@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+.env
+
+# cache local de dados e banco sqlite (ficam em ~/.varlab, mas por seguranca)
+*.parquet
+*.db
+
+.pytest_cache/
+.mypy_cache/
+
+# frontend (Vite/React)
+frontend/node_modules/
