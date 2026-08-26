@@ -50,11 +50,15 @@ cd .. && varlab web            # Flask detecta frontend/dist e serve tudo em :50
 Rodar um experimento headless (sem subir nada de web), imprime a tabela de ranking:
 
 ```bash
-varlab run --ticker PETR4.SA --start 2022-01-01 --end 2024-01-01 \
-    --model garch_1_1 --model lstm \
-    --backtest kupiec --backtest christoffersen \
+varlab run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
+    --model parametric --model historical --model monte_carlo --model garch_1_1 --model egarch \
+    --backtest kupiec --backtest christoffersen --backtest dq --backtest basileia \
     --save
 ```
+
+Por padrao roda em `alpha=0.05` e `alpha=0.01` simultaneamente (95% e 99%, comparacao
+regulatoria) e usa uma janela de treino fixa de 252 dias uteis (1 ano) a partir do inicio
+do periodo — ambos configuraveis via `--alpha` (repetir a flag) e `--train-window`.
 
 ## Testes
 
@@ -135,8 +139,8 @@ Ver `Cronograma_TCC_II.docx` na pasta do TCC. Mapeamento Etapa → módulo:
 | Etapa | Conteúdo | Módulo | Status |
 |---|---|---|---|
 | E1 | Dados + VaR tradicional | `data/`, `models/traditional/` | ✅ implementado (paramétrico, histórico, Monte Carlo) |
-| E2 | GARCH/EGARCH | `models/garch/` | ⏳ pendente |
-| E3 | LSTM/GRU/CAViaR/GARCHNet | `models/ml/` | ⏳ pendente |
-| E4 | Backtesting | `backtesting/` | ⏳ pendente |
+| E2 | GARCH/EGARCH | `models/garch/` | ✅ implementado (GARCH(1,1), EGARCH, reestimacao periodica) |
+| E3 | LSTM/GRU/CAViaR/GARCHNet | `models/ml/` | ✅ implementado (quantil direto via pinball loss, walk-forward, grid search) |
+| E4 | Backtesting | `backtesting/` | ✅ implementado (Kupiec, Christoffersen, DQ, zonas de Basileia) |
 | E5 | Interface web | `web/` (API) + `frontend/` (React) | ✅ implementado |
 | E6 | Experimento comparativo | `experiments/runner.py` | ✅ implementado (orquestrador pronto) |
