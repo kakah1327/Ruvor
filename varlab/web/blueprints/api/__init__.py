@@ -29,7 +29,7 @@ def config():
     return jsonify(
         {
             "tickers": current_app.config["DEFAULT_TICKERS"],
-            "alpha": current_app.config["DEFAULT_ALPHA"],
+            "alphas": current_app.config["DEFAULT_ALPHAS"],
         }
     )
 

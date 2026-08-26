@@ -7,7 +7,7 @@ import os
 class BaseConfig:
     SECRET_KEY = os.environ.get("VARLAB_SECRET_KEY", "dev-secret-change-me")
     DEFAULT_TICKERS = ["^BVSP", "PETR4.SA", "VALE3.SA", "ITUB4.SA"]
-    DEFAULT_ALPHA = 0.05
+    DEFAULT_ALPHAS = [0.05, 0.01]
 
 
 class DevConfig(BaseConfig):

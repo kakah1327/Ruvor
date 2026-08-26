@@ -30,9 +30,12 @@ def web(host: str, port: int, debug: bool) -> None:
 @click.option("--end", required=True, help="YYYY-MM-DD")
 @click.option("--model", "models", multiple=True, required=True, help="Repetir para varios modelos")
 @click.option("--backtest", "backtests", multiple=True, required=True, help="Repetir para varios testes")
-@click.option("--alpha", default=0.05, type=float)
+@click.option("--alpha", "alphas", multiple=True, type=float, default=(0.05, 0.01),
+              help="Repetir para varios niveis de confianca (default: 0.05 e 0.01 simultaneos)")
+@click.option("--train-window", "train_window_days", default=252, type=int,
+              help="Dias uteis usados para treino, a partir do inicio do periodo (default: 252, 1 ano)")
 @click.option("--save/--no-save", default=False, help="Persiste o resultado no SQLite local")
-def run(ticker: str, start: str, end: str, models: tuple[str, ...], backtests: tuple[str, ...], alpha: float, save: bool) -> None:
+def run(ticker: str, start: str, end: str, models: tuple[str, ...], backtests: tuple[str, ...], alphas: tuple[float, ...], train_window_days: int, save: bool) -> None:
     """Roda um experimento headless (sem subir a web) e imprime a tabela de ranking."""
     from varlab.data.providers.yfinance_provider import YFinanceProvider
     from varlab.experiments.runner import ExperimentConfig, run_experiment
@@ -48,7 +51,8 @@ def run(ticker: str, start: str, end: str, models: tuple[str, ...], backtests: t
         end=end,
         model_names=list(models),
         backtest_names=list(backtests),
-        alpha=alpha,
+        alphas=list(alphas),
+        train_window_days=train_window_days,
     )
     result = run_experiment(config, provider=YFinanceProvider())
     click.echo(result.ranking_table().to_string(index=False))

@@ -44,7 +44,7 @@ export default function ResultDetail() {
       <Card>
         <h2>Experimento #{runId} — {config.ticker}</h2>
         <p className="meta">
-          Período: {config.start} a {config.end} &middot; alpha={config.alpha} &middot; horizonte={config.horizon}
+          Período: {config.start} a {config.end} &middot; alphas={config.alphas.join(', ')} &middot; horizonte={config.horizon}
         </p>
 
         <div className="actions">
