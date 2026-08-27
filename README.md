@@ -52,6 +52,7 @@ Rodar um experimento headless (sem subir nada de web), imprime a tabela de ranki
 ```bash
 varlab run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
     --model parametric --model historical --model monte_carlo --model garch_1_1 --model egarch \
+    --model lstm --model gru --model caviar --model garchnet \
     --backtest kupiec --backtest christoffersen --backtest dq --backtest basileia \
     --save
 ```
@@ -59,6 +60,15 @@ varlab run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
 Por padrao roda em `alpha=0.05` e `alpha=0.01` simultaneamente (95% e 99%, comparacao
 regulatoria) e usa uma janela de treino fixa de 252 dias uteis (1 ano) a partir do inicio
 do periodo — ambos configuraveis via `--alpha` (repetir a flag) e `--train-window`.
+
+Nao ha uma etapa de treino separada com pesos salvos em disco: cada `varlab run` faz
+fit + estimate + backtest de ponta a ponta, e os modelos de ML retreinam do zero a cada
+execucao (grid search + reestimacao periodica a cada `REFIT_FREQUENCY_DAYS`, ver
+`varlab/models/ml/_quantile_nn.py`). Um experimento com todos os 9 modelos para 1 ticker
+no periodo 2015-2024 leva algo entre 20 e 60 min rodando so em CPU — o TensorFlow **nao
+usa GPU no Windows nativo** para versoes >= 2.11 (precisa WSL2 ou o plugin DirectML). Para
+rodar varios tickers com os modelos de ML, prefira uma maquina com GPU acessivel ao
+TensorFlow (Linux/WSL2) ou rode um ticker por vez.
 
 ## Testes
 
