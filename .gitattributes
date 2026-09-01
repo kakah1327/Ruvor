@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+*.svg  text
+*.R    text
+*.csv  text
+*.json text
+
+*.docx binary
+*.png  binary
+*.zip  binary
