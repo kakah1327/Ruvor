@@ -265,5 +265,5 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
 | Parecer sobre fronteira CVM | Pendente, antes do Marco 2 |
 | Tema claro (kit de marca) vs escuro | Não resolvido |
-| Kit de marca incompleto | Falta modo escuro, estados de interação e **componentes de formulário** — bloqueantes já no Marco 1 por causa do portão de mockup |
+| Kit de marca incompleto | Faltam **estados de interação** (só `:active` existe) e **modo escuro**. Campos de formulário deixaram de ser lacuna: `brand/ruvor/mockups/03-nova-analise.html` estabelece o padrão |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |

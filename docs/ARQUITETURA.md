@@ -28,14 +28,25 @@ risco, que é a única parte que ninguém mais tem.
 
 ## Estrutura do repositório
 
+**Estado alvo.** Os blocos do roadmap chegam nele por partes — `apps/` nasce no F4, `infra/`
+no F3.
+
 ```
 ruvor/
-├── engine/            # motor numérico — pacote Python puro
-│   ├── models/            algoritmos de VaR
-│   ├── backtesting/       testes estatísticos
-│   └── ...                ZERO Django aqui dentro
+├── engine/            # projeto do motor numérico
+│   ├── pyproject.toml     metadados de ruvor-engine
+│   ├── src/
+│   │   └── engine/        ← pacote importável — ZERO Django aqui dentro
+│   │       ├── models/        algoritmos de VaR
+│   │       ├── backtesting/   testes estatísticos
+│   │       ├── data/
+│   │       ├── experiments/
+│   │       └── cli.py
+│   └── tests/
 │
 ├── backend/           # aplicação Django
+│   ├── pyproject.toml
+│   ├── manage.py
 │   ├── config/            settings, urls
 │   └── apps/              um app por domínio
 │       ├── assets/          ações, catálogo, preços
@@ -50,6 +61,14 @@ ruvor/
 ├── docs/
 └── brand/
 ```
+
+**Não existe `pyproject.toml` na raiz.** Um projeto Python por diretório: cada um declara as
+próprias dependências e a configuração das próprias ferramentas. É o que permite ao F3
+construir imagens diferentes — a web sem TensorFlow, o worker com.
+
+**Layout `src/` no motor**, e não o pacote na raiz do projeto: com `src/`, `import engine` só
+funciona se o pacote estiver instalado, nunca por resolução acidental a partir do diretório
+de trabalho. É o que torna verificável a exigência de instalar em ambiente limpo.
 
 ### A regra estrutural inegociável
 

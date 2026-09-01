@@ -113,6 +113,58 @@ Referência aos registros em docs/decisoes/. Não repete o conteúdo.
 Explícitas. Uma spec com lacuna declarada é melhor que uma que finge não ter.
 ```
 
+### Spec não é documento vivo
+
+Distinção que evita duplicação e contradição:
+
+| | Documento vivo | Spec |
+|---|---|---|
+| Responde | "como o sistema **é**" | "o que muda **agora**" |
+| Vida | permanente, atualizado sempre | encerra quando o trabalho fecha |
+| Onde | `PRODUTO.md`, `ARQUITETURA.md`, `decisoes/` | `specs/` |
+| Escopo e critério de aceite | não tem | tem |
+
+**A spec referencia; nunca repete.** Se a informação já está num documento vivo ou num
+registro de decisão, a spec aponta para lá. Conteúdo duplicado começa igual e termina
+divergente — e aí ninguém sabe qual dos dois manda.
+
+Se ao escrever uma spec você percebe que ela está reescrevendo arquitetura, pare: ou aquilo
+pertence ao documento vivo (e a spec só aponta), ou é decisão nova (e vira registro em
+`decisoes/`).
+
+### Antes de mandar revisar
+
+A auto-revisão **não é formalidade** — é onde o defeito sai barato. Quem escreve tem o
+contexto inteiro e acesso ao código; o revisor adversarial custa uma rodada completa de
+leitura do projeto. A auto-revisão deve ser a cara, e a adversarial, confirmação.
+
+Seis perguntas, cada uma derivada de defeito que já custou rodada neste projeto:
+
+**1. Toda afirmação sobre o código existente foi conferida no código?**
+Não vale "eu me lembro que". Abrir o arquivo. Afirmação plausível e falsa é o defeito mais
+caro que existe: ela sobrevive à leitura de quem tem contexto e só cai na verificação.
+
+**2. Todo requisito tem o comando ou o teste que o prova?**
+Se não dá para escrever a verificação, o requisito não está pronto. "Configurado e passando",
+sem dizer com que rigor, passa vazio — a checagem aprova por estar desligada.
+
+**3. Todo artefato citado tem nome, local, conteúdo e dono?**
+"Arquivo de trava", "metadados próprios", "dependência local" — substantivo sem definição
+transfere a decisão para quem implementa, que decidirá diferente de você.
+
+**4. Todo arquivo que existe hoje tem destino?**
+Para spec de migração ou reestruturação, inventário explícito: cada arquivo migra, é
+reescrito, é removido ou permanece. O que não está na lista fica sem dono — sobretudo quando
+duas specs irmãs dividem o trabalho.
+
+**5. Toda lista fechada foi derivada da fonte, não da memória?**
+Opções de um comando: ler o arquivo do comando. Formatos de cor: ler o CSS. Lista fechada
+incompleta é pior que lista aberta, porque parece decidida.
+
+**6. A spec contradiz documento vivo ou decisão registrada?**
+Listar o que ela toca e conferir um a um. Se contradiz, ou a spec muda, ou nasce decisão nova
+que restrinja a antiga — nunca contradição silenciosa dentro da spec.
+
 ### Revisão da spec
 
 - **Spec de módulo, ou que cria contrato novo, ou que atravessa mais de um bloco** →
@@ -127,14 +179,34 @@ Explícitas. Uma spec com lacuna declarada é melhor que uma que finge não ter.
 
 ## 5. Anatomia de um plano
 
-> **O plano especifica contratos, não corpos.**
+> **O plano especifica contratos, não corpos** — com duas exceções que valem mais que a regra.
 
-Código completo dentro do plano é desperdício: escreve-se duas vezes, e a segunda versão
-diverge no minuto em que a realidade aparece. Além disso, revisar código em markdown é pior
-que revisar código no editor.
+Código completo em toda tarefa é desperdício: escreve-se duas vezes, e a segunda versão
+diverge no minuto em que a realidade aparece. Revisar código em markdown também é pior que
+revisar no editor.
 
 Lista de tarefas soltas é pior ainda: o agente novo re-deriva decisões já tomadas, e cada um
 deriva diferente. É a máquina de retrabalho.
+
+### Quando o conteúdo entra no plano
+
+Três casos, não dois:
+
+**1. Quando o conteúdo *é* o contrato.** Arquivo de configuração, esquema, formato de
+artefato gerado. `pyproject.toml`, configuração do verificador de tipos, `.gitattributes` —
+não existe "implementação" separada do conteúdo. Descrevê-los em prosa transfere para quem
+implementa uma decisão que já deveria estar tomada.
+
+**2. Quando a lógica é sutil e a falha é silenciosa.** Teste que pode passar vazio,
+comparação numérica com tolerância, verificação que ninguém percebe estar desligada. Aqui o
+código no plano é barato, e o erro sem ele é caro — porque passa verde.
+
+**3. Nos demais casos, não entra.** Mover arquivo, reescrever import, criar diretório: a
+implementação é óbvia dado o contrato, e o comando exato já está no critério de aceite.
+
+Numa base madura, o implementador infere pelo padrão do código existente. **Em projeto novo
+não há padrão para imitar**, então a precisão precisa vir do plano — e pode afrouxar conforme
+as convenções se estabelecem.
 
 O ponto certo, por tarefa:
 
@@ -178,6 +250,37 @@ terminado. Com "ficou bom", consegue.
 
 ---
 
+## 5.1 Ciclo de correção após revisão
+
+Revisão que reprova **não reabre o portão humano**. O ciclo de correção é autônomo:
+
+```
+revisão reprova → orquestrador decide o que aceita → correção → nova revisão → ...
+```
+
+Roda até a revisão passar, **sem pedir permissão a cada volta**. Vale para spec, plano e
+implementação.
+
+O motivo: o portão humano existe para decidir **direção**, não para carimbar conserto. Se um
+revisor aponta que falta um critério de aceite, corrigir é trabalho, não decisão.
+
+### Quando escalar mesmo assim
+
+Para e pergunta quando um achado exige **direção**, não conserto:
+
+- a correção muda o **escopo** acordado
+- o achado revela uma **decisão de produto** ainda não tomada
+- há duas saídas válidas e a escolha depende de preferência, custo ou prazo — não de técnica
+- corrigir contradiz uma **decisão registrada** em `decisoes/`
+
+Nesses casos, junte as dúvidas e pergunte **de uma vez**, no fim da rodada — não uma a uma.
+
+### O que o orquestrador faz com os achados
+
+Ele **decide**, não obedece. Achado de revisor é informação, não ordem: pode ser aceito,
+aceito em parte, ou recusado com motivo registrado. Quem responde pelo artefato é quem o
+escreve.
+
 ## 6. Execução
 
 Depois do plano aprovado, a implementação **roda até o fim sem pedir permissão**. Cada
@@ -208,7 +311,18 @@ contexto para consertar um detalhe não se paga.
 
 ## 7. Portão de mockup
 
-**Toda tarefa visual vira duas.**
+### A que telas o portão se aplica
+
+Vale para **tela de produto**: qualquer interface que um usuário final vá usar, ou que tenha
+decisão de design a tomar.
+
+Fica de fora o **casco técnico** — tela cuja única função é provar que a infraestrutura
+responde, sem layout, navegação ou conteúdo de produto. Ver
+[D-30](decisoes/D-30-portao-de-mockup-so-para-tela-de-produto.md).
+
+Na dúvida, passa pelo portão: mockup é barato; tela errada implementada não é.
+
+**Toda tarefa visual de produto vira duas.**
 
 ```
 Tarefa N     mockup HTML da tela, usando os tokens reais do Ruvor
@@ -228,6 +342,11 @@ Três razões:
   ser "bate com o aprovado?", que é verificável.
 
 Ficam em `docs/mockups/<módulo>/`, versionados junto com a spec que os originou.
+
+**Não confundir com `brand/ruvor/mockups/`**, que são as quatro telas de referência da
+identidade visual — o vocabulário do produto, produzido no trabalho de marca. Os mockups do
+portão são **derivados** delas para uma tela específica de um bloco. Aquilo é o vocabulário;
+isto é a frase.
 
 ---
 

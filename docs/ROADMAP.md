@@ -16,8 +16,9 @@ Não entrega nada ao usuário final. É o alicerce, e é o que faltou antes.
 | | Bloco | Entrega |
 |---|---|---|
 | 🟡 | **F1 — Documentação de base** | PROCESSO, PRODUTO, ARQUITETURA, decisões, ROADMAP, ESTADO, CLAUDE.md |
-| ⬜ | **F2 — Esqueleto do repositório** | monorepo `engine/` + `backend/` + `frontend/` + `infra/`, com o rebrand aplicado |
-| ⬜ | **F3 — Ambiente local** | `docker compose up` sobe Postgres, Redis, web e worker |
+| ⬜ | **F2a — Migração do motor** | `engine/` isolado, rebrand, empacotamento próprio, linha de base numérica |
+| ⬜ | **F2b — Casco da aplicação** | projeto Django e projeto React funcionais, com identidade Ruvor |
+| ⬜ | **F3 — Ambiente local** | `docker compose up` sobe Postgres, Redis, web e worker; cria `infra/` |
 | ⬜ | **F4 — Fundação de dados** | primeiras migrations, esquemas bronze/prata/ouro, entidade Organização |
 | ⬜ | **F5 — CI** | estilo, tipos e testes a cada mudança |
 | ⬜ | **F6 — Agentes do projeto** | explorador, revisor, implementador |
@@ -36,7 +37,7 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 | ⬜ | **M1.1 — Catálogo de ativos** | lista de papéis da B3 com nome, setor e situação; base da busca |
 | ⬜ | **M1.2 — Ingestão de preços** | histórico + atualização diária, camada bronze com data de coleta |
 | ⬜ | **M1.3 — Camadas 1 e 2** | identidade, preço, gráfico, volume, dividendos, retornos, volatilidade, quedas, relação com o Ibovespa |
-| ⬜ | **M1.4 — Motor de risco** | migração do `engine/`, semente fixa, manifesto de execução |
+| ⬜ | **M1.4 — Motor de risco** | semente fixa, manifesto de execução, integração com a fila (a migração é do F2a) |
 | ⬜ | **M1.5 — Execução assíncrona** | fila, modo A, pré-cálculo dos ativos cobertos |
 | ⬜ | **M1.6 — Aplicação web** | shell, busca, tela do ativo, identidade Ruvor |
 

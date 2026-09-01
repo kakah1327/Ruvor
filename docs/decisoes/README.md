@@ -25,6 +25,7 @@ conversas e entre agentes.
 | [D-08](D-08-dono-do-dado-no-schema.md) | Dono do dado no schema desde a primeira migration |
 | [D-11](D-11-pilha-tecnologica.md) | Pilha: Python, Django, DRF, React, PostgreSQL |
 | [D-12](D-12-tipagem-obrigatoria.md) | Tipagem obrigatória, verificada no CI |
+| [D-29](D-29-rigor-de-tipagem-por-origem-do-codigo.md) | Rigor de tipagem varia conforme a origem do código |
 | [D-13](D-13-camadas-bronze-prata-ouro.md) | Bronze, prata e ouro como esquemas do PostgreSQL |
 | [D-14](D-14-celery-e-redis.md) | Celery e Redis para execução assíncrona |
 | [D-15](D-15-manifesto-de-execucao.md) | Todo resultado carrega um manifesto de execução |
@@ -32,6 +33,7 @@ conversas e entre agentes.
 | [D-17](D-17-monorepo-engine-sem-django.md) | Monorepo, com o motor numérico isolado do Django |
 | [D-18](D-18-separacao-treino-previsao.md) | Separação entre treino e previsão em produção |
 | [D-24](D-24-organizacao-desde-a-primeira-migration.md) | Organização existe desde a primeira migration |
+| [D-28](D-28-frontend-em-typescript.md) | Frontend em TypeScript |
 
 ## Processo e execução
 
@@ -44,6 +46,7 @@ conversas e entre agentes.
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
+| [D-30](D-30-portao-de-mockup-so-para-tela-de-produto.md) | Portão de mockup vale para tela de produto, não para casco técnico |
 | [D-27](D-27-commits-sem-assinatura.md) | Commits sem assinatura de ferramenta |
 
 ## As três mais consequentes

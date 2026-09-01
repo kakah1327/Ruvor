@@ -14,6 +14,10 @@ estatística de qual deles merece confiança para aquele ativo.
 2. **[`docs/PROCESSO.md`](docs/PROCESSO.md)** — como se trabalha aqui. **Leia antes de produzir qualquer coisa.**
 3. **[`docs/aprendizados.md`](docs/aprendizados.md)** — armadilhas já descobertas. Leia antes de implementar.
 
+Antes de mandar spec ou plano para revisão, rode a
+[lista de verificação](docs/PROCESSO.md#antes-de-mandar-revisar). A primeira spec do projeto
+custou cinco rodadas de revisão pelos seis defeitos que ela cobre.
+
 ---
 
 ## Autoridade dos documentos
@@ -31,7 +35,7 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | ordem dos blocos e status |
 | [`docs/ESTADO.md`](docs/ESTADO.md) | posição atual |
 | [`docs/specs/`](docs/specs/) e [`docs/planos/`](docs/planos/) | o trabalho corrente |
-| [`brand/ruvor/`](brand/ruvor/) | tokens, logo e regras da identidade visual |
+| [`brand/ruvor/`](brand/ruvor/) | tokens, logo, regras e as quatro telas de referência (`mockups/`) |
 
 ### NÃO é referência
 
@@ -41,6 +45,7 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | `varlab/`, `frontend/src/`, `tests/` | código do protótipo | só `varlab/models/` e `varlab/backtesting/` têm valor; o resto será reconstruído |
 | [`docs/tcc/`](docs/tcc/) | trabalho acadêmico | escopo de pesquisa, **não** especificação de produto |
 | `brand/ruvor/estudos/` | histórico de como se chegou à marca | em divergência com o kit, **o kit vence** |
+| `brand/ruvor/examples/` | estudos visuais anteriores | em divergência, **`brand/ruvor/mockups/` vence** |
 
 Se um documento antigo contradiz um destes, **estes vencem**.
 
@@ -70,8 +75,10 @@ pulou. Não existe "deve funcionar".
 
 **`engine/` não importa Django.** Nunca ([D-17](docs/decisoes/D-17-monorepo-engine-sem-django.md)).
 
-**Toda tela passa por mockup aprovado antes de virar código**
-([PROCESSO.md §7](docs/PROCESSO.md#7-portão-de-mockup)).
+**Toda tela de produto passa por mockup aprovado antes de virar código**
+([PROCESSO.md §7](docs/PROCESSO.md#7-portão-de-mockup)). Casco técnico — tela que só prova
+que a infraestrutura responde — está fora
+([D-30](docs/decisoes/D-30-portao-de-mockup-so-para-tela-de-produto.md)).
 
 ---
 

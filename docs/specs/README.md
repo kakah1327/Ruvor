@@ -25,4 +25,9 @@ escrita → auto-revisão → revisão adversarial → ✋ aprovação humana �
 Spec pequena e local pode ser revisada inline, sem agente. Spec de bloco, que cria contrato
 novo ou atravessa mais de um bloco, vai para revisão por agente.
 
-*Nenhuma spec escrita ainda.*
+## Specs
+
+| Spec | Bloco | Situação |
+|---|---|---|
+| [F2a — Migração do motor](F2a-migracao-do-motor.md) | Fundação · F2a | em revisão |
+| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | em revisão |
