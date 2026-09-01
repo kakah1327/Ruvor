@@ -289,8 +289,12 @@ tarefa termina quando seu critério de aceite passa; a próxima começa.
 **Um agente por tarefa.** Paralelo só entre tarefas sem dependência e com arquivos
 disjuntos.
 
-**Commit por tarefa**, **ramo por plano**. Dá para voltar ao ponto exato, e o ramo
-principal nunca fica quebrado no meio da execução.
+**Commit por tarefa.** Dá para voltar ao ponto exato e revisar a execução passo a passo.
+
+**Sem ramo por plano, por enquanto** — o trabalho acontece direto na `main`
+([D-31](decisoes/D-31-trabalho-direto-na-main.md)). Ramo existe para isolar trabalho
+paralelo e proteger consumidores da `main`; hoje não há nem um nem outro. Volta a haver
+quando houver mais de uma pessoa desenvolvendo ao mesmo tempo, ou versão publicada.
 
 ### Quando parar
 

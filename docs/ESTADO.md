@@ -10,8 +10,8 @@
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** F2a fechado; **F2b é o próximo**
-**Ramo:** `f2a-migracao-do-motor`, 13 commits acima de `main`, **ainda não integrado**
+**Bloco:** F2a fechado e integrado; **F2b é o próximo**
+**Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 O motor numérico existe como pacote isolado e verificado. A plataforma web ainda não foi
 construída.
@@ -48,8 +48,8 @@ que o protótipo produzia.
 
 ## Próximo passo
 
-**Integrar o ramo `f2a-migracao-do-motor` ao `main`**, e então escrever o plano do
-[F2b — Casco da aplicação](specs/F2b-casco-da-aplicacao.md), cuja spec já está aprovada.
+**Escrever o plano do [F2b — Casco da aplicação](specs/F2b-casco-da-aplicacao.md)**, cuja
+spec já está aprovada.
 
 O F2b cria o projeto Django e o projeto React funcionais, com a identidade Ruvor. Depois dele
 vêm F3 (ambiente local), F4 (banco e migrations), F5 (CI) e F6 (agentes do projeto).

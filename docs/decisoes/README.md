@@ -47,6 +47,7 @@ conversas e entre agentes.
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
 | [D-30](D-30-portao-de-mockup-so-para-tela-de-produto.md) | Portão de mockup vale para tela de produto, não para casco técnico |
+| [D-31](D-31-trabalho-direto-na-main.md) | Trabalho direto na `main` enquanto o time for uma pessoa |
 | [D-27](D-27-commits-sem-assinatura.md) | Commits sem assinatura de ferramenta |
 
 ## As três mais consequentes
