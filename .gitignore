@@ -8,7 +8,7 @@ dist/
 
 .env
 
-# cache local de dados e banco sqlite (ficam em ~/.varlab, mas por seguranca)
+# cache local de dados e banco sqlite (ficam fora do repositorio, mas por seguranca)
 *.parquet
 *.db
 
