@@ -750,13 +750,32 @@ warn_unused_configs = true
 warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
-module = ["tensorflow.*", "keras.*", "arch.*", "yfinance.*", "scipy.*"]
+module = ["tensorflow.*", "arch.*", "yfinance.*", "scipy.*", "pandas.*"]
 ignore_missing_imports = true
+
+# Divida de tipagem, a pagar depois da Etapa 6 — ate la a D-21 congela o motor
+# e corrigir exigiria editar codigo que nao pode ser alterado.
+#   _quantile_nn: best_config nasce None e e desempacotado; o mypy nao prova
+#                 que o laco de busca sempre atribui.
+#   _conditional: self.dist e str, e o arch exige Literal. O arch tem anotacoes
+#                 inline, entao ignore_missing_imports nao silencia isso.
+[[tool.mypy.overrides]]
+module = ["engine.models.ml._quantile_nn", "engine.models.garch._conditional"]
+ignore_errors = true
 ```
 
-A lista de `overrides` cobre exatamente as bibliotecas de terceiros sem anotação que o código
-migrado importa. `statsmodels` **não** entra: nenhum módulo do motor o importa — só o teste
+A lista cobre as bibliotecas de terceiros que o motor importa e que não publicam anotações —
+**incluindo `pandas`**, que não embarca `py.typed` e exigiria `pandas-stubs`. Sem ele na
+lista, são 19 erros em 19 arquivos, só por causa do import.
+
+`keras` **não** entra: o motor faz `from tensorflow import keras`, acesso a atributo já
+coberto por `tensorflow.*`. Um override para `keras.*` não casaria com módulo nenhum e, com
+`warn_unused_configs`, emitiria aviso permanente.
+
+`statsmodels` também não entra: nenhum módulo do motor o importa — só o teste
 `test_garch_diagnostics.py`, e o alvo do mypy é `src`, não `tests`.
+
+`numpy` não precisa: publica anotações próprias.
 
 **Se o mypy acusar erro em código migrado**, a saída sancionada é acrescentar
 `ignore_errors = true` num override para o módulo específico, com comentário registrando a

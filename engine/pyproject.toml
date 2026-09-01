@@ -24,3 +24,25 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src"]
+disallow_untyped_defs = false
+warn_unused_ignores = true
+warn_unused_configs = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = ["tensorflow.*", "arch.*", "yfinance.*", "scipy.*", "pandas.*"]
+ignore_missing_imports = true
+
+# Divida de tipagem, a pagar depois da Etapa 6 — ate la a D-21 congela o motor
+# e corrigir exigiria editar codigo que nao pode ser alterado.
+#   _quantile_nn: best_config nasce None e e desempacotado; o mypy nao prova
+#                 que o laco de busca sempre atribui.
+#   _conditional: self.dist e str, e o arch exige Literal. O arch tem anotacoes
+#                 inline, entao ignore_missing_imports nao silencia isso.
+[[tool.mypy.overrides]]
+module = ["engine.models.ml._quantile_nn", "engine.models.garch._conditional"]
+ignore_errors = true
