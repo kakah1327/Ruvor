@@ -404,14 +404,20 @@ O `conftest.py` não cita o pacote — move sem alteração.
 **Critério de aceite**
 
 ```bash
-find engine -name __pycache__ -type d -exec rm -rf {} +   # .pyc obsoleto contem "varlab"
 test -f engine/tests/conftest.py
 test -d engine/tests/models && test -d engine/tests/backtesting
 ! test -d engine/tests/tests        # o erro silencioso do git mv
+rm -rf tests                        # git mv nao remove o __pycache__ que sobra
 ! test -d tests
 pytest engine/tests
+find engine -name __pycache__ -type d -exec rm -rf {} +   # DEPOIS do pytest, ver abaixo
 ! grep -rniE "varlab|VaR Lab" engine/tests/
 ```
+
+> **A limpeza de `__pycache__` vem depois do `pytest`, não antes.** O diretório do
+> repositório se chama `varlab`, e o caminho absoluto fica embutido no bytecode — então
+> `.pyc` gerado pela própria execução dos testes casa com o `grep` de rebrand. Limpar antes
+> não adianta: o pytest regenera.
 
 **Cerca de escopo**
 
@@ -859,20 +865,29 @@ duas linhas no README atual, e um `grep` linha a linha passaria em branco:
 
 ```bash
 python -c "
-import pathlib, re, sys
-alvos = ['engine', 'tools', '.env.example', '.gitignore']
+import pathlib, re, subprocess, sys
+# Enumera pelos arquivos RASTREADOS, nao por rglob: o rebrand vale para o que
+# esta versionado. Artefato gerado (.pyc, dist/, egg-info/) nao e alvo — e
+# carrega o caminho absoluto do repositorio, que hoje se chama 'varlab'.
+rastreados = subprocess.run(['git','ls-files','engine','tools','.env.example','.gitignore'],
+                            capture_output=True, text=True, check=True).stdout.split()
 falhas = []
-for alvo in alvos:
-    p = pathlib.Path(alvo)
-    for f in (p.rglob('*') if p.is_dir() else [p]):
-        if not f.is_file(): continue
-        try: texto = f.read_text(encoding='utf-8')
-        except UnicodeDecodeError: continue
-        if re.search(r'varlab|VaR\s+Lab', re.sub(r'\s+', ' ', texto), re.I):
-            falhas.append(str(f))
+for nome in rastreados:
+    f = pathlib.Path(nome)
+    if not f.is_file(): continue
+    try: texto = f.read_text(encoding='utf-8')
+    except UnicodeDecodeError: continue
+    if re.search(r'varlab|VaR\s+Lab', re.sub(r'\s+', ' ', texto), re.I):
+        falhas.append(nome)
 sys.exit('encontrado em: ' + ', '.join(falhas)) if falhas else print('ok')
 "
 ```
+
+> **A enumeração é por `git ls-files`, não por varredura de diretório.** O diretório do
+> repositório se chama `varlab`, então **todo caminho absoluto embutido em artefato gerado
+> casa com o padrão** — `.pyc`, `dist/`, `egg-info/`. Varrer o disco escaparia por acidente
+> (bytecode é binário e cai no tratamento de erro de decodificação), e depender disso é
+> frágil. O rebrand vale para o que está versionado.
 
 Fora da varredura, e legitimamente: `docs/prototipo/`, `docs/tcc/`, `docs/decisoes/`,
 `docs/ROADMAP.md`, `docs/ESTADO.md`, as specs, o `CLAUDE.md`, o `frontend/` e o próprio

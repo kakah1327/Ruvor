@@ -59,6 +59,26 @@ E tratar a auto-revisão como o passo caro: quem escreve tem o contexto e o cód
 revisor adversarial gasta uma rodada inteira só para reconstruir o que o autor já sabia.
 
 
+## O diretório do repositório se chama `varlab` e contamina varredura de nome
+
+**Quando:** ao escrever ou executar qualquer verificação que procure o nome antigo
+(`varlab`) em arquivos — varredura de rebrand, `grep -r`, teste de limpeza.
+
+**Problema:** o repositório está em `E:\Temp\Trilobitarlab`. Todo artefato que embute
+caminho absoluto passa a conter a palavra: `.pyc` em `__pycache__`, e potencialmente
+`dist/`, `build/` e `*.egg-info/`. Uma varredura de diretório encontra esses casamentos e
+reprova sem causa real — ou escapa por acidente, porque bytecode é binário e cai no
+tratamento de erro de decodificação. Depender do acidente é frágil.
+
+Agrava: limpar `__pycache__` **antes** de rodar o `pytest` não resolve, porque a execução
+dos testes regenera o bytecode.
+
+**Faça:** enumerar por `git ls-files`, não por varredura de disco — o rebrand vale para o
+que está versionado, não para artefato gerado. Quando a varredura de diretório for
+inevitável, limpe o `__pycache__` **depois** da última execução de teste e imediatamente
+antes da verificação.
+
+
 ## Import diferido escapa da inspeção de módulos carregados
 
 **Quando:** ao verificar quais bibliotecas um pacote Python carrega — por exemplo, o teste
