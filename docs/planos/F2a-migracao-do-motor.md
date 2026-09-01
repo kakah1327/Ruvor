@@ -561,9 +561,13 @@ revertida em seguida:
 
 ```bash
 # (a) import em nivel de modulo -> o parametrizado precisa REPROVAR
+#     Insere DEPOIS do `from __future__`, que precisa ser a primeira instrucao do
+#     arquivo. Prefixar na linha 1 produz SyntaxError, e ai o teste reprova pelo
+#     motivo errado — provaria o mesmo com qualquer arquivo quebrado.
 python -c "
-import pathlib; p = pathlib.Path('engine/src/engine/cli.py')
-p.write_text('import flask\n' + p.read_text(encoding='utf-8'), encoding='utf-8')"
+import pathlib; p = pathlib.Path('engine/src/engine/cli.py'); s = p.read_text(encoding='utf-8')
+p.write_text(s.replace('from __future__ import annotations\n',
+                       'from __future__ import annotations\n\nimport flask\n', 1), encoding='utf-8')"
 if pytest engine/tests/test_modulos_proibidos.py -k carregado -q; then
   echo "FALHOU EM DETECTAR (a)"; exit 1
 fi
