@@ -3,51 +3,67 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-08-29
+**Última atualização:** 2026-09-01
 
 ---
 
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** F2a e F2b — specs em revisão
-**Situação:** 🟡 em andamento
+**Bloco:** F2a fechado; **F2b é o próximo**
+**Ramo:** `f2a-migracao-do-motor`, 13 commits acima de `main`, **ainda não integrado**
 
-O projeto está na fase de fundação. **Nenhuma linha de código da plataforma nova foi
-escrita ainda** — e isso é proposital. O que existe de código é o protótipo VaR Lab, que
-será substituído (ver [`docs/prototipo/`](prototipo/)).
+O motor numérico existe como pacote isolado e verificado. A plataforma web ainda não foi
+construída.
 
 ## O que foi concluído
 
-- **Definição de produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos,
-  requisitos candidatos
-- **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução,
-  auditoria, regimes
-- **Processo de trabalho** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano,
-  agentes, portões
+### Documentação e processo (F1)
+
+- **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
+- **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
+- **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
 - **30 decisões registradas** — [decisoes/](decisoes/)
-- **Roadmap** — [ROADMAP.md](ROADMAP.md)
-- **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), incluindo as **quatro
-  telas de referência** em `brand/ruvor/mockups/` (login, visão geral, nova análise,
-  resultado analítico); histórico em `brand/ruvor/estudos/`
-- **Limpeza do repositório** — ruído removido, documentos históricos separados e marcados,
-  assinaturas de ferramenta removidas do histórico do git
+- **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
+  referência em `brand/ruvor/mockups/`
+
+### F2a — Migração do motor
+
+O motor saiu de `varlab/` e virou o pacote `engine/`, com layout `src/`, empacotamento
+próprio (`ruvor-engine`) e o rebrand aplicado. O protótipo Flask, a persistência SQLite e o
+`pyproject.toml` da raiz foram removidos.
+
+| Verificação | Resultado |
+|---|---|
+| `import engine` sem Django instalado | ✅ |
+| Linha de base numérica | ✅ 12 combinações, diferença **zero** |
+| Suíte de testes | ✅ 58 passando |
+| Verificação de tipos | ✅ mypy limpo em 33 módulos |
+| `engine/` não importa plataforma | ✅ detecção comprovada por mutação |
+| Empacotamento | ✅ wheel e sdist gerados, sem `tests/` dentro |
+
+**Revisão adversarial: aprovada**, sem achado grave. O revisor recriou o `varlab` original num
+worktree de `main` e recalculou as 12 combinações — a linha de base é bit a bit idêntica ao
+que o protótipo produzia.
 
 ## Próximo passo
 
-**Aprovar as specs F2a e F2b**, e então escrever os planos.
+**Integrar o ramo `f2a-migracao-do-motor` ao `main`**, e então escrever o plano do
+[F2b — Casco da aplicação](specs/F2b-casco-da-aplicacao.md), cuja spec já está aprovada.
 
-As duas estão escritas e passaram por duas rodadas de revisão adversarial:
-
-- [F2a — Migração do motor](specs/F2a-migracao-do-motor.md): `engine/` isolado, rebrand,
-  empacotamento `ruvor-engine`, linha de base numérica
-- [F2b — Casco da aplicação](specs/F2b-casco-da-aplicacao.md): Django e React funcionais,
-  identidade Ruvor
-
-O bloco F2 do roadmap foi dividido em dois porque código migrado e código novo exigem rigor
-de tipagem oposto ([D-29](decisoes/D-29-rigor-de-tipagem-por-origem-do-codigo.md)).
+O F2b cria o projeto Django e o projeto React funcionais, com a identidade Ruvor. Depois dele
+vêm F3 (ambiente local), F4 (banco e migrations), F5 (CI) e F6 (agentes do projeto).
 
 ---
+
+## Dívida registrada
+
+| Dívida | Onde | Quando se paga |
+|---|---|---|
+| `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
+
+Nenhum dos dois é defeito em execução. Corrigi-los exigiria anotar o motor, o que a D-21
+proíbe até o experimento comparativo do TCC estar rodado.
 
 ## Aberto e aguardando decisão
 
@@ -57,7 +73,7 @@ de tipagem oposto ([D-29](decisoes/D-29-rigor-de-tipagem-por-origem-do-codigo.md
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
-| Tema claro vs escuro | kit é claro; protótipo é escuro |
+| Tema claro vs escuro | kit é claro; decisão de produto pendente |
 
 ## Pendências que bloqueiam trabalho futuro
 
@@ -67,13 +83,6 @@ de tipagem oposto ([D-29](decisoes/D-29-rigor-de-tipagem-por-origem-do-codigo.md
 | **Parecer sobre fronteira CVM** | Marco 2 (carteira) |
 | **Verificação de marca e domínio "Ruvor"** | Nada agora; risco se descoberto tarde |
 | **Medir o gargalo do treino** | Decisão sobre GPU vs paralelização — ver [D-20](decisoes/D-20-experimentos-em-cpu.md) |
-
-## Ações pendentes do time
-
-- **Os 4 devs precisam clonar o repositório de novo** (ou `git fetch origin && git reset
-  --hard origin/main`). O histórico foi reescrito em 2026-08-29 para remover assinaturas de
-  ferramenta — os identificadores de commit mudaram. Quem tiver trabalho não enviado precisa
-  salvar antes.
 
 ---
 
@@ -85,5 +94,8 @@ Independente da plataforma, é tempo de máquina. Nada iniciado. Sequência obri
 2. Refazer a Tabela 1
 3. Executar a Etapa 6
 4. Escrever §4.5 e o Capítulo 5
+
+O motor já roda por linha de comando (`ruvor run`), então a Etapa 6 pode ser executada assim
+que a semente for corrigida.
 
 Ver [ROADMAP.md](ROADMAP.md#trilha-paralela--tcc).

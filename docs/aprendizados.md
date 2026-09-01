@@ -79,6 +79,59 @@ inevitável, limpe o `__pycache__` **depois** da última execução de teste e i
 antes da verificação.
 
 
+## Migração de arquivo: prove a igualdade contra o original, não olhando
+
+**Quando:** ao mover ou renomear código em lote, onde o contrato é "só muda o nome".
+
+**Problema:** critério de aceite que conta arquivos e faz `grep` pelo nome antigo **não
+detecta alteração de lógica**. Uma linha trocada de passagem atravessa, e o defeito só
+aparece muito depois — ou nunca, se não houver linha de base.
+
+**Faça:** reconstruir cada arquivo a partir do original no git aplicando **apenas** a
+substituição mecânica, e comparar byte a byte:
+
+```
+git show HEAD:<caminho antigo>  →  aplicar substituição  →  comparar com o arquivo em disco
+```
+
+Os que divergirem são exatamente os que precisam de justificativa. Na migração do motor, 32
+de 33 arquivos saíram idênticos e o único delta tinha as três mudanças autorizadas — prova
+que nenhum critério de contagem daria.
+
+
+## `pandas` não publica anotações de tipo
+
+**Quando:** ao configurar mypy sobre código que importa pandas.
+
+**Problema:** o pandas não embarca `py.typed`; o mypy exige o pacote `pandas-stubs`, à parte.
+Sem ele nem `ignore_missing_imports`, cada arquivo que importa pandas gera um erro
+`import-untyped` — no motor, 17 erros em 17 arquivos, todos só pelo import.
+
+O risco não é o erro: é a "solução" errada. Silenciar por módulo com `ignore_errors`
+desligaria a verificação em mais da metade do pacote e tornaria "mypy passa" vacuamente
+verdadeiro.
+
+**Faça:** `ignore_missing_imports` para `pandas.*`. `numpy` **não** precisa — publica
+anotações próprias. E `keras` também não: o acesso é `from tensorflow import keras`, já
+coberto por `tensorflow.*`; um override para `keras.*` não casa com nada e, com
+`warn_unused_configs`, emite aviso permanente.
+
+
+## `git mv` para diretório existente move para dentro
+
+**Quando:** ao mover um diretório cujo destino já existe.
+
+**Problema:** `git mv tests engine/tests`, com `engine/tests/` já criado, produz
+`engine/tests/tests/`. O layout fica errado e critérios ingênuos (`pytest passa`,
+`grep não acha o nome antigo`) **passam do mesmo jeito** — erro silencioso.
+
+Relacionado: `git add --renormalize .` implica `-u` e só toca arquivo já rastreado. Arquivo
+novo precisa de `git add` explícito antes, ou fica pendente e o critério reprova sem causa.
+
+**Faça:** mover o **conteúdo**, não o diretório, e verificar explicitamente que o aninhamento
+não existe (`! test -d engine/tests/tests`).
+
+
 ## Import diferido escapa da inspeção de módulos carregados
 
 **Quando:** ao verificar quais bibliotecas um pacote Python carrega — por exemplo, o teste

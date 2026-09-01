@@ -42,7 +42,7 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | Caminho | O que é | Cuidado |
 |---|---|---|
 | [`docs/prototipo/`](docs/prototipo/) | documentação do protótipo **VaR Lab**, que está sendo substituído | linha de base de revisão, **não** modelo de spec nem de código |
-| `varlab/`, `frontend/src/`, `tests/` | código do protótipo | só `varlab/models/` e `varlab/backtesting/` têm valor; o resto será reconstruído |
+| `frontend/src/` | frontend do protótipo | não fala com o motor: a API que consumia deixou de existir. Substituído no F2b |
 | [`docs/tcc/`](docs/tcc/) | trabalho acadêmico | escopo de pesquisa, **não** especificação de produto |
 | `brand/ruvor/estudos/` | histórico de como se chegou à marca | em divergência com o kit, **o kit vence** |
 | `brand/ruvor/examples/` | estudos visuais anteriores | em divergência, **`brand/ruvor/mockups/` vence** |
@@ -107,9 +107,12 @@ Código — nomes de variável, função, classe — em inglês.
 
 ## Estado do repositório
 
-A plataforma **ainda não foi construída**. O que existe de código é o protótipo VaR Lab
-(Flask + SQLite + React), que será substituído por Django + PostgreSQL + React.
+A **plataforma web ainda não foi construída** — não há Django, banco nem API.
 
-O que se aproveita do protótipo: os 9 modelos de VaR e os 4 testes de backtesting, validados
-contra referência independente e verificação cruzada com R. Migram para `engine/` sem
-alteração de comportamento.
+O que existe é o **motor numérico**, em `engine/`: pacote Python isolado, instalável e
+publicável por si só (`ruvor-engine`), com 9 modelos de VaR, 4 testes de backtesting, 58
+testes automatizados e uma linha de base numérica que prova que o comportamento não mudou na
+migração. Roda por linha de comando: `ruvor run`.
+
+O protótipo Flask e a persistência SQLite foram removidos. O `frontend/` ainda é o do
+protótipo e sai no F2b.

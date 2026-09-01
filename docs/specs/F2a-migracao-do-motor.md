@@ -383,12 +383,17 @@ Configuração exata do F2a, para que "passa" não seja vácuo:
 |---|---|
 | Modo | padrão do mypy — **sem** `--strict` |
 | `disallow_untyped_defs` | desligado |
-| `ignore_missing_imports` | ligado **apenas** para `tensorflow.*`, `keras.*`, `arch.*`, `yfinance.*`, `scipy.*` |
+| `ignore_missing_imports` | ligado **apenas** para `tensorflow.*`, `arch.*`, `yfinance.*`, `scipy.*`, `pandas.*` |
 | Alvo | `engine/src/` |
 | `warn_unused_ignores` | ligado — impede que supressão vire hábito |
 
 Ignorar biblioteca fora dessa lista reprova. É o que impede que a checagem passe por estar
 desligada.
+
+> **Corrigido durante a execução.** A lista original trazia `keras.*` e não trazia `pandas.*`.
+> Nenhum módulo do motor faz `import keras` — o acesso é `from tensorflow import keras`, já
+> coberto —, então aquele override não casaria com nada e emitiria aviso permanente. E o
+> `pandas` não embarca `py.typed`: sem ele na lista, são 17 erros de importação não tipada.
 
 Código novo nasce com rigor alto — isso é o F2b.
 
