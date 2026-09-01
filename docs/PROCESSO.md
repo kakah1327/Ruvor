@@ -73,8 +73,27 @@ IMPLEMENTAÇÃO     execução contínua, 1 agente por tarefa, commit por tarefa
     ↓
 REVISÃO FINAL     código contra spec e plano
     ↓
-FECHA             atualiza ESTADO, ROADMAP e aprendizados
+FECHA             ver abaixo
 ```
+
+### O passo FECHA
+
+Fechar um bloco não é só marcar o roadmap. **Quatro artefatos apodrecem juntos se um deles
+for esquecido**, e o sintoma só aparece na sessão seguinte, quando alguém age sobre status
+mentiroso:
+
+| Atualizar | Por quê |
+|---|---|
+| `ESTADO.md` | é a primeira leitura de toda sessão |
+| `ROADMAP.md` | marca o bloco fechado |
+| `aprendizados.md` | o que custou tempo e reincidiria |
+| **cabeçalho de status da spec e do plano** | ficam dizendo "aguardando revisão" para sempre |
+| **tabelas de `specs/README.md` e `planos/README.md`** | são o índice que alguém consulta antes de abrir o artefato |
+| `CLAUDE.md`, se o bloco mudou o que existe no repositório | ele descreve o estado do código |
+
+Os dois últimos itens da lista são os mais fáceis de esquecer e os que mais enganam: um
+índice que diz "nenhum plano escrito ainda" faz o próximo agente escrever do zero em vez de
+partir do modelo existente.
 
 Portões humanos: **spec, plano e cada mockup**. O resto corre sozinho.
 
@@ -345,7 +364,7 @@ Três razões:
 - **O mockup aprovado vira o critério da revisão.** Deixa de ser "ficou bonito?" e passa a
   ser "bate com o aprovado?", que é verificável.
 
-Ficam em `docs/mockups/<módulo>/`, versionados junto com a spec que os originou.
+Ficam em `docs/mockups/<bloco>/`, versionados junto com a spec que os originou.
 
 **Não confundir com `brand/ruvor/mockups/`**, que são as quatro telas de referência da
 identidade visual — o vocabulário do produto, produzido no trabalho de marca. Os mockups do

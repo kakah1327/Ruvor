@@ -1,7 +1,7 @@
 # F2b — Casco da aplicação
 
 **Bloco:** Fundação · F2b
-**Status:** revisão adversarial aprovada · aguardando portão humano
+**Status:** ✅ **aprovada** (2026-08-31) · aguardando plano
 **Depende de:** [F2a — Migração do motor](F2a-migracao-do-motor.md)
 
 ---

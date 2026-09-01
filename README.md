@@ -95,7 +95,17 @@ ruvor run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
     --backtest kupiec --backtest christoffersen
 ```
 
-Testes: `pytest engine/tests`
+### Comandos do dia a dia
+
+| O quê | Comando |
+|---|---|
+| Testes | `pytest engine/tests` |
+| Verificação de tipos | `cd engine && mypy` — o mypy lê a configuração do diretório corrente |
+| Construir o pacote | `python -m build --no-isolation engine` |
+
+O interpretador do projeto é o do ambiente virtual: **`.venv/Scripts/python.exe`** no Windows,
+`.venv/bin/python` no Linux. Reproduzir o ambiente exato que gerou a linha de base numérica:
+`pip install -r engine/requirements-lock.txt`.
 
 O `frontend/` ainda é o do protótipo e não fala com o motor — a API que ele consumia deixou
 de existir. Ele é substituído no F2b.

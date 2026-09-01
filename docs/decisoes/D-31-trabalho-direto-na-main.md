@@ -8,8 +8,12 @@ O [PROCESSO](../PROCESSO.md) previa **ramo por plano**, e o F2a foi executado as
 commits num ramo, integrados à `main` no fim.
 
 Ramo existe para isolar trabalho paralelo — impedir que duas pessoas se atropelem, e manter
-a `main` sempre entregável enquanto algo incompleto está em andamento. Hoje o
-desenvolvimento é de uma pessoa só, e não existe versão publicada para proteger.
+a `main` sempre entregável enquanto algo incompleto está em andamento.
+
+**O projeto tem quatro pessoas** ([D-23](D-23-trabalho-dividido-por-bloco.md)), mas hoje o
+desenvolvimento acontece com **uma delas por vez** — não há duas frentes simultâneas. E não
+existe versão publicada para proteger. As duas coisas que justificariam o ramo estão
+ausentes agora, não permanentemente.
 
 ## Decisão
 

@@ -38,7 +38,7 @@ removido. Arquivo longo demais deixa de ser lido, e aí não serve para nada.
 
 **Quando:** ao escrever uma spec ou um plano, antes de mandar para revisão adversarial.
 
-**Problema:** a primeira spec do projeto (F2) precisou de **cinco rodadas** de revisão para
+**Problema:** a primeira spec do projeto (F2, depois dividida em F2a e F2b) precisou de **cinco rodadas** de revisão para
 ser aprovada — 431 mil tokens só nos revisores, mais as rodadas de correção. O revisor não
 errou: a spec é que nascia incompleta, e sempre pelos mesmos motivos.
 
@@ -64,7 +64,7 @@ revisor adversarial gasta uma rodada inteira só para reconstruir o que o autor 
 **Quando:** ao escrever ou executar qualquer verificação que procure o nome antigo
 (`varlab`) em arquivos — varredura de rebrand, `grep -r`, teste de limpeza.
 
-**Problema:** o repositório está em `E:\Temp\Trilobitarlab`. Todo artefato que embute
+**Problema:** o repositório está em `E:\Temp\Trilobit\varlab`. Todo artefato que embute
 caminho absoluto passa a conter a palavra: `.pyc` em `__pycache__`, e potencialmente
 `dist/`, `build/` e `*.egg-info/`. Uma varredura de diretório encontra esses casamentos e
 reprova sem causa real — ou escapa por acidente, porque bytecode é binário e cai no

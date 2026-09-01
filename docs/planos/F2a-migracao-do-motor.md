@@ -1,12 +1,17 @@
 # F2a — Plano de implementação
 
 **Spec:** [F2a — Migração do motor](../specs/F2a-migracao-do-motor.md)
-**Status:** rascunho, aguardando revisão
+**Status:** ✅ aprovado (2026-09-01) · **executado e fechado** (2026-09-01)
 
 **Objetivo:** tirar o motor numérico de `varlab/`, colocá-lo em `engine/` com layout `src/`,
 aplicar o rebrand e provar que o comportamento não mudou.
 
-**Ramo:** `f2a-migracao-do-motor`. Um commit por tarefa.
+**Commit por tarefa**, direto na `main`.
+
+> **Este plano foi executado com ramo próprio**, antes da
+> [D-31](../decisoes/D-31-trabalho-direto-na-main.md). Planos novos **não criam ramo**
+> enquanto valer aquela decisão. Se você está usando este arquivo como modelo, ignore
+> qualquer referência a ramo.
 
 ---
 

@@ -77,6 +77,9 @@ proíbe até o experimento comparativo do TCC estar rodado.
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
 | Tema claro vs escuro | kit é claro; decisão de produto pendente |
+| **Ferramenta de estilo** | A ARQUITETURA promete que o CI roda "verificação de estilo", mas nenhum documento nomeia a ferramenta (ruff? black? prettier?) e nenhum `pyproject.toml` a configura. Sem dono até o F5 — decidir antes, no plano do F2b, ou fica território órfão |
+| **Escala tipográfica nos tokens** | `tokens.css` define cor, fonte-família, espaço, raio e sombra — **não define tamanho de fonte**. O F2b-09 proíbe cor literal e nada diz sobre `font-size`, então a primeira tela terá tamanho literal sem que ninguém tenha decidido se isso é aceito |
+| **Versões do backend** | A spec F2b lista Django, DRF, mypy, django-stubs, pytest e pytest-django sem faixa de versão, e não fixa o `requires-python` do `backend/`. O motor exige `>=3.12` |
 
 ## Pendências que bloqueiam trabalho futuro
 

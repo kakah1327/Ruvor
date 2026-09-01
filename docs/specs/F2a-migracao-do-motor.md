@@ -1,7 +1,7 @@
 # F2a — Migração do motor
 
 **Bloco:** Fundação · F2a
-**Status:** revisão adversarial aprovada · aguardando portão humano
+**Status:** ✅ aprovada (2026-08-31) · **implementada e fechada** (2026-09-01)
 **Antecede:** [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md)
 
 ---

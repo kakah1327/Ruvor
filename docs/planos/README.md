@@ -24,4 +24,14 @@ se é visual.
 contínua segura — com um teste como critério, o agente não consegue se enganar sobre ter
 terminado.
 
-*Nenhum plano escrito ainda.*
+## Planos
+
+| Plano | Spec | Situação |
+|---|---|---|
+| [F2a — Migração do motor](F2a-migracao-do-motor.md) | [F2a](../specs/F2a-migracao-do-motor.md) | ✅ executado e fechado |
+
+**O plano do F2a é o modelo vivo.** É o único exemplar completo que existe: 12 tarefas, mapa
+de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
+
+Uma ressalva ao copiá-lo: ele foi executado **com ramo próprio**, antes da
+[D-31](../decisoes/D-31-trabalho-direto-na-main.md). Plano novo não cria ramo.

@@ -3,7 +3,7 @@
 Uma spec por bloco do [ROADMAP](../ROADMAP.md). Descreve **o que deve existir e por quê** —
 nunca como implementar.
 
-Nomeação: `<bloco>-<nome-curto>.md` — por exemplo `F2-esqueleto-do-repositorio.md`.
+Nomeação: `<bloco>-<nome-curto>.md` — por exemplo `F2a-migracao-do-motor.md`.
 
 ## Antes de escrever
 
@@ -29,5 +29,5 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 
 | Spec | Bloco | Situação |
 |---|---|---|
-| [F2a — Migração do motor](F2a-migracao-do-motor.md) | Fundação · F2a | em revisão |
-| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | em revisão |
+| [F2a — Migração do motor](F2a-migracao-do-motor.md) | Fundação · F2a | ✅ implementada e fechada |
+| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | ✅ aprovada · **aguardando plano** |
