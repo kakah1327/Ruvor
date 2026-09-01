@@ -26,6 +26,9 @@ construída.
 - **30 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
+- **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
+  explorador, revisor e implementador, com as regras invioláveis e as condições de parada na
+  definição em vez de repetidas a cada despacho
 
 ### F2a — Migração do motor
 

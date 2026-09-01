@@ -358,11 +358,23 @@ isto é a frase.
 
 Poucos, com papel nítido. Agente demais é overhead e vira loop.
 
+Definidos em [`.claude/agents/`](../.claude/agents/) — versionados, porque são configuração
+que o time compartilha.
+
 | Agente | Papel | Nunca faz |
 |---|---|---|
-| **explorador** | lê código e documentos, devolve conclusão | escrever qualquer coisa |
-| **revisor** | adversarial; usado em spec, plano e implementação com listas diferentes | corrigir o que encontrou |
-| **implementador** | executa **uma** tarefa do plano, dentro da cerca | sair da cerca, mudar contrato |
+| [**explorador**](../.claude/agents/explorador.md) | lê código e documentos, devolve conclusão | escrever qualquer coisa |
+| [**revisor**](../.claude/agents/revisor.md) | adversarial; usado em spec, plano e implementação | corrigir o que encontrou |
+| [**implementador**](../.claude/agents/implementador.md) | executa **uma** tarefa do plano, dentro da cerca | sair da cerca, mudar contrato |
+
+**A restrição vem da ferramenta, não da boa vontade.** O explorador e o revisor não têm
+`Write` nem `Edit` — "não conserta o que encontrou" deixa de ser instrução que dá para
+desobedecer e vira impossibilidade.
+
+**O que vai na definição, e o que vai no despacho.** Regras invioláveis, condições de
+parada e formato do relato pertencem à definição — repetir isso a cada despacho gasta token
+e, pior, deixa o comportamento variar conforme quem escreveu o pedido. O despacho carrega só
+o que é específico daquela tarefa.
 
 **O orquestrador nunca implementa.** Conversa, escreve spec, despacha, integra, decide. É
 assim que a janela dele permanece pequena e ele aguenta o módulo inteiro.
