@@ -21,3 +21,10 @@ frontend/node_modules/
 # saida gerada por tools/garch_rcheck/export_for_r.py (reproduzivel, nao versionada)
 tools/garch_rcheck/train_returns.csv
 tools/garch_rcheck/python_arch_params.json
+
+# ruido de sistema operacional
+.DS_Store
+Thumbs.db
+
+# estado de ferramentas de sessao (nao e artefato do projeto)
+.superpowers/
