@@ -1,8 +1,8 @@
 """1 teste parametrizado cobre TODO modelo registrado — novo modelo adicionado em
-varlab/models/{traditional,garch,ml} passa a ser testado aqui automaticamente, sem
+engine/models/{traditional,garch,ml} passa a ser testado aqui automaticamente, sem
 escrever nenhum teste novo.
 """
-from varlab.models import get_model, list_models, load_all_model_modules
+from engine.models import get_model, list_models, load_all_model_modules
 
 load_all_model_modules()
 

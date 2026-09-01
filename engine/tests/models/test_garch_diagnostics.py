@@ -11,8 +11,8 @@ import pandas as pd
 import pytest
 from statsmodels.stats.diagnostic import acorr_ljungbox
 
-from varlab.models.garch.egarch import EgarchVaR
-from varlab.models.garch.garch_1_1 import Garch11VaR
+from engine.models.garch.egarch import EgarchVaR
+from engine.models.garch.garch_1_1 import Garch11VaR
 
 
 @pytest.fixture

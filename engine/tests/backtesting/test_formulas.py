@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from varlab.backtesting.basileia import BasileiaZonesTest
-from varlab.backtesting.christoffersen import ChristoffersenTest
-from varlab.backtesting.dq import DynamicQuantileTest
-from varlab.backtesting.kupiec import KupiecTest, unconditional_coverage_lr
+from engine.backtesting.basileia import BasileiaZonesTest
+from engine.backtesting.christoffersen import ChristoffersenTest
+from engine.backtesting.dq import DynamicQuantileTest
+from engine.backtesting.kupiec import KupiecTest, unconditional_coverage_lr
 
 
 def _reference_lr_uc(x: int, n: int, alpha: float) -> float:

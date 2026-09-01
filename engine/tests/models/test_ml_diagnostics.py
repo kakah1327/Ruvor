@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from varlab.models.ml.caviar import CaviarVaR
+from engine.models.ml.caviar import CaviarVaR
 
 
 def test_caviar_optimizer_converges_with_plausible_params(synthetic_returns):

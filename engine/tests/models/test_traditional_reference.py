@@ -9,9 +9,9 @@ import pandas as pd
 import pytest
 from scipy.stats import norm
 
-from varlab.models.traditional.historical import HistoricalVaR
-from varlab.models.traditional.monte_carlo import MonteCarloVaR
-from varlab.models.traditional.parametric import ParametricVaR
+from engine.models.traditional.historical import HistoricalVaR
+from engine.models.traditional.monte_carlo import MonteCarloVaR
+from engine.models.traditional.parametric import ParametricVaR
 
 
 @pytest.fixture

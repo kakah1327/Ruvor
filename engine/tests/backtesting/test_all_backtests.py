@@ -1,9 +1,9 @@
 """1 teste parametrizado cobre TODO teste de backtesting registrado — novo teste
-adicionado em varlab/backtesting/*.py passa a ser validado aqui automaticamente.
+adicionado em engine/backtesting/*.py passa a ser validado aqui automaticamente.
 """
 import pytest
 
-from varlab.backtesting import get_backtest, list_backtests, load_all_backtest_modules
+from engine.backtesting import get_backtest, list_backtests, load_all_backtest_modules
 
 load_all_backtest_modules()
 
