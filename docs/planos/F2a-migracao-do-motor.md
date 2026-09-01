@@ -835,7 +835,9 @@ test -f .gitattributes
 git add .gitattributes          # --renormalize implica -u: nao adiciona arquivo novo
 git add --renormalize .
 git add --renormalize .
-test -z "$(git status --porcelain)"   # na segunda passada precisa estar limpo
+# na segunda passada nao pode sobrar arquivo MODIFICADO — o proprio .gitattributes
+# aparece como adicionado ate a tarefa ser commitada, e isso e esperado
+test -z "$(git status --porcelain | grep '^ M')"
 ```
 
 O `git add .gitattributes` explícito não é redundante: `--renormalize` só toca arquivo já
