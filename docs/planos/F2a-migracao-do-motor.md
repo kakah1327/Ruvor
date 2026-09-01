@@ -624,8 +624,13 @@ mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 print('ok')
 "
+find tools -name __pycache__ -type d -exec rm -rf {} +   # a importacao acima gera .pyc
 ! grep -rn "varlab" tools/
 ```
+
+> **A ordem importa aqui também.** O passo de importação gera `__pycache__`, e o caminho
+> absoluto embutido no bytecode contém `varlab` — o nome do diretório do repositório. Sem a
+> limpeza entre os dois comandos, o critério sabota a si mesmo.
 
 **Cerca de escopo**
 

@@ -11,10 +11,10 @@ import argparse
 import json
 from pathlib import Path
 
-from varlab.data.preprocessing import fetch_returns
-from varlab.data.providers.yfinance_provider import YFinanceProvider
-from varlab.models.garch.egarch import EgarchVaR
-from varlab.models.garch.garch_1_1 import Garch11VaR
+from engine.data.preprocessing import fetch_returns
+from engine.data.providers.yfinance_provider import YFinanceProvider
+from engine.models.garch.egarch import EgarchVaR
+from engine.models.garch.garch_1_1 import Garch11VaR
 
 OUT_DIR = Path(__file__).parent
 TRAIN_WINDOW_DAYS = 252
