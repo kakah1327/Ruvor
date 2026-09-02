@@ -53,6 +53,11 @@ pede que o plano resolva. Cada um é reversível; nenhum contradiz decisão regi
 tarefa do plano — não gera arquivo — mas o critério da T4 começa por `node --version` e
 reprova sem ele.
 
+Na execução, a escolha foi **não substituir o Node global** (20.11, usado por outros
+projetos da máquina): Node 24.20 foi instalado via **fnm**, ativado por diretório pelo
+`.nvmrc`. No Git Bash, `fnm env` põe o Node no PATH mas não o próprio `fnm`; chame-o pelo
+caminho completo: `eval "$("$FNM" env --shell bash)" && "$FNM" use 24`.
+
 O `.venv/` da raiz continua sendo o único ambiente Python; `backend/` é instalado nele em
 modo editável, ao lado do motor.
 
@@ -387,8 +392,11 @@ mypy                          # Success: no issues found
 
 Antes de subir o servidor, confirme que a porta está livre — `netstat -ano | grep ":8000 "`
 vazio. **Nunca encerre processo por porta**: encerre o PID que você iniciou. No Git Bash,
-`kill $!` encerra o processo nativo (verificado); **não** use `taskkill` com `$!` — esse
-número é o PID do MSYS, não o do Windows, e pode acertar processo alheio.
+`kill $!` encerra o processo nativo (verificado) **quando o comando foi lançado direto com
+`&`**; se foi lançado dentro de subshell — `(cd dir && cmd) &` — o `$!` é do invólucro, e o
+servidor sobrevive: localize o filho em `ps -ef` pela hora de início antes de encerrar. E
+**não** use `taskkill` com `$!` — esse número é o PID do MSYS, não o do Windows, e pode
+acertar processo alheio.
 
 E o mypy prova que está em modo estrito: acrescentar a `views.py` uma função sem anotação
 (`def sem_tipo(x): return x`) produz `error: Function is missing a type annotation
@@ -457,7 +465,7 @@ E os dois testes detectam o que prometem. Duas mutações, cada uma revertida em
 ```bash
 # (a) a rota muda -> o primeiro teste REPROVA
 sed -i 's/"status": "ok"/"status": "nok"/' backend/config/views.py
-if pytest backend -q -k health >/dev/null 2>&1; then echo "FALHOU EM DETECTAR (a)"; exit 1; fi
+if pytest backend -q -k responde_ok >/dev/null 2>&1; then echo "FALHOU EM DETECTAR (a)"; exit 1; fi
 git checkout backend/config/views.py
 
 # (b) um banco aparece -> o segundo teste REPROVA (o pytest-django bloqueia o acesso com
@@ -669,7 +677,10 @@ F2b-08 — nada do protótipo sobreviveu:
 
 ```bash
 cd ..
+# git ls-files so ve o que esta no indice: antes do git add, passa vazio. Por isso
+# a segunda linha varre a arvore de trabalho.
 ! git ls-files frontend | grep -E '\.(jsx|js)$'
+! find frontend -path frontend/node_modules -prune -o -path frontend/dist -prune -o -type f \( -name '*.js' -o -name '*.jsx' \) -print | grep .
 ! test -f frontend/.oxlintrc.json
 ! test -f frontend/public/favicon.svg
 ! grep -rniE "varlab|VaR Lab" frontend --exclude-dir=node_modules --exclude-dir=dist
@@ -890,7 +901,8 @@ npm test            # limpo de novo
 ```
 
 As mutações (a) e (b) foram executadas na verificação deste plano e reprovaram como previsto;
-a saída de (a) foi `expected [ 'app.css:32 hexadecimal: #fff' ] to deeply equal []`.
+a saída de (a) tem a forma `expected [ 'app.css:<n> hexadecimal: #fff' ] to deeply equal []`,
+onde `<n>` é a última linha do `app.css` corrente.
 
 **Cerca de escopo**
 
@@ -924,7 +936,7 @@ O que a parte de backend e frontend precisa conter, no mínimo:
 
 | Item | Conteúdo |
 |---|---|
-| Pré-requisitos | Python 3.12 e **Node 24.15 ou superior**; o `.npmrc` recusa Node mais antigo |
+| Pré-requisitos | Python 3.12 e **Node 24.15 ou superior**; o `.npmrc` recusa Node mais antigo. `frontend/.nvmrc` declara a versão: com fnm ou nvm, `fnm use` / `nvm use` dentro de `frontend/` ativa o Node certo sem trocar o global |
 | Instalar backend | `pip install -e "./backend[dev]"`, no mesmo `.venv/` do motor |
 | Variáveis | copiar `.env.example` para `.env` e exportar no shell — nada as carrega do arquivo até o F3 |
 | Subir backend | `cd backend && python manage.py runserver 8000` |
