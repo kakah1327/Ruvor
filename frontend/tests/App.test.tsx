@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "../src/App";
@@ -11,6 +11,7 @@ function stubFetch(body: unknown, ok = true): void {
 }
 
 afterEach(() => {
+  cleanup(); // sem globals: true no Vitest, a Testing Library nao limpa o DOM sozinha
   vi.unstubAllGlobals();
 });
 
