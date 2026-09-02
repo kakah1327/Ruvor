@@ -42,7 +42,6 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | Caminho | O que é | Cuidado |
 |---|---|---|
 | [`docs/prototipo/`](docs/prototipo/) | documentação do protótipo **VaR Lab**, que está sendo substituído | linha de base de revisão, **não** modelo de spec nem de código |
-| `frontend/src/` | frontend do protótipo | não fala com o motor: a API que consumia deixou de existir. Substituído no F2b |
 | [`docs/tcc/`](docs/tcc/) | trabalho acadêmico | escopo de pesquisa, **não** especificação de produto |
 | `brand/ruvor/estudos/` | histórico de como se chegou à marca | em divergência com o kit, **o kit vence** |
 | `brand/ruvor/examples/` | estudos visuais anteriores | em divergência, **`brand/ruvor/mockups/` vence** |
@@ -107,12 +106,17 @@ Código — nomes de variável, função, classe — em inglês.
 
 ## Estado do repositório
 
-A **plataforma web ainda não foi construída** — não há Django, banco nem API.
+Existe o **motor** e o **casco da aplicação**. Não há banco, API de negócio nem tela de
+produto.
 
-O que existe é o **motor numérico**, em `engine/`: pacote Python isolado, instalável e
-publicável por si só (`ruvor-engine`), com 9 modelos de VaR, 4 testes de backtesting, 58
-testes automatizados e uma linha de base numérica que prova que o comportamento não mudou na
-migração. Roda por linha de comando: `ruvor run`.
+- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
+  testes de backtesting, 58 testes e linha de base numérica. Roda por linha de comando:
+  `ruvor run`. **Nunca importa Django**, e um teste prova isso.
+- `backend/` — projeto Django sem app de domínio. Uma rota, `GET /health`, sem banco.
+  Configuração por variáveis `RUVOR_*`; mypy estrito; testes com pytest-django.
+- `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
+  consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
+  cor literal em `frontend/src/`. Exige **Node 24.15+**, travado por `engine-strict`.
 
-O protótipo Flask e a persistência SQLite foram removidos. O `frontend/` ainda é o do
-protótipo e sai no F2b.
+Um só `.venv/` na raiz para motor e backend. O protótipo Flask, o SQLite e o frontend antigo
+foram removidos por inteiro.

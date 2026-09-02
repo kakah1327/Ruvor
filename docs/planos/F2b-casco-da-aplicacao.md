@@ -1,7 +1,7 @@
 # F2b — Plano de implementação
 
 **Spec:** [F2b — Casco da aplicação](../specs/F2b-casco-da-aplicacao.md)
-**Status:** ✅ aprovado (2026-09-01) · 🟡 em execução
+**Status:** ✅ aprovado (2026-09-01) · **executado e fechado** (2026-09-01)
 
 **Objetivo:** criar o projeto Django e o projeto React funcionais, com a identidade Ruvor,
 provar que os dois sobem e conversam, e remover o frontend do protótipo.

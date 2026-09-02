@@ -10,11 +10,12 @@
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** F2a fechado e integrado; **F2b é o próximo**
+**Bloco:** F2b fechado e integrado; **F3 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
-O motor numérico existe como pacote isolado e verificado. A plataforma web ainda não foi
-construída.
+Existem o motor numérico e o casco da aplicação: Django respondendo `/health` e React
+renderizando a tela de verificação com a marca. Não há banco, API de negócio nem tela de
+produto.
 
 ## O que foi concluído
 
@@ -23,39 +24,54 @@ construída.
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **30 decisões registradas** — [decisoes/](decisoes/)
+- **31 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
-  explorador, revisor e implementador, com as regras invioláveis e as condições de parada na
-  definição em vez de repetidas a cada despacho
+  explorador, revisor e implementador
 
 ### F2a — Migração do motor
 
 O motor saiu de `varlab/` e virou o pacote `engine/`, com layout `src/`, empacotamento
-próprio (`ruvor-engine`) e o rebrand aplicado. O protótipo Flask, a persistência SQLite e o
-`pyproject.toml` da raiz foram removidos.
+próprio (`ruvor-engine`) e o rebrand aplicado. Linha de base numérica com diferença zero em
+12 combinações; 58 testes; mypy limpo; prova de que `engine/` não importa plataforma.
+
+> A verificação "`import engine` sem Django instalado" foi feita no F2a, num ambiente sem
+> Django. Desde o F2b o `.venv/` compartilhado **tem** Django, então a garantia viva passa a
+> ser `engine/tests/test_modulos_proibidos.py`, que continua passando.
+
+### F2b — Casco da aplicação
+
+Spec e plano em [`specs/F2b-casco-da-aplicacao.md`](specs/F2b-casco-da-aplicacao.md) e
+[`planos/F2b-casco-da-aplicacao.md`](planos/F2b-casco-da-aplicacao.md). Seis tarefas, um
+commit cada, direto na `main`.
 
 | Verificação | Resultado |
 |---|---|
-| `import engine` sem Django instalado | ✅ |
-| Linha de base numérica | ✅ 12 combinações, diferença **zero** |
-| Suíte de testes | ✅ 58 passando |
-| Verificação de tipos | ✅ mypy limpo em 33 módulos |
-| `engine/` não importa plataforma | ✅ detecção comprovada por mutação |
-| Empacotamento | ✅ wheel e sdist gerados, sem `tests/` dentro |
+| `GET /health` → `200 {"status": "ok"}`, sem banco | ✅ `curl` no `runserver` e 2 testes com pytest-django |
+| Django sobe sem variável? | ✅ não: `ImproperlyConfigured` citando `RUVOR_SECRET_KEY` |
+| mypy estrito sobre `backend/` | ✅ 10 arquivos, com o plugin do django-stubs |
+| React em TypeScript estrito | ✅ `tsc --noEmit` limpo; mutação TS7006 reprova |
+| Tokens da marca no pacote final | ✅ `--ruvor-ink` presente no CSS do `vite build` |
+| Proxy do Vite até o Django | ✅ `localhost:5173/health` responde pelo proxy |
+| Sem cor literal em `frontend/src/` | ✅ varredura automatizada; 2 mutações reprovam |
+| Tela renderiza marca e estado do backend | ✅ Vitest, 5 testes; mutação de rótulo reprova |
+| Frontend do protótipo removido | ✅ 29 arquivos; nenhum resíduo |
+| `engine/` segue sem plataforma | ✅ `test_modulos_proibidos` passa com Django instalado |
 
-**Revisão adversarial: aprovada**, sem achado grave. O revisor recriou o `varlab` original num
-worktree de `main` e recalculou as 12 combinações — a linha de base é bit a bit idêntica ao
-que o protótipo produzia.
+**Revisão adversarial: aprovada**, sem achado grave. O único achado médio (DOM não limpo
+entre os testes da tela) foi corrigido inline antes do fechamento.
+
+**Ambiente:** Node 24.20 entrou via **fnm**, sem substituir o Node 20.11 global da máquina,
+que outros projetos usam. `frontend/.nvmrc` e `engine-strict` garantem a versão.
 
 ## Próximo passo
 
-**Escrever o plano do [F2b — Casco da aplicação](specs/F2b-casco-da-aplicacao.md)**, cuja
-spec já está aprovada.
+**Escrever a spec do F3 — Ambiente local**: `docker compose up` sobe Postgres, Redis, web e
+worker; cria `infra/`. O F3 consome a rota `/health` como verificação de vida do contêiner e
+lê o `.env` nativamente — o backend já espera as variáveis `RUVOR_*` do ambiente do processo.
 
-O F2b cria o projeto Django e o projeto React funcionais, com a identidade Ruvor. Depois dele
-vêm F3 (ambiente local), F4 (banco e migrations), F5 (CI) e F6 (agentes do projeto).
+Depois vêm F4 (banco e migrations) e F5 (CI).
 
 ---
 
@@ -64,9 +80,7 @@ vêm F3 (ambiente local), F4 (banco e migrations), F5 (CI) e F6 (agentes do proj
 | Dívida | Onde | Quando se paga |
 |---|---|---|
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
-
-Nenhum dos dois é defeito em execução. Corrigi-los exigiria anotar o motor, o que a D-21
-proíbe até o experimento comparativo do TCC estar rodado.
+| `RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula (`"a, b"` vira `[' b']` e responde 400) | `backend/config/settings.py` | F3, quando o valor passar a vir do `compose`; um `.strip()` resolve |
 
 ## Aberto e aguardando decisão
 
@@ -77,9 +91,8 @@ proíbe até o experimento comparativo do TCC estar rodado.
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
 | Tema claro vs escuro | kit é claro; decisão de produto pendente |
-| **Ferramenta de estilo** | A ARQUITETURA promete que o CI roda "verificação de estilo", mas nenhum documento nomeia a ferramenta (ruff? black? prettier?) e nenhum `pyproject.toml` a configura. Sem dono até o F5 — decidir antes, no plano do F2b, ou fica território órfão |
-| **Escala tipográfica nos tokens** | `tokens.css` define cor, fonte-família, espaço, raio e sombra — **não define tamanho de fonte**. O F2b-09 proíbe cor literal e nada diz sobre `font-size`, então a primeira tela terá tamanho literal sem que ninguém tenha decidido se isso é aceito |
-| **Versões do backend** | A spec F2b lista Django, DRF, mypy, django-stubs, pytest e pytest-django sem faixa de versão, e não fixa o `requires-python` do `backend/`. O motor exige `>=3.12` |
+| **Ferramenta de estilo** | Tem dono: a **spec do F5** escolhe (ruff? prettier? eslint?). O F2b registrou a decisão de não escolher — [plano F2b, "O que este plano decide"](planos/F2b-casco-da-aplicacao.md#o-que-este-plano-decide) |
+| **Escala tipográfica nos tokens** | `tokens.css` não define tamanho de fonte. O casco não declara `font-size` nenhum; a primeira tela de produto (Marco 1) precisa que o kit decida |
 
 ## Pendências que bloqueiam trabalho futuro
 

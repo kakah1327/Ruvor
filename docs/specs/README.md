@@ -30,4 +30,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | Spec | Bloco | Situação |
 |---|---|---|
 | [F2a — Migração do motor](F2a-migracao-do-motor.md) | Fundação · F2a | ✅ implementada e fechada |
-| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | ✅ aprovada · **aguardando plano** |
+| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | ✅ implementada e fechada |

@@ -1,7 +1,7 @@
 # F2b — Casco da aplicação
 
 **Bloco:** Fundação · F2b
-**Status:** ✅ **aprovada** (2026-08-31) · aguardando plano
+**Status:** ✅ **implementada e fechada** (2026-09-01) · plano em [`planos/F2b-casco-da-aplicacao.md`](../planos/F2b-casco-da-aplicacao.md)
 **Depende de:** [F2a — Migração do motor](F2a-migracao-do-motor.md)
 
 ---

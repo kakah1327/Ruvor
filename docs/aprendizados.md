@@ -158,3 +158,89 @@ indevido apareceria.
 **Faça:** varrer a árvore com `pkgutil.walk_packages` sobre o pacote, não chamar os
 carregadores de registry. E tolerar falha de import por dependência opcional ausente: sem
 TensorFlow, os módulos de ML falham ao importar de propósito.
+
+
+## `conftest.py` não consegue preparar o ambiente antes do pytest-django
+
+**Quando:** ao configurar testes de um projeto Django cujas settings exigem variável de
+ambiente (`RUVOR_SECRET_KEY`).
+
+**Problema:** o pytest-django chama `django.setup()` na varredura inicial do projeto, **antes**
+de carregar qualquer `conftest.py` — na raiz ou em `tests/`. Um `os.environ.setdefault` no
+conftest chega tarde; a suíte morre com `ImproperlyConfigured` antes do primeiro teste. O
+plugin do django-stubs para o mypy importa as settings do mesmo jeito e cai no mesmo erro.
+
+**Faça:** um módulo de settings de teste (`config/settings_test.py`) que preenche as
+variáveis e reexporta `config.settings` com `from config.settings import *`; apontar
+`DJANGO_SETTINGS_MODULE` do pytest **e** `django_settings_module` do django-stubs para ele.
+
+
+## `DATABASES = {}` não fica vazio, e "sem banco" se prova pelo acesso
+
+**Quando:** ao escrever teste que garante que o processo Django não tem banco configurado.
+
+**Problema:** o Django preenche `settings.DATABASES` com um backend `dummy` no **primeiro
+acesso a `connections`**, mutando o mesmo dicionário. `assert settings.DATABASES == {}` passa
+ou reprova conforme a ordem dos testes — critério que depende de ordem é critério vazio.
+
+**Faça:** prova ativa: `with pytest.raises(ImproperlyConfigured): connection.cursor()`. Se
+alguém configurar um banco, o teste reprova (com `RuntimeError` do bloqueio do pytest-django,
+que não é `ImproperlyConfigured`).
+
+
+## npm sob Node incompatível pula binding nativo em silêncio
+
+**Quando:** ao instalar dependências de frontend numa máquina cujo Node não satisfaz o
+`engines` de alguma dependência (Vite 8, jsdom 30, rolldown).
+
+**Problema:** sem `engine-strict`, o npm só avisa `EBADENGINE` e **omite as dependências
+opcionais** que não casam — entre elas o binding nativo do rolldown. A instalação "termina
+bem" e o `vite build` quebra depois com `Cannot find native binding`, mensagem que culpa o
+`package-lock.json` e não a versão do Node.
+
+**Faça:** `engine-strict=true` em `frontend/.npmrc`, e `engines.node` no `package.json` com o
+piso real das dependências (jsdom 30 exige `^22.22.2 || ^24.15.0`). Assim a instalação sob
+Node errado falha alto, na hora. O Node 24 desta máquina vem por `fnm`, não pelo PATH global;
+no Git Bash, chame o `fnm` pelo caminho completo tanto no `env` quanto no `use`.
+
+
+## Vite escuta em `localhost`, que é IPv6 no Windows
+
+**Quando:** ao verificar o servidor de desenvolvimento do Vite com `curl` ou script.
+
+**Problema:** o Vite 8 anuncia `http://localhost:5173/`, e no Windows `localhost` resolve
+para `::1`. `curl http://127.0.0.1:5173` é recusado com o servidor funcionando perfeitamente
+— parece que o proxy ou o servidor está fora do ar.
+
+**Faça:** use `http://localhost:5173` (ou `[::1]`) nas verificações. O alvo do proxy para o
+Django pode continuar `127.0.0.1:8000`, porque o `runserver` escuta em IPv4.
+
+
+## Servidor de teste: encerre pelo PID certo, nunca por porta
+
+**Quando:** ao subir `runserver` ou `vite` em segundo plano num critério de aceite.
+
+**Problema:** duas armadilhas encadeadas. (1) Encerrar "tudo que escuta na porta" pode
+derrubar programa alheio — nesta máquina a porta 5173 já estava ocupada por outro projeto do
+usuário, e uma limpeza por porta o matou. (2) No Git Bash, `$!` de um lançamento em subshell
+`(cd dir && cmd) &` é o PID do invólucro: `kill $!` não encerra o servidor. E `taskkill` com
+`$!` usa o PID do MSYS, que não é o do Windows.
+
+**Faça:** confirme a porta livre antes (`netstat -ano | grep ":PORTA "` vazio); lance o
+comando direto com `&` quando puder; se lançou em subshell, localize o filho real em
+`ps -ef` pela hora de início e use `kill` nele. Nunca `taskkill` por porta.
+
+
+## Arquivo copiado de plano por heredoc perde barras invertidas
+
+**Quando:** ao materializar um conteúdo literal do plano que contém `\` (expressão regular
+em string JavaScript, por exemplo) via heredoc ou `printf` no Git Bash.
+
+**Problema:** dependendo do caminho até o shell, `\s` chega ao disco como `\s`. O arquivo
+parece igual ao plano, compila, e o padrão que deveria casar não casa — a varredura de cores
+teria deixado passar `color: white`.
+
+**Faça:** depois de gravar, extraia o bloco do plano (`awk` entre as cercas) e faça `diff`
+contra o arquivo em disco. Foi esse `diff` que pegou o caso real. `startproject` no Windows
+tem armadilha parecida com fim de linha: gera CRLF, e `diff` contra template só bate com
+`--strip-trailing-cr`.
