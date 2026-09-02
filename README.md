@@ -8,11 +8,18 @@ merece confiança para aquele ativo.
 
 > ## ⚠️ Este repositório está em reconstrução
 >
-> A plataforma Ruvor **ainda não foi construída**: não há camada web, banco nem API.
+> A plataforma Ruvor **ainda não foi construída**: não há banco, API de negócio nem tela de
+> produto.
 >
-> O que já existe é o **motor numérico**, em [`engine/`](engine/) — pacote Python isolado,
-> com suíte de testes e linha de base numérica próprias. O protótipo que o originou foi
-> removido. O `frontend/` ainda é o do protótipo e será substituído no **F2b**.
+> O que já existe:
+>
+> - o **motor numérico**, em [`engine/`](engine/) — pacote Python isolado, com suíte de
+>   testes e linha de base numérica próprias
+> - o **casco da aplicação**: um projeto Django em [`backend/`](backend/), que responde
+>   `GET /health` sem banco, e um projeto React em TypeScript em [`frontend/`](frontend/),
+>   que renderiza uma tela de verificação com a marca e o estado do backend
+>
+> O protótipo que originou o motor foi removido por inteiro, frontend incluído.
 >
 > - **O que a plataforma será:** [`docs/PRODUTO.md`](docs/PRODUTO.md) e [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)
 > - **Onde estamos:** [`docs/ESTADO.md`](docs/ESTADO.md)
@@ -77,17 +84,27 @@ Material acadêmico em [`docs/tcc/`](docs/tcc/).
 
 ---
 
-## Executar o motor
+## Executar
 
-> Não há API: a camada web chega no F2b. O motor roda pela linha de comando.
+### Pré-requisitos
+
+- **Python 3.12 ou superior**, num ambiente virtual na raiz — `.venv/`. É o único ambiente
+  Python do repositório: motor e backend são instalados nele.
+- **Node.js 24.15 ou superior**, só para o frontend. O `frontend/.npmrc` liga `engine-strict`:
+  com Node mais antigo, o `npm install` recusa em vez de instalar quebrado. A versão está
+  declarada em `frontend/.nvmrc` — com fnm ou nvm, `fnm use` / `nvm use` dentro de
+  `frontend/` ativa o Node certo sem trocar o global da máquina.
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate                    # Windows
 pip install -e ./engine                   # use ./engine[all] para GARCH, ML e testes
+pip install -e "./backend[dev]"           # Django, DRF e as ferramentas de teste e de tipos
 ```
 
-Experimento:
+### Motor
+
+Roda pela linha de comando. Experimento:
 
 ```bash
 ruvor run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
@@ -95,17 +112,49 @@ ruvor run --ticker PETR4.SA --start 2015-01-01 --end 2024-12-31 \
     --backtest kupiec --backtest christoffersen
 ```
 
+### Backend
+
+O Django lê toda a configuração de variáveis `RUVOR_*` (`backend/config/settings.py`) e não
+tem banco. Copie `.env.example` para `.env` e preencha `RUVOR_SECRET_KEY`. **Nada carrega o
+arquivo** até o F3: as variáveis precisam estar exportadas no shell que sobe o servidor.
+
+```bash
+export RUVOR_SECRET_KEY=troque-isto RUVOR_DEBUG=true RUVOR_ALLOWED_HOSTS=localhost,127.0.0.1
+cd backend && python manage.py runserver 8000
+```
+
+No PowerShell, `$env:RUVOR_SECRET_KEY = "troque-isto"`, e assim por diante. Sem
+`RUVOR_SECRET_KEY` o processo não sobe, e a mensagem diz qual variável falta.
+
+`curl http://127.0.0.1:8000/health` responde `{"status": "ok"}`. É a única rota.
+
+### Frontend
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+Abra `http://localhost:5173` — `localhost`, não `127.0.0.1`: no Windows, `localhost` resolve
+para IPv6 e é lá que o Vite escuta. A tela mostra a marca e `Backend: ok` quando o Django
+está de pé na porta 8000 — o servidor de desenvolvimento encaminha `/health` para ele. Com o
+backend fora do ar, `Backend: indisponível`.
+
+`frontend/.env.example` documenta `VITE_API_BASE_URL`; vazia, que é o padrão, a tela usa o
+proxy.
+
 ### Comandos do dia a dia
 
 | O quê | Comando |
 |---|---|
-| Testes | `pytest engine/tests` |
-| Verificação de tipos | `cd engine && mypy` — o mypy lê a configuração do diretório corrente |
-| Construir o pacote | `python -m build --no-isolation engine` |
+| Testes do motor | `pytest engine/tests` |
+| Tipos do motor | `cd engine && mypy` — o mypy lê a configuração do diretório corrente |
+| Construir o pacote do motor | `python -m build --no-isolation engine` |
+| Testes do backend | `pytest backend` — não precisa de variável exportada |
+| Tipos do backend | `cd backend && mypy` |
+| Testes do frontend | `cd frontend && npm test` |
+| Tipos do frontend | `cd frontend && npm run typecheck` |
+| Construir o frontend | `cd frontend && npm run build` |
 
 O interpretador do projeto é o do ambiente virtual: **`.venv/Scripts/python.exe`** no Windows,
 `.venv/bin/python` no Linux. Reproduzir o ambiente exato que gerou a linha de base numérica:
 `pip install -r engine/requirements-lock.txt`.
-
-O `frontend/` ainda é o do protótipo e não fala com o motor — a API que ele consumia deixou
-de existir. Ele é substituído no F2b.
