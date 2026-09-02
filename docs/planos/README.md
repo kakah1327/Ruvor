@@ -29,8 +29,9 @@ terminado.
 | Plano | Spec | Situação |
 |---|---|---|
 | [F2a — Migração do motor](F2a-migracao-do-motor.md) | [F2a](../specs/F2a-migracao-do-motor.md) | ✅ executado e fechado |
+| [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | [F2b](../specs/F2b-casco-da-aplicacao.md) | 🟡 revisado · **aguardando aprovação humana** |
 
-**O plano do F2a é o modelo vivo.** É o único exemplar completo que existe: 12 tarefas, mapa
+**O plano do F2a é o modelo vivo.** É o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
 
 Uma ressalva ao copiá-lo: ele foi executado **com ramo próprio**, antes da
