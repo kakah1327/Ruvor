@@ -1,0 +1,36 @@
+/* Tela de verificacao do casco. Cor e fonte vem so dos tokens (@brand/tokens.css).
+   Sem font-size: casco tecnico usa o tamanho padrao do navegador. */
+
+body {
+  margin: 0;
+  background: var(--ruvor-bg);
+  color: var(--ruvor-text);
+  font-family: var(--ruvor-font-sans);
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ruvor-space-4);
+  padding: var(--ruvor-space-7) var(--ruvor-space-4);
+}
+
+.shell__mark {
+  width: 64px;
+  height: 64px;
+}
+
+/* Cor nunca e o unico sinal: o texto do estado muda junto com a cor. */
+.status {
+  font-family: var(--ruvor-font-mono);
+  color: var(--ruvor-text-muted);
+}
+
+.status--ok {
+  color: var(--ruvor-validated);
+}
+
+.status--unavailable {
+  color: var(--ruvor-critical);
+}
