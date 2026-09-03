@@ -34,6 +34,9 @@ conversas e entre agentes.
 | [D-18](D-18-separacao-treino-previsao.md) | Separação entre treino e previsão em produção |
 | [D-24](D-24-organizacao-desde-a-primeira-migration.md) | Organização existe desde a primeira migration |
 | [D-28](D-28-frontend-em-typescript.md) | Frontend em TypeScript |
+| [D-32](D-32-frontend-no-compose.md) | O frontend entra no `docker compose` |
+| [D-34](D-34-banco-celery-e-redis-no-f3.md) | Banco, Celery e Redis chegam no F3, não no F4 |
+| [D-35](D-35-compose-e-dockerignore-na-raiz.md) | `compose.yaml` e `.dockerignore` ficam na raiz, não em `infra/` |
 
 ## Processo e execução
 
@@ -49,6 +52,7 @@ conversas e entre agentes.
 | [D-30](D-30-portao-de-mockup-so-para-tela-de-produto.md) | Portão de mockup vale para tela de produto, não para casco técnico |
 | [D-31](D-31-trabalho-direto-na-main.md) | Trabalho direto na `main` enquanto o time for uma pessoa |
 | [D-27](D-27-commits-sem-assinatura.md) | Commits sem assinatura de ferramenta |
+| [D-33](D-33-dia-a-dia-dentro-do-conteiner.md) | O dia a dia de backend e frontend roda dentro do contêiner |
 
 ## As três mais consequentes
 
