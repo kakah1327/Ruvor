@@ -19,7 +19,7 @@ Não entrega nada ao usuário final. É o alicerce, e é o que faltou antes.
 | ✅ | **F6 — Agentes do projeto** (antecipado) | definições em `.claude/agents/`, com restrição por ferramenta |
 | ✅ | **F2a — Migração do motor** | `engine/` isolado, rebrand, empacotamento próprio, linha de base numérica |
 | ✅ | **F2b — Casco da aplicação** | projeto Django e projeto React funcionais, com identidade Ruvor |
-| ⬜ | **F3 — Ambiente local** | `docker compose up` sobe Postgres, Redis, web e worker; cria `infra/` |
+| ⬜ | **F3 — Ambiente local** | `docker compose up` sobe Postgres, Redis, web, worker e frontend; duas imagens do backend (web leve, worker com ML); cria `infra/` |
 | ⬜ | **F4 — Fundação de dados** | primeiras migrations, esquemas bronze/prata/ouro, entidade Organização |
 | ⬜ | **F5 — CI** | estilo, tipos e testes a cada mudança |
 

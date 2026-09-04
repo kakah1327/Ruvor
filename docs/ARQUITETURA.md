@@ -57,10 +57,17 @@ ruvor/
 │       └── audit/
 │
 ├── frontend/          # React
-├── infra/             # docker, compose, CI
+├── infra/             # arquivos de construcao de imagem, e CI a partir do F5
+├── compose.yaml       # na raiz, nao em infra/ — ver D-35
+├── .dockerignore      # na raiz: e onde o Docker o procura
 ├── docs/
 └── brand/
 ```
+
+**`compose.yaml` e `.dockerignore` ficam na raiz** porque dentro de `infra/` os dois
+falhariam em silêncio: o Docker procura o `.dockerignore` na raiz do contexto de construção,
+e o Compose descobre o `.env` no diretório do arquivo de composição
+([D-35](decisoes/D-35-compose-e-dockerignore-na-raiz.md)).
 
 **Não existe `pyproject.toml` na raiz.** Um projeto Python por diretório: cada um declara as
 próprias dependências e a configuração das próprias ferramentas. É o que permite ao F3
@@ -275,9 +282,19 @@ Ver [D-18](decisoes/D-18-separacao-treino-previsao.md),
 
 ## Ambientes
 
-**Local: um comando.** `docker compose up` sobe Postgres, Redis, web e worker. Não é
-conforto — evita "na minha máquina funciona" num time de 4 pessoas com sistemas diferentes,
-e faz alguém novo produzir no primeiro dia.
+**Local: um comando.** `docker compose up`, na raiz, sobe **cinco serviços**: Postgres, Redis,
+web, worker e frontend. Não é conforto — evita "na minha máquina funciona" num time de 4
+pessoas com sistemas diferentes, e faz alguém novo produzir no primeiro dia.
+
+O frontend está entre eles porque é a peça com o pré-requisito mais frágil do repositório —
+exige Node 24.15+, e deixá-lo fora contradiria as duas razões acima
+([D-32](decisoes/D-32-frontend-no-compose.md)).
+
+**O dia a dia de `backend/` e `frontend/` — servidor, teste, verificação de tipos — roda
+dentro do contêiner**; o `engine/` continua no ambiente virtual nativo, por ser pacote
+independente que não fala com serviço nenhum
+([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). A CI espelha o contêiner, não o
+`.venv`.
 
 **CI**: a cada mudança roda verificação de estilo, verificação de tipos e testes. Não
 passou, não entra.

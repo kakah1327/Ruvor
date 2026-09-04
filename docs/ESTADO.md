@@ -3,14 +3,14 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-01
+**Última atualização:** 2026-09-02
 
 ---
 
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** F2b fechado e integrado; **F3 é o próximo**
+**Bloco:** **F3 em andamento** — spec aprovada, plano ainda não escrito
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico e o casco da aplicação: Django respondendo `/health` e React
@@ -65,11 +65,26 @@ entre os testes da tela) foi corrigido inline antes do fechamento.
 **Ambiente:** Node 24.20 entrou via **fnm**, sem substituir o Node 20.11 global da máquina,
 que outros projetos usam. `frontend/.nvmrc` e `engine-strict` garantem a versão.
 
+### F3 — Ambiente local (em andamento)
+
+Spec em [`specs/F3-ambiente-local.md`](specs/F3-ambiente-local.md), **aprovada em 2026-09-02**
+após quatro rodadas de revisão adversarial. Onze requisitos, cinco serviços, duas imagens do
+backend.
+
+Quatro decisões nasceram dela e já estão registradas: [D-32](decisoes/D-32-frontend-no-compose.md)
+(frontend no compose), [D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) (dia a dia no
+contêiner), [D-34](decisoes/D-34-banco-celery-e-redis-no-f3.md) (banco, Celery e Redis no F3)
+e [D-35](decisoes/D-35-compose-e-dockerignore-na-raiz.md) (compose na raiz). A ARQUITETURA e o
+ROADMAP já foram corrigidos para refletir as duas primeiras.
+
+**Ambiente pronto:** WSL 2.7.12 e Docker Desktop 4.89 instalados em 2026-09-02, com programa e
+dados fora do `C:` — que tem só 7,2 GB livres. Docker Engine 29.7.2, Compose v5.5.0,
+`hello-world` executado.
+
 ## Próximo passo
 
-**Escrever a spec do F3 — Ambiente local**: `docker compose up` sobe Postgres, Redis, web e
-worker; cria `infra/`. O F3 consome a rota `/health` como verificação de vida do contêiner e
-lê o `.env` nativamente — o backend já espera as variáveis `RUVOR_*` do ambiente do processo.
+**Escrever o plano do F3**, a partir da spec aprovada. Portão humano antes da implementação;
+portão de mockup não se aplica, porque não há tela de produto no bloco.
 
 Depois vêm F4 (banco e migrations) e F5 (CI).
 
