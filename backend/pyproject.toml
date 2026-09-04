@@ -37,3 +37,9 @@ plugins = ["mypy_django_plugin.main"]
 # derrubaria o mypy sem a variavel; settings_test a preenche.
 [tool.django-stubs]
 django_settings_module = "config.settings_test"
+
+# O Celery nao publica py.typed nem stubs. Restrito ao modulo dele: o codigo do
+# repositorio continua sob verificacao estrita.
+[[tool.mypy.overrides]]
+module = ["celery", "celery.*"]
+ignore_missing_imports = true
