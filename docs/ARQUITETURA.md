@@ -28,8 +28,8 @@ risco, que é a única parte que ninguém mais tem.
 
 ## Estrutura do repositório
 
-**Estado alvo.** Os blocos do roadmap chegam nele por partes — `apps/` nasce no F4, `infra/`
-no F3.
+**Estado alvo.** Os blocos do roadmap chegam nele por partes — `infra/` nasceu no F3;
+`apps/` nasce no F4.
 
 ```
 ruvor/
