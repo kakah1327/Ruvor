@@ -18,6 +18,11 @@ export default defineConfig({
     host: true,
     fs: { allow: [repoRoot] },
     proxy: { "/health": proxyTarget },
+    // Sondagem: o aviso de alteracao de arquivo nao atravessa a montagem
+    // Windows -> conteiner. Medido na T6 do F3 -- o conteiner enxerga o arquivo novo,
+    // mas o Vite nao emite evento algum, e a tela so muda com recarga manual.
+    // Custa CPU continua, e por isso so foi ligada depois de a falta ser observada.
+    watch: { usePolling: true },
   },
   test: {
     environment: "jsdom",
