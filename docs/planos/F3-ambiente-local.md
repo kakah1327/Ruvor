@@ -1,7 +1,29 @@
 ﻿# F3 — Plano de implementação
 
 **Spec:** [F3 — Ambiente local](../specs/F3-ambiente-local.md)
-**Status:** 🟡 **revisão adversarial aprovada** (3ª rodada) — aguardando aprovação humana
+**Status:** ✅ **executado e fechado** (2026-09-04) · dez tarefas, um commit cada, de
+`e3e0cb5` a `36d9a4d`. Revisão final aprovada.
+
+> ## O que a execução contrariou
+>
+> Anotado depois de executar, para que o plano não fique afirmando o que se mostrou falso.
+> Nada disso mudou o resultado do bloco.
+>
+> | O plano dizia | O que se mediu |
+> |---|---|
+> | imagem `web` ≈ 330 MB, `worker` ≈ 3,2 GB | **467 MB** e **3,79 GB** — a verificação prévia mediu antes de a T3 acrescentar `psycopg`, `celery` e `redis` ao backend |
+> | construção do `worker` em ~90 s | **122 s** |
+> | *"se recarregar, não ligue [a sondagem]"* | **não recarregou.** O contêiner enxerga o arquivo alterado, mas o Vite não emite evento nenhum: a montagem Windows→contêiner não propaga o aviso. Sondagem ligada em `7a327b3` |
+> | *"a unidade do sistema tem ~7 GB livres"* — risco de espaço | **aponta para a unidade errada.** Os dados do Docker estão no `E:`; durante a reconstrução de 3 GB da mutação **b**, o `C:` não se moveu |
+> | mutação **a**: o `web` *"nem chega a ser criado"* | ele **é** criado, e fica em `Created` sem nunca iniciar. A substância se sustenta: `--wait` sai 1 |
+> | mutação **d**: *"F3-04 reprova"* | reprova **duas** vezes — o `runserver` toca o banco no arranque, e o serviço já fica insalubre antes de o teste rodar |
+> | T7: `ignore_missing_imports` resolveria o `mypy` | **insuficiente.** O `untyped-decorator` sobre `@app.task` sobrevive, porque o Celery virando `Any` não torna o decorador tipado. Resolvido sem suprimir nada, aplicando o decorador como chamada sobre função tipada |
+>
+> Dois vãos de plano, ambos meus e ambos consertados: a verificação de recarga a quente caiu
+> entre a T5 (que não tinha conjunto de pé) e a T6 (cuja cerca proíbe tocar em `frontend/`); e
+> o critério da T1 verifica **presença** de padrões, não identidade — uma linha a mais no
+> `.dockerignore` passaria. O implementador supriu por conta própria com `diff` contra o bloco
+> do plano, que é a verificação certa.
 
 **Objetivo:** `docker compose up` na raiz sobe Postgres, Redis, web, worker e frontend, todos
 saudáveis; o Django conecta no banco; uma tarefa enfileirada pelo `web` é executada pelo

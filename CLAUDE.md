@@ -117,7 +117,9 @@ existe API de negócio nem tela de produto.
   Configuração por variáveis `RUVOR_*`; mypy estrito; testes com pytest-django.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
-  cor literal em `frontend/src/`. Exige **Node 24.15+**, travado por `engine-strict`.
+  cor literal em `frontend/src/`. O `package.json` exige **Node 24.15+**, travado por
+  `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do
+  contêiner não precisa de Node instalado.
 - `compose.yaml` na raiz — `docker compose up` sobe cinco serviços: `postgres`, `redis`,
   `web`, `worker` e `frontend`. Backend e frontend rodam aí no dia a dia; o motor segue no
   `.venv/` nativo ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)).

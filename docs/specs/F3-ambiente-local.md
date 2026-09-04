@@ -1,7 +1,8 @@
 # F3 — Ambiente local
 
 **Bloco:** Fundação · F3
-**Status:** ✅ **aprovada** (2026-09-02) — pronta para o plano. Quatro rodadas de revisão adversarial; a última sem achado grave.
+**Status:** ✅ **implementada e fechada** (2026-09-04) · plano em [`planos/F3-ambiente-local.md`](../planos/F3-ambiente-local.md)
+Quatro rodadas de revisão da spec, três do plano, e revisão final da implementação aprovada.
 **Depende de:** [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md)
 
 ---

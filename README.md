@@ -111,12 +111,15 @@ editado.
 
 ```bash
 cp .env.example .env
-docker compose up -d --wait
+docker compose up
 ```
 
-O `docker compose` lê o `.env` da raiz sozinho; nenhuma variável precisa ser exportada no
-shell. O `--wait` só devolve quando os cinco serviços estão saudáveis, e sai com erro se
-algum não chegar lá.
+É essa a linha. O `docker compose` lê o `.env` da raiz sozinho; nenhuma variável precisa ser
+exportada no shell.
+
+Para script e verificação, use a variante desanexada: `docker compose up -d --wait` devolve
+o terminal e só sai quando os cinco serviços estão saudáveis — com erro, se algum não chegar
+lá. É a forma usada nos comandos do dia a dia abaixo.
 
 | Serviço | Onde atende no hospedeiro |
 |---|---|

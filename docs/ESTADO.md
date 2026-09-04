@@ -3,19 +3,25 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-02
+**Última atualização:** 2026-09-04
 
 ---
 
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** **F3 em andamento** — spec aprovada, plano ainda não escrito
+**Bloco:** F3 fechado e integrado; **F4 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
-Existem o motor numérico e o casco da aplicação: Django respondendo `/health` e React
-renderizando a tela de verificação com a marca. Não há banco, API de negócio nem tela de
-produto.
+Existem o motor numérico, o casco da aplicação e o **ambiente local em contêiner**.
+`docker compose up` sobe cinco serviços; o Django conecta no PostgreSQL e tem fila Celery
+sobre Redis. Ainda não há migrations, API de negócio nem tela de produto.
+
+**O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
+([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
+Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova um teste**, de
+propósito — o `settings_test.py` fixa valores de banco inexistentes para que um `.env`
+incompleto não passe despercebido. Não é regressão.
 
 ## O que foi concluído
 
@@ -24,7 +30,7 @@ produto.
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **31 decisões registradas** — [decisoes/](decisoes/)
+- **36 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -65,28 +71,57 @@ entre os testes da tela) foi corrigido inline antes do fechamento.
 **Ambiente:** Node 24.20 entrou via **fnm**, sem substituir o Node 20.11 global da máquina,
 que outros projetos usam. `frontend/.nvmrc` e `engine-strict` garantem a versão.
 
-### F3 — Ambiente local (em andamento)
+### F3 — Ambiente local
 
-Spec em [`specs/F3-ambiente-local.md`](specs/F3-ambiente-local.md), **aprovada em 2026-09-02**
-após quatro rodadas de revisão adversarial. Onze requisitos, cinco serviços, duas imagens do
-backend.
+Spec em [`specs/F3-ambiente-local.md`](specs/F3-ambiente-local.md) e plano em
+[`planos/F3-ambiente-local.md`](planos/F3-ambiente-local.md). Dez tarefas, um commit cada,
+direto na `main`.
 
-Quatro decisões nasceram dela e já estão registradas: [D-32](decisoes/D-32-frontend-no-compose.md)
-(frontend no compose), [D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) (dia a dia no
-contêiner), [D-34](decisoes/D-34-banco-celery-e-redis-no-f3.md) (banco, Celery e Redis no F3)
-e [D-35](decisoes/D-35-compose-e-dockerignore-na-raiz.md) (compose na raiz). A ARQUITETURA e o
-ROADMAP já foram corrigidos para refletir as duas primeiras.
+| Verificação | Resultado |
+|---|---|
+| Cinco serviços saudáveis por `docker compose up` | ✅ `--wait` devolve 0; saudáveis na primeira subida |
+| Duas imagens do mesmo fonte | ✅ um arquivo, dois alvos; `python --version` idêntico (3.12.14) |
+| `import tensorflow` falha na `web`, funciona na `worker` | ✅ e `import django` funciona nas duas — os quatro casos |
+| Django conecta no Postgres | ✅ cursor contra o banco **configurado**, conferindo `current_database()` |
+| Tarefa enfileirada pelo `web` executada pelo `worker` | ✅ devolve `worker`; modo síncrono desligado |
+| `compose` lê o `.env` | ✅ sem nada exportado no shell |
+| Frontend alcançável, e `/health` pelo proxy | ✅ nas portas publicadas |
+| As quatro portas configuráveis | ✅ trocadas e reverificadas, sem cliente no hospedeiro |
+| Teste e tipos dentro do contêiner | ✅ os quatro comandos; `mypy` sobre 14 arquivos, mesma lista do hospedeiro |
+| `RUVOR_ALLOWED_HOSTS` tolera espaço | ✅ `_split_hosts`, cinco testes |
+| Documentação não mente | ✅ varredura sobre lista fechada de oito trechos |
 
-**Ambiente pronto:** WSL 2.7.12 e Docker Desktop 4.89 instalados em 2026-09-02, com programa e
-dados fora do `C:` — que tem só 7,2 GB livres. Docker Engine 29.7.2, Compose v5.5.0,
-`hello-world` executado.
+**As sete mutações reprovaram** — nenhuma verificação do bloco aprova com o trabalho mal
+feito. **Revisão final: aprovada**, com os onze requisitos reconferidos por execução e os
+cinco arquivos literais idênticos ao plano.
+
+Cinco decisões nasceram do bloco: [D-32](decisoes/D-32-frontend-no-compose.md) (frontend no
+compose), [D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) (dia a dia no contêiner),
+[D-34](decisoes/D-34-banco-celery-e-redis-no-f3.md) (banco, Celery e Redis no F3),
+[D-35](decisoes/D-35-compose-e-dockerignore-na-raiz.md) (compose na raiz) e
+[D-36](decisoes/D-36-versao-do-postgres.md) (Postgres 18).
+
+**Ambiente:** WSL 2.7.12 e Docker Desktop 4.89, instalados em 2026-09-02 com programa e dados
+em `E:\Docker` — o `C:` tem pouco espaço. Docker Engine 29.7.2, Compose v5.5.0. As imagens
+saíram maiores que a estimativa: `web` 467 MB, `worker` 3,79 GB.
+
+**A recarga a quente exigiu sondagem.** A montagem Windows→contêiner não propaga aviso de
+alteração: o contêiner enxerga o arquivo novo, o Vite não emite evento. Ligada em `7a327b3`,
+depois de a falta ser medida.
 
 ## Próximo passo
 
-**Escrever o plano do F3**, a partir da spec aprovada. Portão humano antes da implementação;
-portão de mockup não se aplica, porque não há tela de produto no bloco.
+**Escrever a spec do F4 — Fundação de dados**: primeiras migrations, esquemas bronze/prata/ouro
+([D-13](decisoes/D-13-camadas-bronze-prata-ouro.md)) e a entidade Organização desde a primeira
+migration ([D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md)).
 
-Depois vêm F4 (banco e migrations) e F5 (CI).
+O F4 herda um ambiente em que o Django já conecta no banco, então ele cria migrations sobre
+conexão que funciona — e herda também a versão maior do Postgres, fixada em
+[D-36](decisoes/D-36-versao-do-postgres.md). `INSTALLED_APPS` ainda é só `rest_framework`: o
+F4 vai precisar de pelo menos parte de `contenttypes`/`auth`, e é lá que a escolha se
+justifica.
+
+Depois vem o F5 (CI), que **espelha o contêiner, não o `.venv`**.
 
 ---
 
@@ -95,7 +130,8 @@ Depois vêm F4 (banco e migrations) e F5 (CI).
 | Dívida | Onde | Quando se paga |
 |---|---|---|
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
-| `RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula (`"a, b"` vira `[' b']` e responde 400) | `backend/config/settings.py` | F3, quando o valor passar a vir do `compose`; um `.strip()` resolve |
+| ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
+| Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
 
 ## Aberto e aguardando decisão
 

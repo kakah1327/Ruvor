@@ -175,17 +175,22 @@ variáveis e reexporta `config.settings` com `from config.settings import *`; ap
 `DJANGO_SETTINGS_MODULE` do pytest **e** `django_settings_module` do django-stubs para ele.
 
 
-## `DATABASES = {}` não fica vazio, e "sem banco" se prova pelo acesso
+## Provar conexão com o banco **configurado** exige desbloquear o pytest-django
 
-**Quando:** ao escrever teste que garante que o processo Django não tem banco configurado.
+**Quando:** ao escrever teste que prove que a aplicação alcança o banco do `compose`.
 
-**Problema:** o Django preenche `settings.DATABASES` com um backend `dummy` no **primeiro
-acesso a `connections`**, mutando o mesmo dicionário. `assert settings.DATABASES == {}` passa
-ou reprova conforme a ordem dos testes — critério que depende de ordem é critério vazio.
+**Problema:** o caminho óbvio, `@pytest.mark.django_db`, alcança o servidor mas conecta num
+banco `test_<nome>` que o próprio pytest-django cria. Com isso ele **não exercita
+`RUVOR_DB_NAME`** — um nome de banco errado no `.env` atravessa sem ser notado, que é
+justamente o erro que uma verificação de ambiente existe para pegar. E sem marca nenhuma, o
+pytest-django bloqueia o acesso e levanta `RuntimeError`.
 
-**Faça:** prova ativa: `with pytest.raises(ImproperlyConfigured): connection.cursor()`. Se
-alguém configurar um banco, o teste reprova (com `RuntimeError` do bloqueio do pytest-django,
-que não é `ImproperlyConfigured`).
+**Faça:** peça o acessório `django_db_blocker` e abra o cursor dentro de `unblock()`,
+conferindo `SELECT current_database()` contra a variável de ambiente. É o que prova a
+configuração inteira, e não só que existe um Postgres em pé.
+
+> Substitui o verbete anterior sobre `DATABASES = {}`, que descrevia o
+> `test_processo_nao_tem_banco` — removido no F3, quando o Django passou a conectar.
 
 
 ## npm sob Node incompatível pula binding nativo em silêncio
@@ -244,3 +249,108 @@ teria deixado passar `color: white`.
 contra o arquivo em disco. Foi esse `diff` que pegou o caso real. `startproject` no Windows
 tem armadilha parecida com fim de linha: gera CRLF, e `diff` contra template só bate com
 `--strip-trailing-cr`.
+
+
+## O Postgres 18 mudou o ponto de montagem do volume
+
+**Quando:** ao declarar o volume de dados do Postgres em `compose.yaml`, ou ao subir a versão
+maior da imagem.
+
+**Problema:** o caminho que todo tutorial ensina, `/var/lib/postgresql/data`, **deixou de
+valer na 18**. O `PGDATA` da imagem passou a ser `/var/lib/postgresql/18/docker`, e o volume
+vai um nível acima, em `/var/lib/postgresql`. Com o caminho antigo o contêiner **recusa
+subir**, falando de compatibilidade com `pg_ctlcluster` — mensagem que não parece ser sobre
+montagem.
+
+**Faça:** monte em `/var/lib/postgresql`. Ao trocar a versão maior, confira o `PGDATA`
+declarado na imagem antes de confiar na memória: `docker image inspect postgres:NN --format
+'{{range .Config.Env}}{{println .}}{{end}}'`.
+
+
+## `.env` ausente não faz o `docker compose` falhar
+
+**Quando:** ao escrever critério de aceite que dependa de o `compose` ler o `.env`.
+
+**Problema:** sem o arquivo, o Compose **não reprova**. Ele emite `variable is not set.
+Defaulting to a blank string` e segue com **código de saída 0** — as portas sobem vazias, e o
+que deveria ser falha alta vira comportamento estranho depois. Um critério do tipo "renomeie
+o `.env` e veja falhar" passa vazio.
+
+**Faça:** declare as variáveis com a sintaxe de obrigatoriedade — `${VAR:?mensagem}`. Aí a
+ausência sai com código 1 e nomeia a variável que falta. Vale para toda variável sem padrão
+sensato.
+
+
+## `grep` na saída casa com a linha ecoada no traceback
+
+**Quando:** ao verificar que um comando produziu certo texto, sobretudo em prova de mutação.
+
+**Problema:** o traceback do Python **ecoa a linha de código que falhou**, e essa linha
+costuma conter a própria string procurada. Uma checagem do tipo `saida | grep "resultado"`
+casa com o traceback e **aprova a falha**. Aconteceu de verdade aqui, verificando que a fila
+reprova com o worker parado: a mutação passou por isso.
+
+**Faça:** apoie o critério no **código de saída**, não em casamento de texto. Quando o texto
+for mesmo o contrato, ponha o `grep -q` dentro da cadeia que decide o código de saída, nunca
+como leitura humana da saída.
+
+
+## Montagem Windows→contêiner não propaga aviso de alteração de arquivo
+
+**Quando:** ao rodar servidor de desenvolvimento com recarga a quente dentro de contêiner,
+com o código montado do Windows.
+
+**Problema:** o contêiner **enxerga** o arquivo alterado — `tail` mostra a mudança —, mas o
+observador de arquivos não recebe evento nenhum. O Vite não emite `hmr update`, a tela não
+muda, e nada indica a causa. Pior: o Vite normalmente se reinicia sozinho quando o próprio
+`vite.config.ts` muda, e isso depende do mesmo aviso quebrado — então ligar a sondagem exige
+reiniciar o serviço à mão.
+
+**Faça:** verifique antes de supor, editando um arquivo e olhando o log do contêiner. Se não
+houver evento, ligue `server.watch.usePolling` e **reinicie o serviço**. Sondagem custa CPU
+contínua, então não a ligue por precaução.
+
+
+## `@app.task` reprova sob mypy estrito, e `ignore_missing_imports` não resolve
+
+**Quando:** ao escrever a primeira tarefa Celery num projeto com `disallow_untyped_decorators`.
+
+**Problema:** o Celery não publica tipos, então o `mypy` estrito emite dois erros de natureza
+diferente. O `import-untyped` some com `ignore_missing_imports` restrito a `celery.*` — mas o
+`untyped-decorator` **sobrevive**: com o Celery virando `Any`, o decorador continua não
+tipado. Quem só configurar o `ignore_missing_imports` fica travado, e a saída fácil vira
+`# type: ignore` ou, pior, `ignore_errors` no módulo.
+
+**Faça:** aplique o decorador como chamada sobre uma função anotada —
+`ping = app.task(name="…")(_ping)`. Nada é suprimido e a função segue verificada. Saiba a
+ressalva: a tarefa resultante é `Any` de qualquer forma, então isso remove o aviso, não a
+perda de tipagem. Adotar o pacote `celery-types` é a saída de verdade, quando houver tarefas
+o bastante para pagar por ela.
+
+
+## Volume anônimo de `node_modules` sobrevive à recriação do contêiner
+
+**Quando:** ao acrescentar dependência ao `package.json` de um frontend em contêiner.
+
+**Problema:** o volume anônimo que protege o `node_modules` do hospedeiro **não é recriado**
+com o contêiner. Reconstruir a imagem instala a dependência nova dentro dela, mas o volume
+antigo é montado por cima e a apaga — a dependência "não existe", e a imagem parece errada.
+
+**Faça:** `docker compose up -d --build --renew-anon-volumes` depois de mexer no
+`package.json`.
+
+
+## `Set-Content -Encoding utf8` do PowerShell 5.1 grava BOM e corrompe o arquivo
+
+**Quando:** ao escrever arquivo de código por script do PowerShell no Windows — em sonda,
+mutação ou geração de conteúdo.
+
+**Problema:** o Windows PowerShell 5.1 escreve **marca de ordem de bytes** com `-Encoding
+utf8`. Num `.ts` ou `.py` o arquivo continua abrindo e quase sempre compilando, mas o diff
+mostra a primeira linha inteira alterada, e ferramentas que leem o começo do arquivo se
+confundem. Aconteceu aqui num teste de recarga a quente: a sonda sujou o `App.tsx` sem que
+nada acusasse.
+
+**Faça:** para restaurar arquivo versionado, use `git checkout --`, não reescrita. Para
+escrever de fato, prefira as ferramentas de edição do agente, ou `-Encoding utf8NoBOM` onde
+existir.
