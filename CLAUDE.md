@@ -106,17 +106,21 @@ Código — nomes de variável, função, classe — em inglês.
 
 ## Estado do repositório
 
-Existe o **motor** e o **casco da aplicação**. Não há banco, API de negócio nem tela de
-produto.
+Existem o **motor**, o **casco da aplicação** e o **ambiente local em contêiner**. Ainda não
+existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
   testes de backtesting, 58 testes e linha de base numérica. Roda por linha de comando:
   `ruvor run`. **Nunca importa Django**, e um teste prova isso.
-- `backend/` — projeto Django sem app de domínio. Uma rota, `GET /health`, sem banco.
+- `backend/` — projeto Django sem app de domínio. Uma rota, `GET /health`. Conecta no
+  PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.
   Configuração por variáveis `RUVOR_*`; mypy estrito; testes com pytest-django.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
   cor literal em `frontend/src/`. Exige **Node 24.15+**, travado por `engine-strict`.
+- `compose.yaml` na raiz — `docker compose up` sobe cinco serviços: `postgres`, `redis`,
+  `web`, `worker` e `frontend`. Backend e frontend rodam aí no dia a dia; o motor segue no
+  `.venv/` nativo ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)).
 
 Um só `.venv/` na raiz para motor e backend. O protótipo Flask, o SQLite e o frontend antigo
 foram removidos por inteiro.
