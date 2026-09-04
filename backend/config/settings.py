@@ -1,4 +1,4 @@
-"""Configuracao do Django. Tudo vem de variaveis RUVOR_*; nao ha banco neste bloco (F4)."""
+"""Configuracao do Django. Tudo vem de variaveis RUVOR_*."""
 
 from __future__ import annotations
 
@@ -19,7 +19,14 @@ def _required(name: str) -> str:
 
 SECRET_KEY = _required("RUVOR_SECRET_KEY")
 DEBUG = os.environ.get("RUVOR_DEBUG", "false").lower() in {"1", "true", "yes"}
-ALLOWED_HOSTS = [h for h in os.environ.get("RUVOR_ALLOWED_HOSTS", "").split(",") if h]
+
+
+def _split_hosts(valor: str) -> list[str]:
+    """Separa por virgula, tira o espaco em volta de cada item e descarta vazios."""
+    return [parte.strip() for parte in valor.split(",") if parte.strip()]
+
+
+ALLOWED_HOSTS = _split_hosts(os.environ.get("RUVOR_ALLOWED_HOSTS", ""))
 
 INSTALLED_APPS = ["rest_framework"]
 
@@ -32,9 +39,21 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Vazio de proposito: F2b-02. O Django preenche com o backend "dummy", que levanta
-# ImproperlyConfigured em qualquer acesso — e o teste da T3 prova isso.
-DATABASES: dict[str, dict[str, str]] = {}
+DATABASES: dict[str, dict[str, str]] = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": _required("RUVOR_DB_HOST"),
+        "PORT": _required("RUVOR_DB_PORT"),
+        "NAME": _required("RUVOR_DB_NAME"),
+        "USER": _required("RUVOR_DB_USER"),
+        "PASSWORD": _required("RUVOR_DB_PASSWORD"),
+    }
+}
+
+# Fila. CELERY_TASK_ALWAYS_EAGER nao e definido de proposito: o modo sincrono fica
+# desligado, senao a tarefa de fumaca rodaria no proprio web e nao provaria nada.
+CELERY_BROKER_URL = _required("RUVOR_REDIS_URL")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
