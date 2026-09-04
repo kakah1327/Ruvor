@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${RUVOR_DB_NAME:?defina no .env}
+      POSTGRES_USER: ${RUVOR_DB_USER:?defina no .env}
+      POSTGRES_PASSWORD: ${RUVOR_DB_PASSWORD:?defina no .env}
+    ports:
+      - "${RUVOR_PORT_POSTGRES:?defina no .env}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:8
+    ports:
+      - "${RUVOR_PORT_REDIS:?defina no .env}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build: { context: ., dockerfile: infra/backend.Dockerfile, target: web }
+    image: ruvor-web
+    hostname: web
+    environment: &backend-env
+      RUVOR_SECRET_KEY: ${RUVOR_SECRET_KEY:?defina no .env}
+      RUVOR_DEBUG: ${RUVOR_DEBUG:-true}
+      RUVOR_ALLOWED_HOSTS: ${RUVOR_ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+      RUVOR_DB_HOST: ${RUVOR_DB_HOST:-postgres}
+      RUVOR_DB_PORT: ${RUVOR_DB_PORT:-5432}
+      RUVOR_DB_NAME: ${RUVOR_DB_NAME:?defina no .env}
+      RUVOR_DB_USER: ${RUVOR_DB_USER:?defina no .env}
+      RUVOR_DB_PASSWORD: ${RUVOR_DB_PASSWORD:?defina no .env}
+      RUVOR_REDIS_URL: ${RUVOR_REDIS_URL:-redis://redis:6379/0}
+    volumes:
+      - ./backend:/repo/backend
+    ports:
+      - "${RUVOR_PORT_WEB:?defina no .env}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    build: { context: ., dockerfile: infra/backend.Dockerfile, target: worker }
+    image: ruvor-worker
+    hostname: worker
+    environment: *backend-env
+    volumes:
+      - ./backend:/repo/backend
+      - ./engine:/repo/engine
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping -d celery@$$(hostname) || exit 1"]
+      interval: 10s
+      timeout: 15s
+      retries: 20
+      start_period: 30s
+    depends_on:
+      redis: { condition: service_healthy }
+
+  frontend:
+    build: { context: ., dockerfile: infra/frontend.Dockerfile }
+    image: ruvor-frontend
+    hostname: frontend
+    environment:
+      VITE_PROXY_TARGET: http://web:8000
+    volumes:
+      - ./frontend:/repo/frontend
+      - ./brand/ruvor:/repo/brand/ruvor:ro
+      - /repo/frontend/node_modules
+    ports:
+      - "${RUVOR_PORT_FRONTEND:?defina no .env}:5173"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5173/"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    depends_on:
+      web: { condition: service_healthy }
+
+volumes:
+  pgdata:

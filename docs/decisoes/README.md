@@ -37,6 +37,7 @@ conversas e entre agentes.
 | [D-32](D-32-frontend-no-compose.md) | O frontend entra no `docker compose` |
 | [D-34](D-34-banco-celery-e-redis-no-f3.md) | Banco, Celery e Redis chegam no F3, não no F4 |
 | [D-35](D-35-compose-e-dockerignore-na-raiz.md) | `compose.yaml` e `.dockerignore` ficam na raiz, não em `infra/` |
+| [D-36](D-36-versao-do-postgres.md) | A versão maior do Postgres é a 18 |
 
 ## Processo e execução
 
