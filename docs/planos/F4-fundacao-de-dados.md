@@ -562,12 +562,15 @@ docker compose exec -T web mypy
 # proprio teste e confrontada com o banco. A partir desta tarefa o teste e a fonte,
 # e o heredoc da T3 deixa de ter voto. Comentario nao confronta nada — por isso e
 # comando.
-grep -oE '(core|public)\.[a-z_]+' backend/tests/test_esquemas.py | sort -u > /tmp/f4-do-teste.txt
+# Nomes proprios da T5, e `rm` antes: a T3 grava em /tmp/f4-tabelas.txt, e um
+# arquivo velho dela sobrevivendo aqui daria falso verde numa execucao parcial.
+rm -f /tmp/f4t5-do-teste.txt /tmp/f4t5-tabelas.txt
+grep -oE '(core|public)\.[a-z_]+' backend/tests/test_esquemas.py | sort -u > /tmp/f4t5-do-teste.txt
 docker compose exec -T postgres psql -U ruvor -d ruvor -tAc "
   SELECT schemaname||'.'||tablename FROM pg_tables
   WHERE schemaname NOT IN ('pg_catalog','information_schema')
-  ORDER BY 1" | tr -d '\r' | sort > /tmp/f4-tabelas.txt
-diff /tmp/f4-do-teste.txt /tmp/f4-tabelas.txt
+  ORDER BY 1" | tr -d '\r' | sort > /tmp/f4t5-tabelas.txt
+diff /tmp/f4t5-do-teste.txt /tmp/f4t5-tabelas.txt
 ```
 
 **Consequência para quem escreve o teste:** as nove tabelas precisam aparecer em
