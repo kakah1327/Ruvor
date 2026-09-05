@@ -201,12 +201,15 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Tipos do motor | `cd engine && mypy` — o mypy lê a configuração do diretório corrente |
 | Construir o pacote do motor | `python -m build --no-isolation engine` |
 
-**`pytest backend` no hospedeiro reprova um teste, e é de propósito.** O
+**`pytest backend` no hospedeiro reprova cinco testes, e é de propósito.** O
 `backend/config/settings_test.py` fixa valores de banco inexistentes (`nao-usar`) justamente
-para que um `.env` incompleto não passe despercebido; com isso,
-`test_conexao_com_o_banco` só passa dentro do contêiner, onde as variáveis vêm do `compose`.
-No hospedeiro ele falha com `OperationalError: failed to resolve host 'nao-usar'`. Não é
-regressão: é a suíte rodando fora da casa dela.
+para que um `.env` incompleto não passe despercebido. No hospedeiro, tudo que toca o banco
+falha com `OperationalError: failed to resolve host 'nao-usar'`: o `test_conexao_com_o_banco`
+desde o F3, e desde o F4 os quatro que leem o esquema, a organização e a coluna
+`organization_id` — `test_esquemas.py` (dois), `test_organizacao.py` e o
+`test_a_coluna_organization_id_e_not_null`. Os cinco só passam dentro do contêiner, onde as
+variáveis vêm do `compose` **e o banco está migrado**. Não é regressão: é a suíte rodando
+fora da casa dela.
 
 O interpretador nativo do projeto é o do ambiente virtual: **`.venv/Scripts/python.exe`** no
 Windows, `.venv/bin/python` no Linux. Reproduzir o ambiente exato que gerou a linha de base

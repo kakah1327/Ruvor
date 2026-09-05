@@ -1,7 +1,7 @@
 # F4 — Fundação de dados
 
 **Bloco:** Fundação · F4
-**Status:** ✅ **aprovada** (2026-09-04) — em implementação
+**Status:** ✅ **implementada e fechada** (2026-09-05) · plano em [`planos/F4-fundacao-de-dados.md`](../planos/F4-fundacao-de-dados.md)
 Duas rodadas de revisão adversarial. O contrato do esquema embutido no `db_table` foi medido
 de ponta a ponta contra o `postgres:18` do `compose`, e produz exatamente a lista fechada
 declarada aqui. As cinco decisões que ela produz estão registradas:

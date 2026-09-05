@@ -32,4 +32,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [F2a — Migração do motor](F2a-migracao-do-motor.md) | Fundação · F2a | ✅ implementada e fechada |
 | [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | ✅ implementada e fechada |
 | [F3 — Ambiente local](F3-ambiente-local.md) | Fundação · F3 | ✅ implementada e fechada |
-| [F4 — Fundação de dados](F4-fundacao-de-dados.md) | Fundação · F4 | 🟡 em revisão final |
+| [F4 — Fundação de dados](F4-fundacao-de-dados.md) | Fundação · F4 | ✅ implementada e fechada |

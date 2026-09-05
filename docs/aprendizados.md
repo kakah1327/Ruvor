@@ -354,3 +354,79 @@ nada acusasse.
 **Faça:** para restaurar arquivo versionado, use `git checkout --`, não reescrita. Para
 escrever de fato, prefira as ferramentas de edição do agente, ou `-Encoding utf8NoBOM` onde
 existir.
+
+
+## O esquema no `db_table` mora em dois lugares, e só um deles cria a tabela
+
+**Quando:** ao mexer no esquema de uma tabela — mudar, ou escrever mutação que o estrague de
+propósito.
+
+**Problema:** o identificador em duas partes (`db_table = 'core"."user'`) existe no **modelo**
+e nas `options` do `CreateModel` da migration. Quem cria a tabela é a migration. Mexer só no
+`models.py` deixa a tabela nascendo no esquema certo, e quem acusa é o `makemigrations
+--check` — ou seja, a verificação de *sincronia entre modelo e migration*, não a de *esquema*.
+Uma mutação escrita assim parece válida e ataca o requisito errado. Aconteceu no F4, e nenhuma
+das quatro rodadas de revisão pegou: só apareceu na execução.
+
+**Faça:** ao mudar o esquema de uma tabela, mude nos dois. Ao escrever mutação sobre esquema,
+aplique nos dois — é o defeito de verdade, alguém que escreveu o `db_table` errado desde o
+começo.
+
+
+## `pytest.mark.django_db` concede acesso ao banco, nunca exige uso
+
+**Quando:** ao escrever verificação de que uma rota ou função **não** toca o banco.
+
+**Problema:** a intuição é que acrescentar a marca a um teste o faria falhar se o código não
+usasse o banco. É o contrário: a marca libera o acesso que o pytest-django bloqueia por
+padrão. Uma mutação que só acrescenta a marca **não reprova nada** — medido no F4, sobre o
+teste do `/health`.
+
+**Faça:** apoie a garantia no **bloqueio** do pytest-django sobre o teste sem marca, e mute o
+**código** — faça a view tocar o banco e confirme que o teste quebra com `Database access not
+allowed`.
+
+
+## Idempotência de migration de dados só se testa com `--fake`
+
+**Quando:** ao verificar que uma migration de dados pode rodar duas vezes sem duplicar.
+
+**Problema:** o caminho óbvio — desaplicar e reaplicar — executa a função de reversão, que
+apaga a linha. A reaplicação encontra o banco vazio, e uma implementação com `create()` no
+lugar de `get_or_create()` **passa**. A verificação existe justamente para pegar essa
+implementação, e não pega.
+
+**Faça:** `migrate <app> <n> --fake`. Conferido na fonte: `unapply_migration(..., fake=True)`
+não executa as operações, só desfaz o registro — a linha fica no banco, e a reaplicação roda
+contra o estado que `get_or_create` existe para tratar.
+
+
+## `! grep` sobre status aprova vazio, e o padrão pode casar com o próprio critério
+
+**Quando:** ao escrever varredura que prove que um documento parou de mentir.
+
+**Problema:** dois modos de aprovar sem trabalho. (1) A negativa (`! grep -q "aguardando
+revisão"`) passa assim que o texto muda por **qualquer** motivo — no F4 o cabeçalho já dizia
+outra coisa desde o portão humano, e a verificação aprovava com o arquivo intocado. (2) A
+afirmativa desancorada casa com a **própria linha do critério**, quando o critério mora no
+arquivo verificado.
+
+**Faça:** verifique por afirmação do texto final e **ancorada** —
+`grep -q '^\*\*Status:\*\* ✅ \*\*executado e fechado\*\*'`. E rode a varredura **antes** de
+editar, confirmando que ela acusa: varredura que já passa antes não prova nada.
+
+
+## Lista fechada é o ponto fraco recorrente, e envelhece calada
+
+**Quando:** ao escrever spec com "lista fechada" de trechos, arquivos ou tabelas.
+
+**Problema:** é a terceira vez no projeto que a lista fechada é o defeito. No F4 ela estava
+incompleta em dois pontos, e os dois só apareceram na revisão final: a frase do `README` e do
+`ESTADO` sobre *"`pytest` no hospedeiro reprova **um** teste"* — que virou cinco e nenhuma
+verificação podia pegar, porque a linha não estava na lista — e a seção "Isolamento por
+organização" da ARQUITETURA, que ficou descrevendo no presente um mecanismo adiado.
+
+**Faça:** ao declarar que a suíte, o ambiente ou um contrato **mudam de exigência**, procure
+imediatamente todo texto que descreva a exigência antiga, e ponha cada um na lista. A
+pergunta que fecha o buraco é: *"que documento afirma um número, uma contagem ou um verbo no
+presente sobre o que eu acabei de mudar?"*

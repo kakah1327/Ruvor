@@ -31,7 +31,7 @@ terminado.
 | [F2a — Migração do motor](F2a-migracao-do-motor.md) | [F2a](../specs/F2a-migracao-do-motor.md) | ✅ executado e fechado |
 | [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | [F2b](../specs/F2b-casco-da-aplicacao.md) | ✅ executado e fechado |
 | [F3 — Ambiente local](F3-ambiente-local.md) | [F3](../specs/F3-ambiente-local.md) | ✅ executado e fechado |
-| [F4 — Fundação de dados](F4-fundacao-de-dados.md) | [F4](../specs/F4-fundacao-de-dados.md) | 🟡 em revisão final |
+| [F4 — Fundação de dados](F4-fundacao-de-dados.md) | [F4](../specs/F4-fundacao-de-dados.md) | ✅ executado e fechado |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.

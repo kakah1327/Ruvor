@@ -10,7 +10,7 @@
 ## Onde estamos
 
 **Marco:** Fundação
-**Bloco:** F3 fechado e integrado; **F4 é o próximo**
+**Bloco:** F4 fechado e integrado; **F5 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
@@ -22,9 +22,10 @@ produto, e `bronze`, `silver` e `gold` seguem vazios até o M1.2 e o M1.4.
 
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
-Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova um teste**, de
-propósito — o `settings_test.py` fixa valores de banco inexistentes para que um `.env`
-incompleto não passe despercebido. Não é regressão.
+Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova cinco
+testes**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
+`.env` incompleto não passe despercebido. Era um até o F3; o F4 acrescentou quatro que leem o
+banco. **Dentro do contêiner eles também exigem `migrate` aplicado.** Não é regressão.
 
 ## O que foi concluído
 
@@ -33,7 +34,7 @@ incompleto não passe despercebido. Não é regressão.
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **36 decisões registradas** — [decisoes/](decisoes/)
+- **41 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -112,19 +113,53 @@ saíram maiores que a estimativa: `web` 467 MB, `worker` 3,79 GB.
 alteração: o contêiner enxerga o arquivo novo, o Vite não emite evento. Ligada em `7a327b3`,
 depois de a falta ser medida.
 
+### F4 — Fundação de dados
+
+Spec em [`specs/F4-fundacao-de-dados.md`](specs/F4-fundacao-de-dados.md) e plano em
+[`planos/F4-fundacao-de-dados.md`](planos/F4-fundacao-de-dados.md). Sete tarefas, um commit
+cada, direto na `main`.
+
+| Verificação | Resultado |
+|---|---|
+| Os quatro esquemas existem depois do `migrate` | ✅ `core`, `bronze`, `silver`, `gold`, por migration versionada |
+| Nenhuma tabela de domínio no `public` | ✅ conjunto **inteiro** de `esquema.tabela` contra lista fechada de nove, não amostra |
+| Organização fixa do Marco 1, idempotente | ✅ `slug` `ruvor`; provada com `migrate --fake`, que é o que mantém a linha no banco |
+| `AUTH_USER_MODEL` próprio, na primeira migration | ✅ `accounts.User`, `AbstractBaseUser`, autentica por e-mail |
+| Organização obrigatória no usuário | ✅ **duas camadas** provadas em testes separados: o gerente recusa, e a coluna é `NOT NULL` |
+| `migrate` do zero, e a segunda execução | ✅ código 0 nas duas; `migrate accounts zero` também volta |
+| `makemigrations --check` limpo | ✅ |
+| mypy sobre o código novo | ✅ 25 arquivos, e a lista nomeia as duas migrations |
+| `GET /health` sem tocar no banco | ✅ segue sem marca de banco, como o F2b congelou |
+| A imagem constrói com o pacote novo | ✅ e foi preciso copiar os `__init__.py` no `Dockerfile` |
+
+**As onze mutações reprovaram.** **Revisão final: aprovada**, com os dez requisitos
+reconferidos por execução e o banco refeito do zero.
+
+Cinco decisões nasceram do bloco: [D-37](decisoes/D-37-esquema-core-para-dado-operacional.md)
+(esquema `core`), [D-38](decisoes/D-38-public-guarda-o-encanamento.md) (o `public` guarda o
+encanamento, e o esquema vai no `db_table`),
+[D-39](decisoes/D-39-usuario-proprio-autentica-por-email.md) (usuário próprio por e-mail),
+[D-40](decisoes/D-40-identificadores-de-esquema-em-ingles.md) (identificadores em inglês) e
+[D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md) (o filtro por
+organização é do M2.2).
+
+**O que a execução contrariou.** A mutação que troca o `db_table` pelo nome sem esquema
+**não** reprovava como escrita: quem cria a tabela é o `options` do `CreateModel`, não o
+modelo, então aplicá-la só em `models.py` atacava o requisito errado. Nenhuma das quatro
+rodadas de revisão pegou — foi preciso executar.
+
 ## Próximo passo
 
-**Escrever a spec do F4 — Fundação de dados**: primeiras migrations, esquemas bronze/prata/ouro
-([D-13](decisoes/D-13-camadas-bronze-prata-ouro.md)) e a entidade Organização desde a primeira
-migration ([D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md)).
+**Escrever a spec do F5 — CI**: estilo, tipos e testes a cada mudança. Ele **espelha o
+contêiner, não o `.venv`** ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)), e herda
+do F4 uma exigência nova: a suíte do backend agora precisa de um banco **migrado**, não só
+alcançável.
 
-O F4 herda um ambiente em que o Django já conecta no banco, então ele cria migrations sobre
-conexão que funciona — e herda também a versão maior do Postgres, fixada em
-[D-36](decisoes/D-36-versao-do-postgres.md). A escolha de `INSTALLED_APPS` se justificou lá:
-hoje ele tem `django.contrib.contenttypes`, `django.contrib.auth` e `apps.accounts` ao lado
-do `rest_framework`.
+O F5 também tem um dono esperando: é a spec dele que escolhe a **ferramenta de estilo**
+(`ruff`? `prettier`? `eslint`?) — o F2b registrou a decisão de não escolher.
 
-Depois vem o F5 (CI), que **espelha o contêiner, não o `.venv`**.
+Depois do F5 fecha a Fundação, e começa o Marco 1 pelo M1.1 (catálogo de ativos), que é o
+primeiro consumidor dos esquemas e da convenção de migration que o F4 fixou.
 
 ---
 
@@ -136,6 +171,7 @@ Depois vem o F5 (CI), que **espelha o contêiner, não o `.venv`**.
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
+| **`createsuperuser` não funciona.** O gerente exige organização e o comando não tem como fornecê-la: pôr `organization` em `REQUIRED_FIELDS` faria o `create_superuser` receber a **chave crua**, porque `ForeignKey.clean` devolve a pk (`createsuperuser.py:150,233`). Falha com `ValueError: o usuario precisa de organizacao` | `backend/apps/accounts/managers.py`, comentado no próprio arquivo | **M2.1**, que constrói o fluxo de identidade e decide como um primeiro usuário nasce. Enquanto isso, criar usuário exige `shell` |
 
 ## Aberto e aguardando decisão
 

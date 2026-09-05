@@ -1,7 +1,7 @@
 # F4 — Plano de implementação
 
 **Spec:** [F4 — Fundação de dados](../specs/F4-fundacao-de-dados.md)
-**Status:** ✅ **aprovado** (2026-09-05) — em implementação
+**Status:** ✅ **executado e fechado** (2026-09-05) · sete tarefas, um commit cada, de `5e91ea6` a `6a9cc5d`. Revisão final aprovada.
 Duas rodadas. Os critérios de aceite foram executados contra o contêiner de pé durante a
 revisão; os quatro achados da segunda rodada foram absorvidos antes do portão.
 **Objetivo:** `migrate` num banco vazio cria os quatro esquemas e as tabelas do projeto;

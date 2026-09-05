@@ -161,12 +161,20 @@ conta individual ganha organização pessoal implícita, invisível na interface
 O risco do ITUB4 é o mesmo para todo mundo — não faz sentido calcular por cliente. A
 superfície de isolamento é pequena.
 
-**O que isola não é a coluna, é a consulta filtrar.** Uma classe base aplica o filtro por
-organização **por padrão**, para que esquecer deixe de ser possível. Coluna sem filtro
+**O que isola não é a coluna, é a consulta filtrar.** Uma classe base **vai aplicar** o filtro
+por organização por padrão, para que esquecer deixe de ser possível. Coluna sem filtro
 automático é teatro: um dia alguém esquece e um cliente vê dado de outro.
 
+**Ela ainda não existe.** O F4 entregou a coluna — o `organization` obrigatório do usuário —,
+e o mecanismo é obrigação do bloco que criar a primeira tabela privada de domínio, a carteira
+no M2.2, onde há contra o que prová-lo. O `user` é exceção permanente: os backends de
+autenticação do Django alcançam o modelo por `_default_manager`, e a busca no login é anterior
+a saber a que organização a pessoa pertence — então o M2.1 precisa isolar listagem de usuário
+por outro meio, e não pelo ORM ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)).
+
 Ver [D-08](decisoes/D-08-dono-do-dado-no-schema.md),
-[D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md).
+[D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md),
+[D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md).
 
 ---
 
