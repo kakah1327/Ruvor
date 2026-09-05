@@ -28,7 +28,7 @@ def _split_hosts(valor: str) -> list[str]:
 
 ALLOWED_HOSTS = _split_hosts(os.environ.get("RUVOR_ALLOWED_HOSTS", ""))
 
-INSTALLED_APPS = ["rest_framework"]
+INSTALLED_APPS = ["rest_framework", "apps.accounts"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

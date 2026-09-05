@@ -21,7 +21,7 @@ build-backend = "setuptools.build_meta"
 # Nao e pacote distribuivel. Declarar o pacote evita a descoberta automatica do
 # setuptools, que falha com manage.py e config/ lado a lado.
 [tool.setuptools]
-packages = ["config"]
+packages = ["config", "apps"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings_test"
@@ -29,7 +29,7 @@ testpaths = ["tests"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["config", "manage.py", "tests"]
+files = ["config", "apps", "manage.py", "tests"]
 strict = true
 plugins = ["mypy_django_plugin.main"]
 
