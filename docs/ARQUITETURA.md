@@ -28,8 +28,8 @@ risco, que é a única parte que ninguém mais tem.
 
 ## Estrutura do repositório
 
-**Estado alvo.** Os blocos do roadmap chegam nele por partes — `infra/` nasceu no F3;
-`apps/` nasce no F4.
+**Estado alvo.** Os blocos do roadmap chegam nele por partes — `infra/` nasceu no F3, e
+`apps/` no F4, com o primeiro app: `apps/accounts`.
 
 ```
 ruvor/
@@ -109,11 +109,21 @@ com particionamento por data. O que viraria big data é dado tick a tick, fora d
 diretamente o requisito de auditoria. Implementada como **esquemas dentro do próprio
 PostgreSQL**:
 
-| Camada | Conteúdo | Quem consulta |
-|---|---|---|
-| **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
-| **Prata** | preços limpos e conformados, retornos calculados, validados | base de trabalho |
-| **Ouro** | métricas de comportamento, séries de VaR, backtests, agregados de carteira | é o que a plataforma serve |
+| Esquema | Camada | Conteúdo | Quem consulta |
+|---|---|---|---|
+| `core` | nenhuma — é o dado operacional | organização, usuário, e depois carteiras, limites e chaves de API | a aplicação |
+| `bronze` | **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
+| `silver` | **Prata** | preços limpos e conformados, retornos calculados, validados | base de trabalho |
+| `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, agregados de carteira | é o que a plataforma serve |
+
+Os quatro esquemas existem desde a primeira migration do F4. O `core` é esquema à parte
+porque dado operacional não é camada de linhagem, e empurrá-lo para dentro de `bronze` ou de
+`gold` mentiria sobre a origem dele
+([D-37](decisoes/D-37-esquema-core-para-dado-operacional.md)). Os identificadores ficam em
+inglês — `silver` e `gold`, e não `prata` e `ouro` —, ainda que o texto siga chamando as
+camadas pelos nomes em português ([D-40](decisoes/D-40-identificadores-de-esquema-em-ingles.md)).
+O `public` guarda o encanamento do Django: `django_migrations`, `auth_*` e `django_content_type`
+([D-38](decisoes/D-38-public-guarda-o-encanamento.md)).
 
 ### Por que a camada bronze é obrigatória aqui
 

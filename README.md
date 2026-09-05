@@ -187,10 +187,11 @@ proxy.
 
 Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). O conjunto precisa estar de pé
-(`docker compose up -d --wait`) para as cinco primeiras linhas.
+(`docker compose up -d --wait`) para as seis primeiras linhas.
 
 | O quê | Comando |
 |---|---|
+| Aplicar migrations | `docker compose exec -T web python manage.py migrate` |
 | Testes do backend | `docker compose exec -T web pytest tests` |
 | Tipos do backend | `docker compose exec -T web mypy` |
 | Testes do frontend | `docker compose exec -T frontend npm test` |

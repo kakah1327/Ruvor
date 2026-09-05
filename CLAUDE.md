@@ -106,15 +106,21 @@ Código — nomes de variável, função, classe — em inglês.
 
 ## Estado do repositório
 
-Existem o **motor**, o **casco da aplicação** e o **ambiente local em contêiner**. Ainda não
+Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêiner** e a
+**fundação de dados** — os quatro esquemas do banco e as duas primeiras tabelas. Ainda não
 existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
   testes de backtesting, 58 testes e linha de base numérica. Roda por linha de comando:
   `ruvor run`. **Nunca importa Django**, e um teste prova isso.
-- `backend/` — projeto Django sem app de domínio. Uma rota, `GET /health`. Conecta no
-  PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; testes com pytest-django.
+- `backend/` — projeto Django com um app, `apps/accounts`. Uma rota, `GET /health`. Conecta
+  no PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 16 testes com pytest-django.
+  `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
+  as tabelas `core.organization` e `core.user` e a organização fixa do Marco 1 (`slug`
+  `ruvor`). O `AUTH_USER_MODEL` é próprio e autentica por e-mail
+  ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)); `bronze`,
+  `silver` e `gold` nascem vazios e seguem assim até o M1.2 e o M1.4.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
   cor literal em `frontend/src/`. O `package.json` exige **Node 24.15+**, travado por

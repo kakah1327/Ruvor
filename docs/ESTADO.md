@@ -3,7 +3,7 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-04
+**Última atualização:** 2026-09-05
 
 ---
 
@@ -13,9 +13,12 @@
 **Bloco:** F3 fechado e integrado; **F4 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
-Existem o motor numérico, o casco da aplicação e o **ambiente local em contêiner**.
-`docker compose up` sobe cinco serviços; o Django conecta no PostgreSQL e tem fila Celery
-sobre Redis. Ainda não há migrations, API de negócio nem tela de produto.
+Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
+**fundação de dados**. `docker compose up` sobe cinco serviços; o Django conecta no
+PostgreSQL e tem fila Celery sobre Redis. `migrate` num banco vazio cria os quatro esquemas
+— `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
+organização fixa do Marco 1 (`slug` `ruvor`). Ainda não há API de negócio nem tela de
+produto, e `bronze`, `silver` e `gold` seguem vazios até o M1.2 e o M1.4.
 
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
@@ -117,9 +120,9 @@ migration ([D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md)).
 
 O F4 herda um ambiente em que o Django já conecta no banco, então ele cria migrations sobre
 conexão que funciona — e herda também a versão maior do Postgres, fixada em
-[D-36](decisoes/D-36-versao-do-postgres.md). `INSTALLED_APPS` ainda é só `rest_framework`: o
-F4 vai precisar de pelo menos parte de `contenttypes`/`auth`, e é lá que a escolha se
-justifica.
+[D-36](decisoes/D-36-versao-do-postgres.md). A escolha de `INSTALLED_APPS` se justificou lá:
+hoje ele tem `django.contrib.contenttypes`, `django.contrib.auth` e `apps.accounts` ao lado
+do `rest_framework`.
 
 Depois vem o F5 (CI), que **espelha o contêiner, não o `.venv`**.
 
@@ -132,6 +135,7 @@ Depois vem o F5 (CI), que **espelha o contêiner, não o `.venv`**.
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
+| **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
 
 ## Aberto e aguardando decisão
 
