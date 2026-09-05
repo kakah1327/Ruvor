@@ -18,9 +18,14 @@ if TYPE_CHECKING:
 
 
 class UserManager(BaseUserManager["User"]):
-    """Cria usuario e superusuario, sempre com organizacao."""
+    """Cria usuario e superusuario, sempre com organizacao.
 
-    use_in_migrations = True
+    Sem `use_in_migrations`, de proposito. Com ele, o `makemigrations` serializa o
+    gerente na migration, que passa a importar este modulo e a instanciar a classe
+    pelo nome -- e ai renomear a classe ou mover o arquivo quebra o `migrate` de
+    qualquer banco a partir do zero. E a mesma razao pela qual migration de dados usa
+    `apps.get_model` em vez de importar `models.py`.
+    """
 
     def create_user(
         self,
