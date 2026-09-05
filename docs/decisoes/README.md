@@ -38,6 +38,11 @@ conversas e entre agentes.
 | [D-34](D-34-banco-celery-e-redis-no-f3.md) | Banco, Celery e Redis chegam no F3, não no F4 |
 | [D-35](D-35-compose-e-dockerignore-na-raiz.md) | `compose.yaml` e `.dockerignore` ficam na raiz, não em `infra/` |
 | [D-36](D-36-versao-do-postgres.md) | A versão maior do Postgres é a 18 |
+| [D-37](D-37-esquema-core-para-dado-operacional.md) | Existe um quarto esquema, `core`, para o dado operacional |
+| [D-38](D-38-public-guarda-o-encanamento.md) | O `public` guarda o encanamento do Django, e a tabela declara o esquema no `db_table` |
+| [D-39](D-39-usuario-proprio-autentica-por-email.md) | O usuário do projeto herda `AbstractBaseUser` e autentica por e-mail |
+| [D-40](D-40-identificadores-de-esquema-em-ingles.md) | Os identificadores de esquema ficam em inglês |
+| [D-41](D-41-filtro-por-organizacao-na-primeira-tabela-privada.md) | O filtro por organização é obrigação da primeira tabela privada; o usuário é exceção |
 
 ## Processo e execução
 
