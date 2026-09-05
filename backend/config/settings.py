@@ -28,8 +28,18 @@ def _split_hosts(valor: str) -> list[str]:
 
 ALLOWED_HOSTS = _split_hosts(os.environ.get("RUVOR_ALLOWED_HOSTS", ""))
 
-INSTALLED_APPS = ["rest_framework", "apps.accounts"]
+INSTALLED_APPS = [
+    "django.contrib.contenttypes",
+    "django.contrib.auth",
+    "rest_framework",
+    "apps.accounts",
+]
 
+AUTH_USER_MODEL = "accounts.User"
+
+# MIDDLEWARE nao ganha AuthenticationMiddleware: a exigencia (auth.E013) so dispara com
+# LoginRequiredMiddleware presente, e ele nao esta. Sessao e autenticacao de requisicao
+# sao do M2.1.
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
