@@ -602,7 +602,7 @@ As onze da spec. Cada uma precisa reprovar a verificação apontada, e o relato 
 | # | Mutação | Precisa reprovar | Como aplicar |
 |---|---|---|---|
 | a | Remover o `CREATE SCHEMA` do **`gold`** da `0001` | F4-01 | `down -v` + `up -d --wait` + `migrate` |
-| b | Trocar um `db_table` pelo nome sem esquema | F4-02 | `down -v` + `up -d --wait` + `migrate` |
+| b | Trocar um `db_table` pelo nome sem esquema, **no modelo e nas `options` do `CreateModel` da `0001`** | F4-02 | `down -v` + `up -d --wait` + `migrate` |
 | c | Trocar `get_or_create` por `create` na `0002` | F4-03, na reaplicação | `migrate accounts 0001 --fake` + `migrate` |
 | d | Mover a criação do usuário para uma `0003` | F4-04 | `down -v` + `up -d --wait` + `migrate`; **cria arquivo novo** |
 | e | Tirar a exigência de organização do `create_user` | F4-04, camada do gerente | `pytest tests` |
@@ -613,11 +613,26 @@ As onze da spec. Cada uma precisa reprovar a verificação apontada, e o relato 
 | j | Fazer a view do `/health` tocar no banco | F4-08 | `pytest tests` |
 | k | Declarar `apps` em `packages` sem copiá-lo no `Dockerfile` | F4-09 | `build --no-cache web` |
 
-**Seis delas exigem recriar o banco, e sem isso não reprovam.** `a`, `b`, `d`, `f` e `g`
+**Cinco delas exigem recriar o banco, e sem isso não reprovam.** `a`, `b`, `d`, `f` e `g`
 mudam o que a migration produz, e o banco já migrado continua com as tabelas onde estavam: a
 verificação de F4-01/F4-02 não se move e a mutação dá **falso verde**, justamente na tarefa
 que existe para impedir falso verde. É o mesmo achado que o F3 registrou. Sempre
 `docker compose down -v && docker compose up -d --wait` antes, e `migrate` depois.
+
+**A `b` precisa ser aplicada nos dois lugares, e é o detalhe que decide se ela vale.** Quem
+cria a tabela é o `options={"db_table": ...}` do `CreateModel`, não o modelo: mexer só no
+`models.py` deixa a tabela nascendo em `core`, o `diff` da lista fechada passa, e quem acusa
+é o `makemigrations --check` — que é a verificação de **F4-06**, não a de F4-02 que a mutação
+diz atacar. Aplicada nos dois, ela reproduz o defeito de verdade: alguém que escreveu
+`db_table = "organization"` desde o começo.
+
+**A `d` e a `f` exigem escrever a `0003` à mão.** O `makemigrations` não gera esse recorte
+sozinho; as dependências são `auth.0012_alter_user_first_name_max_length` e
+`accounts.0002_marco1_organization`.
+
+**A `f` não é pega pelo `makemigrations --check`** — a migration nova acompanha o modelo, e o
+par continua coerente. Quem reprova é o teste da camada de banco, e é por isso que F4-04 tem
+as duas camadas em testes separados.
 
 **A mutação `c` só reprova com `--fake`.** Desaplicar de verdade executa a função de reversão,
 que apaga a linha — e aí `create()` passa. É a razão de o critério da T4 usar `--fake`, e a
