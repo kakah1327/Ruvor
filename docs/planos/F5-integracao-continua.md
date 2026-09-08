@@ -367,18 +367,23 @@ Não corrige violação de lint. Não toca no frontend. Não remove o script.
 
 **Contrato**
 
-Enumeradas na spec. A ferramenta aplica a maioria; **três exigem mão, e são as que o `--fix`
-estragaria:**
+Enumeradas na spec. A ferramenta aplica a maioria; **seis exigem mão**, por duas razões
+diferentes:
 
-| Onde | O que o `--fix` faria | O que fazer |
+| Onde | Por quê | O que fazer |
 |---|---|---|
-| `engine/src/engine/experiments/runner.py`, duas `RUF100` | apagar `# noqa: BLE001 — isola falha de …`, e com ele a intenção escrita | **converter em comentário comum**, mantendo a explicação |
-| `backend/config/settings_test.py`, uma `RUF100` | fix parcial: remove `E402`, mantém `F403` | aceitar — aqui o fix está certo |
+| `engine/src/engine/experiments/runner.py`, duas `RUF100` | o `--fix` **estragaria**: apaga `# noqa: BLE001 - isola falha de …` com a intenção escrita junto | **converter em comentário comum**, mantendo a explicação |
+| `backend/config/settings_test.py`, uma `RUF100` | o `--fix` acerta, e é parcial: remove `E402`, mantém `F403` | aceitar |
+| `engine/src/engine/models/ml/_quantile_nn.py`, uma `RUF012` | **`RUF012` não tem correção automática** — medido: `--fix` resolve 26 de 27 e deixa exatamente esta | anotar com `ClassVar` |
+| `backend/apps/accounts/models.py`, uma `RUF012` | idem — no backend, `ruff check .` reporta `1 fixable` de 2, e a fixável é a `RUF100` | anotar `REQUIRED_FIELDS` com `ClassVar` |
+| `engine/tests/models/test_ml_diagnostics.py:17`, uma `F841` | não é auto-fixável | remover a variável morta |
 
-Das três de `engine/tests/`, **duas são automáticas e uma não é**: as `UP033`
-(`lru_cache(maxsize=None)` → `functools.cache`, o mesmo objeto) a ferramenta aplica; a
-`F841` de `models/test_ml_diagnostics.py:17` exige mão. **São quatro correções manuais no
-total, não três.**
+As duas `UP033` de `engine/tests/` a ferramenta aplica sozinha
+(`lru_cache(maxsize=None)` → `functools.cache`, o mesmo objeto).
+
+**O separador dos `# noqa` é hífen ASCII, não travessão** — no arquivo é
+`# noqa: BLE001 - isola falha de …`. O `grep` do critério usa o prefixo comum e não depende
+disso, mas quem for casar o texto inteiro tropeça.
 
 **Cuidado com a `F841`:** o mesmo desempacotamento `train, test = ...` aparece duas vezes no
 arquivo, nas linhas 17 e 27, e só a primeira é acusada — a segunda usa `test`. Corrigir a
