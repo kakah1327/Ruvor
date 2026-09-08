@@ -628,10 +628,10 @@ docker run --rm -v "$PWD:/repo:ro" -w /tmp python:3.12-slim sh -c "
   python -c 'import tensorflow, arch, engine; print(\"extras ok\")' &&
   pytest engine/tests --ignore=engine/tests/baseline -q"
 
-# ATENCAO: o comando acima e a PRIMEIRA vez que a linha de base numerica roda em
-# Linux na historia do repositorio. Se ela divergir, a tarefa PARA e relata o numero:
-# e achado sobre o motor, do lado da VERIFICACAO pela tabela da T8, e vira divida --
-# nao e defeito do F5 e nao se conserta reescrevendo valores.json.
+# A linha de base NAO roda aqui, por causa do `--ignore` acima. Ela ja rodou uma vez
+# em Linux, durante a execucao deste bloco, e divergiu: 8 das 58, com o EGARCH
+# convergindo para outro otimo. Esta registrado como divida no ESTADO.md, com dono
+# na trilha do TCC. Nao se conserta reescrevendo valores.json.
 
 # F5-02 e F5-03 provados pela sequencia exata do fluxo
 cp .env.example .env
