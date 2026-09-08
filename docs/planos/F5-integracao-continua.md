@@ -1,7 +1,7 @@
 # F5 — Plano de implementação
 
 **Spec:** [F5 — Integração contínua](../specs/F5-integracao-continua.md)
-**Status:** ✅ **aprovado** (2026-09-08) — em implementação
+**Status:** ✅ **executado e fechado** (2026-09-08) · oito tarefas, onze commits, de `bbcc24a` a `650a716`. Revisão final aprovada.
 Três reprovações antes da aprovação. Os dois últimos bloqueios fecharam **por execução, não
 por leitura**: a mutação da prova de formatação foi aplicada e reprova nomeando o arquivo, e
 o `pip install` da T1 foi resolvido com `--dry-run`.

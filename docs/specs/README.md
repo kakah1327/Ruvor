@@ -33,4 +33,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [F2b — Casco da aplicação](F2b-casco-da-aplicacao.md) | Fundação · F2b | ✅ implementada e fechada |
 | [F3 — Ambiente local](F3-ambiente-local.md) | Fundação · F3 | ✅ implementada e fechada |
 | [F4 — Fundação de dados](F4-fundacao-de-dados.md) | Fundação · F4 | ✅ implementada e fechada |
-| [F5 — Integração contínua](F5-integracao-continua.md) | Fundação · F5 | 🟡 aprovada · **em implementação** |
+| [F5 — Integração contínua](F5-integracao-continua.md) | Fundação · F5 | ✅ implementada e fechada |

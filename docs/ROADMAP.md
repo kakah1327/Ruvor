@@ -13,6 +13,10 @@ Cada bloco recebe spec própria → plano próprio → implementação, conforme
 
 Não entrega nada ao usuário final. É o alicerce, e é o que faltou antes.
 
+**✅ Fechada em 2026-09-08.** Sete blocos, do F1 ao F5. O último provou o repositório
+numa máquina que não é a do desenvolvedor — e foi lá que se descobriu que a linha de
+base numérica do motor não é portátil entre plataformas.
+
 | | Bloco | Entrega |
 |---|---|---|
 | ✅ | **F1 — Documentação de base** | PROCESSO, PRODUTO, ARQUITETURA, decisões, ROADMAP, ESTADO, CLAUDE.md |
@@ -21,7 +25,7 @@ Não entrega nada ao usuário final. É o alicerce, e é o que faltou antes.
 | ✅ | **F2b — Casco da aplicação** | projeto Django e projeto React funcionais, com identidade Ruvor |
 | ✅ | **F3 — Ambiente local** | `docker compose up` sobe Postgres, Redis, web, worker e frontend; duas imagens do backend (web leve, worker com ML); cria `infra/` |
 | ✅ | **F4 — Fundação de dados** | primeiras migrations, os quatro esquemas, Organização e usuário próprio |
-| ⬜ | **F5 — CI** | estilo, tipos e testes a cada mudança |
+| ✅ | **F5 — Integração contínua** | estilo, tipos e testes a cada push; quatro trabalhos em máquina limpa |
 
 ---
 

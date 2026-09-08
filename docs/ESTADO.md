@@ -3,14 +3,14 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-05
+**Última atualização:** 2026-09-08
 
 ---
 
 ## Onde estamos
 
-**Marco:** Fundação
-**Bloco:** F4 fechado e integrado; **F5 é o próximo**
+**Marco:** ✅ **Fundação fechada** — sete blocos, do F1 ao F5
+**Bloco:** F5 fechado e integrado; **o M1.1 é o próximo**, e abre o Marco 1
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
@@ -19,6 +19,13 @@ PostgreSQL e tem fila Celery sobre Redis. `migrate` num banco vazio cria os quat
 — `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
 organização fixa do Marco 1 (`slug` `ruvor`). Ainda não há API de negócio nem tela de
 produto, e `bronze`, `silver` e `gold` seguem vazios até o M1.2 e o M1.4.
+
+**Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
+`backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
+**avisa e não bloqueia** ([D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md)); com trabalho
+direto na `main`, não há onde barrar. `ruff` cobre os dois projetos Python, `Biome` cobre o
+frontend, e o motor entrou no estilo com a formatação provada por árvore sintática
+([D-44](decisoes/D-44-o-motor-entra-no-estilo.md)).
 
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
@@ -148,18 +155,57 @@ organização é do M2.2).
 modelo, então aplicá-la só em `models.py` atacava o requisito errado. Nenhuma das quatro
 rodadas de revisão pegou — foi preciso executar.
 
+### F5 — Integração contínua
+
+Spec em [`specs/F5-integracao-continua.md`](specs/F5-integracao-continua.md) e plano em
+[`planos/F5-integracao-continua.md`](planos/F5-integracao-continua.md). Oito tarefas, onze
+commits, direto na `main`.
+
+| Verificação | Resultado |
+|---|---|
+| Push dispara a CI, e os quatro trabalhos executam | ✅ run `34207505155`, **verde nos quatro**, 2m14s de parede |
+| Backend no contêiner, com banco migrado | ✅ `migrate` cria os esquemas do zero no runner; 16 testes |
+| Frontend na imagem, não no Node do runner | ✅ os quatro comandos |
+| Motor com extras completas | ✅ 34 testes e mypy; TensorFlow instalado pelo lock |
+| A imagem `worker` não é construída | ✅ nenhuma menção a `ruvor-worker` no log; só `Worker ID:` do runner |
+| `ruff` nos dois projetos Python | ✅ `All checks passed!`; 44 e 25 arquivos formatados |
+| `Biome` no frontend | ✅ `biome check .` |
+| A formatação não alterou a árvore sintática | ✅ **69 arquivos, zero divergência** — cobre os nove modelos, não os seis da linha de base |
+| Documentação não mente | ✅ nove verificações, com os cinco negativos provadamente acusando antes |
+
+**As oito mutações reprovaram.** **Revisão final: aprovada**, com os dez requisitos
+reconferidos por execução.
+
+Quatro decisões nasceram do bloco: [D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md) (a CI
+avisa e não bloqueia), [D-43](decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)
+(ruff e Biome, e onde cada verificação roda),
+[D-44](decisoes/D-44-o-motor-entra-no-estilo.md) (o motor entra no estilo) e
+[D-45](decisoes/D-45-a-ci-mora-em-github-workflows.md) (a CI mora em `.github/workflows/`).
+
+**O achado do bloco não era sobre CI.** A primeira execução do motor em Linux revelou que a
+linha de base numérica **não é portátil entre plataformas** — ver a dívida abaixo. Era
+exatamente o que a spec dizia na abertura: nunca ninguém havia rodado este repositório numa
+máquina limpa.
+
+**Nove rodadas de revisão** entre spec e plano, mais que os quatro blocos anteriores somados.
+Todas as reprovações foram de método, não de direção: medição feita fora das condições reais,
+e verificação que não sabia reprovar. Está em [aprendizados.md](aprendizados.md).
+
 ## Próximo passo
 
-**Escrever a spec do F5 — CI**: estilo, tipos e testes a cada mudança. Ele **espelha o
-contêiner, não o `.venv`** ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)), e herda
-do F4 uma exigência nova: a suíte do backend agora precisa de um banco **migrado**, não só
-alcançável.
+**Escrever a spec do M1.1 — Catálogo de ativos**, que abre o Marco 1 e é o primeiro código de
+domínio de verdade: lista de papéis da B3 com nome, setor e situação, base da busca.
 
-O F5 também tem um dono esperando: é a spec dele que escolhe a **ferramenta de estilo**
-(`ruff`? `prettier`? `eslint`?) — o F2b registrou a decisão de não escolher.
+Ele é o primeiro consumidor do que a Fundação deixou pronto — os esquemas e a convenção de
+migration do F4, o estilo e a CI do F5 — e o primeiro a povoar a camada `bronze`, que nasceu
+vazia.
 
-Depois do F5 fecha a Fundação, e começa o Marco 1 pelo M1.1 (catálogo de ativos), que é o
-primeiro consumidor dos esquemas e da convenção de migration que o F4 fixou.
+Duas coisas mudam de natureza a partir daqui. **O M1.1 tem tela?** Não: catálogo é dado, e a
+tela do ativo é o M1.6. Mas do M1.6 em diante vale o
+[portão de mockup](PROCESSO.md#7-portão-de-mockup), e o kit de marca ainda está incompleto —
+faltam estados de interação e modo escuro. **E a partir do M1.2 acaba a reversibilidade
+barata:** com preços dentro, mudar esquema, nome de tabela ou modelo de usuário passa a exigir
+migração de dados.
 
 ---
 
@@ -172,6 +218,7 @@ primeiro consumidor dos esquemas e da convenção de migration que o F4 fixou.
 | Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
 | **`createsuperuser` não funciona.** O gerente exige organização e o comando não tem como fornecê-la: pôr `organization` em `REQUIRED_FIELDS` faria o `create_superuser` receber a **chave crua**, porque `ForeignKey.clean` devolve a pk (`createsuperuser.py:150,233`). Falha com `ValueError: o usuario precisa de organizacao` | `backend/apps/accounts/managers.py`, comentado no próprio arquivo | **M2.1**, que constrói o fluxo de identidade e decide como um primeiro usuário nasce. Enquanto isso, criar usuário exige `shell` |
+| **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
 | **O EGARCH converge para outro ótimo em Linux, e isso muda veredito de backtesting.** Medido no F5, com o `requirements-lock.txt` e determinístico: 8 das 58 do motor reprovam num Linux limpo. O `garch_1_1` desvia ~1,4e-6 a 8e-6, no limiar da tolerância — aritmética de BLAS. O **EGARCH desvia ~1,2e-2**, emite `ConvergenceWarning: optimizer returned code 4`, e num backtesting o `passed` vira `False`, com 8 violações contra as 15 esperadas. O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows; `engine/src/engine/models/garch/_conditional.py` | **Trilha do TCC, antes da Etapa 6** — é ela que produz a Tabela 1 e o Capítulo 5, e o resultado do EGARCH depende de onde rodar. Enquanto isso, a CI roda o motor **sem** a linha de base ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)) |
 
 ## Aberto e aguardando decisão

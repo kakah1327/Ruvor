@@ -1,7 +1,7 @@
 # F5 — Integração contínua
 
 **Bloco:** Fundação · F5
-**Status:** ✅ **aprovada** (2026-09-06) — plano em escrita
+**Status:** ✅ **implementada e fechada** (2026-09-08) · plano em [`planos/F5-integracao-continua.md`](../planos/F5-integracao-continua.md)
 Três reprovações antes da aprovação, todas por erro de medição: contagem feita antes da
 formatação, piso de regras fixado sem remedir sob ele, e `ruff --isolated`, que usa a
 versão-alvo padrão de Python em vez da do projeto. Os números desta spec foram medidos sob o

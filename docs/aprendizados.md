@@ -430,3 +430,100 @@ organização" da ARQUITETURA, que ficou descrevendo no presente um mecanismo ad
 imediatamente todo texto que descreva a exigência antiga, e ponha cada um na lista. A
 pergunta que fecha o buraco é: *"que documento afirma um número, uma contagem ou um verbo no
 presente sobre o que eu acabei de mudar?"*
+
+## Medir com a ferramenta isolada da configuração não é medir o projeto
+
+**Quando:** ao contar violações, arquivos afetados ou qualquer número que vá virar critério de
+aceite — sobretudo com `ruff`, `mypy` ou linter que leia configuração do `pyproject.toml`.
+
+**Problema:** `ruff --isolated` ignora a configuração do projeto, **inclusive o
+`requires-python`**, e cai na versão-alvo padrão. Regras que dependem da versão de Python se
+calam. No F5, `UP042` não aparecia com `--isolated` e dispara no projeto real, porque
+`StrEnum` só existe a partir do 3.11 — e ela acusava código congelado pela D-21, com uma
+sugestão não equivalente.
+
+O mesmo vale para o **momento** da medição: contar lint antes de formatar infla o número, com
+violações que a formatação resolve. E para o **escopo**: `src` e `.` são conjuntos diferentes,
+e o comando do contrato usava `.` enquanto a medição usava `src`.
+
+**Faça:** meça sob a configuração real, no escopo do comando que vai para o contrato, e na
+ordem em que o bloco vai executar. Se o número vira critério de aceite, ele precisa ter sido
+medido nas condições em que o critério vai rodar — senão a tarefa reprova a si mesma.
+
+
+## Teste de reprovação que nunca foi aplicado não é teste
+
+**Quando:** ao escrever a tabela de mutações de um plano.
+
+**Problema:** três mutações deste projeto pareciam corretas na leitura e não reprovavam nada.
+Uma procurava serviço **ausente** no `compose` quando a mutação **acrescentava** um. Outra
+mandava alterar um arquivo antes de rodar a prova por árvore sintática — mas a prova captura a
+referência **depois** da edição, então a alteração está nos dois lados da comparação e ela sai
+0. A terceira era um `! grep` sobre cabeçalho de status, que já passava porque o texto tinha
+mudado por outro motivo.
+
+O padrão: a mutação precisa atacar o **instrumento**, e não o insumo, quando o que está sendo
+testado é a capacidade do instrumento de detectar.
+
+**Faça:** aplique cada mutação de verdade antes de escrevê-la como verificada, e apoie o
+resultado no **código de saída**. Uma mutação que passa é achado sobre o plano, não sobre o
+código.
+
+
+## `write_text()` no Windows converte o arquivo inteiro para CRLF, em silêncio
+
+**Quando:** ao editar arquivo versionado por script Python no Windows.
+
+**Problema:** `pathlib.Path.write_text()` usa a tradução de fim de linha do sistema, então
+`\n` vira `\r\n` e o arquivo inteiro muda de fim de linha — contra o `* text=auto eol=lf` do
+`.gitattributes`. O `git diff --stat` continua parecendo limpo, porque o git normaliza na
+leitura; a única pista é o aviso `CRLF will be replaced by LF`.
+
+**Faça:** `write_text(..., newline="")` ou `io.open(..., newline="")`. É irmã do verbete do
+`Set-Content -Encoding utf8`, com gatilho diferente: Python, não PowerShell.
+
+
+## Arquivo de configuração literal precisa passar pela própria ferramenta
+
+**Quando:** ao pôr conteúdo literal de configuração num plano — `biome.json`, `pyproject.toml`,
+qualquer coisa que a própria ferramenta também formate.
+
+**Problema:** o `biome.json` do plano do F5 tinha uma linha de 96 colunas declarando
+`lineWidth: 88`. Gravado como estava, o primeiro `biome check` reprovava o arquivo de
+configuração — e o critério de aceite da tarefa ficava insatisfazível.
+
+**Faça:** rode a ferramenta sobre o próprio arquivo antes de fechar o plano, e **prove que a
+configuração não mudou** — por igualdade profunda de estrutura, não por `diff` de texto.
+
+
+## Linha de base numérica não é portátil entre plataformas
+
+**Quando:** ao levar para outro sistema operacional qualquer teste que compare número contra
+valor gravado, com tolerância.
+
+**Problema:** arquivo de travamento congela **versão, não plataforma**. `numpy`, `scipy` e
+`arch` usam bibliotecas de álgebra e ordem de redução diferentes em Linux e Windows. Onde há
+otimização iterativa, a diferença se amplifica: no F5, o `garch_1_1` desviou ~1e-6, no limiar
+da tolerância, e o **EGARCH desviou ~1,2e-2, convergindo para outro ótimo** e mudando o
+veredito de um backtesting.
+
+Pior que o número: a mensagem do teste dizia *"se a comparação divergir, o defeito está na
+migração"* — apontando para um bloco que não tinha nada a ver.
+
+**Faça:** trate linha de base numérica como referência **do ambiente em que foi capturada**, e
+não como portão entre ambientes. Se a CI precisar rodá-la, ou o ambiente é reproduzido por
+inteiro — inclusive plataforma —, ou a exclusão é declarada com o número real de testes que
+deixam de rodar.
+
+
+## Lista fechada escrita como "esta frase fica falsa" vira "esta frase não pode existir"
+
+**Quando:** ao escrever varredura de documentação com `! grep`.
+
+**Problema:** o critério `! grep -q "A CI espelha o contêiner"` obriga a frase a sumir do
+arquivo — **inclusive de uma redação que a restrinja corretamente**. Quem for corrigir o
+documento não pode citar o texto antigo nem para explicar o que mudou.
+
+**Faça:** ao escrever a lista, pergunte se o trecho precisa **sumir** ou apenas **deixar de ser
+afirmado**. No segundo caso, o padrão tem de ser mais estreito que a frase — ou a verificação
+vira proibição de vocabulário.
