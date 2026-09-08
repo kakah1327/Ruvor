@@ -46,9 +46,7 @@ export function findLiteralColors(root: string): string[] {
       for (const [label, pattern] of PATTERNS) {
         const match = pattern.exec(line);
         if (match) {
-          findings.push(
-            `${relative(root, file)}:${index + 1} ${label}: ${match[0]}`,
-          );
+          findings.push(`${relative(root, file)}:${index + 1} ${label}: ${match[0]}`);
         }
       }
     });
