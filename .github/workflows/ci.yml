@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# timeout-minutes em todos: o repositorio e privado, a cota mensal vale, e um job
+# pendurado a consome inteira. O `motor` baixa TensorFlow e tem folga maior.
+jobs:
+  estilo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.12" }
+      # A versao sai do pyproject, nao daqui: numero repetido diverge em silencio (D-43).
+      - run: |
+          RUFF=$(python -c "import tomllib;d=tomllib.load(open('backend/pyproject.toml','rb'));\
+          print(next(x for x in d['project']['optional-dependencies']['dev'] if x.startswith('ruff')))")
+          pip install "$RUFF"
+      - run: cd backend && ruff check . && ruff format --check .
+      - run: cd engine && ruff check . && ruff format --check .
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - run: cp .env.example .env
+      - run: docker compose up -d --wait web
+      - run: docker compose exec -T web python manage.py migrate
+      - run: docker compose exec -T web pytest tests
+      - run: docker compose exec -T web mypy
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - run: cp .env.example .env
+      - run: docker compose up -d --wait frontend
+      - run: docker compose exec -T frontend npm run lint
+      - run: docker compose exec -T frontend npm test
+      - run: docker compose exec -T frontend npm run typecheck
+      - run: docker compose exec -T frontend npm run build
+
+  motor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with: { python-version: "3.12" }
+      - run: pip install -r engine/requirements-lock.txt
+      - run: pip install -e "./engine[all]" -c engine/requirements-lock.txt
+      # Sem a linha de base: ela nao e portatil entre plataformas -- 8 das 58
+      # reprovam em Linux, e o EGARCH converge para outro otimo. Medido na T5.
+      - run: pytest engine/tests --ignore=engine/tests/baseline
+      - run: cd engine && mypy
