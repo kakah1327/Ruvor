@@ -3,6 +3,7 @@ centrado (Hit_t) sobre suas defasagens e o VaR contemporaneo, e testa se os coef
 sao conjuntamente zero (teste de Wald) — captura tanto cobertura incondicional quanto
 dependencia temporal nas violacoes, num unico teste.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -18,7 +19,9 @@ N_LAGS = 4
 
 @register_backtest("dq")
 class DynamicQuantileTest(BacktestTest):
-    def run(self, returns: pd.Series, var_series: pd.Series, alpha: float) -> BacktestResult:
+    def run(
+        self, returns: pd.Series, var_series: pd.Series, alpha: float
+    ) -> BacktestResult:
         hit = (returns < -var_series).astype(float) - alpha
         n = len(hit)
         n_regressors = N_LAGS + 2  # constante + N_LAGS defasagens + VaR contemporaneo

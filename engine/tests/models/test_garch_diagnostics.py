@@ -4,6 +4,7 @@ rugarch (ver tools/garch_rcheck/) e feita a parte, manualmente — estes testes 
 mesmos criterios de "resultados esperados" da Etapa 2 que dao pra automatizar sem R:
 parametros convergentes e residuos padronizados bem distribuidos.
 """
+
 from __future__ import annotations
 
 import numpy as np

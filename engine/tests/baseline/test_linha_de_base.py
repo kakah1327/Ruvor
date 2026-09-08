@@ -8,6 +8,7 @@ treino e `estimate_var` sobre o teste, com o mesmo alinhamento que
 `engine/experiments/runner.py` faz antes dos backtests. `run_experiment` nao e usado
 porque exige um provider de dados.
 """
+
 from __future__ import annotations
 
 import json
@@ -70,7 +71,9 @@ def _resultado(nome: str, alpha: float) -> tuple[pd.Series, dict]:
 
 
 def _proximo(obtido: float, esperado: float) -> bool:
-    return abs(obtido - esperado) <= max(TOLERANCIA_RELATIVA * abs(esperado), PISO_ABSOLUTO)
+    return abs(obtido - esperado) <= max(
+        TOLERANCIA_RELATIVA * abs(esperado), PISO_ABSOLUTO
+    )
 
 
 @pytest.mark.parametrize("chave", list(ENTRADAS))

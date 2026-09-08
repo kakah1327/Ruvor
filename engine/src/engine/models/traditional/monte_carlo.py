@@ -2,6 +2,7 @@
 cenarios para estimar o quantil de perdas, em vez de usar a formula fechada do metodo
 parametrico.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -24,13 +25,17 @@ class MonteCarloVaR(VaRModel):
         self.sigma_ = returns.std(ddof=1)
         return self
 
-    def estimate_var(self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1) -> VaREstimate:
+    def estimate_var(
+        self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
+    ) -> VaREstimate:
         rng = np.random.default_rng(self.random_state)
         mu_h = self.mu_ * horizon
-        sigma_h = self.sigma_ * (horizon ** 0.5)
+        sigma_h = self.sigma_ * (horizon**0.5)
 
         simulated_returns = rng.normal(mu_h, sigma_h, size=self.n_simulations)
         var_value = -np.quantile(simulated_returns, alpha)
 
         var_series = pd.Series(var_value, index=returns.index)
-        return VaREstimate(var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name)
+        return VaREstimate(
+            var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name
+        )

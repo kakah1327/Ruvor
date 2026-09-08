@@ -17,6 +17,7 @@ O grid search cobre so `units` e `n_layers` (nao `learning_rate`/`batch_size`, f
 decisao consciente de escopo computacional: o fit e' por alpha, e cada combinacao do grid
 custa uma rodada de treino inteira.
 """
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -73,7 +74,10 @@ class QuantileNeuralVaR(VaRModel):
         return x, y
 
     def _compile(self, model: keras.Model, alpha: float) -> keras.Model:
-        model.compile(optimizer=keras.optimizers.Adam(self.LEARNING_RATE), loss=_pinball_loss(alpha))
+        model.compile(
+            optimizer=keras.optimizers.Adam(self.LEARNING_RATE),
+            loss=_pinball_loss(alpha),
+        )
         return model
 
     def _fit_for_alpha(self, alpha: float) -> dict:
@@ -86,9 +90,13 @@ class QuantileNeuralVaR(VaRModel):
         best_config, best_val_loss = None, np.inf
         for units in self.GRID["units"]:
             for n_layers in self.GRID["n_layers"]:
-                candidate = self._compile(self._build_model(n_features, units, n_layers), alpha)
+                candidate = self._compile(
+                    self._build_model(n_features, units, n_layers), alpha
+                )
                 early_stop = keras.callbacks.EarlyStopping(
-                    monitor="val_loss", patience=self.PATIENCE, restore_best_weights=True
+                    monitor="val_loss",
+                    patience=self.PATIENCE,
+                    restore_best_weights=True,
                 )
                 history = candidate.fit(
                     x_train,
@@ -105,11 +113,22 @@ class QuantileNeuralVaR(VaRModel):
 
         units, n_layers = best_config
         model = self._compile(self._build_model(n_features, units, n_layers), alpha)
-        early_stop = keras.callbacks.EarlyStopping(monitor="loss", patience=self.PATIENCE, restore_best_weights=True)
-        model.fit(x, y, epochs=self.SEARCH_EPOCHS, batch_size=self.BATCH_SIZE, callbacks=[early_stop], verbose=0)
+        early_stop = keras.callbacks.EarlyStopping(
+            monitor="loss", patience=self.PATIENCE, restore_best_weights=True
+        )
+        model.fit(
+            x,
+            y,
+            epochs=self.SEARCH_EPOCHS,
+            batch_size=self.BATCH_SIZE,
+            callbacks=[early_stop],
+            verbose=0,
+        )
         return {"model": model, "config": best_config}
 
-    def estimate_var(self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1) -> VaREstimate:
+    def estimate_var(
+        self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
+    ) -> VaREstimate:
         if alpha not in self._fitted:
             self._fitted[alpha] = self._fit_for_alpha(alpha)
         model = self._fitted[alpha]["model"]
@@ -117,14 +136,18 @@ class QuantileNeuralVaR(VaRModel):
         full_returns = pd.concat([self.train_returns_, returns])
         n_train = len(self.train_returns_)
         x_full, y_full = self._windows_and_targets(full_returns)
-        test_start_window = n_train - self.WINDOW  # janela i preve o dia (WINDOW + i) da serie completa
+        test_start_window = (
+            n_train - self.WINDOW
+        )  # janela i preve o dia (WINDOW + i) da serie completa
 
         predicted = np.empty(len(returns))
         pos = 0
         while pos < len(returns):
             chunk_end = min(pos + self.REFIT_FREQUENCY_DAYS, len(returns))
             window_slice = slice(test_start_window + pos, test_start_window + chunk_end)
-            predicted[pos:chunk_end] = model.predict(x_full[window_slice], verbose=0).flatten()
+            predicted[pos:chunk_end] = model.predict(
+                x_full[window_slice], verbose=0
+            ).flatten()
 
             pos = chunk_end
             if pos < len(returns):
@@ -138,5 +161,9 @@ class QuantileNeuralVaR(VaRModel):
                     verbose=0,
                 )
 
-        var_series = pd.Series(np.maximum(-predicted, 0) * (horizon**0.5), index=returns.index)
-        return VaREstimate(var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name)
+        var_series = pd.Series(
+            np.maximum(-predicted, 0) * (horizon**0.5), index=returns.index
+        )
+        return VaREstimate(
+            var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name
+        )

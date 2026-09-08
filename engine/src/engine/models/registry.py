@@ -14,6 +14,7 @@ models/garch ou models/ml:
 Depois disso `list_models()` e `get_model("meu_modelo")` ja enxergam a classe nova,
 sem precisar editar web/, cli.py ou experiments/runner.py.
 """
+
 from __future__ import annotations
 
 from typing import Type

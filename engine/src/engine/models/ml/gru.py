@@ -3,6 +3,7 @@ alpha diretamente via pinball loss), trocando a celula recorrente por GRU -- men
 parametros, custo de treino menor, desempenho competitivo em series curtas (Cho et al.,
 2014). Ver engine/models/ml/_quantile_nn.py para a logica compartilhada.
 """
+
 from __future__ import annotations
 
 import numpy as np

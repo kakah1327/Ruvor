@@ -4,6 +4,7 @@ Duas verificacoes, porque nenhuma sozinha fecha o buraco:
 - inspecao em execucao pega import em nivel de modulo
 - varredura estatica pega import diferido, dentro do corpo de funcao
 """
+
 from __future__ import annotations
 
 import ast

@@ -1,4 +1,5 @@
 """Limpeza de precos e calculo de retornos — usado por todos os modelos, independente da fonte."""
+
 from __future__ import annotations
 
 import numpy as np

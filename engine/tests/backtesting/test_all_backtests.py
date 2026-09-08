@@ -1,6 +1,7 @@
 """1 teste parametrizado cobre TODO teste de backtesting registrado — novo teste
 adicionado em engine/backtesting/*.py passa a ser validado aqui automaticamente.
 """
+
 import pytest
 
 from engine.backtesting import get_backtest, list_backtests, load_all_backtest_modules

@@ -5,6 +5,7 @@ Um teste de backtesting so conhece `returns` (retornos realizados) e `var_series
 esta camada totalmente desacoplada de engine.models: testar um modelo novo com Kupiec
 nao exige nenhuma mudanca aqui.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -27,5 +28,7 @@ class BacktestTest(ABC):
     name: str
 
     @abstractmethod
-    def run(self, returns: pd.Series, var_series: pd.Series, alpha: float) -> BacktestResult:
+    def run(
+        self, returns: pd.Series, var_series: pd.Series, alpha: float
+    ) -> BacktestResult:
         """Compara violacoes (returns < -var_series) contra o esperado pelo teste."""

@@ -2,6 +2,7 @@
 independentes ao longo do tempo (nao-clusterizadas), via cadeia de Markov de 1a ordem
 sobre o indicador de violacao. Complementa o Kupiec, que so testa a taxa incondicional.
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -17,7 +18,9 @@ SIGNIFICANCE = 0.05
 
 @register_backtest("christoffersen")
 class ChristoffersenTest(BacktestTest):
-    def run(self, returns: pd.Series, var_series: pd.Series, alpha: float) -> BacktestResult:
+    def run(
+        self, returns: pd.Series, var_series: pd.Series, alpha: float
+    ) -> BacktestResult:
         indicator = (returns < -var_series).astype(int)
         prev, curr = indicator.iloc[:-1].to_numpy(), indicator.iloc[1:].to_numpy()
 
@@ -32,7 +35,10 @@ class ChristoffersenTest(BacktestTest):
 
         log_l_null = xlogy(n00 + n10, 1 - pi) + xlogy(n01 + n11, pi)
         log_l_alt = (
-            xlogy(n00, 1 - pi_01) + xlogy(n01, pi_01) + xlogy(n10, 1 - pi_11) + xlogy(n11, pi_11)
+            xlogy(n00, 1 - pi_01)
+            + xlogy(n01, pi_01)
+            + xlogy(n10, 1 - pi_11)
+            + xlogy(n11, pi_11)
         )
         lr_ind = -2 * (log_l_null - log_l_alt)
         p_value = 1 - chi2.cdf(lr_ind, df=1)

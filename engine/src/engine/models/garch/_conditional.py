@@ -17,6 +17,7 @@ curta e a unica sem alternativa de usar mais dados) ainda pode reincidir nesse c
 antes do proximo reajuste. Por isso ha tambem um piso minimo de seguranca em `sigma`,
 baseado no desvio-padrao historico do treino — so entra em acao nesse cenario extremo.
 """
+
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -43,7 +44,9 @@ class ConditionalVolatilityVaR(VaRModel):
         """kwargs especificos do tipo de volatilidade (vol='GARCH'/'EGARCH', o=0/1 etc)."""
 
     def _fit_arch(self, returns_scaled: pd.Series):
-        model = arch_model(returns_scaled, mean="Zero", dist=self.dist, **self._arch_kwargs())
+        model = arch_model(
+            returns_scaled, mean="Zero", dist=self.dist, **self._arch_kwargs()
+        )
         return model.fit(disp="off")
 
     def fit(self, returns: pd.Series) -> "ConditionalVolatilityVaR":
@@ -68,7 +71,10 @@ class ConditionalVolatilityVaR(VaRModel):
             chunk_end = min(pos + self.REFIT_FREQUENCY_DAYS, len(returns))
 
             model = arch_model(
-                full_returns.iloc[: n_train + chunk_end], mean="Zero", dist=self.dist, **self._arch_kwargs()
+                full_returns.iloc[: n_train + chunk_end],
+                mean="Zero",
+                dist=self.dist,
+                **self._arch_kwargs(),
             )
             fixed = model.fix(params)
             forecast = fixed.forecast(start=n_train + pos, horizon=1, reindex=False)
@@ -81,13 +87,19 @@ class ConditionalVolatilityVaR(VaRModel):
                 # janela expansiva: reestima com todo o dado conhecido ate aqui p/ o proximo bloco
                 params = self._fit_arch(full_returns.iloc[: n_train + pos]).params
 
-        sigma_h = sigma_1d * (horizon ** 0.5)  # aproximacao p/ horizon > 1 (padrao da plataforma e 1 dia)
+        sigma_h = sigma_1d * (
+            horizon**0.5
+        )  # aproximacao p/ horizon > 1 (padrao da plataforma e 1 dia)
         return pd.Series(sigma_h, index=returns.index)
 
-    def estimate_var(self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1) -> VaREstimate:
+    def estimate_var(
+        self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
+    ) -> VaREstimate:
         sigma_h = self._sigma_path(returns, horizon=horizon)
         var_series = -norm.ppf(alpha) * sigma_h
-        return VaREstimate(var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name)
+        return VaREstimate(
+            var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name
+        )
 
     def full_sigma_series(self, full_returns: pd.Series, horizon: int = 1) -> pd.Series:
         """Serie de sigma cobrindo TODO `full_returns`, que deve comecar exatamente onde
@@ -99,7 +111,8 @@ class ConditionalVolatilityVaR(VaRModel):
         """
         n_train = len(self.train_returns_)
         train_sigma = pd.Series(
-            self.result_.conditional_volatility / SCALE, index=full_returns.index[:n_train]
+            self.result_.conditional_volatility / SCALE,
+            index=full_returns.index[:n_train],
         ) * (horizon**0.5)
 
         test_part = full_returns.iloc[n_train:]

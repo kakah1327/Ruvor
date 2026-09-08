@@ -1,6 +1,7 @@
 """Teste de Kupiec (1995) — Proportion of Failures (POF): compara a taxa de violacoes
 observada contra a esperada por `alpha`, via razao de verossimilhancas qui-quadrado(1).
 """
+
 from __future__ import annotations
 
 import pandas as pd
@@ -22,7 +23,9 @@ def unconditional_coverage_lr(x: int, n: int, alpha: float) -> float:
 
 @register_backtest("kupiec")
 class KupiecTest(BacktestTest):
-    def run(self, returns: pd.Series, var_series: pd.Series, alpha: float) -> BacktestResult:
+    def run(
+        self, returns: pd.Series, var_series: pd.Series, alpha: float
+    ) -> BacktestResult:
         violations = returns < -var_series
         n, x = len(violations), int(violations.sum())
 

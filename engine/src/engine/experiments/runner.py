@@ -2,6 +2,7 @@
 CLI/notebooks, sem nenhuma dependencia do Flask — a interface e so mais um consumidor
 desta camada (Etapa 6: experimento comparativo).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -73,22 +74,35 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
         try:
             model = get_model(model_name)().fit(train_returns)
         except Exception as exc:  # noqa: BLE001 - isola falha de 1 modelo do restante
-            runs.extend(ModelRunResult(model_name=model_name, alpha=a, error=str(exc)) for a in config.alphas)
+            runs.extend(
+                ModelRunResult(model_name=model_name, alpha=a, error=str(exc))
+                for a in config.alphas
+            )
             continue
 
         for alpha in config.alphas:
             try:
-                estimate = model.estimate_var(test_returns, alpha=alpha, horizon=config.horizon)
+                estimate = model.estimate_var(
+                    test_returns, alpha=alpha, horizon=config.horizon
+                )
 
-                aligned_returns = test_returns.reindex(estimate.var_series.index).dropna()
+                aligned_returns = test_returns.reindex(
+                    estimate.var_series.index
+                ).dropna()
                 var_series = estimate.var_series.reindex(aligned_returns.index)
 
                 backtests = [
                     get_backtest(bt_name)().run(aligned_returns, var_series, alpha)
                     for bt_name in config.backtest_names
                 ]
-                runs.append(ModelRunResult(model_name=model_name, alpha=alpha, backtests=backtests))
+                runs.append(
+                    ModelRunResult(
+                        model_name=model_name, alpha=alpha, backtests=backtests
+                    )
+                )
             except Exception as exc:  # noqa: BLE001 - isola falha de 1 (modelo, alpha) do restante
-                runs.append(ModelRunResult(model_name=model_name, alpha=alpha, error=str(exc)))
+                runs.append(
+                    ModelRunResult(model_name=model_name, alpha=alpha, error=str(exc))
+                )
 
     return ExperimentResult(config=config, runs=runs)

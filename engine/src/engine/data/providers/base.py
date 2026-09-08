@@ -1,4 +1,5 @@
 """Interface comum a qualquer fonte de dados de precos (yfinance, CSV, outra API...)."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

@@ -5,6 +5,7 @@ neural) como representante -- LSTM/GRU/GARCHNet compartilham a mesma base
 (QuantileNeuralVaR) e ja sao exercitados pelo teste generico; repetir aqui multiplicaria o
 tempo da suite sem ganho de sinal proporcional.
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Interface comum que todo modelo de VaR (tradicional, GARCH ou ML) deve implementar."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -41,7 +42,9 @@ class VaRModel(ABC):
         """Ajusta o modelo a uma serie de retornos historicos (janela de treino)."""
 
     @abstractmethod
-    def estimate_var(self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1) -> VaREstimate:
+    def estimate_var(
+        self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
+    ) -> VaREstimate:
         """Retorna as estimativas de VaR alinhadas ao indice de `returns` (periodo de teste).
 
         `returns` aqui serve para o modelo saber PARA QUAIS DATAS gerar a serie de VaR —

@@ -1,6 +1,7 @@
 """GARCH(1,1) (Bollerslev, 1986): a variancia condicional depende do choque e da propria
 variancia do periodo anterior, capturando volatility clustering — VaR dinamico = z_alpha * sigma_t.
 """
+
 from __future__ import annotations
 
 from engine.models.base import ModelCategory

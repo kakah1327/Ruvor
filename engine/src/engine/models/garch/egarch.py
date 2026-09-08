@@ -2,6 +2,7 @@
 log) reage de forma diferente a choques negativos e positivos (leverage effect), sem
 exigir restricoes de nao-negatividade nos parametros.
 """
+
 from __future__ import annotations
 
 from engine.models.base import ModelCategory

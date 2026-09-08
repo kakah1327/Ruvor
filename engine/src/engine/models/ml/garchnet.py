@@ -3,6 +3,7 @@ condicional do GARCH(1,1) ja implementado (Etapa 2, `engine.models.garch.garch_1
 feature de entrada extra pra uma LSTM que preve o quantil de VaR diretamente via pinball
 loss, aprendendo uma correcao nao-linear sobre a estimativa GARCH.
 """
+
 from __future__ import annotations
 
 import numpy as np

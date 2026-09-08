@@ -5,6 +5,7 @@ nao-convexo -- mesma pratica usada no artigo original). `statsmodels.QuantReg` N
 suporta essa especificacao: o termo recursivo VaR_{t-1} nao e uma variavel observada, e a
 propria saida do modelo, o que QuantReg (regressao quantilica estatica/linear) nao modela.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -18,7 +19,9 @@ REFIT_FREQUENCY_DAYS = 252  # mesma cadencia do GARCH (Etapa 2)
 N_RESTARTS = 10
 
 
-def _propagate(beta: np.ndarray, returns: np.ndarray, f0: float, r0: float) -> np.ndarray:
+def _propagate(
+    beta: np.ndarray, returns: np.ndarray, f0: float, r0: float
+) -> np.ndarray:
     f = np.empty(len(returns))
     f_prev, r_prev = f0, r0
     for t in range(len(returns)):
@@ -28,7 +31,9 @@ def _propagate(beta: np.ndarray, returns: np.ndarray, f0: float, r0: float) -> n
     return f
 
 
-def _pinball_loss(beta: np.ndarray, returns: np.ndarray, f0: float, alpha: float) -> float:
+def _pinball_loss(
+    beta: np.ndarray, returns: np.ndarray, f0: float, alpha: float
+) -> float:
     f = _propagate(beta, returns, f0, 0.0)
     err = returns + f  # quer P(r_t < -f_t) = alpha
     return float(np.mean(np.maximum(alpha * err, (alpha - 1) * err)))
@@ -43,13 +48,17 @@ def _fit_beta(returns: np.ndarray, f0: float, alpha: float, seed: int) -> np.nda
     for _ in range(N_RESTARTS):
         x0 = np.array([f0 * 0.05, 0.85, 0.05]) + rng.normal(0, 0.02, 3)
         with np.errstate(over="ignore", invalid="ignore"):
-            result = minimize(_pinball_loss, x0, args=(returns, f0, alpha), method="Nelder-Mead")
+            result = minimize(
+                _pinball_loss, x0, args=(returns, f0, alpha), method="Nelder-Mead"
+            )
         if not np.isfinite(result.fun):
             continue
         if best is None or result.fun < best.fun:
             best = result
     if best is None:
-        raise RuntimeError(f"CAViaR: nenhum dos {N_RESTARTS} restarts convergiu para alpha={alpha}")
+        raise RuntimeError(
+            f"CAViaR: nenhum dos {N_RESTARTS} restarts convergiu para alpha={alpha}"
+        )
     return best.x
 
 
@@ -70,7 +79,9 @@ class CaviarVaR(VaRModel):
             self._initial_fit[alpha] = (beta, f0)
         return self._initial_fit[alpha]
 
-    def estimate_var(self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1) -> VaREstimate:
+    def estimate_var(
+        self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
+    ) -> VaREstimate:
         beta, f0 = self._initial_beta(alpha)
         full_returns = pd.concat([self.train_returns_, returns]).to_numpy()
         n_train = len(self.train_returns_)
@@ -91,7 +102,13 @@ class CaviarVaR(VaRModel):
                 # janela expansiva: reajusta beta com todo o dado conhecido ate aqui
                 history = full_returns[: n_train + pos]
                 f0_refit = -np.quantile(history, alpha)
-                beta = _fit_beta(history, f0_refit, alpha, seed=int(alpha * 10000) + pos)
+                beta = _fit_beta(
+                    history, f0_refit, alpha, seed=int(alpha * 10000) + pos
+                )
 
-        var_series = pd.Series(np.maximum(var_values, 0) * (horizon**0.5), index=returns.index)
-        return VaREstimate(var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name)
+        var_series = pd.Series(
+            np.maximum(var_values, 0) * (horizon**0.5), index=returns.index
+        )
+        return VaREstimate(
+            var_series=var_series, alpha=alpha, horizon=horizon, model_name=self.name
+        )

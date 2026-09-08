@@ -2,6 +2,7 @@
 independentes -- nao so a interface (ja coberta por test_all_models.py). Fecha o gap
 identificado na Matriz de Validacao: "Resultados validados contra calculos de referencia."
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -33,7 +34,9 @@ def test_parametric_matches_closed_form_reference(train_test_returns):
     estimate = model.estimate_var(test, alpha=alpha, horizon=1)
 
     assert estimate.var_series.iloc[0] == pytest.approx(expected)
-    assert (estimate.var_series == estimate.var_series.iloc[0]).all()  # estatico: 1 valor p/ toda a serie
+    assert (
+        estimate.var_series == estimate.var_series.iloc[0]
+    ).all()  # estatico: 1 valor p/ toda a serie
 
 
 def test_historical_matches_independent_empirical_quantile(train_test_returns):

@@ -1,4 +1,5 @@
 """Registro central de testes de backtesting — mesmo padrao de engine.models.registry."""
+
 from __future__ import annotations
 
 from typing import Type
@@ -38,7 +39,9 @@ def _load_all_backtest_modules() -> None:
 
     import engine.backtesting as backtesting_pkg
 
-    for _, module_name, _ in pkgutil.iter_modules(backtesting_pkg.__path__, backtesting_pkg.__name__ + "."):
+    for _, module_name, _ in pkgutil.iter_modules(
+        backtesting_pkg.__path__, backtesting_pkg.__name__ + "."
+    ):
         if module_name.rsplit(".", 1)[-1] in {"base", "registry"}:
             continue
         importlib.import_module(module_name)

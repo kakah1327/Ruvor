@@ -2,6 +2,7 @@
 ja e coberta por test_all_backtests.py), com series construidas para ter um numero de
 violacoes conhecido de antemao.
 """
+
 from __future__ import annotations
 
 import math
@@ -31,7 +32,9 @@ def _constant_var_series(n: int, value: float = 1.0) -> pd.Series:
     return pd.Series(value, index=pd.RangeIndex(n))
 
 
-def _returns_with_violations_at(n: int, violation_idx, var_value: float = 1.0) -> pd.Series:
+def _returns_with_violations_at(
+    n: int, violation_idx, var_value: float = 1.0
+) -> pd.Series:
     returns = pd.Series(0.0, index=pd.RangeIndex(n))
     returns.iloc[list(violation_idx)] = -2 * var_value
     return returns
@@ -42,13 +45,17 @@ def _returns_with_violations_at(n: int, violation_idx, var_value: float = 1.0) -
 
 def test_kupiec_matches_independent_reference_formula():
     x, n, alpha = 10, 100, 0.05
-    assert unconditional_coverage_lr(x, n, alpha) == pytest.approx(_reference_lr_uc(x, n, alpha))
+    assert unconditional_coverage_lr(x, n, alpha) == pytest.approx(
+        _reference_lr_uc(x, n, alpha)
+    )
 
 
 def test_kupiec_rejects_excess_violations():
     n, alpha = 100, 0.05
     var_series = _constant_var_series(n)
-    returns = _returns_with_violations_at(n, range(20), var_series.iloc[0])  # 20% vs 5% esperado
+    returns = _returns_with_violations_at(
+        n, range(20), var_series.iloc[0]
+    )  # 20% vs 5% esperado
 
     result = KupiecTest().run(returns, var_series, alpha)
 
@@ -60,7 +67,9 @@ def test_kupiec_rejects_excess_violations():
 def test_kupiec_accepts_expected_violation_rate():
     n, alpha = 200, 0.05
     var_series = _constant_var_series(n)
-    returns = _returns_with_violations_at(n, range(10), var_series.iloc[0])  # exatos 5% de 200
+    returns = _returns_with_violations_at(
+        n, range(10), var_series.iloc[0]
+    )  # exatos 5% de 200
 
     result = KupiecTest().run(returns, var_series, alpha)
 
@@ -74,7 +83,9 @@ def test_kupiec_accepts_expected_violation_rate():
 def test_christoffersen_rejects_clustered_violations():
     n, alpha = 200, 0.05
     var_series = _constant_var_series(n)
-    clustered = list(range(0, 10)) + list(range(100, 110))  # 2 blocos de 10 consecutivas
+    clustered = list(range(0, 10)) + list(
+        range(100, 110)
+    )  # 2 blocos de 10 consecutivas
     returns = _returns_with_violations_at(n, clustered, var_series.iloc[0])
 
     result = ChristoffersenTest().run(returns, var_series, alpha)

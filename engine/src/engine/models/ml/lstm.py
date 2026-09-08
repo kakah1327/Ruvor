@@ -3,6 +3,7 @@ diretamente via pinball loss (nao assume normalidade), a partir de uma janela de
 de retornos e retornos absolutos. Ver engine/models/ml/_quantile_nn.py para a logica
 compartilhada (fit preguicoso por alpha, grid search, walk-forward com reajuste periodico).
 """
+
 from __future__ import annotations
 
 import numpy as np

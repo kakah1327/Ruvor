@@ -1,4 +1,5 @@
 """Provider de dados via yfinance — ativos da B3 (ex: PETR4.SA, VALE3.SA, ITUB4.SA, ^BVSP)."""
+
 from __future__ import annotations
 
 import pandas as pd
@@ -12,7 +13,9 @@ class YFinanceProvider(DataProvider):
 
         df = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=True)
         if df.empty:
-            raise ValueError(f"Nenhum dado retornado para '{ticker}' entre {start} e {end}")
+            raise ValueError(
+                f"Nenhum dado retornado para '{ticker}' entre {start} e {end}"
+            )
 
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
