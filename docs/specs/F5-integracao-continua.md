@@ -86,7 +86,7 @@ sem rede é entrar acumulando risco que ninguém mede.
 | **F5-01** | Um push na `main` dispara a CI, e os quatro trabalhos **executam até o fim** — cada um chegando aos seus comandos de verificação, e não abortando na preparação do ambiente. O **resultado** deles pode ser vermelho: ver [se reprovar](#se-a-primeira-execução-reprovar) |
 | **F5-02** | O backend é verificado **dentro do contêiner**, contra um banco **migrado** |
 | **F5-03** | O frontend é verificado na **imagem do frontend**, não no Node do runner |
-| **F5-04** | O motor é verificado com as extras completas: a suíte **menos a linha de base** — 50 testes — e o mypy dele. A exclusão é medida e justificada em [a linha de base não é portátil](#a-linha-de-base-não-é-portátil-entre-plataformas) |
+| **F5-04** | O motor é verificado com as extras completas: a suíte **menos a linha de base** — **34** testes — e o mypy dele. A exclusão é medida e justificada em [a linha de base não é portátil](#a-linha-de-base-não-é-portátil-entre-plataformas) |
 | **F5-05** | A imagem `worker` **não** é construída em nenhum trabalho da CI |
 | **F5-06** | `ruff` — lint **e** formatação — passa em `backend/` e em `engine/`, com conjunto de regras **explícito** |
 | **F5-07** | `biome` — lint **e** formatação — passa em `frontend/` |
@@ -518,7 +518,7 @@ que o passo FECHA existe para impedir.
 | **F5-01** | Um push real na `main` dispara a execução, e ela **executa até o fim** com o resultado registrado — ver [se reprovar](#se-a-primeira-execução-reprovar). É o único requisito que não se prova localmente |
 | **F5-02** | O trabalho do backend sobe `web` pelo `compose`, roda `migrate` e então `pytest` e `mypy`; os 16 testes passam |
 | **F5-03** | O trabalho do frontend roda os **quatro** comandos dentro do contêiner `frontend` — `lint` incluído |
-| **F5-04** | O trabalho do motor coleta e executa **58** testes e o mypy do `engine/` |
+| **F5-04** | O trabalho do motor coleta e executa **34** testes e o mypy do `engine/` |
 | **F5-05** | Depois da execução, `docker image ls` **não** contém `ruvor-worker`. Lista fechada, não amostra |
 | **F5-06** | `ruff check` e `ruff format --check` saem 0 nos dois projetos, com o conjunto declarado no `pyproject.toml` cobrindo o piso — **com as duas exceções nomeadas por esta spec, e nenhuma outra:** `E501` fora do piso nos dois projetos, e `UP042` ignorada em `engine/` |
 | **F5-07** | `npm run lint` sai 0 dentro do contêiner do frontend |
@@ -727,8 +727,14 @@ ambiente fixado pelo `requirements-lock.txt` — o lock congela versão, não pl
 como portão entre sistemas operacionais nunca foi o desenho dela, e um trabalho que reprova
 em toda execução é alarme que ninguém olha.
 
-Os outros **50** testes do motor seguem guardando, e a linha de base continua valendo onde
-sempre valeu: no ambiente em que foi capturada. **A divergência vira dívida registrada**, com
+Os outros **34** testes do motor seguem guardando, e a linha de base continua valendo onde
+sempre valeu: no ambiente em que foi capturada.
+
+**A exclusão é mais grossa que o problema, e isso precisa estar dito.** Reprovam **8**, mas o
+`--ignore` retira o **diretório inteiro**, que tem **24** — então 16 testes da linha de base
+que passariam em Linux deixam de rodar. Excluir só as 8 exigiria marcá-las uma a uma dentro
+de `engine/tests/baseline/`, o que é mexer no instrumento da prova para acomodar um achado
+sobre o motor. A conta honesta é 58 − 24 = **34**, e é esse o número que a CI coleta. **A divergência vira dívida registrada**, com
 dono na trilha do TCC — antes da Etapa 6, que é quem produz a Tabela 1 e o Capítulo 5.
 
 ### O que a CI não vai pegar
