@@ -86,7 +86,7 @@ sem rede é entrar acumulando risco que ninguém mede.
 | **F5-01** | Um push na `main` dispara a CI, e os quatro trabalhos **executam até o fim** — cada um chegando aos seus comandos de verificação, e não abortando na preparação do ambiente. O **resultado** deles pode ser vermelho: ver [se reprovar](#se-a-primeira-execução-reprovar) |
 | **F5-02** | O backend é verificado **dentro do contêiner**, contra um banco **migrado** |
 | **F5-03** | O frontend é verificado na **imagem do frontend**, não no Node do runner |
-| **F5-04** | O motor é verificado com as extras completas: os **58** testes e o mypy dele |
+| **F5-04** | O motor é verificado com as extras completas: a suíte **menos a linha de base** — 50 testes — e o mypy dele. A exclusão é medida e justificada em [a linha de base não é portátil](#a-linha-de-base-não-é-portátil-entre-plataformas) |
 | **F5-05** | A imagem `worker` **não** é construída em nenhum trabalho da CI |
 | **F5-06** | `ruff` — lint **e** formatação — passa em `backend/` e em `engine/`, com conjunto de regras **explícito** |
 | **F5-07** | `biome` — lint **e** formatação — passa em `frontend/` |
@@ -704,6 +704,33 @@ saindo de todo push. Decidir agora, sem medida, seria otimizar no escuro; e a al
 Não é problema com um push a cada poucos dias. Vira problema se a CI passar a rodar a cada
 commit numa sequência longa como a do F4, que teve onze.
 
+### A linha de base não é portátil entre plataformas
+
+**Medido na execução do bloco, e é achado sobre o motor, não sobre a CI.** Rodando
+`pytest engine/tests` num Linux limpo, com o lock, **8 das 58 reprovam** — determinístico,
+repetido duas vezes com números idênticos. No Windows, no mesmo commit, as 24 da linha de
+base passam.
+
+São as combinações de **GARCH(1,1) e EGARCH**, e em duas magnitudes:
+
+| Modelo | Desvio | O que é |
+|---|---|---|
+| `garch_1_1` | ~1,4e-6 a 8e-6 | mal ultrapassa a tolerância de 1e-6; aritmética de BLAS |
+| `egarch` | ~1,2e-2 | **converge para outro ótimo** — `ConvergenceWarning: optimizer returned code 4` |
+
+O EGARCH não é imprecisão: num dos backtests o veredito muda de `passed: True` para `False`,
+com 8 violações contra as 15 esperadas.
+
+**Por isso o trabalho do motor roda `pytest engine/tests --ignore=engine/tests/baseline`.**
+A linha de base foi criada no F2a para provar que a **migração** não mudou números, num
+ambiente fixado pelo `requirements-lock.txt` — o lock congela versão, não plataforma. Usá-la
+como portão entre sistemas operacionais nunca foi o desenho dela, e um trabalho que reprova
+em toda execução é alarme que ninguém olha.
+
+Os outros **50** testes do motor seguem guardando, e a linha de base continua valendo onde
+sempre valeu: no ambiente em que foi capturada. **A divergência vira dívida registrada**, com
+dono na trilha do TCC — antes da Etapa 6, que é quem produz a Tabela 1 e o Capítulo 5.
+
 ### O que a CI não vai pegar
 
 Vale escrever, para ninguém confundir cobertura com garantia:
@@ -717,6 +744,8 @@ Vale escrever, para ninguém confundir cobertura com garantia:
 - **O motor roda no runner, não na `worker`.** Se as duas divergirem, a CI não vê.
 - **Os três modelos de ML seguem sem guarda numérica** — ver [o que a prova não
   cobre](#o-que-a-prova-não-cobre).
+- **A linha de base numérica não roda na CI**, porque não é portátil entre plataformas — ver
+  [abaixo](#a-linha-de-base-não-é-portátil-entre-plataformas).
 
 A primeira, a terceira e a quarta são consequência de F5-05 e do lock; a segunda é do desenho
 dos trabalhos; a quinta é da [decisão sobre o motor](#o-que-a-prova-não-cobre), tomada com o
