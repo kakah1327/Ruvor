@@ -10,6 +10,8 @@ A chave primaria nao e declarada: o `DEFAULT_AUTO_FIELD` do Django 6.1 ja e
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
@@ -58,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # O `USERNAME_FIELD` nunca entra em `REQUIRED_FIELDS` — e o que o `auth.E002`
     # reprova. A organizacao tambem fica de fora: `createsuperuser` passaria a chave
     # primaria crua, e resolver isso e do M2.1, que constroi o fluxo de autenticacao.
-    REQUIRED_FIELDS = ["name"]
+    REQUIRED_FIELDS: ClassVar[list[str]] = ["name"]
 
     class Meta:
         db_table = 'core"."user'

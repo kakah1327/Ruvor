@@ -38,7 +38,7 @@ class VaRModel(ABC):
     category: ModelCategory
 
     @abstractmethod
-    def fit(self, returns: pd.Series) -> "VaRModel":
+    def fit(self, returns: pd.Series) -> VaRModel:
         """Ajusta o modelo a uma serie de retornos historicos (janela de treino)."""
 
     @abstractmethod

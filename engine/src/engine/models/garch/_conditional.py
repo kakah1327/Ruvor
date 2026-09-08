@@ -49,7 +49,7 @@ class ConditionalVolatilityVaR(VaRModel):
         )
         return model.fit(disp="off")
 
-    def fit(self, returns: pd.Series) -> "ConditionalVolatilityVaR":
+    def fit(self, returns: pd.Series) -> ConditionalVolatilityVaR:
         self.train_returns_ = returns
         self.result_ = self._fit_arch(returns * SCALE)
         self.sigma_floor_ = returns.std() * 0.1

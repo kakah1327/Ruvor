@@ -12,7 +12,7 @@ porque exige um provider de dados.
 from __future__ import annotations
 
 import json
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 import numpy as np
@@ -39,7 +39,7 @@ def _serie_completa() -> pd.Series:
     return pd.Series(valores, index=indice)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _modelo_ajustado(nome: str):
     """Ajusta o modelo uma unica vez sobre o treino, como faz o runner."""
     load_all_model_modules()
@@ -48,7 +48,7 @@ def _modelo_ajustado(nome: str):
     return get_model(nome)().fit(treino)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _resultado(nome: str, alpha: float) -> tuple[pd.Series, dict]:
     """Reproduz o par (serie de VaR, backtests) de uma combinacao."""
     load_all_backtest_modules()

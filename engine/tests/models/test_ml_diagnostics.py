@@ -14,7 +14,7 @@ from engine.models.ml.caviar import CaviarVaR
 
 
 def test_caviar_optimizer_converges_with_plausible_params(synthetic_returns):
-    train, test = synthetic_returns.iloc[:250], synthetic_returns.iloc[250:]
+    train = synthetic_returns.iloc[:250]
 
     model = CaviarVaR().fit(train)
     beta, f0 = model._initial_beta(alpha=0.05)

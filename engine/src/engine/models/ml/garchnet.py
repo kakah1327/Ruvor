@@ -20,7 +20,7 @@ from engine.models.registry import register_model
 class GarchNetVaR(QuantileNeuralVaR):
     category = ModelCategory.ML
 
-    def fit(self, returns: pd.Series) -> "GarchNetVaR":
+    def fit(self, returns: pd.Series) -> GarchNetVaR:
         super().fit(returns)
         self._garch = Garch11VaR().fit(returns)
         return self

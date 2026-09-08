@@ -73,7 +73,7 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
     for model_name in config.model_names:
         try:
             model = get_model(model_name)().fit(train_returns)
-        except Exception as exc:  # noqa: BLE001 - isola falha de 1 modelo do restante
+        except Exception as exc:  # isola falha de 1 modelo do restante
             runs.extend(
                 ModelRunResult(model_name=model_name, alpha=a, error=str(exc))
                 for a in config.alphas
@@ -100,7 +100,7 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
                         model_name=model_name, alpha=alpha, backtests=backtests
                     )
                 )
-            except Exception as exc:  # noqa: BLE001 - isola falha de 1 (modelo, alpha) do restante
+            except Exception as exc:  # isola falha de 1 (modelo, alpha) do restante
                 runs.append(
                     ModelRunResult(model_name=model_name, alpha=alpha, error=str(exc))
                 )

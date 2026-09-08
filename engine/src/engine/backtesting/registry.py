@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Type
-
 from engine.backtesting.base import BacktestTest
 
-_REGISTRY: dict[str, Type[BacktestTest]] = {}
+_REGISTRY: dict[str, type[BacktestTest]] = {}
 
 
 def register_backtest(name: str):
-    def decorator(cls: Type[BacktestTest]) -> Type[BacktestTest]:
+    def decorator(cls: type[BacktestTest]) -> type[BacktestTest]:
         if name in _REGISTRY:
             raise ValueError(f"Teste '{name}' ja registrado por {_REGISTRY[name]!r}")
         cls.name = name
@@ -20,7 +18,7 @@ def register_backtest(name: str):
     return decorator
 
 
-def get_backtest(name: str) -> Type[BacktestTest]:
+def get_backtest(name: str) -> type[BacktestTest]:
     try:
         return _REGISTRY[name]
     except KeyError as exc:

@@ -19,4 +19,4 @@ os.environ.setdefault("RUVOR_DB_USER", "nao-usar")
 os.environ.setdefault("RUVOR_DB_PASSWORD", "nao-usar")
 os.environ.setdefault("RUVOR_REDIS_URL", "redis://nao-usar:1/0")
 
-from config.settings import *  # noqa: E402, F403
+from config.settings import *  # noqa: F403

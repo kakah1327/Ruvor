@@ -56,10 +56,10 @@ def run(
     train_window_days: int,
 ) -> None:
     """Roda um experimento headless e imprime a tabela de ranking."""
+    from engine.backtesting import load_all_backtest_modules
     from engine.data.providers.yfinance_provider import YFinanceProvider
     from engine.experiments.runner import ExperimentConfig, run_experiment
     from engine.models import load_all_model_modules
-    from engine.backtesting import load_all_backtest_modules
 
     load_all_model_modules()
     load_all_backtest_modules()

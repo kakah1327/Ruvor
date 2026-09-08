@@ -14,7 +14,7 @@ from engine.models.registry import register_model
 class HistoricalVaR(VaRModel):
     category = ModelCategory.TRADITIONAL
 
-    def fit(self, returns: pd.Series) -> "HistoricalVaR":
+    def fit(self, returns: pd.Series) -> HistoricalVaR:
         self.train_returns_ = returns
         return self
 

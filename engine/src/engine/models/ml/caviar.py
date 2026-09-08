@@ -66,7 +66,7 @@ def _fit_beta(returns: np.ndarray, f0: float, alpha: float, seed: int) -> np.nda
 class CaviarVaR(VaRModel):
     category = ModelCategory.ML
 
-    def fit(self, returns: pd.Series) -> "CaviarVaR":
+    def fit(self, returns: pd.Series) -> CaviarVaR:
         self.train_returns_ = returns
         self._initial_fit: dict[float, tuple[np.ndarray, float]] = {}
         return self

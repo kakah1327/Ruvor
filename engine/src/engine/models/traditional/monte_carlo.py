@@ -20,7 +20,7 @@ class MonteCarloVaR(VaRModel):
         self.n_simulations = n_simulations
         self.random_state = random_state
 
-    def fit(self, returns: pd.Series) -> "MonteCarloVaR":
+    def fit(self, returns: pd.Series) -> MonteCarloVaR:
         self.mu_ = returns.mean()
         self.sigma_ = returns.std(ddof=1)
         return self

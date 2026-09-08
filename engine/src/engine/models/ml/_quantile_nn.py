@@ -21,6 +21,7 @@ custa uma rodada de treino inteira.
 from __future__ import annotations
 
 from abc import abstractmethod
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -46,7 +47,7 @@ def _make_windows(features: np.ndarray, window: int) -> np.ndarray:
 class QuantileNeuralVaR(VaRModel):
     WINDOW = 20
     REFIT_FREQUENCY_DAYS = 252
-    GRID = {"units": [16, 32], "n_layers": [1, 2]}
+    GRID: ClassVar[dict[str, list[int]]] = {"units": [16, 32], "n_layers": [1, 2]}
     LEARNING_RATE = 0.001
     BATCH_SIZE = 32
     SEARCH_EPOCHS = 20
@@ -62,7 +63,7 @@ class QuantileNeuralVaR(VaRModel):
     def _features(self, returns: pd.Series) -> np.ndarray:
         """Matriz (n, n_features) alinhada a `returns` -- ver contrato no docstring do modulo."""
 
-    def fit(self, returns: pd.Series) -> "QuantileNeuralVaR":
+    def fit(self, returns: pd.Series) -> QuantileNeuralVaR:
         self.train_returns_ = returns
         self._fitted: dict[float, dict] = {}
         return self

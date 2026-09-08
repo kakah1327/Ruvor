@@ -13,7 +13,7 @@ from engine.models.registry import register_model
 class ParametricVaR(VaRModel):
     category = ModelCategory.TRADITIONAL
 
-    def fit(self, returns: pd.Series) -> "ParametricVaR":
+    def fit(self, returns: pd.Series) -> ParametricVaR:
         self.mu_ = returns.mean()
         self.sigma_ = returns.std(ddof=1)
         return self

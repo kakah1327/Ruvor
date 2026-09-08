@@ -17,15 +17,13 @@ sem precisar editar web/, cli.py ou experiments/runner.py.
 
 from __future__ import annotations
 
-from typing import Type
-
 from engine.models.base import ModelCategory, VaRModel
 
-_REGISTRY: dict[str, Type[VaRModel]] = {}
+_REGISTRY: dict[str, type[VaRModel]] = {}
 
 
 def register_model(name: str):
-    def decorator(cls: Type[VaRModel]) -> Type[VaRModel]:
+    def decorator(cls: type[VaRModel]) -> type[VaRModel]:
         if name in _REGISTRY:
             raise ValueError(f"Modelo '{name}' ja registrado por {_REGISTRY[name]!r}")
         cls.name = name
@@ -35,7 +33,7 @@ def register_model(name: str):
     return decorator
 
 
-def get_model(name: str) -> Type[VaRModel]:
+def get_model(name: str) -> type[VaRModel]:
     try:
         return _REGISTRY[name]
     except KeyError as exc:
@@ -60,9 +58,9 @@ def _load_all_model_modules() -> None:
     import importlib
     import pkgutil
 
-    import engine.models.traditional as traditional_pkg
     import engine.models.garch as garch_pkg
     import engine.models.ml as ml_pkg
+    import engine.models.traditional as traditional_pkg
 
     for pkg in (traditional_pkg, garch_pkg, ml_pkg):
         for _, module_name, _ in pkgutil.iter_modules(pkg.__path__, pkg.__name__ + "."):
