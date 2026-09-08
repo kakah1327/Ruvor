@@ -187,19 +187,34 @@ proxy.
 
 Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). O conjunto precisa estar de pé
-(`docker compose up -d --wait`) para as seis primeiras linhas.
+(`docker compose up -d --wait`) para as oito primeiras linhas.
 
 | O quê | Comando |
 |---|---|
 | Aplicar migrations | `docker compose exec -T web python manage.py migrate` |
 | Testes do backend | `docker compose exec -T web pytest tests` |
 | Tipos do backend | `docker compose exec -T web mypy` |
+| Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |
 | Testes do frontend | `docker compose exec -T frontend npm test` |
 | Tipos do frontend | `docker compose exec -T frontend npm run typecheck` |
 | Construir o frontend | `docker compose exec -T frontend npm run build` |
+| Estilo do frontend | `docker compose exec -T frontend npm run lint` |
 | Testes do motor | `pytest engine/tests` |
 | Tipos do motor | `cd engine && mypy` — o mypy lê a configuração do diretório corrente |
+| Estilo do motor | `cd engine && ruff check . && ruff format --check .` — nativo, como o resto do motor |
 | Construir o pacote do motor | `python -m build --no-isolation engine` |
+
+**O estilo é uma ferramenta por lado, e cada uma faz lint e formatação**: `ruff` nos dois
+projetos Python, `@biomejs/biome` no frontend
+([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)). `ruff check`
+aponta as violações e `ruff format --check` reprova sem reescrever — quem aplica é
+`ruff format` e `ruff check --fix`; no frontend, `npm run lint` é `biome check .`, e
+`npx biome check . --write` é que escreve. A versão de cada uma é declarada num lugar só:
+`ruff` nos dois `pyproject.toml`, o Biome no `frontend/package.json`.
+
+**O `sh -c` na linha do backend não é enfeite.** Sem ele, o `&&` é interpretado pelo
+hospedeiro, e a segunda metade rodaria fora do contêiner. O caminho é `.` porque o diretório
+de trabalho do contêiner `web` já é `/repo/backend`.
 
 **`pytest backend` no hospedeiro reprova cinco testes, e é de propósito.** O
 `backend/config/settings_test.py` fixa valores de banco inexistentes (`nao-usar`) justamente
@@ -214,3 +229,32 @@ fora da casa dela.
 O interpretador nativo do projeto é o do ambiente virtual: **`.venv/Scripts/python.exe`** no
 Windows, `.venv/bin/python` no Linux. Reproduzir o ambiente exato que gerou a linha de base
 numérica do motor: `pip install -r engine/requirements-lock.txt`.
+
+### Integração contínua
+
+A CI é o GitHub Actions, definida em
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml). Dispara a cada push na `main`, e
+também à mão pelo `workflow_dispatch`. São quatro trabalhos, todos em `ubuntu-latest`:
+
+| Trabalho | O que roda | Onde |
+|---|---|---|
+| `estilo` | `ruff check .` e `ruff format --check .` no `backend/` e no `engine/` | runner |
+| `backend` | `migrate`, `pytest tests` e `mypy` | contêiner `web` |
+| `frontend` | `npm run lint`, `npm test`, `npm run typecheck` e `npm run build` | contêiner `frontend` |
+| `motor` | `pytest engine/tests` e `mypy` | runner |
+
+**Ela avisa e não bloqueia.** Não há proteção de ramo nem gatilho de `pull_request`: o
+trabalho é direto na `main`, então não existe ponto de integração onde barrar. A CI reprova
+ruidosamente, e o que ela achar vira dívida registrada no
+[ESTADO](docs/ESTADO.md) ([D-42](docs/decisoes/D-42-ci-avisa-e-nao-bloqueia.md)).
+
+`backend` e `frontend` rodam dentro das imagens do `compose`, porque executam a aplicação e
+o ambiente decide o resultado; `estilo` e `motor` rodam direto no runner, porque não
+executam a aplicação e a única imagem que conteria o `engine/` é a `worker`, de 3,79 GB
+([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)). **Nenhum trabalho
+constrói a `worker`** — é por isso que todo `docker compose up` do fluxo nomeia o serviço.
+
+O trabalho `motor` roda a suíte **sem** a linha de base numérica
+(`--ignore=engine/tests/baseline`): ela foi capturada no Windows e não é portátil entre
+plataformas — 8 das 58 reprovam num Linux limpo, com o EGARCH convergindo para outro ótimo.
+Está registrado como dívida no [ESTADO](docs/ESTADO.md).

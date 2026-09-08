@@ -123,7 +123,9 @@ existe API de negócio nem tela de produto.
   `silver` e `gold` nascem vazios e seguem assim até o M1.2 e o M1.4.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
-  cor literal em `frontend/src/`. O `package.json` exige **Node 24.15+**, travado por
+  cor literal em `frontend/src/`. Lint e formatação são do **Biome**, por `npm run lint`
+  ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
+  os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por
   `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do
   contêiner não precisa de Node instalado.
 - `compose.yaml` na raiz — `docker compose up` sobe cinco serviços: `postgres`, `redis`,

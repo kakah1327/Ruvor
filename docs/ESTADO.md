@@ -34,7 +34,7 @@ banco. **Dentro do contêiner eles também exigem `migrate` aplicado.** Não é 
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **41 decisões registradas** — [decisoes/](decisoes/)
+- **45 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -183,7 +183,6 @@ primeiro consumidor dos esquemas e da convenção de migration que o F4 fixou.
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
 | Tema claro vs escuro | kit é claro; decisão de produto pendente |
-| **Ferramenta de estilo** | Tem dono: a **spec do F5** escolhe (ruff? prettier? eslint?). O F2b registrou a decisão de não escolher — [plano F2b, "O que este plano decide"](planos/F2b-casco-da-aplicacao.md#o-que-este-plano-decide) |
 | **Escala tipográfica nos tokens** | `tokens.css` não define tamanho de fonte. O casco não declara `font-size` nenhum; a primeira tela de produto (Marco 1) precisa que o kit decida |
 
 ## Pendências que bloqueiam trabalho futuro

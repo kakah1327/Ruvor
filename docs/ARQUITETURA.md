@@ -57,7 +57,8 @@ ruvor/
 │       └── audit/
 │
 ├── frontend/          # React
-├── infra/             # arquivos de construcao de imagem, e CI a partir do F5
+├── infra/             # arquivos de construcao de imagem
+├── .github/workflows/ # a CI — ver D-45
 ├── compose.yaml       # na raiz, nao em infra/ — ver D-35
 ├── .dockerignore      # na raiz: e onde o Docker o procura
 ├── docs/
@@ -68,6 +69,11 @@ ruvor/
 falhariam em silêncio: o Docker procura o `.dockerignore` na raiz do contexto de construção,
 e o Compose descobre o `.env` no diretório do arquivo de composição
 ([D-35](decisoes/D-35-compose-e-dockerignore-na-raiz.md)).
+
+**A CI mora em `.github/workflows/`, pela mesma razão.** O diagrama já reservou a CI para
+`infra/`, mas o GitHub só lê `.github/workflows/`: o arquivo em `infra/` não seria executado,
+e o sintoma seria a **ausência de execução** — sem erro e sem aviso
+([D-45](decisoes/D-45-a-ci-mora-em-github-workflows.md)).
 
 **Não existe `pyproject.toml` na raiz.** Um projeto Python por diretório: cada um declara as
 próprias dependências e a configuração das próprias ferramentas. É o que permite ao F3
@@ -311,11 +317,28 @@ exige Node 24.15+, e deixá-lo fora contradiria as duas razões acima
 **O dia a dia de `backend/` e `frontend/` — servidor, teste, verificação de tipos — roda
 dentro do contêiner**; o `engine/` continua no ambiente virtual nativo, por ser pacote
 independente que não fala com serviço nenhum
-([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). A CI espelha o contêiner, não o
-`.venv`.
+([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). **Na CI isso vale para dois dos
+quatro trabalhos:** `backend` e `frontend` rodam dentro das imagens, porque executam a
+aplicação e o ambiente decide o resultado; `estilo` e `motor` rodam direto no runner, porque
+não executam a aplicação e a única imagem que conteria o `engine/` é a `worker`, de 3,79 GB
+([D-43](decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)).
 
-**CI**: a cada mudança roda verificação de estilo, verificação de tipos e testes. Não
-passou, não entra.
+**CI**: `.github/workflows/ci.yml`, no GitHub Actions, disparado a cada push na `main` e à
+mão. Quatro trabalhos — `estilo`, `backend`, `frontend` e `motor` — cobrindo estilo, tipos e
+testes. A ferramenta de estilo é o `ruff` nos dois projetos Python e o `@biomejs/biome` no
+frontend, uma por lado, cada uma fazendo lint **e** formatação
+([D-43](decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)).
+
+**A CI avisa, e não impede.** Reprova ruidosamente, sem barrar: não há proteção de ramo nem
+gatilho de `pull_request` porque o trabalho é direto na `main`
+([D-31](decisoes/D-31-trabalho-direto-na-main.md)), e não existe ponto de integração onde
+barrar. A `main` pode ficar vermelha; quando ficar, o [ESTADO.md](ESTADO.md) diz qual é a
+reprovação e quem a paga ([D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md)). Isto se inverte
+no dia em que a D-31 se inverter.
+
+O trabalho `motor` roda a suíte **sem** a linha de base numérica: ela foi capturada no
+Windows e não é portátil entre plataformas — 8 das 58 reprovam num Linux limpo, com o EGARCH
+convergindo para outro ótimo. Está registrado como dívida no [ESTADO.md](ESTADO.md).
 
 **Produção**: forma definida (web + worker + Postgres + Redis); hospedagem em aberto.
 Inclinação para PaaS (Render/Railway, ~US$ 20–50/mês) em vez de VPS — o time não tem
