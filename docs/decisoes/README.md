@@ -43,6 +43,9 @@ conversas e entre agentes.
 | [D-39](D-39-usuario-proprio-autentica-por-email.md) | O usuário do projeto herda `AbstractBaseUser` e autentica por e-mail |
 | [D-40](D-40-identificadores-de-esquema-em-ingles.md) | Os identificadores de esquema ficam em inglês |
 | [D-41](D-41-filtro-por-organizacao-na-primeira-tabela-privada.md) | O filtro por organização é obrigação da primeira tabela privada; o usuário é exceção |
+| [D-43](D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md) | ruff para Python, Biome para o frontend, e onde cada verificação roda |
+| [D-44](D-44-o-motor-entra-no-estilo.md) | O motor entra no estilo, e como isso se prova |
+| [D-45](D-45-a-ci-mora-em-github-workflows.md) | A CI mora em `.github/workflows/`, não em `infra/` |
 
 ## Processo e execução
 
@@ -59,6 +62,7 @@ conversas e entre agentes.
 | [D-31](D-31-trabalho-direto-na-main.md) | Trabalho direto na `main` enquanto o time for uma pessoa |
 | [D-27](D-27-commits-sem-assinatura.md) | Commits sem assinatura de ferramenta |
 | [D-33](D-33-dia-a-dia-dentro-do-conteiner.md) | O dia a dia de backend e frontend roda dentro do contêiner |
+| [D-42](D-42-ci-avisa-e-nao-bloqueia.md) | A CI avisa e não bloqueia, enquanto valer a D-31 |
 
 ## As três mais consequentes
 
