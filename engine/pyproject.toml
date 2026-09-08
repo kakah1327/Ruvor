@@ -9,7 +9,7 @@ dependencies = ["click>=8.1"]
 traditional = ["numpy>=1.26", "scipy>=1.11", "pandas>=2.1", "yfinance>=0.2"]
 garch = ["arch>=6.3", "statsmodels>=0.14"]
 ml = ["tensorflow>=2.16"]
-dev = ["pytest>=8.0", "mypy>=1.11", "build>=1.2", "setuptools>=68"]
+dev = ["pytest>=8.0", "mypy==2.3.1", "build>=1.2", "setuptools>=68", "ruff==0.16.6"]
 all = ["ruvor-engine[traditional,garch,ml,dev]"]
 
 [project.scripts]
@@ -46,3 +46,15 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["engine.models.ml._quantile_nn", "engine.models.garch._conditional"]
 ignore_errors = true
+
+[tool.ruff]
+line-length = 88
+# Com E501 desligado sobram 42 linhas acima de 88 colunas -- comentario, docstring e
+# texto, que o formatador nao quebra. Nao e defeito.
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP", "RUF"]
+# UP042 trocaria `class ModelCategory(str, Enum)` por StrEnum, e a troca NAO e
+# equivalente: str() e f-string diferem entre as duas no 3.12, e ModelCategory e
+# comparado e formatado em todo o motor. Reavaliar depois da Etapa 6 -- D-44.
+ignore = ["E501", "UP042"]

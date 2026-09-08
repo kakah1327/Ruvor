@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14"]
+dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14", "ruff==0.16.6"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -43,3 +43,18 @@ django_settings_module = "config.settings_test"
 [[tool.mypy.overrides]]
 module = ["celery", "celery.*"]
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# E501 fora de proposito: o formatador impoe o comprimento de linha, e a regra so
+# sobraria para o que ele nao sabe quebrar -- comentario, docstring, texto.
+select = ["E", "W", "F", "I", "UP", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# `dependencies` e `operations` sao formato canonico do Django em migration; anotar
+# com ClassVar e editar artefato gerado, e o makemigrations --check do F4 reprovaria.
+# A lista e fechada de proposito: "ALL" desligaria o lint num diretorio inteiro.
+"**/migrations/*.py" = ["RUF012"]
