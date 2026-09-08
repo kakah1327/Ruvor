@@ -108,7 +108,7 @@ descoberta de qualquer erro para depois de sete commits.
 | `engine/src/` — 25 arquivos · `engine/tests/` — 8 · `backend/` — 4 | T2 | formatação |
 | `engine/src/` — 12 arquivos · `engine/tests/` — 2 · `backend/` — 2 | T3 | as 28 violações |
 | `frontend/package.json`, `frontend/package-lock.json` | T4 | o Biome entra em `devDependencies`, e o `npm install` reescreve o lock |
-| `frontend/tests/App.test.tsx`, `frontend/tests/cores.test.ts` | T4 | os **dois** arquivos que o Biome de fato reformata — medido; nenhum em `src/`, e o `package-lock.json` é protegido e não é formatado por ele |
+| `frontend/tests/cores.test.ts` | T4 | o **unico** arquivo de teste com mudanca real. O Biome tambem reescreve `App.test.tsx`, mas so o fim de linha: o arquivo estava em CRLF, o Biome grava LF, e o `.gitattributes` normaliza -- `git diff` vazio. Nada em `src/` |
 | `README.md`, `CLAUDE.md`, `docs/ESTADO.md`, `docs/ARQUITETURA.md`, `docs/specs/README.md`, `docs/planos/README.md` | T7 | a lista fechada |
 | `docs/ROADMAP.md`, `docs/aprendizados.md`, cabeçalhos de status | **FECHA** | o que é status |
 
@@ -457,6 +457,13 @@ função auxiliar da varredura de cor literal — o artefato que prova um requis
 As duas saídas eram reestruturar aquele teste, mexendo em prova de bloco fechado, ou
 desligar a regra onde ela não cabe. O override é estreito, vale só para `tests/**`, e as
 duas regras de React seguem valendo lá.
+
+**O arquivo precisa passar pela propria ferramenta antes de o criterio rodar.** O bloco acima
+tem uma linha de 96 colunas -- a do `formatter` --, acima do `lineWidth: 88` que ela mesma
+declara: gravado como esta, `npm run lint` sai **1**. Rode `biome check . --write` sobre ele e
+**prove que a configuracao nao mudou**, por igualdade profunda de JSON contra este bloco. A
+alternativa -- tirar `*.json` do `files.includes` -- mudaria a configuracao, e nao e essa a
+escolha.
 
 **As duas regras de React são declaradas, e não deixadas ao "recomendado".** São o motivo pelo
 qual a spec registrou ressalva ao escolher o Biome em vez do `eslint-plugin-react-hooks`:
