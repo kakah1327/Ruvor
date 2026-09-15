@@ -337,8 +337,10 @@ reprovação e quem a paga ([D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md)). I
 no dia em que a D-31 se inverter.
 
 O trabalho `motor` roda a suíte **sem** a linha de base numérica: ela foi capturada no
-Windows e não é portátil entre plataformas — 8 das 58 reprovam num Linux limpo, com o EGARCH
-convergindo para outro ótimo. Está registrado como dívida no [ESTADO.md](ESTADO.md).
+Windows e não é portátil entre plataformas — 8 das 64 reprovam num Linux limpo, com o EGARCH
+caindo em outro ótimo local de uma superfície quase plana. Está registrado como dívida no
+[ESTADO.md](ESTADO.md); o ajuste que não convergia em Linux foi corrigido pela
+[D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md).
 
 **Produção**: forma definida (web + worker + Postgres + Redis); hospedagem em aberto.
 Inclinação para PaaS (Render/Railway, ~US$ 20–50/mês) em vez de VPS — o time não tem

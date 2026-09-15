@@ -38,7 +38,8 @@ module = ["tensorflow.*", "arch.*", "yfinance.*", "scipy.*", "pandas.*"]
 ignore_missing_imports = true
 
 # Divida de tipagem, a pagar depois da Etapa 6 — ate la a D-21 congela o motor
-# e corrigir exigiria editar codigo que nao pode ser alterado.
+# e corrigir exigiria editar codigo que nao pode ser alterado (a D-46 abriu uma
+# excecao pontual em _conditional, so para o ajuste que nao convergia).
 #   _quantile_nn: best_config nasce None e e desempacotado; o mypy nao prova
 #                 que o laco de busca sempre atribui.
 #   _conditional: self.dist e str, e o arch exige Literal. O arch tem anotacoes

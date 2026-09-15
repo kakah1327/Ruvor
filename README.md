@@ -256,5 +256,5 @@ constrói a `worker`** — é por isso que todo `docker compose up` do fluxo nom
 
 O trabalho `motor` roda a suíte **sem** a linha de base numérica
 (`--ignore=engine/tests/baseline`): ela foi capturada no Windows e não é portátil entre
-plataformas — 8 das 58 reprovam num Linux limpo, com o EGARCH convergindo para outro ótimo.
+plataformas — 8 das 64 reprovam num Linux limpo, com o EGARCH caindo em outro ótimo local.
 Está registrado como dívida no [ESTADO](docs/ESTADO.md).

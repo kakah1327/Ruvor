@@ -15,3 +15,10 @@ class Garch11VaR(ConditionalVolatilityVaR):
 
     def _arch_kwargs(self) -> dict:
         return {"vol": "GARCH", "p": 1, "q": 1}
+
+    def _fallback_starting_values(self, variance: float) -> list[list[float]]:
+        # [omega, alpha, beta]; omega = variancia incondicional * (1 - alpha - beta)
+        return [
+            [0.05 * variance, 0.05, 0.90],
+            [0.10 * variance, 0.10, 0.80],
+        ]

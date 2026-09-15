@@ -111,7 +111,7 @@ Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêine
 existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
-  testes de backtesting, 58 testes e linha de base numérica. Roda por linha de comando:
+  testes de backtesting, 64 testes e linha de base numérica. Roda por linha de comando:
   `ruvor run`. **Nunca importa Django**, e um teste prova isso.
 - `backend/` — projeto Django com um app, `apps/accounts`. Uma rota, `GET /health`. Conecta
   no PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.

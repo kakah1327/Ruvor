@@ -527,3 +527,41 @@ documento não pode citar o texto antigo nem para explicar o que mudou.
 **Faça:** ao escrever a lista, pergunte se o trecho precisa **sumir** ou apenas **deixar de ser
 afirmado**. No segundo caso, o padrão tem de ser mais estreito que a frase — ou a verificação
 vira proibição de vocabulário.
+
+
+## `docker compose exec -w /caminho` falha no Git Bash com "Cwd must be an absolute path"
+
+**Quando:** ao executar comando dentro de um contêiner a partir do Git Bash, com `-w` ou
+qualquer argumento que seja caminho POSIX do contêiner (`/repo`, `/app`).
+
+**Problema:** o MSYS converte argumentos que parecem caminho Unix para caminho Windows
+antes de entregá-los ao `docker`. `/repo` chega como `E:/Git/repo` (ou parecido), e o
+runtime responde `OCI runtime exec failed: exec failed: Cwd must be an absolute path`. A
+mensagem culpa o caminho, não a conversão, e o mesmo comando funciona no PowerShell.
+
+**Faça:** prefixe com `MSYS_NO_PATHCONV=1` — `MSYS_NO_PATHCONV=1 docker compose exec -T -w
+/repo worker ...`. Vale também para `docker run -v /x:/y` e para qualquer `--flag=/caminho`.
+
+
+## Ajuste do `arch` com `convergence_flag != 0` não é estimativa; e o ponto de partida padrão muda com a plataforma
+
+**Quando:** ao usar `arch_model(...).fit()` (GARCH, EGARCH) em código que vai rodar em mais
+de um sistema operacional, ou ao interpretar uma divergência numérica entre plataformas.
+
+**Problema:** o `fit` **devolve resultado mesmo quando o SLSQP não converge** — só emite
+`ConvergenceWarning` e preenche `convergence_flag`. Quem não olha o flag usa parâmetros sem
+sentido (`alpha = 11`, variância condicional na casa dos milhares) como se fossem MLE. E o
+ponto de partida padrão vem de uma busca em grade cujo resultado depende da ordem de redução
+do BLAS: a mesma série, as mesmas versões, convergem no Windows e caem em `code 4` no Linux.
+Medido em 2026-09-15 sobre a série da linha de base — ver
+[D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md).
+
+Agrava: sobre série sem estrutura GARCH (ruído i.i.d.), a superfície de verossimilhança é
+quase plana, e mesmo ajustes convergidos caem em ótimos diferentes por plataforma. Uma
+linha de base assim não é referência do modelo — é referência do ambiente.
+
+**Faça:** confira `convergence_flag == 0` antes de usar `params`; quando não convergir,
+tente de novo a partir de valores iniciais explícitos (`starting_values=`), e recuse o
+resultado se nenhum convergir. É o que `ConditionalVolatilityVaR._fit_arch` faz. Para
+comparar plataformas, compare **log-verossimilhança e flag**, não a série de VaR: é o que
+separa "outro ótimo" de "otimização que falhou".

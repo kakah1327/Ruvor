@@ -20,6 +20,7 @@ baseado no desvio-padrao historico do treino — so entra em acao nesse cenario 
 
 from __future__ import annotations
 
+import warnings
 from abc import abstractmethod
 
 import numpy as np
@@ -43,11 +44,40 @@ class ConditionalVolatilityVaR(VaRModel):
     def _arch_kwargs(self) -> dict:
         """kwargs especificos do tipo de volatilidade (vol='GARCH'/'EGARCH', o=0/1 etc)."""
 
+    @abstractmethod
+    def _fallback_starting_values(self, variance: float) -> list[list[float]]:
+        """Pontos de partida alternativos, na ordem dos parametros do arch, tentados
+        apenas quando o SLSQP nao converge a partir do ponto que o arch escolhe sozinho.
+        `variance` e a variancia amostral dos retornos (ja escalados por SCALE)."""
+
     def _fit_arch(self, returns_scaled: pd.Series):
         model = arch_model(
             returns_scaled, mean="Zero", dist=self.dist, **self._arch_kwargs()
         )
-        return model.fit(disp="off")
+        result = model.fit(disp="off")
+        if result.convergence_flag == 0:
+            return result
+
+        # O ponto de partida padrao do arch depende de uma busca em grade cujo resultado
+        # muda com a plataforma (ordem de reducao do BLAS). Quando ela cai num canto ruim,
+        # o SLSQP devolve `code 4` e parametros sem sentido (alpha ~ 11, variancia
+        # condicional na casa dos milhares), e um resultado nao convergido nao e uma
+        # estimativa de maxima verossimilhanca — nao serve. Ver D-46.
+        for starting_values in self._fallback_starting_values(returns_scaled.var()):
+            retry = model.fit(
+                disp="off", starting_values=np.asarray(starting_values, dtype=float)
+            )
+            if retry.convergence_flag == 0:
+                warnings.warn(
+                    f"{self.name}: o ajuste convergiu a partir de valores iniciais "
+                    f"alternativos {starting_values}, nao do ponto padrao do arch",
+                    stacklevel=2,
+                )
+                return retry
+        raise RuntimeError(
+            f"{self.name}: o ajuste nao convergiu a partir de nenhum ponto de partida "
+            f"(codigo {result.convergence_flag} no ponto padrao do arch)"
+        )
 
     def fit(self, returns: pd.Series) -> ConditionalVolatilityVaR:
         self.train_returns_ = returns

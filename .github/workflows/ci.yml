@@ -55,7 +55,8 @@ jobs:
         with: { python-version: "3.12" }
       - run: pip install -r engine/requirements-lock.txt
       - run: pip install -e "./engine[all]" -c engine/requirements-lock.txt
-      # Sem a linha de base: ela nao e portatil entre plataformas -- 8 das 58
-      # reprovam em Linux, e o EGARCH converge para outro otimo. Medido na T5.
+      # Sem a linha de base: ela nao e portatil entre plataformas -- 8 das 64
+      # reprovam em Linux, e o EGARCH cai em outro otimo local (D-46). Medido na T5
+      # e remedido em 2026-09-15.
       - run: pytest engine/tests --ignore=engine/tests/baseline
       - run: cd engine && mypy
