@@ -1,5 +1,10 @@
 """F4-01 e F4-02: os quatro esquemas existem, e as tabelas sao a lista fechada.
 
+Sao treze tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario e
+as cinco do Django no `public` —, e o M1.1 acrescentou as quatro do catalogo de ativos:
+tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e uma na
+`silver` (`asset`).
+
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
 `test_conexao_com_o_banco`: a marca conecta em `test_<nome>`, um banco que o proprio
 pytest-django cria e migra, e por isso nao diz nada sobre o banco configurado — que e
@@ -18,6 +23,9 @@ from pytest_django.plugin import DjangoDbBlocker
 ESQUEMAS = {"core", "bronze", "silver", "gold"}
 
 TABELAS = {
+    "bronze.b3_company_detail",
+    "bronze.b3_company_listing",
+    "bronze.collection_run",
     "core.organization",
     "core.user",
     "core.user_groups",
@@ -27,6 +35,7 @@ TABELAS = {
     "public.auth_permission",
     "public.django_content_type",
     "public.django_migrations",
+    "silver.asset",
 }
 
 
