@@ -33,6 +33,7 @@ terminado.
 | [F3 — Ambiente local](F3-ambiente-local.md) | [F3](../specs/F3-ambiente-local.md) | ✅ executado e fechado |
 | [F4 — Fundação de dados](F4-fundacao-de-dados.md) | [F4](../specs/F4-fundacao-de-dados.md) | ✅ executado e fechado |
 | [F5 — Integração contínua](F5-integracao-continua.md) | [F5](../specs/F5-integracao-continua.md) | ✅ executado e fechado |
+| [M1.1 — Catálogo de ativos](M1.1-catalogo-de-ativos.md) | [M1.1](../specs/M1.1-catalogo-de-ativos.md) | 🟡 aprovado, em execução |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
