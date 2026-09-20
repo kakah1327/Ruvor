@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "rest_framework",
     "apps.accounts",
+    "apps.assets",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
