@@ -119,7 +119,7 @@ PostgreSQL**:
 |---|---|---|---|
 | `core` | nenhuma — é o dado operacional | organização, usuário, e depois carteiras, limites e chaves de API | a aplicação |
 | `bronze` | **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
-| `silver` | **Prata** | preços limpos e conformados, retornos calculados, validados | base de trabalho |
+| `silver` | **Prata** | o catálogo de ativos — uma linha por ação negociada, mais o Ibovespa —, e depois preços limpos e conformados, retornos calculados, validados | base de trabalho |
 | `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, agregados de carteira | é o que a plataforma serve |
 
 Os quatro esquemas existem desde a primeira migration do F4. O `core` é esquema à parte
