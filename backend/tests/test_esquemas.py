@@ -8,7 +8,9 @@ tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
 `test_conexao_com_o_banco`: a marca conecta em `test_<nome>`, um banco que o proprio
 pytest-django cria e migra, e por isso nao diz nada sobre o banco configurado — que e
-onde os esquemas precisam existir de verdade.
+onde os esquemas precisam existir de verdade. Inspeciona o banco da conexao corrente —
+configurado quando isolado, `test_<nome>` na suite inteira, porque os testes de
+`tests/assets/` vem antes e a marca deles renomeia a conexao ate o fim da sessao.
 
 A comparacao e de conjunto INTEIRO, nunca de amostra: `assertIn` aprovaria com uma
 tabela de dominio nascida no `public`, que e exatamente o que F4-02 proibe.

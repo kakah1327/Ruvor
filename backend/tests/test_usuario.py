@@ -5,7 +5,9 @@ organizacao nao diz nada sobre a coluna, e um `NOT NULL` no banco nao impede o g
 aceitar a chamada: uma verificacao so deixaria metade do requisito sem quem a reprove.
 
 Onde ha banco, o acesso e por `django_db_blocker`, e nao pela marca `django_db` — a marca
-conecta em `test_<nome>` e nao diz nada sobre o banco configurado.
+conecta em `test_<nome>` e nao diz nada sobre o banco configurado. Inspeciona o banco da
+conexao corrente — configurado quando isolado, `test_<nome>` na suite inteira, porque a
+marca dos testes de `tests/assets/` renomeia a conexao ate o fim da sessao.
 """
 
 import pytest

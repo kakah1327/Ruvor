@@ -189,6 +189,12 @@ pytest-django bloqueia o acesso e levanta `RuntimeError`.
 conferindo `SELECT current_database()` contra a variável de ambiente. É o que prova a
 configuração inteira, e não só que existe um Postgres em pé.
 
+Ressalva desde o M1.1: a marca `django_db` de **qualquer** teste da sessão renomeia a conexão
+para `test_<nome>` até o fim dela (`django/db/backends/base/creation.py:78-79`), e o pytest
+coleta `tests/assets/` antes de `tests/test_*.py`. Um teste sem marca que venha depois
+inspeciona o banco de teste, não o configurado; por isso o `test_conexao_com_o_banco`
+aceita os dois nomes.
+
 > Substitui o verbete anterior sobre `DATABASES = {}`, que descrevia o
 > `test_processo_nao_tem_banco` — removido no F3, quando o Django passou a conectar.
 

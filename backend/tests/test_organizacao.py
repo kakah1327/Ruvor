@@ -2,7 +2,9 @@
 
 Usa `django_db_blocker` e nao a marca `django_db`: a marca conecta num banco
 `test_<nome>` recriado pelo pytest-django, e a organizacao que interessa e a que a
-migration de dados criou no banco configurado.
+migration de dados criou. Inspeciona o banco da conexao corrente — configurado quando
+isolado, `test_<nome>` na suite inteira, porque a marca dos testes de `tests/assets/`
+renomeia a conexao ate o fim da sessao.
 """
 
 from pytest_django.plugin import DjangoDbBlocker
