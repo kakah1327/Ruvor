@@ -3,22 +3,24 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-15
+**Última atualização:** 2026-09-21
 
 ---
 
 ## Onde estamos
 
-**Marco:** ✅ **Fundação fechada** — sete blocos, do F1 ao F5
-**Bloco:** F5 fechado e integrado; **o M1.1 é o próximo**, e abre o Marco 1
+**Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
+**Bloco:** M1.1 fechado; **o M1.2 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
 **fundação de dados**. `docker compose up` sobe cinco serviços; o Django conecta no
 PostgreSQL e tem fila Celery sobre Redis. `migrate` num banco vazio cria os quatro esquemas
 — `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
-organização fixa do Marco 1 (`slug` `ruvor`). Ainda não há API de negócio nem tela de
-produto, e `bronze`, `silver` e `gold` seguem vazios até o M1.2 e o M1.4.
+organização fixa do Marco 1 (`slug` `ruvor`), as três tabelas da `bronze` e a `silver.asset`
+com o Ibovespa. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
+473 na coleta de 2026-09-21. Ainda não há API de negócio nem tela de produto; `gold` segue
+vazio até o M1.4.
 
 **Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
 `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
@@ -30,9 +32,10 @@ frontend, e o motor entrou no estilo com a formatação provada por árvore sint
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
 Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova cinco
-testes**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
-`.env` incompleto não passe despercebido. Era um até o F3; o F4 acrescentou quatro que leem o
-banco. **Dentro do contêiner eles também exigem `migrate` aplicado.** Não é regressão.
+testes e dá erro em dezoito**, de propósito — o `settings_test.py` fixa valores de banco
+inexistentes para que um `.env` incompleto não passe despercebido. Os cinco leem o banco
+configurado; os dezoito são os de `assets`, com `django_db`, que nem conseguem criar o banco de
+teste. **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regressão.
 
 ## O que foi concluído
 
@@ -191,21 +194,64 @@ máquina limpa.
 Todas as reprovações foram de método, não de direção: medição feita fora das condições reais,
 e verificação que não sabia reprovar. Está em [aprendizados.md](aprendizados.md).
 
+### M1.1 — Catálogo de ativos
+
+Spec em [`specs/M1.1-catalogo-de-ativos.md`](specs/M1.1-catalogo-de-ativos.md) e plano em
+[`planos/M1.1-catalogo-de-ativos.md`](planos/M1.1-catalogo-de-ativos.md). Nove tarefas, oito
+commits (a T8 não produz), de `125a81f` a `336803c`, direto na `main`. Primeiro bloco do Marco
+1 e primeiro a povoar `bronze` e `silver`.
+
+| Verificação | Resultado |
+|---|---|
+| As quatro tabelas nos esquemas certos; conjunto inteiro de treze | ✅ `test_esquemas`, e `migrate accounts zero` desfaz o `assets` antes — a dependência de grafo está declarada |
+| Ibovespa por migration idempotente | ✅ `--fake` prova; `create` no lugar de `get_or_create` viola o `UNIQUE` |
+| Payload da B3 gravado sem transformação | ✅ igualdade semântica com as fixtures; `{}` gravado |
+| Só `type == "1"` consultado | ✅ contagem de chamadas do cliente falso |
+| Regex de código de ação | ✅ `PETR-DEB62` e `BBAS12` fora; `BBAS11` dentro |
+| Segunda coleta só avança `last_seen_run` | ✅ linha a linha, `updated_at` intacto |
+| Papel some → `inactive`; volta → `active` | ✅ três coletas, `first_seen_run` intacto |
+| Falha no meio não toca na `silver`; `failed` gravado fora da transação | ✅ `Asset` antes == depois; a `bronze` fica com o coletado |
+| Código repetido entre companhias → `failed` antes de escrever | ✅ mensagem com os dois `codeCVM` |
+| Nenhum teste sai para a rede | ✅ guarda em `urlopen`; `ci.yml` intocado |
+| **Coleta real, V-08** (2026-09-21, 68 s) | ✅ `listagem: 3525 companhias em 30 paginas` · `consultadas (type=1): 570` · `acoes conformadas: 473` · `casos de borda: detalhe vazio 8, hasQuotation=S sem codigo de acao 52, classificacao fora de tres partes 0` |
+| **Segunda coleta, V-09** (64 s) | ✅ 2 `collection_run`, `max(updated_at)` inalterado, 0 ativas fora da última coleta |
+
+**As nove mutações reprovaram.** **Revisão final: aprovada.** 82 testes no backend; mypy e
+ruff limpos; `makemigrations --check` limpo.
+
+Três decisões nasceram do bloco: [D-47](decisoes/D-47-fonte-do-catalogo-e-o-site-da-b3.md)
+(a fonte é o site da B3, com o risco assumido),
+[D-48](decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md) (catálogo em
+`silver`, por ticker, atualizado por coleta; payload da `bronze` imutável) e
+[D-49](decisoes/D-49-catalogo-do-marco-1-so-acoes-e-ibovespa.md) (só ações e Ibovespa).
+
+**O que a execução contrariou.** A B3 devolve `otherCodes: null`, não `[]`; o `cnpj` da
+listagem vem sem zeros à esquerda (`191`), o do detalhe completo — a conformação lê o detalhe.
+O esqueleto literal do `run_import` no plano desempacotava um `pages` sem uso, que o `ruff`
+recusa; virou um `Listing(items, pages)` sem mudar a sequência. E a mutação 9 (`from
+urllib.request import urlopen`) **sai para a rede de verdade** quando aplicada: escapa da guarda
+e do `urlopen` falso.
+
+**O achado do bloco.** Dos 52 `hasQuotation=S sem codigo de acao`, 44 têm `otherCodes: null` e
+**8 têm código com sufixo `B`** — `EQMA3B`, `MRSA3B`, `LTEL3B`... —, ações do mercado de balcão
+organizado (SOMA), que o regex do RF-05 exclui por contrato. E `listing_segment` é nulo em 192
+das 473 ações: o `market` da listagem vem vazio para a maioria. Registrados abaixo.
+
 ## Próximo passo
 
-**Escrever a spec do M1.1 — Catálogo de ativos**, que abre o Marco 1 e é o primeiro código de
-domínio de verdade: lista de papéis da B3 com nome, setor e situação, base da busca.
+**Escrever a spec do M1.2 — Ingestão de preços**: histórico e atualização diária, camada
+`bronze` com data de coleta, `silver` com preços limpos e retornos. O `silver.asset` diz quais
+papéis coletar e sob qual símbolo (`provider_symbol`); o padrão de coleta da D-48 —
+`collection_run`, payload imutável, conformação transacional — é o que ele imita.
 
-Ele é o primeiro consumidor do que a Fundação deixou pronto — os esquemas e a convenção de
-migration do F4, o estilo e a CI do F5 — e o primeiro a povoar a camada `bronze`, que nasceu
-vazia.
+**A partir do M1.2 acaba a reversibilidade barata:** com preços apontando para `asset`, mudar
+esquema, nome de tabela ou modelo passa a exigir migração de dados. Hoje `migrate assets zero`
+ainda refaz o bloco inteiro.
 
-Duas coisas mudam de natureza a partir daqui. **O M1.1 tem tela?** Não: catálogo é dado, e a
-tela do ativo é o M1.6. Mas do M1.6 em diante vale o
-[portão de mockup](PROCESSO.md#7-portão-de-mockup), e o kit de marca ainda está incompleto —
-faltam estados de interação e modo escuro. **E a partir do M1.2 acaba a reversibilidade
-barata:** com preços dentro, mudar esquema, nome de tabela ou modelo de usuário passa a exigir
-migração de dados.
+Duas perguntas de produto que o M1.2 encontra na porta e a spec dele precisa fechar: **quais
+ativos coletar** — todos os 473, ou a carteira do Ibovespa, cujo endpoint na B3 já foi visto
+(76 papéis)? — e **quantos anos de histórico**. São a política de cobertura da D-19, pendente
+no [PRODUTO §8](PRODUTO.md#8-pendências-de-produto).
 
 ---
 
@@ -213,6 +259,8 @@ migração de dados.
 
 | Dívida | Onde | Quando se paga |
 |---|---|---|
+| **Ações de balcão organizado (SOMA) ficam fora do catálogo.** 8 companhias com `hasQuotation=S` têm código com sufixo `B` (`EQMA3B`, `MRSA3B`, `LTEL3B`, `PRMN3B`...), que o regex do RF-05 exclui; 44 outras vêm com `otherCodes: null`. Estão na `bronze`, não na `silver` | `backend/apps/assets/conform.py`, `EQUITY_CODE` | Quando o produto decidir se balcão entra — é decisão de cobertura (D-19); mudar o regex é uma linha e o relatório do `import_assets` já conta os casos |
+| **`listing_segment` nulo em 192 das 473 ações.** O `market` da listagem da B3 vem vazio para a maioria das companhias; só NM/N1/N2 vêm preenchidos | `silver.asset.listing_segment` | Quando a tela precisar do segmento — a fonte alternativa é o `market` por extenso do detalhe (`"BOVESPA NIVEL 2"`), que a spec do M1.1 decidiu não usar |
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |

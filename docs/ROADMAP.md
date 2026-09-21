@@ -38,7 +38,7 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M1.1 — Catálogo de ativos** | lista de papéis da B3 com nome, setor e situação; base da busca |
+| ✅ | **M1.1 — Catálogo de ativos** | lista de papéis da B3 com nome, setor e situação; base da busca — fechado em 2026-09-21, 473 ações + Ibovespa |
 | ⬜ | **M1.2 — Ingestão de preços** | histórico + atualização diária, camada bronze com data de coleta |
 | ⬜ | **M1.3 — Camadas 1 e 2** | identidade, preço, gráfico, volume, dividendos, retornos, volatilidade, quedas, relação com o Ibovespa |
 | ⬜ | **M1.4 — Motor de risco** | semente fixa, manifesto de execução, integração com a fila (a migração é do F2a) |

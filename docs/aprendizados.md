@@ -571,3 +571,18 @@ tente de novo a partir de valores iniciais explícitos (`starting_values=`), e r
 resultado se nenhum convergir. É o que `ConditionalVolatilityVaR._fit_arch` faz. Para
 comparar plataformas, compare **log-verossimilhança e flag**, não a série de VaR: é o que
 separa "outro ótimo" de "otimização que falhou".
+
+
+## Migration gerada pelo `makemigrations` reprova no `ruff format --check`
+
+**Quando:** ao criar uma migration com `makemigrations` (ou `--empty`) num projeto em que o
+`ruff format --check .` cobre `migrations/`.
+
+**Problema:** o arquivo nasce com aspas simples e linhas longas, no estilo do gerador do
+Django, e o critério de aceite do bloco reprova por formatação — não por conteúdo. O
+`pyproject.toml` só isenta `migrations/` da regra `RUF012` do lint; o formatador vale para
+todo arquivo.
+
+**Faça:** `ruff format <arquivo>` logo depois de gerar, antes de rodar o critério. O
+`accounts/0001` e o `assets/0001` passaram pelo mesmo. Vale também para a migration de dados
+copiada literal de um plano — confira com `ruff format --check` antes de commitar.
