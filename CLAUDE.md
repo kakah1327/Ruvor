@@ -115,16 +115,20 @@ ações** da B3. Ainda não existe API de negócio nem tela de produto.
   `ruvor run`. **Nunca importa Django**, e um teste prova isso.
 - `backend/` — projeto Django com dois apps, `apps/accounts` e `apps/assets`. Uma rota,
   `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 82 testes com pytest-django.
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 136 testes com pytest-django.
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
-  `ruvor`), as três tabelas da `bronze` e a `silver.asset` com o Ibovespa. O `AUTH_USER_MODEL`
+  `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`, `silver.price` e
+  `silver.corporate_event`. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
   ([D-47](docs/decisoes/D-47-fonte-do-catalogo-e-o-site-da-b3.md),
-  [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md)); `gold`
-  segue vazio até o M1.4.
+  [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md));
+  `manage.py import_prices` consulta o Yahoo e conforma dez anos de preços com retorno
+  logarítmico ([D-50](docs/decisoes/D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md) a
+  [D-54](docs/decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md)); `gold` segue vazio até o
+  M1.3.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
   cor literal em `frontend/src/`. Lint e formatação são do **Biome**, por `npm run lint`

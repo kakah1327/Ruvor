@@ -3,24 +3,26 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-21
+**Última atualização:** 2026-09-22
 
 ---
 
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** M1.1 fechado; **o M1.2 é o próximo**
+**Bloco:** M1.2 fechado; **o M1.3 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
 **fundação de dados**. `docker compose up` sobe cinco serviços; o Django conecta no
 PostgreSQL e tem fila Celery sobre Redis. `migrate` num banco vazio cria os quatro esquemas
 — `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
-organização fixa do Marco 1 (`slug` `ruvor`), as três tabelas da `bronze` e a `silver.asset`
-com o Ibovespa. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
-473 na coleta de 2026-09-21. Ainda não há API de negócio nem tela de produto; `gold` segue
-vazio até o M1.4.
+organização fixa do Marco 1 (`slug` `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`,
+`silver.price` e `silver.corporate_event`. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
+473 na coleta de 2026-09-21. `manage.py import_prices` consulta o Yahoo e conforma
+`silver.price` e `silver.corporate_event`: dez anos de PETR4, VALE3, ITUB4 e Ibovespa, ~2.490
+pregões cada, com retorno logarítmico. Ainda não há API de negócio nem tela de produto; `gold` segue
+vazio até o M1.3.
 
 **Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
 `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
@@ -32,9 +34,9 @@ frontend, e o motor entrou no estilo com a formatação provada por árvore sint
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
 Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova cinco
-testes e dá erro em dezoito**, de propósito — o `settings_test.py` fixa valores de banco
+testes e dá erro em quarenta e nove**, de propósito — o `settings_test.py` fixa valores de banco
 inexistentes para que um `.env` incompleto não passe despercebido. Os cinco leem o banco
-configurado; os dezoito são os de `assets`, com `django_db`, que nem conseguem criar o banco de
+configurado; os quarenta e nove são os de `assets`, com `django_db`, que nem conseguem criar o banco de
 teste. **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regressão.
 
 ## O que foi concluído
@@ -237,21 +239,63 @@ e do `urlopen` falso.
 organizado (SOMA), que o regex do RF-05 exclui por contrato. E `listing_segment` é nulo em 192
 das 473 ações: o `market` da listagem vem vazio para a maioria. Registrados abaixo.
 
+### M1.2 — Ingestão de preços
+
+Spec em [`specs/M1.2-ingestao-de-precos.md`](specs/M1.2-ingestao-de-precos.md) e plano em
+[`planos/M1.2-ingestao-de-precos.md`](planos/M1.2-ingestao-de-precos.md). Sete tarefas, seis
+commits (a T6 não produz), de `2342ae5` a `8040e4d`, direto na `main`.
+
+| Verificação | Resultado |
+|---|---|
+| Três tabelas nos esquemas certos; conjunto inteiro de dezesseis; `0003` reversível | ✅ |
+| Resposta do Yahoo gravada crua, inclusive o 404 | ✅ igualdade semântica, relida da tabela |
+| Data no fuso da bolsa; pregão nulo descartado | ✅ o cenário `01:00Z` prova a regra; `03:00Z` não provaria |
+| `log_return` em `Decimal` sobre os ajustados quantizados; antecessor do banco | ✅ valores conferidos à mão |
+| Reconformar não duplica nem escreve o que não mudou | ✅ `updated_at` e `run` intactos em coleta igual |
+| Evento novo rebusca a série inteira | ✅ duas chamadas, a segunda conformada |
+| Transação por ativo, quatro formas de falha | ✅ inclusive a (d): gravação que levanta reverte só aquele ativo |
+| `provider_symbol` é a única fonte do símbolo | ✅ |
+| Nenhum teste sai para a rede | ✅ |
+| **Coleta real, V-06** (2026-09-22, **6 s**) | ✅ IBOV 2.490 pregões / 8 descartados; ITUB4, PETR4, VALE3 2.490 / 1; 162, 34 e 23 eventos |
+| **Incremental, V-07** (2 s) | ✅ 6–7 pregões por ativo, 0 criados, 0 atualizados — a sobreposição veio idêntica |
+| **Ticker inválido, V-08** | ✅ aborta antes de qualquer chamada, sem `collection_run` |
+
+**As doze mutações reprovaram.** **Revisão final: aprovada.** 136 testes no backend; mypy e
+ruff limpos.
+
+Cinco decisões nasceram do bloco: [D-50](decisoes/D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md)
+(Yahoo por HTTP direto), [D-51](decisoes/D-51-cobertura-e-o-que-tem-preco.md) (cobertura é o
+que tem preço), [D-52](decisoes/D-52-a-janela-de-precos-so-cresce.md) (a janela só cresce),
+[D-53](decisoes/D-53-evento-novo-rebusca-a-serie-inteira.md) (evento novo rebusca a série) e
+[D-54](decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md) (transação por ativo).
+
+**O que a execução contrariou.** Os nulos do Yahoo se movem: o pregão nulo da Petrobras era
+2026-09-17 na sonda de domingo e 2026-09-21 na captura de terça — o de 09-17 foi preenchido. O
+Yahoo é rápido: 6 s para quatro ativos e dez anos, contra a estimativa de ~1 min por ativo. O
+ITUB4 paga dividendo mensal: 158 dividendos e 4 desdobramentos em dez anos. O exemplo de
+relatório da spec mostrava `FALHOU (HTTP 404: …)`; o código imprime com o nome da classe,
+`FALHOU (InvalidResponse: HTTP 404: …)`, e a spec foi corrigida. A conformação pura ganhou
+módulo próprio, `conform_prices.py`, em vez de morar em `prices.py` — o mesmo corte que o M1.1
+fez com `conform.py`.
+
+**Lacuna leve, registrada:** `--full` não tem teste pela casca (`call_command`); só por
+`run_import_prices`. Trocar `full=full` por `full=False` no comando passaria a suíte.
+
 ## Próximo passo
 
-**Escrever a spec do M1.2 — Ingestão de preços**: histórico e atualização diária, camada
-`bronze` com data de coleta, `silver` com preços limpos e retornos. O `silver.asset` diz quais
-papéis coletar e sob qual símbolo (`provider_symbol`); o padrão de coleta da D-48 —
-`collection_run`, payload imutável, conformação transacional — é o que ele imita.
+**Escrever a spec do M1.3 — Camadas 1 e 2**: identidade, preço, gráfico, volume, dividendos,
+retornos por janela, volatilidade, maior queda e recuperação, relação com o Ibovespa. É o
+primeiro bloco que **calcula** em vez de coletar, e o primeiro a povoar `gold`. Lê
+`silver.price` e `silver.corporate_event`; escreve métricas de comportamento por ativo.
 
-**A partir do M1.2 acaba a reversibilidade barata:** com preços apontando para `asset`, mudar
-esquema, nome de tabela ou modelo passa a exigir migração de dados. Hoje `migrate assets zero`
-ainda refaz o bloco inteiro.
+Perguntas que a spec encontra na porta: **onde o cálculo roda** — `manage.py` síncrono como os
+dois blocos anteriores, ou já pela fila (o M1.5 é o bloco da execução assíncrona)? — e **o que
+é uma métrica em `gold`**: uma linha por ativo recalculada, ou uma linha por (ativo, data de
+cálculo), imutável como a [D-16](decisoes/D-16-resultado-e-imutavel.md) manda para resultado?
+A segunda é a leitura da ARQUITETURA; a spec precisa dizer.
 
-Duas perguntas de produto que o M1.2 encontra na porta e a spec dele precisa fechar: **quais
-ativos coletar** — todos os 473, ou a carteira do Ibovespa, cujo endpoint na B3 já foi visto
-(76 papéis)? — e **quantos anos de histórico**. São a política de cobertura da D-19, pendente
-no [PRODUTO §8](PRODUTO.md#8-pendências-de-produto).
+**A reversibilidade barata acabou:** `silver.price` tem ~10 mil linhas e aponta para `asset`.
+`migrate assets zero` ainda funciona, mas custa uma coleta real para voltar.
 
 ---
 

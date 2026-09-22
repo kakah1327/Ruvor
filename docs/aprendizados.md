@@ -586,3 +586,19 @@ todo arquivo.
 **Faça:** `ruff format <arquivo>` logo depois de gerar, antes de rodar o critério. O
 `accounts/0001` e o `assets/0001` passaram pelo mesmo. Vale também para a migration de dados
 copiada literal de um plano — confira com `ruff format --check` antes de commitar.
+
+
+## `git checkout --` não reverte arquivo que ainda não foi commitado
+
+**Quando:** ao aplicar uma mutação de prova num arquivo criado na própria tarefa, antes do
+commit — o padrão "aplica, mede, reverte" das tabelas de mutação.
+
+**Problema:** `git checkout -- <arquivo>` só restaura o que o índice conhece. Num arquivo novo
+ele não faz nada (ou acusa `pathspec did not match`), e a mutação fica no lugar; a segunda
+mutação empilha sobre a primeira, e o critério "verde depois de reverter" mede código sujo.
+Aconteceu na T4 do M1.2, com duas mutações empilhadas antes de alguém notar.
+
+**Faça:** mutação antes do commit → copie o arquivo para o scratchpad e restaure por cópia,
+conferindo com `diff`. Ou commite primeiro e mute depois, que é o que a tarefa de mutações
+do plano faz. Nunca confie no `git status` limpo como prova de reversão de arquivo não
+rastreado: ele nunca esteve sujo aos olhos do git.

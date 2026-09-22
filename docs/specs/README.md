@@ -35,4 +35,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [F4 — Fundação de dados](F4-fundacao-de-dados.md) | Fundação · F4 | ✅ implementada e fechada |
 | [F5 — Integração contínua](F5-integracao-continua.md) | Fundação · F5 | ✅ implementada e fechada |
 | [M1.1 — Catálogo de ativos](M1.1-catalogo-de-ativos.md) | Marco 1 · M1.1 | ✅ implementada e fechada |
-| [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | Marco 1 · M1.2 | 🟡 aprovada, em implementação |
+| [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | Marco 1 · M1.2 | ✅ implementada e fechada |

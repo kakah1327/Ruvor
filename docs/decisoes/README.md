@@ -59,6 +59,11 @@ conversas e entre agentes.
 | [D-47](D-47-fonte-do-catalogo-e-o-site-da-b3.md) | A fonte do catálogo são os endpoints internos do site da B3 |
 | [D-48](D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md) | O catálogo conformado mora em `silver`, um por ticker, atualizado por coleta; payload da `bronze` imutável |
 | [D-49](D-49-catalogo-do-marco-1-so-acoes-e-ibovespa.md) | O catálogo do Marco 1 é só ações e o Ibovespa |
+| [D-50](D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md) | O preço vem do `chart` v8 do Yahoo, por HTTP direto |
+| [D-51](D-51-cobertura-e-o-que-tem-preco.md) | Cobertura é o que tem preço; sem coluna de cobertura |
+| [D-52](D-52-a-janela-de-precos-so-cresce.md) | A janela de preços só cresce |
+| [D-53](D-53-evento-novo-rebusca-a-serie-inteira.md) | Evento corporativo novo rebusca a série inteira |
+| [D-54](D-54-transacao-por-ativo-restringe-a-d-48.md) | Na ingestão de preços a transação é por ativo; restringe a D-48 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
