@@ -8,6 +8,10 @@ As duas tabelas de payload (`b3_company_listing`, `b3_company_detail`) sao so-ac
 nenhum caminho do codigo faz `update` ou `delete` nelas, e a FK `PROTECT` impede apagar
 uma coleta que tenha dado. `collection_run` muda uma vez: de `running` para `ok` ou
 `failed`.
+
+O M1.2 acrescentou os precos: a resposta crua do Yahoo (`yahoo_chart`, so-acrescimo, na
+`bronze`) e, na `silver`, um pregao por ativo (`price`) e os eventos corporativos
+(`corporate_event`).
 """
 
 from __future__ import annotations
@@ -135,3 +139,110 @@ class Asset(models.Model):
 
     def __str__(self) -> str:
         return self.ticker
+
+
+class YahooChart(models.Model):
+    """Uma resposta do `chart` v8 do Yahoo, crua — inclusive a de erro (404 com `chart.error`).
+
+    Sem restricao de unicidade: e so-acrescimo, e a rebusca por evento novo e uma segunda
+    linha na mesma coleta. `symbol` e o `provider_symbol` pedido, copiado para a linha nao
+    depender de o catalogo mudar.
+    """
+
+    run = models.ForeignKey(
+        CollectionRun,
+        on_delete=models.PROTECT,
+        related_name="yahoo_charts",
+    )
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.PROTECT,
+        related_name="yahoo_charts",
+    )
+    symbol = models.CharField(max_length=20)
+    period1 = models.BigIntegerField()
+    period2 = models.BigIntegerField()
+    http_status = models.IntegerField()
+    payload = models.JSONField()
+
+    class Meta:
+        db_table = 'bronze"."yahoo_chart'
+
+    def __str__(self) -> str:
+        return f"{self.symbol} HTTP {self.http_status} (coleta {self.run_id})"
+
+
+class Price(models.Model):
+    """Um pregao por ativo, no fuso da bolsa. Unico em `(asset, date)`.
+
+    `run` e `updated_at` avancam so quando a linha e criada ou algum valor muda — a mesma
+    regra do `asset`; `updated_at` nao leva `auto_now`: quem grava escreve o `now()`. Nao ha
+    `created_at`: a primeira versao da linha e a coleta em `run`. `log_return` e nulo so no
+    primeiro pregao de toda a serie.
+    """
+
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.PROTECT,
+        related_name="prices",
+    )
+    date = models.DateField()
+    open = models.DecimalField(max_digits=18, decimal_places=6)
+    high = models.DecimalField(max_digits=18, decimal_places=6)
+    low = models.DecimalField(max_digits=18, decimal_places=6)
+    close = models.DecimalField(max_digits=18, decimal_places=6)
+    adj_close = models.DecimalField(max_digits=18, decimal_places=6)
+    volume = models.BigIntegerField()
+    log_return = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    run = models.ForeignKey(
+        CollectionRun,
+        on_delete=models.PROTECT,
+        related_name="prices_written",
+    )
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'silver"."price'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(fields=["asset", "date"], name="price_asset_date")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_id} {self.date}"
+
+
+class CorporateEvent(models.Model):
+    """Um evento corporativo por ativo, data e tipo: dividendo (`amount`) ou desdobramento
+    (`numerator`/`denominator`). Unico em `(asset, date, kind)`.
+    """
+
+    class Kind(models.TextChoices):
+        DIVIDEND = "dividend"
+        SPLIT = "split"
+
+    asset = models.ForeignKey(
+        Asset,
+        on_delete=models.PROTECT,
+        related_name="corporate_events",
+    )
+    date = models.DateField()
+    kind = models.CharField(max_length=10, choices=Kind)
+    amount = models.DecimalField(max_digits=18, decimal_places=6, null=True)
+    numerator = models.DecimalField(max_digits=10, decimal_places=4, null=True)
+    denominator = models.DecimalField(max_digits=10, decimal_places=4, null=True)
+    run = models.ForeignKey(
+        CollectionRun,
+        on_delete=models.PROTECT,
+        related_name="corporate_events_written",
+    )
+
+    class Meta:
+        db_table = 'silver"."corporate_event'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["asset", "date", "kind"], name="corporate_event_asset_date_kind"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_id} {self.date} {self.kind}"
