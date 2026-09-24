@@ -35,6 +35,7 @@ terminado.
 | [F5 — Integração contínua](F5-integracao-continua.md) | [F5](../specs/F5-integracao-continua.md) | ✅ executado e fechado |
 | [M1.1 — Catálogo de ativos](M1.1-catalogo-de-ativos.md) | [M1.1](../specs/M1.1-catalogo-de-ativos.md) | ✅ executado e fechado |
 | [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | [M1.2](../specs/M1.2-ingestao-de-precos.md) | ✅ executado e fechado |
+| [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | [M1.3](../specs/M1.3-camadas-1-e-2.md) | ✅ executado e fechado |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.

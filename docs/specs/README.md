@@ -36,3 +36,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [F5 — Integração contínua](F5-integracao-continua.md) | Fundação · F5 | ✅ implementada e fechada |
 | [M1.1 — Catálogo de ativos](M1.1-catalogo-de-ativos.md) | Marco 1 · M1.1 | ✅ implementada e fechada |
 | [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | Marco 1 · M1.2 | ✅ implementada e fechada |
+| [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | Marco 1 · M1.3 | ✅ implementada e fechada |

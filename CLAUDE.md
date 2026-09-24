@@ -106,20 +106,23 @@ Código — nomes de variável, função, classe — em inglês.
 
 ## Estado do repositório
 
-Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêiner** e a
-**fundação de dados** — os quatro esquemas do banco, as primeiras tabelas e o **catálogo de
-ações** da B3. Ainda não existe API de negócio nem tela de produto.
+Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêiner**, a
+**fundação de dados** — os quatro esquemas do banco, as primeiras tabelas, o **catálogo de
+ações** da B3 e dez anos de preço de quatro ativos — e as primeiras **métricas de
+comportamento** em `gold`. Ainda não existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
   testes de backtesting, 64 testes e linha de base numérica. Roda por linha de comando:
   `ruvor run`. **Nunca importa Django**, e um teste prova isso.
-- `backend/` — projeto Django com dois apps, `apps/accounts` e `apps/assets`. Uma rota,
-  `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 136 testes com pytest-django.
+- `backend/` — projeto Django com três apps, `apps/accounts`, `apps/assets` e
+  `apps/analytics`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
+  Redis, com a tarefa de fumaça `config.tasks.ping`.
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 199 testes com pytest-django.
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`, `silver.price` e
-  `silver.corporate_event`. O `AUTH_USER_MODEL`
+  `silver.corporate_event`, e as duas tabelas da `gold`, `gold.behavior_metric` e
+  `gold.return_histogram_bin` — dezoito ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -127,8 +130,13 @@ ações** da B3. Ainda não existe API de negócio nem tela de produto.
   [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md));
   `manage.py import_prices` consulta o Yahoo e conforma dez anos de preços com retorno
   logarítmico ([D-50](docs/decisoes/D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md) a
-  [D-54](docs/decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md)); `gold` segue vazio até o
-  M1.3.
+  [D-54](docs/decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md)); `manage.py
+  compute_metrics` lê `silver` e escreve em `gold`, por ativo e em transação, a linha imutável
+  de métricas de comportamento mais os 42 baldes do histograma de retornos
+  ([D-55](docs/decisoes/D-55-metrica-de-comportamento-e-imutavel.md) a
+  [D-60](docs/decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md)). **`gold`
+  deixou de estar vazio no M1.3**; o cálculo usa só a biblioteca padrão, e o backend segue sem
+  `numpy` e sem `pandas`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
   cor literal em `frontend/src/`. Lint e formatação são do **Biome**, por `npm run lint`

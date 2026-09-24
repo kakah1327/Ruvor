@@ -3,14 +3,14 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-22
+**Última atualização:** 2026-09-24
 
 ---
 
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** M1.2 fechado; **o M1.3 é o próximo**
+**Bloco:** M1.3 fechado em 2026-09-24; **o M1.4 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
@@ -21,8 +21,9 @@ organização fixa do Marco 1 (`slug` `ruvor`), as quatro tabelas da `bronze`, e
 `silver.price` e `silver.corporate_event`. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
 473 na coleta de 2026-09-21. `manage.py import_prices` consulta o Yahoo e conforma
 `silver.price` e `silver.corporate_event`: dez anos de PETR4, VALE3, ITUB4 e Ibovespa, ~2.490
-pregões cada, com retorno logarítmico. Ainda não há API de negócio nem tela de produto; `gold` segue
-vazio até o M1.3.
+pregões cada, com retorno logarítmico. `manage.py compute_metrics` lê a `silver` e povoa a
+`gold`: uma linha imutável de métricas de comportamento por ativo e execução, mais os 42
+baldes do histograma de retornos. Ainda não há API de negócio nem tela de produto.
 
 **Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
 `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
@@ -46,7 +47,7 @@ teste. **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regr
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **45 decisões registradas** — [decisoes/](decisoes/)
+- **60 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -279,23 +280,125 @@ módulo próprio, `conform_prices.py`, em vez de morar em `prices.py` — o mesm
 fez com `conform.py`.
 
 **Lacuna leve, registrada:** `--full` não tem teste pela casca (`call_command`); só por
-`run_import_prices`. Trocar `full=full` por `full=False` no comando passaria a suíte.
+`run_import_prices`. Trocar `full=full` por `full=False` no comando passaria a suíte. **O M1.3
+não repetiu a lacuna:** os três testes do `compute_metrics` são pela casca.
+
+### M1.3 — Camadas 1 e 2
+
+Spec em [`specs/M1.3-camadas-1-e-2.md`](specs/M1.3-camadas-1-e-2.md) e plano em
+[`planos/M1.3-camadas-1-e-2.md`](planos/M1.3-camadas-1-e-2.md). Oito tarefas, nove commits
+(a T7 não produz; duas correções pós-T7 entraram), de `c51366a` ao commit de fecho, direto na
+`main`.
+Primeiro bloco que **calcula** em vez de coletar, e o primeiro a povoar `gold`.
+
+| Verificação | Resultado |
+|---|---|
+| As duas tabelas na `gold`; conjunto inteiro de dezoito; `0001` reversível | ✅ `migrate analytics zero` e `migrate` saem 0 nos dois |
+| Uma linha por (ativo, data de cálculo), imutável | ✅ duas execuções → duas linhas; a primeira intacta campo a campo |
+| Baldes pendem da métrica e não atravessam execuções | ✅ 42 por linha, `(metric, bin_index)` único |
+| Transação por ativo | ✅ `monkeypatch` em `write_metrics` levantando no segundo: o primeiro e o terceiro ficam |
+| Retorno por janela, inclusive `ytd` contra o último pregão do ano anterior | ✅ conferido à mão |
+| Volatilidade (`stdev`), assimetria e curtose (`pstdev`, −3) | ✅ divisores divergentes de propósito |
+| Maior queda, com topo, fundo, recuperação e pregões | ✅ os três cenários: não recuperada, recuperada, platô e empate |
+| Beta e correlação, emparelhando por data | ✅ ativo = 2 × índice → beta 2 e correlação 1; órfãos dos dois lados descartados |
+| Janela insuficiente grava nulo, e o histograma sai zerado | ✅ `NULL` nas sete colunas, 42 baldes com soma 0 |
+| Ausência do Ibovespa é aviso, nunca erro | ✅ linha gravada, nulos e a linha de aviso |
+| Sem dependência numérica nova (V-15) | ✅ `backend/pyproject.toml` intocado; nenhum `import numpy`/`pandas` em `apps/analytics/` |
+| Nenhum teste sai para a rede | ✅ a guarda subiu para `tests/conftest.py` e vale para a suíte inteira |
+| **Execução real** (2026-09-24, 0,1 s) | ✅ quatro ativos, 4 linhas + 168 baldes |
+| **Segunda execução** (0,1 s) | ✅ 8 linhas e 336 baldes; a primeira de cada ativo intacta |
+
+199 testes no backend; mypy (67 arquivos) e ruff limpos; cinco serviços saudáveis.
+
+**As mutações: 25 das 28 reprovaram na primeira medição, com três achados.** O placar não é
+"as 28 reprovaram", e os três valem mais que o verde:
+
+1. **O acessor do índice** — o cenário que a spec prescrevia (catálogo com um segundo ativo
+   `kind="index"`, a reprovação vindo do `MultipleObjectsReturned` do `.get()`) não havia sido
+   implementado por nenhuma tarefa. A mutação passava porque a verificação não existia.
+2. **O `adj_close` no denominador do *yield*** — o V-18 **não podia** observá-la: a
+   `dividend_summary` recebe o divisor já pronto, então a troca não atravessa a fronteira da
+   função sob teste.
+3. **`INSTALLED_APPS`** — remover `apps.analytics` faz `manage.py check` e `manage.py migrate`
+   saírem **os dois 0**; quem acusa é a coleta do pytest, com código **2**. O critério da spec
+   apontava para os comandos errados.
+
+Os dois primeiros foram ligados em `fe03c3d`, com a mutação medida antes (passava) e depois
+(reprova). O terceiro virou correção de texto da spec: o critério passou a nomear a coleta do
+pytest e o código 2.
+
+**Os números da execução real**, capturados da primeira linha de cada ativo:
+
+| Ativo | Pregões | `as_of` | Beta 60m | Correlação 60m | Volatilidade 12m | Maior queda | Topo → fundo | Recuperação |
+|---|---|---|---|---|---|---|---|---|
+| PETR4 | 2.489 | 2026-09-18 | 0,8926 | 0,4973 | 26,67% | **−63,36%** | 2020-01-06 → **2020-03-18** | 2021-01-07, 199 pregões |
+| VALE3 | 2.489 | 2026-09-18 | 0,8591 | 0,5149 | 26,57% | **−43,72%** | 2018-09-25 → **2020-03-23** | 2020-07-14, 77 pregões |
+| ITUB4 | 2.489 | 2026-09-18 | 1,0050 | 0,7044 | 24,06% | **−44,34%** | 2020-01-02 → **2020-03-23** | 2023-12-13, 927 pregões |
+| IBOV | 2.482 | 2026-09-21 | — | — | 17,51% | **−46,82%** | 2020-01-23 → **2020-03-23** | 2021-01-06, 195 pregões |
+
+**A maior queda dos quatro caiu em março de 2020**, que era a conferência que só o dado real
+faz. O beta e a correlação do IBOV são nulos por identidade, não por lacuna — é o RF-08, e por
+isso a linha dele sai `ok` sem `(nulas: …)` por essa causa.
+
+**O que a execução contrariou.**
+
+- **`return_120m` saiu nula nos quatro**, e a causa não é defeito: a janela de 120 meses exige
+  um pregão em ou antes de `as_of − 120 meses`. A coleta do M1.2 trouxe "dez anos" a partir de
+  2016-09-22, e `2026-09-18 − 120 meses = 2016-09-18` é anterior ao primeiro pregão. Faltaram
+  quatro dias. Como a [D-52](decisoes/D-52-a-janela-de-precos-so-cresce.md) mantém o início da
+  série, a coluna se preenche sozinha quando `as_of` alcançar 2026-09-22 — sem recoleta.
+  "Dez anos de histórico" e "a janela de dez anos existe" não são a mesma afirmação.
+- **O plano previu que PETR4 quase certamente teria a maior queda não recuperada. Errou:** os
+  quatro recuperaram. O ramo de `max_drawdown_recovery_date` nula, que o plano esperava ver em
+  dado real, só foi exercido em teste.
+- **A maior queda da VALE3 não é a da covid sozinha.** O topo é 2018-09-25 — a queda começa
+  antes de Brumadinho e o fundo é o de março de 2020. O `max_drawdown` percorre a **série
+  inteira**, não a janela de 60 meses, e este é o caso em que isso aparece.
+- **O histograma quase não usa as pontas abertas:** em 1.247–1.248 retornos por ativo, apenas
+  **um** caiu fora de [−10%, +10%] (ITUB4, balde 0). O risco "o histograma tem cauda cortada"
+  é real de princípio e raro de fato nesta amostra — e a curtose em excesso de 20,73 do ITUB4
+  diz que a cauda está lá, dentro do intervalo, onde o histograma não a destaca.
+- **O IBOV tem uma observação a menos** (1.247 contra 1.248): a série dele termina em
+  2026-09-21 e a das ações em 2026-09-18, e são 2.482 pregões contra 2.489 — o M1.2 descartou
+  oito pregões nulos do índice e um de cada ação.
+- **`benchmark_observations` == `statistical_observations` nos três**, 1.248: nenhum par se
+  perdeu no emparelhamento por data em cinco anos.
+- A soma dos 42 baldes bateu com `statistical_observations` em todos — o V-11 valendo em dado
+  real.
+
+Seis decisões nasceram do bloco:
+[D-55](decisoes/D-55-metrica-de-comportamento-e-imutavel.md) (métrica imutável, uma linha por
+ativo e data de cálculo), [D-56](decisoes/D-56-tabela-de-metricas-larga-e-serie-em-tabela-propria.md)
+(tabela larga e tipada; série em tabela própria),
+[D-57](decisoes/D-57-janela-estatistica-do-marco-1-e-60-meses.md) (a janela estatística é 60
+meses), [D-58](decisoes/D-58-calculo-da-camada-2-mora-no-backend.md) (o cálculo da camada 2
+mora no backend), [D-59](decisoes/D-59-sem-dependencia-numerica-nova-no-backend.md) (sem
+dependência numérica nova) e
+[D-60](decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md) (métrica descritiva
+não carrega manifesto; restringe a D-15).
+
+**O bloco não fecha a camada 1 inteira:** a capitalização de mercado não tem fonte no
+repositório e é do M3.1. O ROADMAP registra a ressalva.
 
 ## Próximo passo
 
-**Escrever a spec do M1.3 — Camadas 1 e 2**: identidade, preço, gráfico, volume, dividendos,
-retornos por janela, volatilidade, maior queda e recuperação, relação com o Ibovespa. É o
-primeiro bloco que **calcula** em vez de coletar, e o primeiro a povoar `gold`. Lê
-`silver.price` e `silver.corporate_event`; escreve métricas de comportamento por ativo.
+**Escrever a spec do M1.4 — Motor de risco**: semente fixa, manifesto de execução,
+integração com a fila. É o bloco em que `engine/` — nove modelos de VaR e quatro testes de
+backtesting — passa a ser consumido pela plataforma, e o primeiro em que há algoritmo,
+hiperparâmetro e semente para manifestar.
 
-Perguntas que a spec encontra na porta: **onde o cálculo roda** — `manage.py` síncrono como os
-dois blocos anteriores, ou já pela fila (o M1.5 é o bloco da execução assíncrona)? — e **o que
-é uma métrica em `gold`**: uma linha por ativo recalculada, ou uma linha por (ativo, data de
-cálculo), imutável como a [D-16](decisoes/D-16-resultado-e-imutavel.md) manda para resultado?
-A segunda é a leitura da ARQUITETURA; a spec precisa dizer.
+Perguntas que a spec encontra na porta: **como o backend chama o motor** sem quebrar a
+[D-17](decisoes/D-17-monorepo-engine-sem-django.md) — a `web` não tem as dependências
+científicas, e a `worker` tem; **onde mora o manifesto** que a
+[D-15](decisoes/D-15-manifesto-de-execucao.md) exige e que a
+[D-60](decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md) adiou para cá; e
+**o que o M1.4 lê da `gold`**, agora que `gold.behavior_metric` existe.
 
 **A reversibilidade barata acabou:** `silver.price` tem ~10 mil linhas e aponta para `asset`.
-`migrate assets zero` ainda funciona, mas custa uma coleta real para voltar.
+`migrate assets zero` ainda funciona, mas custa uma coleta real para voltar. **`gold` é a
+exceção, e não é linha da tabela de dívida** — não procure lá: métrica de comportamento é
+**derivada**, `migrate analytics zero` apaga tudo e uma execução de `compute_metrics`
+reconstrói em 0,1 s. É a última vez no Marco 1 em que isso vale.
 
 ---
 

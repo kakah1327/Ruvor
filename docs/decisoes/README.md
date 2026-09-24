@@ -64,6 +64,12 @@ conversas e entre agentes.
 | [D-52](D-52-a-janela-de-precos-so-cresce.md) | A janela de preços só cresce |
 | [D-53](D-53-evento-novo-rebusca-a-serie-inteira.md) | Evento corporativo novo rebusca a série inteira |
 | [D-54](D-54-transacao-por-ativo-restringe-a-d-48.md) | Na ingestão de preços a transação é por ativo; restringe a D-48 |
+| [D-55](D-55-metrica-de-comportamento-e-imutavel.md) | Métrica de comportamento é imutável, uma linha por (ativo, data de cálculo) |
+| [D-56](D-56-tabela-de-metricas-larga-e-serie-em-tabela-propria.md) | A tabela de métricas é larga e tipada; série ganha tabela própria |
+| [D-57](D-57-janela-estatistica-do-marco-1-e-60-meses.md) | A janela estatística do Marco 1 é 60 meses |
+| [D-58](D-58-calculo-da-camada-2-mora-no-backend.md) | O cálculo da camada 2 mora no backend, não no motor |
+| [D-59](D-59-sem-dependencia-numerica-nova-no-backend.md) | Sem dependência numérica nova no backend |
+| [D-60](D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md) | Métrica descritiva não carrega manifesto; restringe a D-15 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

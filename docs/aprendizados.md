@@ -596,9 +596,46 @@ commit — o padrão "aplica, mede, reverte" das tabelas de mutação.
 **Problema:** `git checkout -- <arquivo>` só restaura o que o índice conhece. Num arquivo novo
 ele não faz nada (ou acusa `pathspec did not match`), e a mutação fica no lugar; a segunda
 mutação empilha sobre a primeira, e o critério "verde depois de reverter" mede código sujo.
-Aconteceu na T4 do M1.2, com duas mutações empilhadas antes de alguém notar.
+Aconteceu na T4 do M1.2, com duas mutações empilhadas antes de alguém notar, e **de novo
+na T7 do M1.3**, na tabela de vinte e oito mutações — o verbete existia e não foi lido.
 
 **Faça:** mutação antes do commit → copie o arquivo para o scratchpad e restaure por cópia,
 conferindo com `diff`. Ou commite primeiro e mute depois, que é o que a tarefa de mutações
 do plano faz. Nunca confie no `git status` limpo como prova de reversão de arquivo não
 rastreado: ele nunca esteve sujo aos olhos do git.
+
+
+## `git diff` vazio não prova árvore intocada, neste repositório
+
+**Quando:** ao confirmar que uma mutação foi revertida, ou que uma tarefa não tocou em arquivo
+fora da sua cerca, usando `git diff` como prova.
+
+**Problema:** este repositório tem `core.autocrlf=true` na configuração local e `* text=auto
+eol=lf` no `.gitattributes`. O git normaliza na leitura, então um arquivo **reescrito inteiro
+em CRLF** — por editor, por script, por ferramenta — some do `git diff` e do `git diff
+--stat`: os dois saem vazios, e o critério "árvore intocada" passa sobre um arquivo alterado.
+A única pista é `git status --porcelain`, que lista o arquivo, e o aviso `CRLF will be
+replaced by LF` quando ele entra no índice.
+
+**Faça:** para provar reversão ou árvore intocada, use `git status --porcelain` — vazio ali é
+prova; vazio no `git diff` não é. Vale junto com os verbetes do `write_text()` e do
+`Set-Content`, que são as **causas** mais comuns da reescrita; este é sobre a **verificação**
+que não a enxerga.
+
+
+## `CASCADE` do Django não vira DDL: não se prova no `psql`
+
+**Quando:** ao verificar um `on_delete=models.CASCADE` (ou `PROTECT`, `SET_NULL`) inspecionando
+a tabela com `\d` no `psql`, ou ao supor que apagar a linha pai pelo banco limpa as filhas.
+
+**Problema:** o Django implementa as ações de `on_delete` **em Python**, no coletor do ORM, e
+emite a FK sem `ON DELETE`. `\d gold.return_histogram_bin` mostra só `FOREIGN KEY (metric_id)
+REFERENCES gold.behavior_metric(id) DEFERRABLE INITIALLY DEFERRED` — nenhuma palavra
+`CASCADE`. Quem procura a cláusula conclui que o modelo está errado; quem apaga a métrica por
+`DELETE` em `psql` não limpa os baldes. Pior: como a FK é `DEFERRABLE INITIALLY DEFERRED`, o
+`DELETE` **responde `DELETE 1`** e só estoura no `COMMIT` — medido em 2026-09-24, com `SET
+CONSTRAINTS ALL IMMEDIATE` forçando a checagem dentro da transação.
+
+**Faça:** prove `on_delete` pelo ORM — `metric.delete()` e conte as filhas —, nunca pela DDL.
+A DDL só prova o que o banco garante sozinho: tipo, nulabilidade, unicidade e a existência da
+FK.
