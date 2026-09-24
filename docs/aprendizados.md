@@ -642,3 +642,56 @@ CONSTRAINTS ALL IMMEDIATE` forçando a checagem dentro da transação.
 **Faça:** prove `on_delete` pelo ORM — `metric.delete()` e conte as filhas —, nunca pela DDL.
 A DDL só prova o que o banco garante sozinho: tipo, nulabilidade, unicidade e a existência da
 FK.
+
+
+## O `mypy` do motor roda de dentro de `engine/`, nunca da raiz
+
+**Quando:** ao verificar tipos do motor — em tarefa que altera `engine/src/`, ou ao conferir
+o critério de aceite de um plano que diz "mypy".
+
+**Problema:** `mypy engine/src` a partir da raiz **não lê** o `engine/pyproject.toml`: ele
+procura a configuração no diretório corrente. O resultado são ~37 erros que **já existem
+hoje** e não são regressão nenhuma — `import-untyped` de pandas, scipy e tensorflow, mais os
+dois módulos que a `ignore_errors` da [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md)
+cobre (`_quantile_nn`, `_conditional`). Quem mede assim conclui que quebrou o motor e sai
+consertando o que não está errado. Medido na T2 do M1.4.
+
+**Faça:** `cd engine && mypy` — sem argumento, porque a configuração já traz `files = ["src"]`.
+É a forma que a CI usa e a que o `README.md` documenta. O `ruff`, ao contrário, roda **da
+raiz** (`ruff check engine`): de dentro de `engine/` o caminho `engine` não existe.
+
+
+## `_REGISTRY` do motor é global de processo, e isso esconde mutação
+
+**Quando:** ao escrever ou medir teste que dependa de `load_all_model_modules()` /
+`load_all_backtest_modules()` terem sido chamadas — e ao mirar uma mutação que as remova.
+
+**Problema:** `list_models()` lê um dicionário de módulo, populado por `load_all_*`. Como ele
+é **global de processo**, qualquer teste anterior da mesma sessão do pytest já o terá
+populado. Remover as duas chamadas do código de produção deixa a suíte **verde** em quase
+todo critério que se escolha para apontar: a mutação só morde em execução real — onde o
+processo é novo — ou num teste escrito para limpar/observar o registry. Na T9 do M1.4 ela
+reprovou em `test_o_registry_e_carregado_antes_de_ser_consultado`, **e só nele**; mirar em
+outro critério teria produzido um falso "a mutação passou".
+
+**Faça:** ao provar que uma verificação sabe reprovar, escolha o teste que **de fato** isola o
+estado global, e registre no plano qual é. Estado global de processo faz a suíte inteira
+parecer cúmplice.
+
+
+## Substituição em massa em documento de contrato precisa ser relida linha a linha
+
+**Quando:** ao aplicar `sed`, `str.replace` ou "substituir tudo" num arquivo que é contrato —
+spec, plano, `README.md`, workflow da CI, tabela de comandos.
+
+**Problema:** a substituição acerta o padrão e erra o contexto. Aconteceu **duas vezes no
+M1.4**: a troca de `web` por `worker` na tabela de comandos atingiu linhas que a tarefa
+mandava explicitamente **não** mover, e uma das substituições deixou um comando **depois de
+um `#`**, dentro de um bloco de critério de aceite — onde ele nunca executaria, e onde
+ninguém que leia rápido percebe que ele sumiu. O texto continua plausível, o diff parece
+pequeno, e o defeito só aparece quando alguém tenta rodar o critério.
+
+**Faça:** depois de qualquer substituição em massa em documento de contrato, releia **o diff
+inteiro linha a linha** — não o resumo, não o `--stat`. Em bloco de código de critério de
+aceite, confira que nenhuma linha executável foi comentada. Vale junto com o verbete da lista
+fechada: os dois são sobre afirmação que envelhece calada.

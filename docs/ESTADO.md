@@ -10,7 +10,7 @@
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** M1.3 fechado em 2026-09-24; **o M1.4 é o próximo**
+**Bloco:** M1.4 fechado em 2026-09-24; **o M1.5 é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
@@ -23,7 +23,11 @@ organização fixa do Marco 1 (`slug` `ruvor`), as quatro tabelas da `bronze`, e
 `silver.price` e `silver.corporate_event`: dez anos de PETR4, VALE3, ITUB4 e Ibovespa, ~2.490
 pregões cada, com retorno logarítmico. `manage.py compute_metrics` lê a `silver` e povoa a
 `gold`: uma linha imutável de métricas de comportamento por ativo e execução, mais os 42
-baldes do histograma de retornos. Ainda não há API de negócio nem tela de produto.
+baldes do histograma de retornos. **`manage.py compute_risk`, no contêiner `worker`, é a
+camada 3**: roda os nove modelos de VaR e os quatro backtests sobre `silver.price` e grava em
+`gold` a execução com o manifesto e os dezoito resultados, cada um com o VaR, os quatro
+testes e o veredito de adequação. Vinte tabelas. Ainda não há API de negócio nem tela de
+produto.
 
 **Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
 `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
@@ -34,11 +38,13 @@ frontend, e o motor entrou no estilo com a formatação provada por árvore sint
 
 **O dia a dia de `backend/` e `frontend/` roda dentro do contêiner**
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
-Consequência que engana quem não sabe: **`pytest backend` no hospedeiro reprova cinco
-testes e dá erro em quarenta e nove**, de propósito — o `settings_test.py` fixa valores de banco
-inexistentes para que um `.env` incompleto não passe despercebido. Os cinco leem o banco
-configurado; os quarenta e nove são os de `assets`, com `django_db`, que nem conseguem criar o banco de
-teste. **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regressão.
+**Desde o M1.4 a suíte e o `mypy` do backend rodam no `worker`, não na `web`** — é o único
+contêiner que tem o motor, e `apps/risk/` o importa (RF-16b). Consequência que engana quem
+não sabe: **`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e nove**,
+de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um `.env`
+incompleto não passe despercebido. Os cinco leem o banco configurado; os 109 são os que
+pedem `django_db` e nem conseguem criar o banco de teste. **Dentro do contêiner os cinco
+exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-24, com 240 testes.
 
 ## O que foi concluído
 
@@ -47,7 +53,7 @@ teste. **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regr
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **60 decisões registradas** — [decisoes/](decisoes/)
+- **66 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -308,7 +314,7 @@ Primeiro bloco que **calcula** em vez de coletar, e o primeiro a povoar `gold`.
 | **Execução real** (2026-09-24, 0,1 s) | ✅ quatro ativos, 4 linhas + 168 baldes |
 | **Segunda execução** (0,1 s) | ✅ 8 linhas e 336 baldes; a primeira de cada ativo intacta |
 
-199 testes no backend; mypy (67 arquivos) e ruff limpos; cinco serviços saudáveis.
+200 testes no backend; mypy (67 arquivos) e ruff limpos; cinco serviços saudáveis.
 
 **As mutações: 25 das 28 reprovaram na primeira medição, com três achados.** O placar não é
 "as 28 reprovaram", e os três valem mais que o verde:
@@ -380,25 +386,144 @@ não carrega manifesto; restringe a D-15).
 **O bloco não fecha a camada 1 inteira:** a capitalização de mercado não tem fonte no
 repositório e é do M3.1. O ROADMAP registra a ressalva.
 
+### M1.4 — Motor de risco
+
+Spec em [`specs/M1.4-motor-de-risco.md`](specs/M1.4-motor-de-risco.md) e plano em
+[`planos/M1.4-motor-de-risco.md`](planos/M1.4-motor-de-risco.md). Dez tarefas e dez commits,
+de `4d5a888` ao commit de fecho, direto na `main` — um por tarefa, menos a T9, que não
+produz, mais a correção pós-T4 (`f870e96`). **Primeiro bloco em que
+a plataforma consome o motor**, e o primeiro com manifesto de execução.
+
+| Verificação | Resultado |
+|---|---|
+| As duas tabelas na `gold`; conjunto inteiro de **vinte**; `0001` reversível | ✅ `migrate risk zero` e `migrate` saem 0 nos dois |
+| A suíte e o `mypy` do backend migram para o `worker` | ✅ e a `web` continua subindo com `apps.risk` instalado, que é o que prova que `models.py` não encosta no motor |
+| Semente fixa nos três neurais | ✅ duas **instâncias novas**, mesma semente → séries de VaR exatamente iguais; sementes diferentes → séries diferentes |
+| Nada mudou de número no motor | ✅ linha de base intacta (V-05) **e** `run_experiment` igual à chamada direta no mesmo processo (V-05b) |
+| `engine/` segue sem Django | ✅ |
+| Retornos do provider batem com `silver.price.log_return` | ✅ diferença absoluta < 1e-9 |
+| Nenhum arquivo de `apps/risk/` menciona o `yfinance` | ✅ varredura textual sobre todos os `*.py` |
+| Dezoito resultados e a janela de 252, sem execução manual | ✅ o V-20, com os **nove modelos de verdade**, redes incluídas |
+| Piso de 503 sessões | ✅ 502 pula, 503 calcula — o par |
+| Transação por ativo, veredito, imutabilidade, `price_run` da coleta mais recente | ✅ |
+| Registry incompleto e nome errado falham alto | ✅ pela casca e contra o comando real |
+| **Execução real** (2026-09-24, **512,0 s**) | ✅ quatro ativos, 4 `risk_run` + 72 `risk_result` |
+| **Segunda execução** (**509,4 s**) | ✅ 8 `risk_run` e 144 `risk_result`; a primeira de cada ativo **intacta campo a campo** |
+| **`compute_risk --model inexistente`** | ✅ `CommandError: modelos ausentes do registry: inexistente`, código 1, **nada gravado** |
+
+240 testes no backend e **98 no motor**; mypy (83 arquivos no backend, 34 no motor) e ruff
+limpos nos dois; vinte tabelas.
+
+**As dezesseis mutações reprovaram na primeira medição** — contadas no arquivo, não
+estimadas: eram quinze na tabela da spec, e a T9 acrescentou a do `load_all_*`, que a T7
+havia identificado e que **só é pega por um teste**, porque o `_REGISTRY` do motor é global
+de processo.
+
+#### Os números da execução real
+
+O tempo, por ativo, na primeira execução: IBOV 131,1 s · ITUB4 140,4 s · PETR4 125,4 s ·
+VALE3 115,1 s. Na segunda: 129,9 · 140,0 · 124,9 · 114,5.
+
+| Ativo | Pregões | `as_of` | Adequados (de 18) | a 95% | a 99% | Falhos |
+|---|---|---|---|---|---|---|
+| IBOV | 2.482 | 2026-09-21 | **8** | 7 | 1 | 0 |
+| ITUB4 | 2.489 | 2026-09-18 | **9** | 6 | 3 | 0 |
+| PETR4 | 2.489 | 2026-09-18 | **7** | 3 | 4 | 0 |
+| VALE3 | 2.489 | 2026-09-18 | **4** | **0** | 4 | 0 |
+
+**Nenhum modelo falhou** nos 72 (ativo, modelo, nível): `error` vazio em todos, e nenhum
+`adequate` nulo. O ramo do veredito nulo, que existe para "não deu para julgar", só foi
+exercido em teste.
+
+**A VALE3 não teve nenhum modelo aprovado a 95%**, e isso é **resultado, não defeito** — é
+exatamente o caso que a spec previu e que o M1.6 precisa saber desenhar: nenhum dos nove
+métodos descreveu bem aquele ativo naquele nível. Dizê-lo é o tipo de honestidade que o
+produto promete.
+
+O `var_latest` do último pregão, em cada ativo, pelos nove modelos:
+
+| Modelo | IBOV 95% / 99% | ITUB4 95% / 99% | PETR4 95% / 99% | VALE3 95% / 99% |
+|---|---|---|---|---|
+| parametric | 2,07% / 2,96% | 2,69% / 3,85% | 4,35% / 6,17% | 4,35% / 6,25% |
+| historical | 2,00% / 3,33% | 2,20% / 4,42% | 4,00% / 6,35% | 4,12% / 6,36% |
+| monte_carlo | 2,09% / 2,99% | 2,71% / 3,88% | 4,38% / 6,22% | 4,38% / 6,29% |
+| garch_1_1 | 1,71% / 2,41% | 2,43% / 3,43% | 3,51% / 4,96% | 3,05% / 4,31% |
+| egarch | 1,56% / 2,21% | 2,43% / 3,44% | 3,43% / 4,86% | 3,23% / 4,57% |
+| caviar | 1,49% / 2,28% | 2,04% / 2,75% | 3,38% / 6,29% | 3,19% / 5,18% |
+| garchnet | 1,32% / 2,89% | 1,62% / 2,56% | 3,89% / 6,54% | 3,84% / 5,70% |
+| lstm | 1,31% / 3,44% | 1,68% / 2,74% | 4,02% / 8,00% | 3,87% / 5,78% |
+| gru | 1,25% / 4,14% | 1,81% / 3,20% | 4,09% / 6,85% | 4,10% / 5,75% |
+
+**O que a execução contrariou.**
+
+- **O tempo não foi o problema que a spec temia.** A estimativa era **~1 h**, pelo paralelo da
+  Etapa 6; a execução inteira levou **8 min 32 s** para os quatro ativos, ~2 min por ativo,
+  sequencial e em CPU. É ~7× mais rápido que o teto declarado, então **não há achado de
+  desempenho** e **nada precisa ser antecipado do M1.5**. A estimativa da Etapa 6 continua de
+  pé para o escopo dela, que é outro.
+- **As duas execuções deram os mesmos números, bit a bit, nos 72 (ativo, modelo, nível)** —
+  `var_latest`, `var_mean`, violações, os três `p_value`, a zona e o veredito. Inclusive nos
+  três neurais, que é o que não acontecia antes deste bloco. É o critério central do bloco
+  medido em dado real, e não só em série sintética.
+- **A família GARCH é conservadora demais nesta amostra, e o Kupiec a reprova por isso.** O
+  EGARCH do IBOV a 99% produziu **5 violações onde se esperavam 22,29** (p = 9e-06); a 95%,
+  29 contra 111,45 (p = 0). Kupiec reprova nos dois sentidos, e aqui reprova por sobra de
+  margem, não por falta. **O EGARCH não foi aprovado em nenhum ativo e em nenhum nível** — 0
+  de 8 —, e o `garch_1_1` só na VALE3 a 99% (15 violações contra 22,36; p = 0,096).
+- **O DQ aprovou 8 dos 72**, e a Basileia reprovou **zero**: 70 zonas verdes e 2 amarelas
+  (ITUB4 `garchnet` e `historical`, ambos a 95%), nenhuma vermelha. É a medição que sustenta
+  o RF-14 em dado real: incluir o DQ no veredito deixaria quase nada de pé, e incluir a
+  Basileia não mudaria nada.
+- **Os modelos que mais passam são os de ML**, e por pouca margem: `garchnet` 6 aprovações de
+  8 possíveis, `caviar`, `gru` e `lstm` 5 cada; `historical`, `monte_carlo` e `parametric` 2
+  cada; `garch_1_1` 1; `egarch` 0. A spec já proíbe eleger um vencedor
+  ([D-65](decisoes/D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md)), e esta
+  distribuição mostra por quê: a ordem muda de ativo para ativo.
+- **A discordância entre modelos é grande, e é visível já aqui.** No PETR4 a 99%, o
+  `var_latest` vai de **4,86%** (EGARCH) a **8,00%** (LSTM) — quase o dobro, para a mesma
+  série e o mesmo dia. É o candidato "discordância entre modelos" do ROADMAP aparecendo sem
+  ninguém ter implementado nada para ele.
+- **`price_run` saiu 3 nos quatro ativos** — a coleta incremental do M1.2 —, e `requested_by`
+  nulo nos quatro, como a spec declarou. `engine_version` gravou **`0.2.0`**, que é o bump da
+  T2 chegando ao `worker` pela reconstrução da imagem.
+
+Seis decisões nasceram do bloco:
+[D-61](decisoes/D-61-backend-alimenta-o-motor-por-dataprovider.md) (o backend alimenta o
+motor por um `DataProvider`), [D-62](decisoes/D-62-a-serie-que-vai-ao-motor-e-o-adj-close.md)
+(a série que vai ao motor é o `adj_close`),
+[D-63](decisoes/D-63-semente-fixa-entra-no-manifesto.md) (semente fixa, aplicada no início de
+cada treino, e no manifesto),
+[D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md) (o veredito é Kupiec
+e Christoffersen), [D-65](decisoes/D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md)
+(lista os aprovados e não elege nenhum) e
+[D-66](decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md) (registry
+incompleto é erro, não silêncio).
+
+**Duas pendências que o portão humano tratou, e só uma foi resolvida:** a divergência do
+ROADMAP sobre a fila foi resolvida **a favor do M1.5**, e a linha do M1.4 foi corrigida; o
+**regime de laboratório continua sem decisão** — está em *Aberto e aguardando decisão*.
+
 ## Próximo passo
 
-**Escrever a spec do M1.4 — Motor de risco**: semente fixa, manifesto de execução,
-integração com a fila. É o bloco em que `engine/` — nove modelos de VaR e quatro testes de
-backtesting — passa a ser consumido pela plataforma, e o primeiro em que há algoritmo,
-hiperparâmetro e semente para manifestar.
+**Escrever a spec do M1.5 — Execução assíncrona**: fila, modo A, pré-cálculo dos ativos
+cobertos e agendamento das ingestões. É o bloco que a spec do M1.4 nomeou ao resolver a
+divergência do ROADMAP sobre a fila.
 
-Perguntas que a spec encontra na porta: **como o backend chama o motor** sem quebrar a
-[D-17](decisoes/D-17-monorepo-engine-sem-django.md) — a `web` não tem as dependências
-científicas, e a `worker` tem; **onde mora o manifesto** que a
-[D-15](decisoes/D-15-manifesto-de-execucao.md) exige e que a
-[D-60](decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md) adiou para cá; e
-**o que o M1.4 lê da `gold`**, agora que `gold.behavior_metric` existe.
+O que ele já encontra pronto: o `compute_risk` síncrono, com transação por ativo e manifesto,
+rodando em **~2 min por ativo** — o que muda a pergunta de "dá para esperar?" para "quando
+recalcular?". E a `worker`, que desde o M1.4 é o contêiner onde a suíte inteira roda.
+
+Perguntas que a spec encontra na porta: **o que dispara o recálculo** — ingestão nova de
+preço, agenda, ou pedido do usuário; **o que o modo A devolve** enquanto o ML não terminou
+([D-07](decisoes/D-07-resposta-progressiva-modo-a.md)); e **como a tarefa Celery carrega o
+manifesto**, agora que ele existe.
 
 **A reversibilidade barata acabou:** `silver.price` tem ~10 mil linhas e aponta para `asset`.
 `migrate assets zero` ainda funciona, mas custa uma coleta real para voltar. **`gold` é a
-exceção, e não é linha da tabela de dívida** — não procure lá: métrica de comportamento é
-**derivada**, `migrate analytics zero` apaga tudo e uma execução de `compute_metrics`
-reconstrói em 0,1 s. É a última vez no Marco 1 em que isso vale.
+exceção, e não é linha da tabela de dívida** — não procure lá: o que está lá é **derivado**,
+`migrate analytics zero` / `migrate risk zero` apagam tudo, e uma execução de
+`compute_metrics` reconstrói em 0,1 s, uma de `compute_risk` em 8,5 min. É a última vez no
+Marco 1 em que isso vale.
 
 ---
 
@@ -410,9 +535,10 @@ reconstrói em 0,1 s. É a última vez no Marco 1 em que isso vale.
 | **`listing_segment` nulo em 192 das 473 ações.** O `market` da listagem da B3 vem vazio para a maioria das companhias; só NM/N1/N2 vêm preenchidos | `silver.asset.listing_segment` | Quando a tela precisar do segmento — a fonte alternativa é o `market` por extenso do detalhe (`"BOVESPA NIVEL 2"`), que a spec do M1.1 decidiu não usar |
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
+| **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
 | Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
-| **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência, ou quando o M1.4 precisar decidir o que o motor pode trazer para dentro do backend |
+| **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
 | **`createsuperuser` não funciona.** O gerente exige organização e o comando não tem como fornecê-la: pôr `organization` em `REQUIRED_FIELDS` faria o `create_superuser` receber a **chave crua**, porque `ForeignKey.clean` devolve a pk (`createsuperuser.py:150,233`). Falha com `ValueError: o usuario precisa de organizacao` | `backend/apps/accounts/managers.py`, comentado no próprio arquivo | **M2.1**, que constrói o fluxo de identidade e decide como um primeiro usuário nasce. Enquanto isso, criar usuário exige `shell` |
 | **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
@@ -422,6 +548,7 @@ reconstrói em 0,1 s. É a última vez no Marco 1 em que isso vale.
 
 | Tema | Onde |
 |---|---|
+| **O regime de laboratório sai do Marco 1 — e ninguém decidiu isso.** A [PRODUTO §4](PRODUTO.md#4-marcos) promete a camada 3 **nos dois regimes** ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); o M1.4 entregou **só produção**, e **nenhum bloco do ROADMAP retoma o laboratório** — nem o M1.5, nem o M1.6. A spec do M1.4 assumiu "o Marco 1 é só produção" **para poder existir** e marcou como pendente de confirmação. Três saídas: (1) o Marco 1 vira só produção e nasce a decisão que restringe a PRODUTO; (2) nasce um **M1.7** para o laboratório; (3) o `ruvor run` é declarado suficiente e a PRODUTO é corrigida. **Enquanto ninguém escolher, adiar é descartar sem dizer** | [ROADMAP.md](ROADMAP.md#marco-1--a-ação-e-o-risco-dela), [PRODUTO.md](PRODUTO.md#4-marcos) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
@@ -442,14 +569,18 @@ reconstrói em 0,1 s. É a última vez no Marco 1 em que isso vale.
 
 ## Trilha paralela — TCC
 
-Independente da plataforma, é tempo de máquina. Nada iniciado. Sequência obrigatória:
+Independente da plataforma, é tempo de máquina. Sequência obrigatória:
 
-1. Fixar a semente das redes neurais
-2. Refazer a Tabela 1
+1. ~~Fixar a semente das redes neurais~~ — ✅ **feito no M1.4**
+   ([D-63](decisoes/D-63-semente-fixa-entra-no-manifesto.md))
+2. Refazer a Tabela 1 — os números atuais vieram de execução **sem** semente
 3. Executar a Etapa 6
 4. Escrever §4.5 e o Capítulo 5
 
-O motor já roda por linha de comando (`ruvor run`), então a Etapa 6 pode ser executada assim
-que a semente for corrigida.
+O motor roda por linha de comando (`ruvor run`) e a semente está fixa, então **o passo 1 não
+bloqueia mais nada**. Uma medição do M1.4 muda a expectativa de custo: os nove modelos sobre
+quatro ativos e dois níveis levaram **8,5 min** sequenciais em CPU pelo caminho do
+`run_experiment` — muito abaixo da estimativa de ~1 h que a Etapa 6 carrega. Não é a mesma
+carga, mas convém remedir antes de planejar paralelização.
 
 Ver [ROADMAP.md](ROADMAP.md#trilha-paralela--tcc).

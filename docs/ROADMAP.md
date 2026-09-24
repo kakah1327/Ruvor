@@ -41,13 +41,23 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 | ✅ | **M1.1 — Catálogo de ativos** | lista de papéis da B3 com nome, setor e situação; base da busca — fechado em 2026-09-21, 473 ações + Ibovespa |
 | ✅ | **M1.2 — Ingestão de preços** | histórico + atualização incremental, `bronze` com data de coleta, `silver.price` e eventos — fechado em 2026-09-22, quatro ativos de dez anos |
 | ✅ | **M1.3 — Camadas 1 e 2** | identidade, preço, gráfico, volume, dividendos, retornos, volatilidade, quedas, **distribuição de retornos** e relação com o Ibovespa — fechado em 2026-09-24, `gold` povoado pelos quatro ativos. **O tamanho não entra:** capitalização de mercado não tem fonte no repositório e é do M3.1 |
-| ⬜ | **M1.4 — Motor de risco** | semente fixa, manifesto de execução, integração com a fila (a migração é do F2a) |
+| ✅ | **M1.4 — Motor de risco** | semente fixa nos três modelos neurais, manifesto de execução e o veredito de adequação por (modelo, nível) — `manage.py compute_risk` no contêiner `worker`, `gold.risk_run` e `gold.risk_result` (a migração é do F2a). Fechado em 2026-09-24, quatro ativos × 18 resultados. **A fila não é deste bloco:** a linha original dizia "integração com a fila", o M1.5 dizia a mesma coisa, e a spec do M1.4 resolveu a divergência **a favor do M1.5** — aqui o comando é síncrono |
 | ⬜ | **M1.5 — Execução assíncrona** | fila, modo A, pré-cálculo dos ativos cobertos, agendamento das ingestões (`import_assets`, `import_prices`) |
 | ⬜ | **M1.6 — Aplicação web** | shell, busca, tela do ativo, identidade Ruvor |
 
 **Candidatos a entrar neste marco** (ver [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos)):
 discordância entre modelos, "em qual modelo confiar", estresse histórico. Ainda não
 decidido.
+
+**Pendência declarada e não decidida — o regime de laboratório.** A
+[PRODUTO §4](PRODUTO.md#4-marcos) promete a camada 3 **nos dois regimes**
+([D-04](decisoes/D-04-dois-regimes-de-operacao.md)) no Marco 1; o M1.4 entregou **só
+produção**, e **nenhum bloco deste marco retoma o laboratório** — nem o M1.5, nem o M1.6. A
+spec do M1.4 assumiu que o Marco 1 é só produção **para poder existir**, e marcou a escolha
+como pendente de confirmação. As três saídas continuam abertas: o Marco 1 vira só produção e
+nasce a decisão que restringe a PRODUTO; nasce um **M1.7** para o laboratório; ou o
+`ruvor run` é declarado suficiente e a PRODUTO é corrigida para dizer isso. Enquanto ninguém
+escolher, adiar o laboratório é o mesmo que descartá-lo sem dizer.
 
 ---
 
@@ -95,7 +105,7 @@ Independente da plataforma. É tempo de máquina, não desenvolvimento.
 
 | | Tarefa | Observação |
 |---|---|---|
-| ⬜ | Fixar semente das redes neurais | pré-requisito de tudo abaixo |
+| ✅ | Fixar semente das redes neurais | **feito no M1.4** — `engine/src/engine/seeding.py`, aplicada no início de cada treino ([D-63](decisoes/D-63-semente-fixa-entra-no-manifesto.md)). Era pré-requisito de tudo abaixo |
 | ⬜ | Refazer a Tabela 1 (modelos de ML) | os números atuais vieram de execução sem semente |
 | ⬜ | Executar a Etapa 6 | 9 modelos × 4 ativos × 2 níveis; ~1h em CPU paralelizada |
 | ⬜ | Escrever §4.5 e o Capítulo 5 | dependem da Etapa 6 |

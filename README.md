@@ -187,7 +187,7 @@ proxy.
 
 Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). O conjunto precisa estar de pé
-(`docker compose up -d --wait`) para as onze primeiras linhas.
+(`docker compose up -d --wait`) para as doze primeiras linhas.
 
 | O quê | Comando |
 |---|---|
@@ -195,6 +195,7 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Importar o catálogo de ativos | `docker compose exec -T web python manage.py import_assets` — consulta a B3 e leva ~2 minutos |
 | Importar os preços | `docker compose exec -T web python manage.py import_prices PETR4 VALE3 ITUB4 IBOV` na primeira vez, depois sem argumentos — consulta o Yahoo |
 | Calcular as métricas de comportamento | `docker compose exec -T web python manage.py compute_metrics` — lê `silver`, escreve em `gold`; aceita tickers como argumento. Não sai para a rede |
+| Calcular o risco (VaR e backtesting) | `docker compose exec -T worker python manage.py compute_risk` — lê `silver`, escreve em `gold`; aceita tickers, `--seed N` e `--model NOME` (repetível). Roda no `worker`, que é quem tem o motor. Não sai para a rede |
 | Testes do backend | `docker compose exec -T worker pytest tests` |
 | Tipos do backend | `docker compose exec -T worker mypy` |
 | Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |

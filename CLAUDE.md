@@ -108,21 +108,27 @@ Código — nomes de variável, função, classe — em inglês.
 
 Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêiner**, a
 **fundação de dados** — os quatro esquemas do banco, as primeiras tabelas, o **catálogo de
-ações** da B3 e dez anos de preço de quatro ativos — e as primeiras **métricas de
-comportamento** em `gold`. Ainda não existe API de negócio nem tela de produto.
+ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
+comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
+de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
 
-- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`), 9 modelos de VaR, 4
-  testes de backtesting, 64 testes e linha de base numérica. Roda por linha de comando:
-  `ruvor run`. **Nunca importa Django**, e um teste prova isso.
-- `backend/` — projeto Django com três apps, `apps/accounts`, `apps/assets` e
-  `apps/analytics`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
+- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.2.0**, 9
+  modelos de VaR, 4 testes de backtesting, 98 testes e linha de base numérica. Roda por linha
+  de comando: `ruvor run`. **Nunca importa Django**, e um teste prova isso. Os três modelos
+  neurais fixam semente por `engine/src/engine/seeding.py`
+  ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md)), e o `py.typed` deixa o
+  `mypy` do backend enxergar os tipos dele.
+- `backend/` — projeto Django com quatro apps, `apps/accounts`, `apps/assets`,
+  `apps/analytics` e `apps/risk`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
   Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 199 testes com pytest-django.
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 240 testes com pytest-django, que
+  **rodam no contêiner `worker`** — é o único que tem o motor
+  ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`, `silver.price` e
-  `silver.corporate_event`, e as duas tabelas da `gold`, `gold.behavior_metric` e
-  `gold.return_histogram_bin` — dezoito ao todo. O `AUTH_USER_MODEL`
+  `silver.corporate_event`, e as quatro tabelas da `gold`, `gold.behavior_metric`,
+  `gold.return_histogram_bin`, `gold.risk_run` e `gold.risk_result` — vinte ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -135,8 +141,14 @@ comportamento** em `gold`. Ainda não existe API de negócio nem tela de produto
   de métricas de comportamento mais os 42 baldes do histograma de retornos
   ([D-55](docs/decisoes/D-55-metrica-de-comportamento-e-imutavel.md) a
   [D-60](docs/decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md)). **`gold`
-  deixou de estar vazio no M1.3**; o cálculo usa só a biblioteca padrão, e o backend segue sem
-  `numpy` e sem `pandas`.
+  deixou de estar vazio no M1.3**; o cálculo da camada 2 usa só a biblioteca padrão.
+  `manage.py compute_risk` roda os nove modelos de VaR sobre `silver.price` e grava em `gold`
+  a execução com o manifesto e os resultados, cada um com o VaR, os quatro backtests e o
+  veredito de adequação
+  ([D-61](docs/decisoes/D-61-backend-alimenta-o-motor-por-dataprovider.md) a
+  [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md)). O
+  backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
+  instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
   consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
   cor literal em `frontend/src/`. Lint e formatação são do **Biome**, por `npm run lint`

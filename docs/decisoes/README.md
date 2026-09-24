@@ -70,6 +70,12 @@ conversas e entre agentes.
 | [D-58](D-58-calculo-da-camada-2-mora-no-backend.md) | O cálculo da camada 2 mora no backend, não no motor |
 | [D-59](D-59-sem-dependencia-numerica-nova-no-backend.md) | Sem dependência numérica nova no backend |
 | [D-60](D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md) | Métrica descritiva não carrega manifesto; restringe a D-15 |
+| [D-61](D-61-backend-alimenta-o-motor-por-dataprovider.md) | O backend alimenta o motor por um `DataProvider`, e o motor não aprende a plataforma |
+| [D-62](D-62-a-serie-que-vai-ao-motor-e-o-adj-close.md) | A série que vai ao motor é o `adj_close` |
+| [D-63](D-63-semente-fixa-entra-no-manifesto.md) | A semente é fixa, aplicada no início de cada treino, e entra no manifesto |
+| [D-64](D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md) | O veredito de adequação é Kupiec **e** Christoffersen; DQ e Basileia ficam de fora |
+| [D-65](D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md) | A plataforma lista os modelos aprovados e não elege nenhum |
+| [D-66](D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md) | Registry incompleto é erro, não silêncio; restringe, no consumo, o `except ImportError` do motor |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
