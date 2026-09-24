@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.assets",
     "apps.analytics",
+    "apps.risk",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

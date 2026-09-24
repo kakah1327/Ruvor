@@ -9,6 +9,7 @@ COPY backend/apps/__init__.py backend/apps/__init__.py
 COPY backend/apps/accounts/__init__.py backend/apps/accounts/__init__.py
 COPY backend/apps/assets/__init__.py backend/apps/assets/__init__.py
 COPY backend/apps/analytics/__init__.py backend/apps/analytics/__init__.py
+COPY backend/apps/risk/__init__.py backend/apps/risk/__init__.py
 RUN pip install --no-cache-dir -e "./backend[dev]"
 
 FROM base AS web
