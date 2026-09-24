@@ -670,7 +670,8 @@ def test_compute_monta_a_linha_inteira() -> None:
     assert metricas.returns["60m"] == Decimal("0.0000000000")  # adj_close constante
     assert metricas.beta_60m == Decimal("2.0000000000")
     assert metricas.benchmark_observations == 31
-    # 1,00 / 10,00 = 0,1 -- e o divisor e o `close` de as_of.
+    # 1,00 / 10,00 = 0,1. Aqui `close == adj_close`, entao este teste NAO distingue
+    # as duas escolhas de divisor -- quem prova que o divisor e o `close` e o V-18c.
     assert metricas.dividends_12m == Decimal("1.000000")
     assert metricas.dividend_payments_12m == 1
     assert metricas.dividend_yield_12m == Decimal("0.1000000000")
