@@ -6,7 +6,11 @@ on:
   workflow_dispatch:
 
 # timeout-minutes em todos: o repositorio e privado, a cota mensal vale, e um job
-# pendurado a consome inteira. O `motor` baixa TensorFlow e tem folga maior.
+# pendurado a consome inteira. `motor` e `backend` tem os mesmos 30 desde o M1.4 T1: os
+# dois instalam TensorFlow -- o `backend` porque a suite passou a rodar no `worker`.
+# O teto do `motor` foi reexaminado na T3 e mantido: os oito treinos neurais do V-03/V-04
+# levaram a suite de 29 s a 87 s no hospedeiro, e o V-05b custa ~4 s -- o que domina os
+# 30 minutos e a instalacao, nao a suite.
 jobs:
   estilo:
     runs-on: ubuntu-latest

@@ -9,10 +9,12 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from engine import seeding
 from engine.backtesting import get_backtest
 from engine.backtesting.base import BacktestResult
 from engine.data.preprocessing import fetch_returns
 from engine.models import get_model
+from engine.models.base import VaREstimate
 
 
 @dataclass
@@ -25,6 +27,8 @@ class ExperimentConfig:
     alphas: list[float] = field(default_factory=lambda: [0.05, 0.01])
     horizon: int = 1
     train_window_days: int = 252
+    #: semente da execucao; o runner a CONFIGURA, e `_fit_for_alpha` a aplica (RF-01)
+    seed: int = seeding.DEFAULT_SEED
 
 
 @dataclass
@@ -33,6 +37,8 @@ class ModelRunResult:
     alpha: float
     backtests: list[BacktestResult] = field(default_factory=list)
     error: str | None = None
+    #: a estimativa que produziu os backtests; sem ela o VaR nao sai daqui (RF-04)
+    estimate: VaREstimate | None = None
 
 
 @dataclass
@@ -59,7 +65,13 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
 
     Falhas (ex: dados insuficientes) nao derrubam o experimento inteiro — o erro fica
     registrado no ModelRunResult daquele (modelo, alpha) especifico e os demais continuam.
+
+    A semente e CONFIGURADA aqui, uma vez por experimento, e aplicada no inicio de cada
+    treino por `_fit_for_alpha` — o `fit()` dos neurais e preguicoso, entao semear aqui
+    semearia antes de o treino existir (RF-01).
     """
+    seeding.configure(config.seed)
+
     returns = fetch_returns(provider, config.ticker, config.start, config.end)
     if len(returns) <= config.train_window_days:
         raise ValueError(
@@ -97,7 +109,10 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
                 ]
                 runs.append(
                     ModelRunResult(
-                        model_name=model_name, alpha=alpha, backtests=backtests
+                        model_name=model_name,
+                        alpha=alpha,
+                        backtests=backtests,
+                        estimate=estimate,
                     )
                 )
             except Exception as exc:  # isola falha de 1 (modelo, alpha) do restante
