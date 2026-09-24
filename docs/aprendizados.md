@@ -610,8 +610,11 @@ rastreado: ele nunca esteve sujo aos olhos do git.
 **Quando:** ao confirmar que uma mutação foi revertida, ou que uma tarefa não tocou em arquivo
 fora da sua cerca, usando `git diff` como prova.
 
-**Problema:** este repositório tem `core.autocrlf=true` na configuração local e `* text=auto
-eol=lf` no `.gitattributes`. O git normaliza na leitura, então um arquivo **reescrito inteiro
+**Problema:** o `.gitattributes` fixa `* text=auto eol=lf`, e o `core.autocrlf` vale `true` —
+**pelo gitconfig do sistema**, o que o Git for Windows instala, não pela configuração local do
+repositório. Conferir com `git config --local core.autocrlf` devolve vazio e faz o verbete
+parecer falso; a forma que mostra a origem é `git config --show-origin core.autocrlf`. Em
+Linux a armadilha não se reproduz. O git normaliza na leitura, então um arquivo **reescrito inteiro
 em CRLF** — por editor, por script, por ferramenta — some do `git diff` e do `git diff
 --stat`: os dois saem vazios, e o critério "árvore intocada" passa sobre um arquivo alterado.
 A única pista é `git status --porcelain`, que lista o arquivo, e o aviso `CRLF will be
