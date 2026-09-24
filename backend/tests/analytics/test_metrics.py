@@ -1,5 +1,5 @@
 """O calculo puro conferido a mao: V-05, V-06, V-07, V-08, V-08b, V-09, V-10, V-10b,
-V-10c, V-11, V-11b, V-18, V-18b e V-19.
+V-10c, V-11, V-11b, V-18, V-18b, V-18c e V-19.
 
 Nenhum teste aqui toca banco, modelo ou rede: as funcoes de `metrics` recebem listas de
 `Bar` e `Dividend` construidas no proprio teste.
@@ -678,3 +678,37 @@ def test_compute_monta_a_linha_inteira() -> None:
     assert metricas.avg_volume_21d == Decimal("1000.00")
     assert metricas.avg_volume_252d is None
     assert metricas.drawdown.depth == Decimal("0.0000000000")
+
+
+# --- V-18c: o divisor do *yield* e o `close`, provado pela chamada dentro de `compute` -
+
+# A escolha `close` x `adj_close` **nao mora** em `dividend_summary`: ela recebe
+# `as_of_close` pronto e nao tem como observar de onde o chamador o tirou. Todo teste que
+# a chame direto passa o divisor a mao e aprovaria as duas escolhas. O unico lugar onde a
+# escolha existe e a chamada dentro de `compute` -- e so uma serie com `close != adj_close`
+# a alcanca.
+
+AS_OF_DIVIDENDO = date(2026, 3, 16)
+SERIE_CLOSE_DIVERGENTE = [
+    bar(date(2025, 3, 10), "20.000000", "16.000000"),
+    bar(date(2025, 9, 15), "24.000000", "19.200000", log_return="0.1823215568"),
+    bar(AS_OF_DIVIDENDO, "25.000000", "20.000000", log_return="0.0408219945"),
+]
+
+
+def test_v18c_o_compute_divide_o_yield_pelo_close_e_nao_pelo_ajustado() -> None:
+    # Os dois pagamentos caem dentro dos 12 meses anteriores a 2026-03-16.
+    dividendos = [
+        Dividend(date(2025, 12, 10), Decimal("0.500000")),
+        Dividend(date(2026, 2, 10), Decimal("1.000000")),
+    ]
+
+    metricas = compute(SERIE_CLOSE_DIVERGENTE, dividendos, None)
+
+    assert metricas.as_of_date == AS_OF_DIVIDENDO
+    assert metricas.dividends_12m == Decimal("1.500000")
+    assert metricas.dividend_payments_12m == 2
+    # 0,50 + 1,00 = 1,50, sobre o `close` de as_of: 1,50 / 25,00 = 0,06. Pelo `adj_close`
+    # o divisor seria 20,00 e o resultado 0,075 -- e e esse par de numeros que separa as
+    # duas escolhas.
+    assert metricas.dividend_yield_12m == Decimal("0.0600000000")

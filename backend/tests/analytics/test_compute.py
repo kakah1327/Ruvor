@@ -80,11 +80,19 @@ def collection_run() -> CollectionRun:
     return CollectionRun.objects.create(source="teste", started_at=timezone.now())
 
 
-def make_asset(ticker: str, *, status: str = Asset.Status.ACTIVE) -> Asset:
+def make_asset(
+    ticker: str,
+    *,
+    status: str = Asset.Status.ACTIVE,
+    kind: str = Asset.Kind.STOCK,
+) -> Asset:
+    """Um ativo do catalogo. `kind` e parametro por causa do V-14, que precisa de um
+    **segundo** indice: com um so, `.get(kind="index")` e `.get(ticker="IBOV")` devolvem
+    a mesma linha e a mutacao do acessor passa verde."""
     now = timezone.now()
     return Asset.objects.create(
         ticker=ticker,
-        kind=Asset.Kind.STOCK,
+        kind=kind,
         name=f"{ticker} S.A.",
         trading_name=ticker,
         status=status,
@@ -94,17 +102,22 @@ def make_asset(ticker: str, *, status: str = Asset.Status.ACTIVE) -> Asset:
     )
 
 
-def make_prices(asset: Asset, datas: list[date]) -> None:
-    """Serie crescente: `adj_close` 100, 101, 102... e `log_return` = ln(adj/anterior).
+def make_prices(asset: Asset, datas: list[date], *, passo: int = 1) -> None:
+    """Serie crescente: `adj_close` 100, 100+passo, 100+2*passo... e `log_return` =
+    ln(adj/anterior).
 
     O primeiro pregao fica com `log_return` nulo, como o `import_prices` grava.
+
+    `passo` existe para o segundo indice do V-14: com o passo padrao a serie dele seria
+    identica a do IBOV, trocar o benchmark nao mudaria beta nenhum, e a acao deixaria de
+    dar sinal.
     """
     run = collection_run()
     now = timezone.now()
     anterior: Decimal | None = None
     linhas = []
     for i, d in enumerate(datas):
-        adj = Decimal(100 + i)
+        adj = Decimal(100 + i * passo)
         log_return = None if anterior is None else (adj / anterior).ln().quantize(Q10)
         linhas.append(
             Price(
@@ -326,9 +339,17 @@ def test_v12_escrita_que_levanta_no_segundo_reverte_so_ele(
 
 
 def test_v14_o_ibovespa_nao_tem_beta_consigo_mesmo() -> None:
+    # O cenario tem **dois** ativos `kind="index"`, e o segundo nao e enfeite: com um so,
+    # `.get(kind=Asset.Kind.INDEX)` e `.get(ticker="IBOV")` devolvem a mesma linha e
+    # a mutacao do acessor passa verde. Com dois, ela levanta `MultipleObjectsReturned`.
+    # A serie do segundo sobe de tres em tres, e por isso os log-retornos dele nao sao os
+    # do IBOV: trocar o benchmark muda o beta de quem for comparado contra ele.
     ibov()
+    segundo_indice = make_asset("IBXX", kind=Asset.Kind.INDEX)
+    make_prices(segundo_indice, SERIE_LONGA, passo=3)
+    com_serie_longa("AAA3")
 
-    report = run_compute_metrics(["IBOV"], now=lambda: RUN_1)
+    report = run_compute_metrics(["AAA3", "IBOV", "IBXX"], now=lambda: RUN_1)
 
     metric = linha("IBOV")
     assert metric.beta_60m is None
@@ -342,6 +363,23 @@ def test_v14_o_ibovespa_nao_tem_beta_consigo_mesmo() -> None:
     assert resultado(report, "IBOV").null_columns == ["avg_volume_252d"]
     assert not report.benchmark_missing
     assert "aviso:" not in report.render()
+
+    # A acao e quem da o sinal do benchmark trocado. A serie dela e a do IBOV sao a
+    # mesma serie, entao a regressao e de x contra x: beta 1 e correlacao 1, exatos e
+    # analiticos. Contra o segundo indice -- log-retornos ln((100+3i)/(97+3i)), que nao
+    # sao proporcionais a ln((100+i)/(99+i)) -- nenhum dos dois valores se repete.
+    acao = linha("AAA3")
+    assert acao.beta_60m == Decimal("1.0000000000")
+    assert acao.correlation_60m == Decimal("1.0000000000")
+    assert acao.benchmark_observations == 60
+    assert resultado(report, "AAA3").null_columns == ["avg_volume_252d"]
+
+    # E o segundo indice **nao** e o Ibovespa: ele tem beta, porque quem escolhe o
+    # benchmark e o ticker, nunca o `kind`.
+    outro = linha("IBXX")
+    assert outro.benchmark_observations == 60
+    assert outro.beta_60m is not None
+    assert outro.correlation_60m is not None
 
 
 def test_v20_banco_sem_ibovespa_grava_a_linha_e_avisa() -> None:
