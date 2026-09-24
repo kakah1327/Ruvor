@@ -25,14 +25,14 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - run: cp .env.example .env
-      - run: docker compose up -d --wait web
-      - run: docker compose exec -T web python manage.py migrate
-      - run: docker compose exec -T web pytest tests
-      - run: docker compose exec -T web mypy
+      - run: docker compose up -d --wait worker
+      - run: docker compose exec -T worker python manage.py migrate
+      - run: docker compose exec -T worker pytest tests
+      - run: docker compose exec -T worker mypy
 
   frontend:
     runs-on: ubuntu-latest

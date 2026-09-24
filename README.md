@@ -195,8 +195,8 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Importar o catálogo de ativos | `docker compose exec -T web python manage.py import_assets` — consulta a B3 e leva ~2 minutos |
 | Importar os preços | `docker compose exec -T web python manage.py import_prices PETR4 VALE3 ITUB4 IBOV` na primeira vez, depois sem argumentos — consulta o Yahoo |
 | Calcular as métricas de comportamento | `docker compose exec -T web python manage.py compute_metrics` — lê `silver`, escreve em `gold`; aceita tickers como argumento. Não sai para a rede |
-| Testes do backend | `docker compose exec -T web pytest tests` |
-| Tipos do backend | `docker compose exec -T web mypy` |
+| Testes do backend | `docker compose exec -T worker pytest tests` |
+| Tipos do backend | `docker compose exec -T worker mypy` |
 | Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |
 | Testes do frontend | `docker compose exec -T frontend npm test` |
 | Tipos do frontend | `docker compose exec -T frontend npm run typecheck` |
@@ -243,7 +243,7 @@ também à mão pelo `workflow_dispatch`. São quatro trabalhos, todos em `ubunt
 | Trabalho | O que roda | Onde |
 |---|---|---|
 | `estilo` | `ruff check .` e `ruff format --check .` no `backend/` e no `engine/` | runner |
-| `backend` | `migrate`, `pytest tests` e `mypy` | contêiner `web` |
+| `backend` | `migrate`, `pytest tests` e `mypy` | contêiner `worker` |
 | `frontend` | `npm run lint`, `npm test`, `npm run typecheck` e `npm run build` | contêiner `frontend` |
 | `motor` | `pytest engine/tests` e `mypy` | runner |
 
@@ -255,8 +255,9 @@ ruidosamente, e o que ela achar vira dívida registrada no
 `backend` e `frontend` rodam dentro das imagens do `compose`, porque executam a aplicação e
 o ambiente decide o resultado; `estilo` e `motor` rodam direto no runner, porque não
 executam a aplicação e a única imagem que conteria o `engine/` é a `worker`, de 3,79 GB
-([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)). **Nenhum trabalho
-constrói a `worker`** — é por isso que todo `docker compose up` do fluxo nomeia o serviço.
+([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)). **O trabalho
+`backend` constrói a `worker`**, que é o único ambiente que vê backend e motor juntos; os
+outros três não a tocam — é por isso que todo `docker compose up` do fluxo nomeia o serviço.
 
 O trabalho `motor` roda a suíte **sem** a linha de base numérica
 (`--ignore=engine/tests/baseline`): ela foi capturada no Windows e não é portátil entre

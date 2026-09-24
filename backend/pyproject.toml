@@ -44,6 +44,21 @@ django_settings_module = "config.settings_test"
 module = ["celery", "celery.*"]
 ignore_missing_imports = true
 
+# O motor tem verificacao de tipos propria, com a configuracao dele. Reverifica-lo sob o
+# `strict` do backend duplicaria o trabalho e reprovaria os dois modulos que a D-21 congela
+# ate a Etapa 6. O `py.typed` do motor continua valendo: os tipos SAO usados para verificar
+# o codigo do backend que o chama — o que se suprime e o erro DENTRO do motor.
+[[tool.mypy.overrides]]
+module = ["engine.*"]
+ignore_errors = true
+
+# `apps/risk/provider.py` monta um DataFrame, entao o backend passa a importar pandas — que
+# nao publica `py.typed`. Sob `strict`, isso e `import-untyped` no arquivo do BACKEND, fora
+# do alcance da isencao de `engine.*`. E a mesma pedra que o proprio motor ja contornou.
+[[tool.mypy.overrides]]
+module = ["pandas.*"]
+ignore_missing_imports = true
+
 [tool.ruff]
 line-length = 88
 

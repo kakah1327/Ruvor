@@ -69,6 +69,7 @@ services:
       retries: 20
       start_period: 30s
     depends_on:
+      postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
 
   frontend:
