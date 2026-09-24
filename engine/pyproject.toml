@@ -1,6 +1,6 @@
 [project]
 name = "ruvor-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "Motor de modelagem e backtesting de risco do Ruvor"
 requires-python = ">=3.12"
 dependencies = ["click>=8.1"]

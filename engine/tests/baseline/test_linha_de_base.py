@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
+from conftest import serie_da_linha_de_base
 
 from engine.backtesting import get_backtest, load_all_backtest_modules
 from engine.models import get_model, load_all_model_modules
@@ -31,19 +32,11 @@ TOLERANCIA_RELATIVA = 1e-6
 PISO_ABSOLUTO = 1e-12
 
 
-def _serie_completa() -> pd.Series:
-    serie = PARAMETROS["serie"]
-    rng = np.random.default_rng(serie["semente"])
-    valores = rng.normal(serie["media"], serie["desvio"], serie["n_total"])
-    indice = pd.bdate_range("2020-01-01", periods=serie["n_total"])
-    return pd.Series(valores, index=indice)
-
-
 @cache
 def _modelo_ajustado(nome: str):
     """Ajusta o modelo uma unica vez sobre o treino, como faz o runner."""
     load_all_model_modules()
-    retornos = _serie_completa()
+    retornos = serie_da_linha_de_base()
     treino = retornos.iloc[: PARAMETROS["divisao"]["treino"]]
     return get_model(nome)().fit(treino)
 
@@ -52,7 +45,7 @@ def _modelo_ajustado(nome: str):
 def _resultado(nome: str, alpha: float) -> tuple[pd.Series, dict]:
     """Reproduz o par (serie de VaR, backtests) de uma combinacao."""
     load_all_backtest_modules()
-    retornos = _serie_completa()
+    retornos = serie_da_linha_de_base()
     teste = retornos.iloc[PARAMETROS["divisao"]["treino"] :]
     assert len(teste) == PARAMETROS["divisao"]["teste"]
 
@@ -115,3 +108,16 @@ def test_backtests_reproduzem_a_linha_de_base(chave: str) -> None:
             f"{chave}/{nome_bt}.passed: esperado {referencia['passed']!r}, "
             f"obtido {obtido.passed!r}"
         )
+
+
+def test_a_serie_compartilhada_obedece_aos_parametros_da_linha_de_base() -> None:
+    """A serie saiu daqui para o `conftest.py`, onde o teste da semente tambem a usa.
+    Sem esta guarda, altera-la reprovaria as doze entradas acima com a mensagem errada —
+    a docstring do modulo diz que a culpa e da migracao."""
+    serie = PARAMETROS["serie"]
+    rng = np.random.default_rng(serie["semente"])
+    esperada = pd.Series(
+        rng.normal(serie["media"], serie["desvio"], serie["n_total"]),
+        index=pd.bdate_range("2020-01-01", periods=serie["n_total"]),
+    )
+    pd.testing.assert_series_equal(serie_da_linha_de_base(), esperada, check_exact=True)

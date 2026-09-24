@@ -28,6 +28,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 
+from engine import seeding
 from engine.models.base import VaREstimate, VaRModel
 
 
@@ -82,6 +83,10 @@ class QuantileNeuralVaR(VaRModel):
         return model
 
     def _fit_for_alpha(self, alpha: float) -> dict:
+        # o treino de verdade comeca aqui, e e o unico ponto do motor que consome
+        # aleatoriedade sem semear: o fit() acima e preguicoso (ver RF-01 do M1.4)
+        seeding.apply()
+
         x, y = self._windows_and_targets(self.train_returns_)
         n_val = max(1, int(len(x) * self.VAL_FRACTION))
         x_train, y_train = x[:-n_val], y[:-n_val]
