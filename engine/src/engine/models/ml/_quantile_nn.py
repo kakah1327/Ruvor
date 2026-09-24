@@ -61,7 +61,9 @@ class QuantileNeuralVaR(VaRModel):
         return {
             "window": self.WINDOW,
             "refit_frequency_days": self.REFIT_FREQUENCY_DAYS,
-            "grid": self.GRID,
+            # copia: devolver o proprio dict deixaria um chamador alterar a grade de
+            # busca de TODAS as instancias. Leitura pura nao pode entregar estado vivo.
+            "grid": dict(self.GRID),
             "learning_rate": self.LEARNING_RATE,
             "batch_size": self.BATCH_SIZE,
             "search_epochs": self.SEARCH_EPOCHS,
