@@ -6,6 +6,7 @@ exigir restricoes de nao-negatividade nos parametros.
 from __future__ import annotations
 
 import math
+from typing import Any
 
 from engine.models.base import ModelCategory
 from engine.models.garch._conditional import ConditionalVolatilityVaR
@@ -15,6 +16,10 @@ from engine.models.registry import register_model
 @register_model("egarch")
 class EgarchVaR(ConditionalVolatilityVaR):
     category = ModelCategory.GARCH
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        return {**super().hyperparameters, **self._arch_kwargs()}
 
     def _arch_kwargs(self) -> dict:
         return {"vol": "EGARCH", "p": 1, "o": 1, "q": 1}

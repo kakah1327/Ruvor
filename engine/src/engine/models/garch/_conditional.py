@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import warnings
 from abc import abstractmethod
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -39,6 +40,10 @@ class ConditionalVolatilityVaR(VaRModel):
 
     def __init__(self, dist: str = "normal"):
         self.dist = dist
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        return {"dist": self.dist, "refit_frequency_days": self.REFIT_FREQUENCY_DAYS}
 
     @abstractmethod
     def _arch_kwargs(self) -> dict:

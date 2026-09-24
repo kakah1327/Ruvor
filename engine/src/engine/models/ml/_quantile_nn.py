@@ -21,7 +21,7 @@ custa uma rodada de treino inteira.
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -55,6 +55,20 @@ class QuantileNeuralVaR(VaRModel):
     REFIT_EPOCHS = 10
     PATIENCE = 5
     VAL_FRACTION = 0.15
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        return {
+            "window": self.WINDOW,
+            "refit_frequency_days": self.REFIT_FREQUENCY_DAYS,
+            "grid": self.GRID,
+            "learning_rate": self.LEARNING_RATE,
+            "batch_size": self.BATCH_SIZE,
+            "search_epochs": self.SEARCH_EPOCHS,
+            "refit_epochs": self.REFIT_EPOCHS,
+            "patience": self.PATIENCE,
+            "val_fraction": self.VAL_FRACTION,
+        }
 
     @abstractmethod
     def _build_model(self, n_features: int, units: int, n_layers: int) -> keras.Model:

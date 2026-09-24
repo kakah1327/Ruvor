@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 import pandas as pd
 
@@ -36,6 +37,17 @@ class VaRModel(ABC):
     #: nome curto e unico usado no registry e na UI (ex: "garch_1_1")
     name: str
     category: ModelCategory
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        """Os hiperparametros efetivos desta instancia, para o manifesto de execucao (D-15).
+
+        Leitura pura: nenhum caminho de calculo a chama, e sobrescreve-la nao pode alterar
+        o que `fit` ou `estimate_var` produzem. O `{}` padrao e resposta legitima para
+        modelo sem parametro configuravel (`parametric`, `historical`) — mas so vale
+        quando foi conferido no codigo, nao quando ninguem implementou a propriedade.
+        """
+        return {}
 
     @abstractmethod
     def fit(self, returns: pd.Series) -> VaRModel:

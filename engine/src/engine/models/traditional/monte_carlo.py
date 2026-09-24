@@ -5,6 +5,8 @@ parametrico.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -19,6 +21,13 @@ class MonteCarloVaR(VaRModel):
     def __init__(self, n_simulations: int = 100_000, random_state: int = 42):
         self.n_simulations = n_simulations
         self.random_state = random_state
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        return {
+            "n_simulations": self.n_simulations,
+            "random_state": self.random_state,
+        }
 
     def fit(self, returns: pd.Series) -> MonteCarloVaR:
         self.mu_ = returns.mean()

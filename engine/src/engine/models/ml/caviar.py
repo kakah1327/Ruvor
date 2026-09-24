@@ -8,6 +8,8 @@ propria saida do modelo, o que QuantReg (regressao quantilica estatica/linear) n
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
@@ -65,6 +67,17 @@ def _fit_beta(returns: np.ndarray, f0: float, alpha: float, seed: int) -> np.nda
 @register_model("caviar")
 class CaviarVaR(VaRModel):
     category = ModelCategory.ML
+
+    @property
+    def hyperparameters(self) -> dict[str, Any]:
+        # `REFIT_FREQUENCY_DAYS` e `N_RESTARTS` sao constantes de MODULO, nao atributos
+        # de classe: `self.` nao as alcanca, e promove-las a atributo seria mexer no que
+        # o `fit` executa — proibido pela D-21. Por isso a propriedade le os nomes do
+        # modulo diretamente.
+        return {
+            "refit_frequency_days": REFIT_FREQUENCY_DAYS,
+            "n_restarts": N_RESTARTS,
+        }
 
     def fit(self, returns: pd.Series) -> CaviarVaR:
         self.train_returns_ = returns
