@@ -21,4 +21,4 @@ def test_a_guarda_de_rede_esta_armada() -> None:
     with pytest.raises(AssertionError, match="teste tentou sair para a rede"):
         # 127.0.0.1:1 nao atende: se a guarda cair, o erro sera de conexao, nao
         # AssertionError, e o teste reprova do mesmo jeito — sem sair da maquina.
-        urllib.request.urlopen("http://127.0.0.1:1/")  # noqa: S310
+        urllib.request.urlopen("http://127.0.0.1:1/")
