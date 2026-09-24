@@ -44,7 +44,7 @@ não sabe: **`pytest backend` no hospedeiro reprova cinco testes e dá erro em c
 de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um `.env`
 incompleto não passe despercebido. Os cinco leem o banco configurado; os 109 são os que
 pedem `django_db` e nem conseguem criar o banco de teste. **Dentro do contêiner os cinco
-exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-24, com 240 testes.
+exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-24, com 241 testes.
 
 ## O que foi concluído
 
@@ -389,7 +389,7 @@ repositório e é do M3.1. O ROADMAP registra a ressalva.
 ### M1.4 — Motor de risco
 
 Spec em [`specs/M1.4-motor-de-risco.md`](specs/M1.4-motor-de-risco.md) e plano em
-[`planos/M1.4-motor-de-risco.md`](planos/M1.4-motor-de-risco.md). Dez tarefas e dez commits,
+[`planos/M1.4-motor-de-risco.md`](planos/M1.4-motor-de-risco.md). Dez tarefas, um commit cada,
 de `4d5a888` ao commit de fecho, direto na `main` — um por tarefa, menos a T9, que não
 produz, mais a correção pós-T4 (`f870e96`). **Primeiro bloco em que
 a plataforma consome o motor**, e o primeiro com manifesto de execução.
@@ -411,10 +411,10 @@ a plataforma consome o motor**, e o primeiro com manifesto de execução.
 | **Segunda execução** (**509,4 s**) | ✅ 8 `risk_run` e 144 `risk_result`; a primeira de cada ativo **intacta campo a campo** |
 | **`compute_risk --model inexistente`** | ✅ `CommandError: modelos ausentes do registry: inexistente`, código 1, **nada gravado** |
 
-240 testes no backend e **98 no motor**; mypy (83 arquivos no backend, 34 no motor) e ruff
+241 testes no backend e **102 no motor**; mypy (83 arquivos no backend, 34 no motor) e ruff
 limpos nos dois; vinte tabelas.
 
-**As dezesseis mutações reprovaram na primeira medição** — contadas no arquivo, não
+**As dezoito mutações reprovaram na primeira medição** — contadas no arquivo, não
 estimadas: eram quinze na tabela da spec, e a T9 acrescentou a do `load_all_*`, que a T7
 havia identificado e que **só é pega por um teste**, porque o `_REGISTRY` do motor é global
 de processo.

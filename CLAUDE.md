@@ -113,7 +113,7 @@ comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e
 de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.2.0**, 9
-  modelos de VaR, 4 testes de backtesting, 98 testes e linha de base numérica. Roda por linha
+  modelos de VaR, 4 testes de backtesting, 102 testes e linha de base numérica. Roda por linha
   de comando: `ruvor run`. **Nunca importa Django**, e um teste prova isso. Os três modelos
   neurais fixam semente por `engine/src/engine/seeding.py`
   ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md)), e o `py.typed` deixa o
@@ -121,7 +121,7 @@ de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
 - `backend/` — projeto Django com quatro apps, `apps/accounts`, `apps/assets`,
   `apps/analytics` e `apps/risk`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
   Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 240 testes com pytest-django, que
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 241 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
