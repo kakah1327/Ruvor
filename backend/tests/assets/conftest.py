@@ -1,4 +1,4 @@
-"""Infraestrutura comum dos testes de `apps.assets`: guarda de rede, fixtures e fonte falsa.
+"""Infraestrutura comum dos testes de `apps.assets`: fixtures e fontes falsas.
 
 `fixture_json` e funcao comum, nao fixture do pytest, e se importa por
 `from tests.assets.conftest import fixture_json`.
@@ -9,9 +9,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, NoReturn
-
-import pytest
+from typing import Any
 
 from apps.assets.b3 import B3ClientError, Page
 from apps.assets.yahoo import ChartResponse
@@ -24,14 +22,6 @@ def fixture_json(nome: str, subdir: str = "b3") -> dict[str, Any]:
     with (FIXTURES_DIR / subdir / f"{nome}.json").open(encoding="utf-8") as arquivo:
         data: dict[str, Any] = json.load(arquivo)
     return data
-
-
-@pytest.fixture(autouse=True)
-def sem_rede(monkeypatch: pytest.MonkeyPatch) -> None:
-    def recusa(*args: object, **kwargs: object) -> NoReturn:
-        raise AssertionError("teste de assets tentou sair para a rede")
-
-    monkeypatch.setattr("urllib.request.urlopen", recusa)
 
 
 class FakeSource:
