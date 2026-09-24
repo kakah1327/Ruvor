@@ -286,7 +286,7 @@ não repetiu a lacuna:** os três testes do `compute_metrics` são pela casca.
 ### M1.3 — Camadas 1 e 2
 
 Spec em [`specs/M1.3-camadas-1-e-2.md`](specs/M1.3-camadas-1-e-2.md) e plano em
-[`planos/M1.3-camadas-1-e-2.md`](planos/M1.3-camadas-1-e-2.md). Oito tarefas, doze commits
+[`planos/M1.3-camadas-1-e-2.md`](planos/M1.3-camadas-1-e-2.md). Oito tarefas, um commit cada a partir de `c51366a`, mais as correções do fecho
 (a T7 não produz; duas correções pós-T7 entraram), de `c51366a` ao commit de fecho, direto na
 `main`.
 Primeiro bloco que **calcula** em vez de coletar, e o primeiro a povoar `gold`.
