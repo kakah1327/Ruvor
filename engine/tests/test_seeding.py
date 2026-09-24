@@ -9,8 +9,13 @@ este teste ficaria verde sobre codigo nao semeado.
 so roda na primeira `estimate_var` de cada alpha, e o laco de reajuste consome
 aleatoriedade em toda chamada.
 
-Um alpha so (0.05) basta: o que se prova e determinismo, e `_fit_for_alpha` roda por alpha
-independentemente. Sao seis treinos aqui, mais dois no V-04.
+Um alpha so (0.05) basta para o V-03: o que ele prova e determinismo, e `_fit_for_alpha`
+roda por alpha independentemente. Sao seis treinos ali, mais dois no V-04.
+
+Mas um alpha so NAO distingue os dois pontos de semeadura — com ele o V-03 fica verde
+tambem sobre a semeadura no `fit()`, e foi medido. Quem defende essa distincao e
+`test_a_ordem_dos_alphas_nao_muda_o_var_de_nenhum_deles`, com dois alphas e mais quatro
+treinos.
 """
 
 from __future__ import annotations
@@ -66,6 +71,44 @@ def test_duas_instancias_com_a_mesma_semente_dao_var_identico(nome: str) -> None
     segunda = _serie_de_var(nome)
 
     pd.testing.assert_series_equal(primeira, segunda, check_exact=True)
+
+
+def test_a_ordem_dos_alphas_nao_muda_o_var_de_nenhum_deles() -> None:
+    """O ponto de semeadura e `_fit_for_alpha`, nunca o `fit()` (RF-01).
+
+    Com **um** alpha so, os dois pontos sao indistinguiveis: entre o `fit()` preguicoso e
+    o unico treino nao ha nada que consuma aleatoriedade, e o V-03 fica verde tambem sobre
+    a semeadura no lugar errado — medido. Com **dois** alphas em ordem trocada a diferenca
+    aparece: cada `_fit_for_alpha` semeia, entao o segundo treino nao depende do que o
+    primeiro consumiu; semeando no `fit()`, o segundo alpha continuaria de onde o primeiro
+    parou e mudaria de valor quando a ordem mudasse.
+
+    Escolhido no lugar do espiao que conta `apply()` por alpha porque prova a consequencia
+    observavel — o VaR — e nao a forma da chamada; um espiao que substituisse `apply()`
+    deixaria de semear, e o que ele mediria seria so a contagem.
+
+    Um modelo neural basta: o ponto de semeadura e da base `QuantileNeuralVaR`, comum aos
+    tres. Sao quatro treinos.
+    """
+    direta = _var_por_alpha("lstm", (0.05, 0.01))
+    trocada = _var_por_alpha("lstm", (0.01, 0.05))
+
+    for alpha in (0.05, 0.01):
+        pd.testing.assert_series_equal(
+            direta[alpha], trocada[alpha], check_exact=True, obj=f"alpha={alpha}"
+        )
+
+
+def _var_por_alpha(nome: str, alphas: tuple[float, ...]) -> dict[float, pd.Series]:
+    """Uma instancia so, os alphas pedidos NA ORDEM dada — cada um passa por um
+    `_fit_for_alpha` proprio, e o anterior ja consumiu aleatoriedade."""
+    load_all_model_modules()
+    retornos = serie_da_linha_de_base()
+    modelo = get_model(nome)().fit(retornos.iloc[:TREINO])
+    teste = retornos.iloc[TREINO:]
+    return {
+        alpha: modelo.estimate_var(teste, alpha=alpha).var_series for alpha in alphas
+    }
 
 
 def test_sementes_diferentes_dao_var_diferente() -> None:

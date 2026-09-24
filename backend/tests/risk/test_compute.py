@@ -442,6 +442,25 @@ def _resultados(run: RiskRun) -> list[dict[str, object]]:
     ]
 
 
+def test_o_calculated_at_e_o_mesmo_para_os_dois_ativos_da_execucao() -> None:
+    """Contrato de `run_compute_risk`: `calculated_at` e o `now()` de **uma** chamada, e e
+    o que faz "uma execucao" ser identificavel em `gold.risk_run`.
+
+    Sem esta comparacao ENTRE ativos, mover o `now()` para dentro do laco passaria a suite
+    inteira — e uma execucao multi-ativo deixaria de ser agrupavel. O relogio devolve
+    `INICIO_1` na primeira chamada e `FIM_1` nas seguintes: com o `now()` no lugar certo,
+    os dois ativos nascem em `INICIO_1`.
+    """
+    com_serie("AAA3")
+    com_serie("BBB3")
+
+    run_compute_risk(["AAA3", "BBB3"], models=BARATOS, now=relogio(INICIO_1, FIM_1))
+
+    runs = list(RiskRun.objects.order_by("asset__ticker"))
+    assert [r.asset.ticker for r in runs] == ["AAA3", "BBB3"]
+    assert {r.calculated_at for r in runs} == {INICIO_1}
+
+
 # --- V-10: uma transacao por ativo -------------------------------------------------------
 
 

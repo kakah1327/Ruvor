@@ -1,4 +1,4 @@
-"""V-02 do M1.4: a lista fechada de `VaRModel.hyperparameters`.
+"""RF-02 / V-14b do M1.4: a lista fechada de `VaRModel.hyperparameters`.
 
 Sem este teste, uma implementacao em que a propriedade existe em `base.py` e nenhum
 modelo a sobrescreve grava NOVE dicionarios vazios no manifesto e passa em tudo — e a
@@ -74,6 +74,20 @@ def test_sete_dos_nove_nao_devolvem_vazio() -> None:
         nome for nome in CHAVES_ESPERADAS if not get_model(nome)().hyperparameters
     }
     assert vazios == {"parametric", "historical"}
+
+
+@pytest.mark.parametrize("nome", ("garchnet", "lstm", "gru"))
+def test_alterar_o_grid_devolvido_nao_toca_a_grade_da_classe(nome: str) -> None:
+    """A copia do `grid` precisa alcancar as LISTAS: uma copia rasa devolve as mesmas
+    listas de `GRID`, e `hiperparametros["grid"]["units"].append(...)` alteraria a grade
+    de busca de TODAS as instancias do modelo. Leitura pura nao entrega estado vivo."""
+    modelo = get_model(nome)()
+    antes = {chave: list(valores) for chave, valores in type(modelo).GRID.items()}
+
+    modelo.hyperparameters["grid"]["units"].append(64)
+    modelo.hyperparameters["grid"]["n_layers"] = [99]
+
+    assert type(modelo).GRID == antes
 
 
 def test_os_valores_do_caviar_seguem_as_constantes_de_modulo() -> None:

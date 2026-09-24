@@ -695,3 +695,23 @@ pequeno, e o defeito só aparece quando alguém tenta rodar o critério.
 inteiro linha a linha** — não o resumo, não o `--stat`. Em bloco de código de critério de
 aceite, confira que nenhuma linha executável foi comentada. Vale junto com o verbete da lista
 fechada: os dois são sobre afirmação que envelhece calada.
+
+
+## Teste de determinismo com um parâmetro só não localiza o ponto de semeadura
+
+**Quando:** ao escrever verificação de reprodutibilidade — semente, cache, estado global —
+em que o requisito não é só "duas execuções dão o mesmo número", mas **onde** a semeadura
+acontece.
+
+**Problema:** o V-03 do M1.4 roda os três modelos neurais com **um** alpha e compara as
+séries de VaR. Com um alpha só, nada consome aleatoriedade entre o `fit()` preguiçoso e o
+único `_fit_for_alpha`, então mover `seeding.apply()` do segundo para o primeiro — a
+implementação que a spec gasta 40 linhas rejeitando — dá **resultado idêntico e o teste
+passa**. Medido duas vezes: na revisão final do bloco, por monkeypatch, e na T11, aplicando
+a mutação no arquivo. O V-14c, do lado do backend, também não pega.
+
+**Faça:** exercite o eixo que distingue os dois pontos — no caso, **dois alphas em ordem
+trocada** na mesma instância: cada `_fit_for_alpha` semeia, então a ordem não pode mudar
+valor nenhum; com a semeadura no `fit()`, o segundo alpha continua de onde o primeiro parou
+e muda. Espião que substitui a função de semeadura prova a contagem de chamadas, não a
+consequência — e, ao substituir, deixa de semear.
