@@ -20,7 +20,7 @@ merece confiança para aquele ativo.
 >   [`frontend/`](frontend/), que renderiza uma tela de verificação com a marca e o estado
 >   do backend
 > - o **ambiente local em contêiner**: `docker compose up` sobe Postgres, Redis, o Django, um
->   worker Celery e o servidor de desenvolvimento do frontend
+>   worker Celery, o agendador Celery Beat e o servidor de desenvolvimento do frontend
 >
 > O protótipo que originou o motor foi removido por inteiro, frontend incluído.
 >
@@ -92,8 +92,8 @@ Material acadêmico em [`docs/tcc/`](docs/tcc/).
 ### Pré-requisitos
 
 - **Docker**, com o plugin `compose`. É o único pré-requisito do repositório: PostgreSQL,
-  Redis, Django, o worker Celery e o servidor de desenvolvimento do frontend sobem em
-  contêiner, e nada disso precisa estar instalado na máquina.
+  Redis, Django, o worker e o Beat do Celery e o servidor de desenvolvimento do frontend
+  sobem em contêiner, e nada disso precisa estar instalado na máquina.
 - **Python 3.12 ou superior**, num ambiente virtual na raiz — `.venv/`. É exigência do
   **motor**, que continua rodando nativo
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). O mesmo ambiente serve para
@@ -118,7 +118,7 @@ docker compose up
 exportada no shell.
 
 Para script e verificação, use a variante desanexada: `docker compose up -d --wait` devolve
-o terminal e só sai quando os cinco serviços estão saudáveis — com erro, se algum não chegar
+o terminal e só sai quando os seis serviços estão saudáveis — com erro, se algum não chegar
 lá. É a forma usada nos comandos do dia a dia abaixo.
 
 | Serviço | Onde atende no hospedeiro |
@@ -128,6 +128,7 @@ lá. É a forma usada nos comandos do dia a dia abaixo.
 | `postgres` | `localhost:55432` |
 | `redis` | `localhost:56379` |
 | `worker` | sem porta publicada |
+| `beat` | sem porta publicada |
 
 **As portas publicadas não são as padrão das ferramentas.** O frontend atende em **5273**, e
 não em 5173, porque 5173 pertence a outro projeto desta máquina; Postgres em **55432** e
@@ -140,6 +141,25 @@ Depois de mexer em `backend/pyproject.toml` ou em `frontend/package.json`, recon
 `node_modules` do contêiner sobrevive à recriação, e a dependência nova não aparece.
 
 Para derrubar tudo, `docker compose down`; com `-v`, leva junto o volume do banco.
+
+### Agendamento (Celery Beat)
+
+O serviço `beat` dispara duas rotinas, no fuso de São Paulo: o **catálogo de ações**, uma vez
+por semana, e os **preços**, de segunda a sexta — com o **recálculo do risco** encadeado a
+eles, e não agendado à parte. Ele só agenda: quem executa é o `worker`. O `beat` não tem
+`build` próprio e usa a imagem `ruvor-worker`, que o `docker compose up --build` constrói.
+
+| Variável | O que controla | Padrão |
+|---|---|---|
+| `RUVOR_BEAT_ASSETS_CRON` | a agenda semanal do catálogo | `0 7 * * 1` — segunda, 7h |
+| `RUVOR_BEAT_PRICES_CRON` | a agenda de preços e, por tabela, a do risco | `30 19 * * 1-5` — segunda a sexta, 19h30 |
+
+As duas são cron de cinco campos (minuto, hora, dia do mês, mês, dia da semana) e saem do
+`.env`; ausentes ou vazias, vale o padrão. Mudou, repita o `docker compose up -d --wait`.
+
+Para ver o que o Beat disparou: `docker compose logs beat` (com `-f` para acompanhar). O
+estado da agenda fica em `backend/celerybeat-schedule`, que o git ignora. Para não disparar
+nada, `docker compose stop beat`.
 
 ### Motor
 
@@ -195,7 +215,7 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Importar o catálogo de ativos | `docker compose exec -T web python manage.py import_assets` — consulta a B3 e leva ~2 minutos |
 | Importar os preços | `docker compose exec -T web python manage.py import_prices PETR4 VALE3 ITUB4 IBOV` na primeira vez, depois sem argumentos — consulta o Yahoo |
 | Calcular as métricas de comportamento | `docker compose exec -T web python manage.py compute_metrics` — lê `silver`, escreve em `gold`; aceita tickers como argumento. Não sai para a rede |
-| Calcular o risco (VaR e backtesting) | `docker compose exec -T worker python manage.py compute_risk` — lê `silver`, escreve em `gold`; aceita tickers, `--seed N` e `--model NOME` (repetível). Roda no `worker`, que é quem tem o motor. Não sai para a rede |
+| Calcular o risco (VaR e backtesting) | `docker compose exec -T worker python manage.py compute_risk` — lê `silver`, escreve em `gold`; aceita tickers, `--seed N` e `--model NOME` (repetível). Roda no `worker`, que é quem tem o motor. Não sai para a rede. Com `--async`, enfileira uma execução por ativo no `worker` e devolve na hora — o resultado aparece em `gold` quando as tarefas terminam |
 | Testes do backend | `docker compose exec -T worker pytest tests` |
 | Tipos do backend | `docker compose exec -T worker mypy` |
 | Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |

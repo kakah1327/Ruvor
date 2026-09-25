@@ -58,6 +58,8 @@ services:
     build: { context: ., dockerfile: infra/backend.Dockerfile, target: worker }
     image: ruvor-worker
     hostname: worker
+    # concorrencia declarada (RF-12 do M1.5): 4 GB no conteiner, 1-2 GB por rede em treino
+    command: celery -A config worker --loglevel=info --concurrency=2
     environment: *backend-env
     volumes:
       - ./backend:/repo/backend
@@ -70,6 +72,48 @@ services:
       start_period: 30s
     depends_on:
       postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  beat:
+    # reusa a imagem que o `worker` constroi: sem `build`, e `never` para o compose nao
+    # tentar baixar `ruvor-worker` de registro publico -- falta a imagem, falha alto
+    image: ruvor-worker
+    pull_policy: never
+    hostname: beat
+    command: celery -A config beat --loglevel=info
+    environment:
+      <<: *backend-env
+      RUVOR_BEAT_ASSETS_CRON: ${RUVOR_BEAT_ASSETS_CRON:-}
+      RUVOR_BEAT_PRICES_CRON: ${RUVOR_BEAT_PRICES_CRON:-}
+    volumes:
+      - ./backend:/repo/backend
+      # o Beat nao calcula, mas importa: a descoberta automatica chega em `engine`, e a
+      # imagem so copia o pyproject.toml e o __init__.py do motor
+      - ./engine:/repo/engine
+    # Duas condicoes. (1) o laco vivo: o Scheduler regrava `celerybeat-schedule` a cada
+    # sync, e medido na T7 do M1.5 com a agenda ociosa o mtime avanca a cada 300 s (o
+    # max_interval do Beat); 600 s e a folga de 2x. "Existe" nao bastaria: o arquivo mora na
+    # montagem e sobrevive a recriacao do conteiner. (2) o broker alcancavel -- sem o Redis,
+    # o ensure_connection desiste em ~10 s, por isso o timeout de 20 s.
+    # Forma CMD, sem shell e sem `$`: o criterio da T7 executa este mesmo argv, extraido do
+    # `docker compose config`, com `docker compose exec`.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, sys, time
+          age = time.time() - os.stat("/repo/backend/celerybeat-schedule").st_mtime
+          if age > 600:
+              sys.exit(f"celerybeat-schedule sem sync ha {age:.0f} s")
+          from config import celery_app
+          celery_app.connection_for_write().ensure_connection(max_retries=1)
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 30s
+    depends_on:
       redis: { condition: service_healthy }
 
   frontend:

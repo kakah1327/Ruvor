@@ -15,6 +15,9 @@ dist/
 .pytest_cache/
 .mypy_cache/
 
+# agenda persistida do Celery Beat, gravada no diretorio de trabalho do servico `beat`
+backend/celerybeat-schedule
+
 # frontend (Vite/React)
 frontend/node_modules/
 
