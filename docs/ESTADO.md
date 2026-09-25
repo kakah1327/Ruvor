@@ -59,7 +59,7 @@ exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-25, com 30
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **72 decisões registradas** — [decisoes/](decisoes/)
+- **74 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -650,6 +650,20 @@ o fecho lê o banco), [D-71](decisoes/D-71-a-risk-run-nasce-no-worker.md) (a `ri
 `worker`) e [D-72](decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md) (o
 fecho escreve metadado de execução; restringe a D-16).
 
+#### Depois do fecho — três pendências decididas (2026-09-25)
+
+- **O `.env.example` fica como está**, com os dois horários preenchidos. Comentar as linhas não
+  desligaria nada — ausente ou vazio vale o mesmo padrão do `settings.py` —, só esconderia o
+  comportamento. Quem precisar dos preços congelados roda `docker compose stop beat`, como o
+  README já diz.
+- **O cabeçalho do `chord` sai por custo** — tradicionais, GARCH, ML —
+  ([D-73](decisoes/D-73-o-cabecalho-do-chord-sai-por-custo.md)). Dentro de um ativo, os
+  modelos baratos passam a gravar antes das redes. **A espera entre ativos continua**, e fica
+  com o M1.5b. O V-02 foi ajustado, e a mudança medida: com o cabeçalho na ordem pedida, ele
+  reprova.
+- **O Marco 1 é só produção; o laboratório vai para o Marco 2**, como bloco M2.4
+  ([D-74](decisoes/D-74-o-marco-1-e-so-producao.md)). A PRODUTO e o ROADMAP foram corrigidos.
+
 ## Próximo passo
 
 **Escrever a spec do M1.5b — Treino separado da previsão**: a
@@ -696,10 +710,7 @@ hoje, não para a de cada dia passado.
 
 | Tema | Onde |
 |---|---|
-| **O `.env.example` traz os dois horários do Beat preenchidos com os padrões** (`0 7 * * 1` e `30 19 * * 1-5`). Quem copia para `.env` — que é o que o README manda — fica com o Beat agendando **coleta real** na B3 e no Yahoo, e o recálculo do risco, sem ter pedido. É o comportamento do padrão de qualquer forma (ausente ou vazio vale o mesmo), mas o arquivo o torna explícito. **A confirmar pelo humano**: manter assim, ou deixar as linhas comentadas e o Beat parado por padrão no ambiente local | `.env.example`, [README](../README.md#agendamento-celery-beat) |
-| **O modo A entrega menos do que a spec do M1.5 prometeu.** Com `--concurrency=2` e o cabeçalho do `chord` na ordem alfabética de `MODELS`, `historical`, `monte_carlo` e `parametric` esperam atrás das redes (~1 min 40 s a ~2 min 25 s no IBOV), e os ativos do fim da fila não recebem nada por ~2,5 min; o fecho entra no fim da fila, e uma execução completa fica minutos em `running`. Saídas: ordenar os modelos baratos primeiro, uma fila separada para as redes, ou aceitar e esperar o M1.5b. **Precisa estar decidido antes da spec do M1.6**, que desenha a tela | [ESTADO, M1.5](#m15--execução-assíncrona) |
 | **A execução presa em `running`** — se o fecho não rodar (`worker` morto, Redis reiniciado), a linha fica `running` para sempre. Limpar por idade, reprocessar ou deixar para operação: a spec do M1.5 deixou aberto por falta de dado de produção | [spec M1.5](specs/M1.5-execucao-assincrona.md#a-execução-presa-em-running) |
-| **O regime de laboratório sai do Marco 1 — e ninguém decidiu isso.** A [PRODUTO §4](PRODUTO.md#4-marcos) promete a camada 3 **nos dois regimes** ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); o M1.4 entregou **só produção**, e **nenhum bloco do ROADMAP retoma o laboratório** — nem o M1.5, nem o M1.6. A spec do M1.4 assumiu "o Marco 1 é só produção" **para poder existir** e marcou como pendente de confirmação. Três saídas: (1) o Marco 1 vira só produção e nasce a decisão que restringe a PRODUTO; (2) nasce um **M1.7** para o laboratório; (3) o `ruvor run` é declarado suficiente e a PRODUTO é corrigida. **Enquanto ninguém escolher, adiar é descartar sem dizer** | [ROADMAP.md](ROADMAP.md#marco-1--a-ação-e-o-risco-dela), [PRODUTO.md](PRODUTO.md#4-marcos) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |

@@ -82,6 +82,8 @@ conversas e entre agentes.
 | [D-70](D-70-a-tarefa-nunca-levanta-e-o-fecho-le-o-banco.md) | A tarefa nunca levanta, e o fecho lê o banco |
 | [D-71](D-71-a-risk-run-nasce-no-worker.md) | A `risk_run` nasce no `worker`, não em quem enfileira |
 | [D-72](D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md) | O fecho escreve metadado de execução; restringe a D-16 |
+| [D-73](D-73-o-cabecalho-do-chord-sai-por-custo.md) | O cabeçalho do `chord` sai por custo, não na ordem pedida |
+| [D-74](D-74-o-marco-1-e-so-producao.md) | O Marco 1 é só produção; o laboratório vai para o Marco 2; restringe a PRODUTO §4 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

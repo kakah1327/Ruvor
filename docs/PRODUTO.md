@@ -106,7 +106,8 @@ o estado anterior.
 - Catálogo de ativos da B3 (nome, setor, situação) — base da busca
 - Ingestão de preços: histórico + atualização diária, armazenados pela plataforma
 - Camadas 1 e 2 (identidade, preço, comportamento)
-- Camada 3 (risco) nos dois regimes
+- Camada 3 (risco) no regime de produção — o de laboratório foi para o Marco 2
+  ([D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
 - Execução assíncrona no modo A + pré-cálculo dos ativos cobertos
 - Aplicação web com a identidade Ruvor
 
@@ -119,6 +120,8 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 - Usuários, autenticação, papéis, permissões
 - Carteira composta pelo usuário, com risco de carteira
 - Camada explicativa iniciante/avançado como sistema
+- Camada 3 no regime de laboratório ([D-04](decisoes/D-04-dois-regimes-de-operacao.md),
+  [D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
 
 ### Marco 3 — "tudo sobre a ação" completo
 

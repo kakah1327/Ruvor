@@ -284,13 +284,26 @@ def _limpas(run: RiskRun, model_name: str) -> None:
 def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
     fila: list[Any],
 ) -> None:
-    """Os nove numa ordem que nao e a de `MODELS`: a ordem do cabecalho tem de ser a pedida.
+    """Os nove numa ordem que nao e a de `MODELS`: o cabecalho sai **por custo** (D-73) --
+    tradicionais, GARCH, ML --, e dentro de cada categoria na ordem pedida. O
+    `requested_models` continua na ordem pedida.
 
     Zero `risk_result` no mesmo teste e o que separa "enfileirou nove" de "executou nove em
     linha" -- a contagem sozinha passaria com o atalho errado.
     """
     _serie("AAA3")
     pedidos = list(reversed(MODELS))
+    por_custo = [
+        "parametric",
+        "monte_carlo",
+        "historical",
+        "garch_1_1",
+        "egarch",
+        "lstm",
+        "gru",
+        "garchnet",
+        "caviar",
+    ]
 
     run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, pedidos)
 
@@ -299,7 +312,7 @@ def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
     grupo = fila[0]
     assert isinstance(grupo, chord)
     assert [(s.task, s.args) for s in grupo.tasks] == [
-        ("apps.risk.tasks.compute_asset_model", (run_id, nome)) for nome in pedidos
+        ("apps.risk.tasks.compute_asset_model", (run_id, nome)) for nome in por_custo
     ]
     assert (grupo.body.task, grupo.body.args) == (
         "apps.risk.tasks.fechar_execucao",

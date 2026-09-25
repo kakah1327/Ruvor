@@ -41,7 +41,8 @@ from django.db import transaction
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
 from engine.experiments.runner import ExperimentConfig, run_experiment
-from engine.models import list_models, load_all_model_modules
+from engine.models import get_model, list_models, load_all_model_modules
+from engine.models.base import ModelCategory
 
 from apps.assets.models import Asset
 from apps.risk import config
@@ -139,6 +140,14 @@ def enqueue_compute(
     return AsyncReport([a.ticker for a in assets], [a.ticker for a in skipped])
 
 
+#: a ordem de custo do cabecalho do `chord` (D-73): o que termina em segundos vai primeiro
+_COST_RANK = {
+    ModelCategory.TRADITIONAL: 0,
+    ModelCategory.GARCH: 1,
+    ModelCategory.ML: 2,
+}
+
+
 def _abrir_execucao(
     ticker: str, calculated_at_iso: str, seed: int, models: list[str]
 ) -> int | None:
@@ -160,12 +169,17 @@ def _abrir_execucao(
         )
         return None
     run = open_run(asset, datetime.fromisoformat(calculated_at_iso), seed, bars, models)
+    # O cabecalho sai por custo, nao na ordem pedida (D-73): com a fila por ordem de
+    # chegada e duas vagas no worker, as redes na frente seguravam os modelos baratos por
+    # minutos. `sorted` e estavel, entao dentro da categoria vale a ordem pedida -- e o
+    # `requested_models`, gravado acima, continua na ordem pedida.
+    by_cost = sorted(models, key=lambda name: _COST_RANK[get_model(name).category])
     # Montado sem aplicar: `chord(...)(corpo)` ja enfileiraria, e nenhum duplo capturaria
     # nada. O cabecalho e imutavel (`.si`), porque nao ha o que receber; o corpo (`.s`)
     # recebe a lista de resultados do cabecalho como primeiro argumento.
     _enqueue(
         chord(
-            [compute_asset_model.si(run.id, model_name) for model_name in models],
+            [compute_asset_model.si(run.id, model_name) for model_name in by_cost],
             fechar_execucao.s(run.id),
         )
     )

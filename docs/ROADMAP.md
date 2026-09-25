@@ -50,15 +50,9 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 discordância entre modelos, "em qual modelo confiar", estresse histórico. Ainda não
 decidido.
 
-**Pendência declarada e não decidida — o regime de laboratório.** A
-[PRODUTO §4](PRODUTO.md#4-marcos) promete a camada 3 **nos dois regimes**
-([D-04](decisoes/D-04-dois-regimes-de-operacao.md)) no Marco 1; o M1.4 entregou **só
-produção**, e **nenhum bloco deste marco retoma o laboratório** — nem o M1.5, nem o M1.6. A
-spec do M1.4 assumiu que o Marco 1 é só produção **para poder existir**, e marcou a escolha
-como pendente de confirmação. As três saídas continuam abertas: o Marco 1 vira só produção e
-nasce a decisão que restringe a PRODUTO; nasce um **M1.7** para o laboratório; ou o
-`ruvor run` é declarado suficiente e a PRODUTO é corrigida para dizer isso. Enquanto ninguém
-escolher, adiar o laboratório é o mesmo que descartá-lo sem dizer.
+**O regime de laboratório não é deste marco**
+([D-74](decisoes/D-74-o-marco-1-e-so-producao.md), 2026-09-25). A camada 3 do Marco 1 é só
+produção; o laboratório vai para o Marco 2, como M2.4.
 
 ---
 
@@ -69,6 +63,7 @@ escolher, adiar o laboratório é o mesmo que descartá-lo sem dizer.
 | ⬜ | **M2.1 — Identidade e acesso** | autenticação, papéis, permissões, telas de login |
 | ⬜ | **M2.2 — Carteira** | composição pelo usuário e risco de carteira |
 | ⬜ | **M2.3 — Camada explicativa** | leitura iniciante/avançado como sistema |
+| ⬜ | **M2.4 — Regime de laboratório** | a camada 3 validada ao longo de uma década, na plataforma ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); veio do Marco 1 pela [D-74](decisoes/D-74-o-marco-1-e-so-producao.md) |
 
 **Pré-requisito:** parecer sobre a fronteira regulatória da CVM.
 
