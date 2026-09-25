@@ -30,7 +30,19 @@ class RiskRun(models.Model):
 
     `requested_by` nasce anulavel e sempre nula: nao ha usuario autenticado antes do M2.1,
     e a D-15 fica cumprida pela metade, declaradamente.
+
+    `status` e `requested_models` **nao tem `default`** (RF-08): com `default=running`, o
+    caminho que esquecesse de escrever o estado deixaria a linha `running` para sempre, em
+    silencio. Para o `status` isso nao basta -- `CharField` sem padrao grava string vazia
+    --, e quem o guarda e teste. `requested_models` e a lista de modelos pedidos, na ordem
+    do pedido: e contra ela que o estado e decidido.
     """
+
+    class Status(models.TextChoices):
+        RUNNING = "running"
+        OK = "ok"
+        PARTIAL = "partial"
+        FAILED = "failed"
 
     asset = models.ForeignKey(
         "assets.Asset",
@@ -58,6 +70,8 @@ class RiskRun(models.Model):
         related_name="risk_runs",
         null=True,
     )
+    status = models.CharField(max_length=10, choices=Status)
+    requested_models = models.JSONField()
 
     class Meta:
         db_table = 'gold"."risk_run'

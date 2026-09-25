@@ -406,6 +406,20 @@ def _row(run: RiskRun, model_run: ModelRunResult) -> RiskResult:
     )
 
 
+def status_for(expected: int, written: int, with_error: int) -> str:
+    """A regra do fecho (RF-05), literal: relativa ao que foi **pedido**, nao a nove.
+
+    `expected` e `len(requested_models) * len(config.ALPHAS)`, um resultado por nivel. A migration `0002`
+    traz uma copia desta funcao -- migration nao importa este modulo, que importa o motor
+    --, e um teste confere as duas contra a mesma tabela de casos.
+    """
+    if written == 0 or with_error == written:
+        return RiskRun.Status.FAILED
+    if written == expected and with_error == 0:
+        return RiskRun.Status.OK
+    return RiskRun.Status.PARTIAL
+
+
 def write_risk(
     asset: Asset,
     calculated_at: datetime,
@@ -423,6 +437,13 @@ def write_risk(
     # `log_returns` descarta o primeiro pregao: P precos dao P-1 retornos, e o que sobra
     # depois da janela de treino e o periodo de teste.
     test_count = len(bars) - 1 - train_window_days
+    model_names = result.config.model_names
+    # O desfecho e conhecido antes da escrita: o sincrono aplica a regra do fecho aqui e
+    # cria a linha ja com o estado final, sem `update` (RF-08).
+    with_error = sum(1 for model_run in result.runs if model_run.error)
+    status = status_for(
+        len(model_names) * len(config.ALPHAS), len(result.runs), with_error
+    )
     run = RiskRun.objects.create(
         asset=asset,
         calculated_at=calculated_at,
@@ -442,6 +463,8 @@ def write_risk(
         # Sempre nula: nao ha usuario autenticado antes do M2.1, e a D-15 fica cumprida
         # pela metade, declaradamente.
         requested_by=None,
+        status=status,
+        requested_models=list(model_names),
     )
     RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
     return run

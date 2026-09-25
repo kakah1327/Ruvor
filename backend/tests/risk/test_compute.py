@@ -579,6 +579,40 @@ def test_o_relatorio_conta_os_resultados_falhos_do_ativo(
     assert (linha.results, linha.failed, linha.error) == (4, 2, None)
 
 
+# --- RF-08: o sincrono grava o estado ------------------------------------------------------
+
+
+def test_o_sincrono_grava_ok_numa_execucao_limpa() -> None:
+    """O guarda que o `CharField` sem padrao nao da: esquecer o `status` grava `""`."""
+    com_serie("AAA3")
+
+    run_compute_risk(["AAA3"], models=BARATOS, now=relogio(INICIO_1, FIM_1))
+
+    run = RiskRun.objects.get()
+    assert (run.status, run.requested_models) == (RiskRun.Status.OK, BARATOS)
+
+
+def test_o_sincrono_grava_partial_quando_um_dos_modelos_falha(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Molde do V-11: a falha no `get_model` do runner, para um dos dois modelos."""
+    original = get_model
+
+    def quebrado(nome: str) -> type[VaRModel]:
+        if nome == "historical":
+            raise RuntimeError("modelo quebrado de proposito")
+        return original(nome)
+
+    monkeypatch.setattr("engine.experiments.runner.get_model", quebrado)
+    com_serie("AAA3")
+
+    run_compute_risk(["AAA3"], models=BARATOS, now=relogio(INICIO_1, FIM_1))
+
+    run = RiskRun.objects.get()
+    assert run.results.exclude(error="").count() == 2
+    assert (run.status, run.requested_models) == (RiskRun.Status.PARTIAL, BARATOS)
+
+
 # --- V-13: o veredito e exatamente Kupiec E Christoffersen -------------------------------
 
 
