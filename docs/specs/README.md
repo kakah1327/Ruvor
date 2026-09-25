@@ -38,4 +38,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | Marco 1 · M1.2 | ✅ implementada e fechada |
 | [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | Marco 1 · M1.3 | ✅ implementada e fechada |
 | [M1.4 — Motor de risco](M1.4-motor-de-risco.md) | Marco 1 · M1.4 | ✅ implementada e fechada |
-| [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | Marco 1 · M1.5 | ✅ aprovada, plano aprovado, em implementação |
+| [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | Marco 1 · M1.5 | ✅ implementada e fechada |

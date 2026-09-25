@@ -110,7 +110,8 @@ Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêine
 **fundação de dados** — os quatro esquemas do banco, as primeiras tabelas, o **catálogo de
 ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
 comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
-de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
+de adequação por ativo —, calculado **pela fila** e **agendado** pelo Celery Beat. Ainda não
+existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.2.0**, 9
   modelos de VaR, 4 testes de backtesting, 102 testes e linha de base numérica. Roda por linha
@@ -120,8 +121,14 @@ de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
   `mypy` do backend enxergar os tipos dele.
 - `backend/` — projeto Django com quatro apps, `apps/accounts`, `apps/assets`,
   `apps/analytics` e `apps/risk`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis, com a tarefa de fumaça `config.tasks.ping`.
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 241 testes com pytest-django, que
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as sete tarefas de
+  app, por descoberta automática — `apps/risk/tasks.py` (a abertura, uma por (ativo, modelo),
+  o fecho e o leque `recalcular_cobertos`) e `apps/assets/tasks.py` (catálogo, preços e a
+  `rotina_diaria`, que encadeia preços → risco). O `CELERY_BEAT_SCHEDULE` tem duas entradas,
+  com horário em `RUVOR_BEAT_ASSETS_CRON` e `RUVOR_BEAT_PRICES_CRON`
+  ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
+  [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 304 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -146,7 +153,10 @@ de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
   a execução com o manifesto e os resultados, cada um com o VaR, os quatro backtests e o
   veredito de adequação
   ([D-61](docs/decisoes/D-61-backend-alimenta-o-motor-por-dataprovider.md) a
-  [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md)). O
+  [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md));
+  com `--async`, enfileira uma abertura por ativo e devolve — a `risk_run` nasce no `worker`
+  como `running`, cada modelo grava os seus dois resultados em transação própria, e o fecho
+  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. O
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
@@ -156,9 +166,11 @@ de adequação por ativo. Ainda não existe API de negócio nem tela de produto.
   os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por
   `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do
   contêiner não precisa de Node instalado.
-- `compose.yaml` na raiz — `docker compose up` sobe cinco serviços: `postgres`, `redis`,
-  `web`, `worker` e `frontend`. Backend e frontend rodam aí no dia a dia; o motor segue no
-  `.venv/` nativo ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)).
+- `compose.yaml` na raiz — `docker compose up` sobe seis serviços: `postgres`, `redis`,
+  `web`, `worker`, `beat` e `frontend`. O `worker` roda com `--concurrency=2`; o `beat` usa a
+  imagem do `worker`, sem `build` próprio, e **agenda coleta real** — `docker compose stop
+  beat` quando isso não for desejado. Backend e frontend rodam aí no dia a dia; o motor segue
+  no `.venv/` nativo ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)).
 
 Um só `.venv/` na raiz para motor e backend. O protótipo Flask, o SQLite e o frontend antigo
 foram removidos por inteiro.

@@ -76,6 +76,12 @@ conversas e entre agentes.
 | [D-64](D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md) | O veredito de adequação é Kupiec **e** Christoffersen; DQ e Basileia ficam de fora |
 | [D-65](D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md) | A plataforma lista os modelos aprovados e não elege nenhum |
 | [D-66](D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md) | Registry incompleto é erro, não silêncio; restringe, no consumo, o `except ImportError` do motor |
+| [D-67](D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) | Uma tarefa por (ativo, modelo), e a transação acompanha; restringe o RF-12 do M1.4 |
+| [D-68](D-68-o-estado-da-execucao-mora-no-banco.md) | O estado da execução mora no banco, não no Redis |
+| [D-69](D-69-o-agendamento-e-encadeado.md) | O agendamento é encadeado, não por horário paralelo |
+| [D-70](D-70-a-tarefa-nunca-levanta-e-o-fecho-le-o-banco.md) | A tarefa nunca levanta, e o fecho lê o banco |
+| [D-71](D-71-a-risk-run-nasce-no-worker.md) | A `risk_run` nasce no `worker`, não em quem enfileira |
+| [D-72](D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md) | O fecho escreve metadado de execução; restringe a D-16 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

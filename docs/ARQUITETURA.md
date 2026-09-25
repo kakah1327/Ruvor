@@ -201,6 +201,17 @@ O pedido vira um **grupo de tarefas independentes, uma por algoritmo**. Os rápi
 em segundos e gravam resultado; os de ML gravam conforme terminam. A tela consulta o estado
 e vai preenchendo.
 
+**Como o M1.5 construiu isso.** Uma tarefa por (ativo, **modelo**), cada uma gravando os seus
+dois níveis em transação própria
+([D-67](decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md)); a
+`risk_run` nasce no worker como `running`
+([D-71](decisoes/D-71-a-risk-run-nasce-no-worker.md)), e um `chord` fecha o grupo lendo o
+banco e escrevendo `ok`, `partial` ou `failed`
+([D-70](decisoes/D-70-a-tarefa-nunca-levanta-e-o-fecho-le-o-banco.md),
+[D-72](decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)). **O estado
+mora no banco, não no Redis** ([D-68](decisoes/D-68-o-estado-da-execucao-mora-no-banco.md)):
+o canal de progresso do item 3 acima não foi construído, e a tela conta as linhas gravadas.
+
 **Atualização da tela por consulta periódica** (~2 segundos), não WebSocket. Para uma
 operação de minutos, 2 segundos de atraso é irrelevante, e evita Django Channels e
 infraestrutura extra. Trocar depois é fácil.
@@ -306,8 +317,8 @@ Ver [D-18](decisoes/D-18-separacao-treino-previsao.md),
 
 ## Ambientes
 
-**Local: um comando.** `docker compose up`, na raiz, sobe **cinco serviços**: Postgres, Redis,
-web, worker e frontend. Não é conforto — evita "na minha máquina funciona" num time de 4
+**Local: um comando.** `docker compose up`, na raiz, sobe **seis serviços**: Postgres, Redis,
+web, worker, beat e frontend. Não é conforto — evita "na minha máquina funciona" num time de 4
 pessoas com sistemas diferentes, e faz alguém novo produzir no primeiro dia.
 
 O frontend está entre eles porque é a peça com o pré-requisito mais frágil do repositório —
@@ -342,7 +353,13 @@ caindo em outro ótimo local de uma superfície quase plana. Está registrado co
 [ESTADO.md](ESTADO.md); o ajuste que não convergia em Linux foi corrigido pela
 [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md).
 
-**Produção**: forma definida (web + worker + Postgres + Redis); hospedagem em aberto.
+**Produção**: forma definida (web + worker + beat + Postgres + Redis); hospedagem em aberto.
+O **beat** é o agendador do Celery, **um só por ambiente** — dois duplicariam cada disparo.
+Não calcula: agenda o catálogo e os preços, e o recálculo do risco vem encadeado aos preços
+([D-69](decisoes/D-69-o-agendamento-e-encadeado.md)). Usa a mesma imagem do worker, porque
+importa as tarefas de app, que chegam no motor. Os horários são variáveis de ambiente
+(`RUVOR_BEAT_ASSETS_CRON`, `RUVOR_BEAT_PRICES_CRON`), e o valor de produção depende da
+hospedagem.
 Inclinação para PaaS (Render/Railway, ~US$ 20–50/mês) em vez de VPS — o time não tem
 capacidade de operação sobrando, e essas horas sairiam do produto.
 

@@ -240,14 +240,15 @@ aponta as violações e `ruff format --check` reprova sem reescrever — quem ap
 hospedeiro, e a segunda metade rodaria fora do contêiner. O caminho é `.` porque o diretório
 de trabalho do contêiner `web` já é `/repo/backend`.
 
-**`pytest backend` no hospedeiro reprova cinco testes e dá erro em quarenta e nove, e é de propósito.** O
+**`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e quarenta e oito, e é de propósito.** O
 `backend/config/settings_test.py` fixa valores de banco inexistentes (`nao-usar`) justamente
 para que um `.env` incompleto não passe despercebido. No hospedeiro, tudo que toca o banco
 falha com `OperationalError: failed to resolve host 'nao-usar'`: o `test_conexao_com_o_banco`
 desde o F3, e desde o F4 os quatro que leem o esquema, a organização e a coluna
 `organization_id` — `test_esquemas.py` (dois), `test_organizacao.py` e o
-`test_a_coluna_organization_id_e_not_null`. Os quarenta e nove são os de `assets` com `django_db`, que
-nem conseguem criar o banco de teste. Todos só passam dentro do contêiner, onde as variáveis
+`test_a_coluna_organization_id_e_not_null`. Os cento e quarenta e oito são os que pedem `django_db`, que
+nem conseguem criar o banco de teste — medido em 2026-09-25, com 304 testes. Todos só passam
+dentro do contêiner, onde as variáveis
 vêm do `compose` **e o banco está migrado**. Não é regressão: é a suíte rodando fora da casa
 dela.
 

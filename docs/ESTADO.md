@@ -3,19 +3,20 @@
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
 > Atualizado ao fim de cada sessão de trabalho.
 
-**Última atualização:** 2026-09-24
+**Última atualização:** 2026-09-25
 
 ---
 
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** M1.4 fechado em 2026-09-24; **o M1.5 é o próximo**
+**Bloco:** M1.5 fechado em 2026-09-25; **o M1.5b é o próximo**
 **Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
-**fundação de dados**. `docker compose up` sobe cinco serviços; o Django conecta no
-PostgreSQL e tem fila Celery sobre Redis. `migrate` num banco vazio cria os quatro esquemas
+**fundação de dados**. `docker compose up` sobe seis serviços; o Django conecta no
+PostgreSQL e tem fila Celery sobre Redis, com o **Celery Beat** agendando a coleta. `migrate`
+num banco vazio cria os quatro esquemas
 — `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
 organização fixa do Marco 1 (`slug` `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`,
 `silver.price` e `silver.corporate_event`. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
@@ -26,8 +27,13 @@ pregões cada, com retorno logarítmico. `manage.py compute_metrics` lê a `silv
 baldes do histograma de retornos. **`manage.py compute_risk`, no contêiner `worker`, é a
 camada 3**: roda os nove modelos de VaR e os quatro backtests sobre `silver.price` e grava em
 `gold` a execução com o manifesto e os dezoito resultados, cada um com o VaR, os quatro
-testes e o veredito de adequação. Vinte tabelas. Ainda não há API de negócio nem tela de
-produto.
+testes e o veredito de adequação. **Desde o M1.5 isso também roda pela fila:**
+`compute_risk --async` enfileira uma abertura por ativo, a `risk_run` nasce no `worker` como
+`running`, cada modelo grava os seus dois resultados em transação própria, e o fecho escreve
+`ok`, `partial` ou `failed`. Há, além da tarefa de fumaça `config.tasks.ping`, sete tarefas de
+app, em `apps/risk/tasks.py` e `apps/assets/tasks.py`, e o Beat dispara duas rotinas — o
+catálogo, às segundas, e os preços, de segunda a sexta, com o recálculo do risco **encadeado**
+a eles. Vinte tabelas. Ainda não há API de negócio nem tela de produto.
 
 **Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
 `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
@@ -40,11 +46,11 @@ frontend, e o motor entrou no estilo com a formatação provada por árvore sint
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
 **Desde o M1.4 a suíte e o `mypy` do backend rodam no `worker`, não na `web`** — é o único
 contêiner que tem o motor, e `apps/risk/` o importa (RF-16b). Consequência que engana quem
-não sabe: **`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e nove**,
-de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um `.env`
-incompleto não passe despercebido. Os cinco leem o banco configurado; os 109 são os que
+não sabe: **`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e quarenta e
+oito**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
+`.env` incompleto não passe despercebido. Os cinco leem o banco configurado; os 148 são os que
 pedem `django_db` e nem conseguem criar o banco de teste. **Dentro do contêiner os cinco
-exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-24, com 241 testes.
+exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-25, com 304 testes.
 
 ## O que foi concluído
 
@@ -53,7 +59,7 @@ exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-24, com 24
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **66 decisões registradas** — [decisoes/](decisoes/)
+- **72 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -503,27 +509,168 @@ incompleto é erro, não silêncio).
 ROADMAP sobre a fila foi resolvida **a favor do M1.5**, e a linha do M1.4 foi corrigida; o
 **regime de laboratório continua sem decisão** — está em *Aberto e aguardando decisão*.
 
+### M1.5 — Execução assíncrona
+
+Spec em [`specs/M1.5-execucao-assincrona.md`](specs/M1.5-execucao-assincrona.md) e plano em
+[`planos/M1.5-execucao-assincrona.md`](planos/M1.5-execucao-assincrona.md). Nove tarefas, um
+commit cada, de `352c471` ao commit de fecho, direto na `main` — menos a T8, que não produz.
+**Primeiro bloco em que o risco roda pela fila, e o primeiro em que alguma coisa roda
+sozinha.**
+
+| Verificação | Resultado |
+|---|---|
+| `status` e `requested_models` sem `default`; a migration `0002` deriva as execuções antigas do dado | ✅ a função, a forma da lista de operações e — V-10c — **as oito do banco real `ok`, com os nove**, remedidas no fecho |
+| Nove tarefas por ativo, **enfileiradas**, não executadas em linha (V-02) | ✅ um `chord` de nove e zero `risk_result` depois da abertura |
+| Transação por (ativo, modelo), e os dois níveis tudo ou nada (V-03) | ✅ as duas partes |
+| Parcial visível; `ok`, `partial` e `failed`; o fecho relativo ao pedido (V-04, V-05, V-05c) | ✅ |
+| A tarefa nunca levanta, e o que fica gravado é o par de erro (V-05b) | ✅ com `run_experiment` e com a escrita levantando |
+| A `risk_run` nasce no `worker` (V-05d); sem fecho, fica `running` (V-06) | ✅ |
+| Síncrono e assíncrono gravam o mesmo, com os nove modelos de verdade (V-07) | ✅ |
+| Duas entradas no Beat, o risco encadeado aos preços, o horário é configuração, o elo não se rompe (V-08 a V-10b) | ✅ inclusive o cron em que dia do mês e dia da semana divergem |
+| As tarefas de app entram por descoberta automática (V-10d) | ✅ em subprocesso, as sete |
+| `engine/` intocado no bloco inteiro (V-11) | ✅ `git diff 2c624b9..HEAD -- engine` vazio |
+| Nenhum teste sai para a rede nem fala com o Redis (V-12) | ✅ |
+| **Execução real, `compute_risk --async`** (2026-09-25, **4 min 46 s**) | ✅ código 0, o relatório literal, quatro `risk_run` `ok` e 72 `risk_result` — **iguais às execuções 5–8 do M1.4 campo a campo** |
+| **Tique real do Beat** (2026-09-25, **4 min 40 s** do disparo ao último fecho) | ✅ `rotina_diaria` → `import_prices` no Yahoo → `recalcular_cobertos` → quatro `risk_run` novas, as quatro `ok` |
+
+304 testes no backend e 102 no motor; mypy (88 arquivos no backend) e ruff limpos; vinte
+tabelas; **seis serviços** saudáveis.
+
+**As dezenove mutações reprovaram** — as doze da tabela da spec, as seis que o plano
+acrescentou e a do `calculated_at` produzido por abertura, acrescentada na execução. Três
+acusam por um caminho que não é o óbvio, e o plano registra: o import explícito de
+`apps.risk.tasks` no `celery.py` derruba o processo do pytest com `AppRegistryNotReady` — não
+há teste nomeado que reprove, porque não chega a haver teste —; o `finished_at` escrito na
+criação só o V-06 acusa, não o V-05; e a janela da tarefa, só o caso "pregão depois do
+`as_of_date`".
+
+#### Os números da execução real
+
+**Medição 1 — o V-10c no banco real.** As oito `risk_run` do M1.4 estão `ok`, com
+`requested_models` igual aos nove, 18 `risk_result` cada, nenhuma com erro.
+
+**Medição 2 — `compute_risk --async` sobre os quatro ativos**, com o `worker` reiniciado antes
+e `silver.price` intocada desde o M1.4. O comando saiu **0** em 3,5 s e imprimiu:
+
+```
+IBOV         enfileirado
+ITUB4        enfileirado
+PETR4        enfileirado
+VALE3        enfileirado
+risco assincrono: 4 ativos, 4 enfileirados, 0 pulados; acompanhe em gold.risk_run
+```
+
+| Instante (UTC) | O quê |
+|---|---|
+| 05:48:52,5 | o comando começa |
+| 05:48:57,2 | as quatro aberturas terminam — a primeira de cada filho do *prefork* em 1,8 s, as seguintes em 0,04 s |
+| 05:49:09 | **primeiros resultados** de IBOV e ITUB4 — `caviar`, `egarch` e `garch_1_1`, ~14 s depois de o comando devolver |
+| ~05:51:21 / 05:51:29 | IBOV e ITUB4 com os dezoito |
+| ~05:51:30 / ~05:51:41 | **primeiros resultados** de PETR4 e VALE3 — 2 min 34 s e 2 min 45 s depois de o comando devolver |
+| 05:53:36,0 | fecho de IBOV, ITUB4 e PETR4, os três em 20 ms |
+| 05:53:39,0 | fecho de VALE3 — **4 min 46 s** do começo ao fim, contra os 8 min 32 s do síncrono no M1.4 |
+
+**As dezoito linhas de cada ativo saíram iguais às das execuções 5–8 do M1.4, campo a campo:**
+1.080 comparações — 72 resultados × `model_category`, `hyperparameters`, `var_latest`,
+`var_mean`, `violations`, `expected_violations`, os três `*_passed` e os três `*_p_value`,
+`basel_zone`, `adequate` e `error` —, **zero divergências**; e o manifesto (`engine_version`,
+`seed`, as datas, as contagens, `price_run`, `status`, `requested_models`) igual nos quatro.
+O script de comparação foi provado contra ativos trocados: acusou 540 divergências.
+
+**RF-12 medido** — memória do `worker` por `docker stats --no-stream`, a cada ~15 s: 157,5 MiB
+antes, **pico de 2,94 GiB** na medição 2 (20 amostras) — e **não volta**: 2,91 GiB com o
+`worker` ocioso depois. Na medição 4, partindo daí, o pico foi **5,05 GiB** (31 amostras), e
+ocioso depois ficou em 5,05 GiB. O contêiner não tem limite declarado; a máquina mostra 15,47
+GiB. Ver "o que a execução contrariou".
+
+**Medição 3 — V-11.** `git diff 2c624b9..HEAD -- engine` vazio; `2c624b9` é o pai do commit
+da T1.
+
+**Medição 4 — um tique do Beat.** `RUVOR_BEAT_PRICES_CRON=58 2 * * *` no `.env`, `docker
+compose up -d --wait beat`, e às **02:58:00 de São Paulo** o Beat enviou
+`apps.assets.tasks.rotina_diaria`. A `importar_precos` rodou o `import_prices` real em 0,8 s —
+`coleta: 4 ativos, 4 ok, 0 falhos, 0 pulados`; IBOV 2 pregões novos, os outros três 3 cada,
+`collection_run` 5 `ok` —, a `recalcular_cobertos` abriu quatro execuções (ids 13–16) com o
+mesmo `calculated_at` e `price_run` 5, e as quatro fecharam `ok` às 03:02:40, **4 min 40 s**
+depois do disparo. Adequados, de 18: IBOV 8, ITUB4 9, PETR4 7, VALE3 4 — os mesmos totais do
+M1.4, com dois ou três pregões a mais. Depois, a linha saiu do `.env`, o `beat` foi recriado,
+`printenv` mostrou as duas variáveis vazias e o `CELERY_BEAT_SCHEDULE` voltou a `0 7 * * 1` e
+`30 19 * * 1-5`. **O `beat` ficou de pé** — é o estado normal do ambiente a partir daqui.
+
+**O que a execução contrariou.**
+
+- **"Os seis determinísticos em segundos" só vale para parte deles, e só para os primeiros
+  ativos da fila.** O cabeçalho do `chord` segue a ordem de `requested_models` — a de `MODELS`,
+  alfabética —, e com `--concurrency=2` as duas vagas são tomadas pelas redes assim que elas
+  chegam na fila. No IBOV, `caviar`, `egarch` e `garch_1_1` gravaram em ~14 s; `historical`
+  esperou ~1 min 40 s, atrás de `garchnet` e `gru`; `monte_carlo` e `parametric`, ~2 min 25 s,
+  atrás do `lstm`. E a fila é uma só para todos os ativos: PETR4 e VALE3 não tiveram **nada**
+  por 2 min 34 s e 2 min 45 s. Não é defeito do contrato — o plano fixa a ordem do pedido —,
+  mas é o oposto do que o "Resultado esperado" da spec promete, e o M1.6 precisa saber antes
+  de desenhar a tela. Está em *Aberto e aguardando decisão*.
+- **O fecho entra no fim da fila.** O corpo do `chord` é enfileirado quando a última tarefa do
+  grupo termina, atrás do que já estava lá: o IBOV ficou **2 min 15 s em `running` com os
+  dezoito gravados**, e os quatro fechos saíram juntos, depois da última tarefa do VALE3. Quem
+  ler `status` para decidir se a execução acabou vai esperar mais do que o cálculo durou.
+- **A memória do `worker` cresce a cada execução e não volta.** 2,9 GiB depois da primeira
+  rodada dos quatro ativos, 5,0 GiB depois da segunda. Os filhos do *prefork* vivem entre
+  tarefas, e o que eles alocam não volta — a medição é do contêiner inteiro, não por processo,
+  então **quem** aloca (o TensorFlow é o suspeito óbvio) não está medido. Com dois filhos, a
+  conta "1–2 GB por rede, dois cabem em 4 GB" do RF-12 **não segura** depois de duas rodadas. Não passou do que a
+  máquina tem, então é achado **para o M1.5b**, como o plano previu — e é o M1.5b que muda o
+  treino de lugar.
+- **Os números não mudaram nem um dígito.** Separar os nove em nove chamadas de
+  `run_experiment`, em processos-filhos recém-nascidos e sem registry herdado, deu os mesmos 72
+  resultados que o síncrono, iguais em todas as casas gravadas — inclusive nas três redes. É o RF-08 medido em dado
+  real, e não só no V-07.
+- **O `--async` carrega o TensorFlow no processo do comando**: o `enqueue_compute` confere o
+  registry antes de enfileirar, e isso importa os módulos das redes — a saída do comando traz
+  as mensagens de partida do TensorFlow, e ele levou 3,5 s para enfileirar quatro aberturas.
+  Não estorva no `worker`; é mais uma razão para o M1.6, que enfileira da `web`, não herdar
+  esse caminho.
+- **Mutação em `backend/config/*.py` derruba a `web`**, pela recarga automática, e ela **não
+  volta sozinha** quando a mutação é revertida — foi preciso subi-la de novo na T8.
+- **O *sync* do Beat ocioso é a cada 300,0 s** (o `max_interval`), medido na T7; o
+  `healthcheck` exige o `celerybeat-schedule` tocado há menos de 600 s.
+- **Correções de texto, sem mudar contrato**, todas no fim do plano: o esperado do fecho é
+  `len(requested_models) * len(config.ALPHAS)`, não `* 2` (a migration mantém `* 2`); o V-05b
+  mira `apps.risk.tasks.*`; o relatório tem 13 caracteres antes do status, não 12; o literal do
+  Beat foi reformatado pelo `ruff format`; `chain(...)` devolve `celery.canvas._chain`, e o V-09
+  identifica a corrente por `subtask_type`; e três arquivos de teste alterados fora do
+  inventário da spec, que ganhou a correção.
+
+Seis decisões nasceram do bloco:
+[D-67](decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) (uma tarefa
+por (ativo, modelo), e a transação acompanha; restringe o RF-12 do M1.4),
+[D-68](decisoes/D-68-o-estado-da-execucao-mora-no-banco.md) (o estado mora no banco, não no
+Redis), [D-69](decisoes/D-69-o-agendamento-e-encadeado.md) (o agendamento é encadeado),
+[D-70](decisoes/D-70-a-tarefa-nunca-levanta-e-o-fecho-le-o-banco.md) (a tarefa nunca levanta, e
+o fecho lê o banco), [D-71](decisoes/D-71-a-risk-run-nasce-no-worker.md) (a `risk_run` nasce no
+`worker`) e [D-72](decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md) (o
+fecho escreve metadado de execução; restringe a D-16).
+
 ## Próximo passo
 
-**Escrever a spec do M1.5 — Execução assíncrona**: fila, modo A, pré-cálculo dos ativos
-cobertos e agendamento das ingestões. É o bloco que a spec do M1.4 nomeou ao resolver a
-divergência do ROADMAP sobre a fila.
+**Escrever a spec do M1.5b — Treino separado da previsão**: a
+[D-18](decisoes/D-18-separacao-treino-previsao.md), persistir as redes treinadas e fazer a
+previsão diária ser uma passada só. É a decisão que a própria D-18 chama de "a que faz a conta
+fechar": hoje são ~2 min de CPU por ativo, e 473 ações × 2 min ≈ 16 h por rodada completa.
 
-O que ele já encontra pronto: o `compute_risk` síncrono, com transação por ativo e manifesto,
-rodando em **~2 min por ativo** — o que muda a pergunta de "dá para esperar?" para "quando
-recalcular?". E a `worker`, que desde o M1.4 é o contêiner onde a suíte inteira roda.
+O que ele já encontra pronto: a fila, com uma tarefa por (ativo, modelo) e o estado da
+execução no banco; o Beat, que roda a coleta de preços e o recálculo **todo dia útil às
+19h30**; e a execução real, que levou **4 min 46 s** para os quatro ativos com dois filhos em
+paralelo.
 
-Perguntas que a spec encontra na porta: **o que dispara o recálculo** — ingestão nova de
-preço, agenda, ou pedido do usuário; **o que o modo A devolve** enquanto o ML não terminou
-([D-07](decisoes/D-07-resposta-progressiva-modo-a.md)); e **como a tarefa Celery carrega o
-manifesto**, agora que ele existe.
+Duas medições do M1.5 que a spec do M1.5b encontra na porta: **a memória do `worker` cresce
+a cada rodada e não volta** — 2,9 GiB depois da primeira, 5,0 GiB depois da segunda, sem
+medição por processo que diga quem aloca —; e **as redes seguram a fila**: com duas vagas, os modelos baratos esperam
+atrás delas, e os ativos do fim da fila esperam todos. Separar treino de previsão ataca as
+duas.
 
-**A reversibilidade barata acabou:** `silver.price` tem ~10 mil linhas e aponta para `asset`.
-`migrate assets zero` ainda funciona, mas custa uma coleta real para voltar. **`gold` é a
-exceção, e não é linha da tabela de dívida** — não procure lá: o que está lá é **derivado**,
-`migrate analytics zero` / `migrate risk zero` apagam tudo, e uma execução de
-`compute_metrics` reconstrói em 0,1 s, uma de `compute_risk` em 8,5 min. É a última vez no
-Marco 1 em que isso vale.
+**`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta quatro
+`risk_run` a cada dia útil, e `migrate risk zero` apagaria essa história junto. Ela ainda se
+reconstrói — o preço está em `silver`, e cada execução leva ~5 min —, mas só para a série de
+hoje, não para a de cada dia passado.
 
 ---
 
@@ -536,7 +683,7 @@ Marco 1 em que isso vale.
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
-| Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos | `backend/config/tasks.py`, comentado no próprio arquivo | Quando houver tarefas o bastante para pagar pelo pacote `celery-types` — M1.5 |
+| Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)): sete tarefas não é "o bastante", e o `ignore_missing_imports` de `celery.*` segue | `backend/pyproject.toml`; `backend/config/tasks.py`, `backend/apps/risk/tasks.py` e `backend/apps/assets/tasks.py` registram sem decorador por isso | **O próximo bloco que criar uma leva de tarefas Celery** — prazo novo, que o M1.5 declarou em vez de deixar a dívida sem dono |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
@@ -548,6 +695,9 @@ Marco 1 em que isso vale.
 
 | Tema | Onde |
 |---|---|
+| **O `.env.example` traz os dois horários do Beat preenchidos com os padrões** (`0 7 * * 1` e `30 19 * * 1-5`). Quem copia para `.env` — que é o que o README manda — fica com o Beat agendando **coleta real** na B3 e no Yahoo, e o recálculo do risco, sem ter pedido. É o comportamento do padrão de qualquer forma (ausente ou vazio vale o mesmo), mas o arquivo o torna explícito. **A confirmar pelo humano**: manter assim, ou deixar as linhas comentadas e o Beat parado por padrão no ambiente local | `.env.example`, [README](../README.md#agendamento-celery-beat) |
+| **O modo A entrega menos do que a spec do M1.5 prometeu.** Com `--concurrency=2` e o cabeçalho do `chord` na ordem alfabética de `MODELS`, `historical`, `monte_carlo` e `parametric` esperam atrás das redes (~1 min 40 s a ~2 min 25 s no IBOV), e os ativos do fim da fila não recebem nada por ~2,5 min; o fecho entra no fim da fila, e uma execução completa fica minutos em `running`. Saídas: ordenar os modelos baratos primeiro, uma fila separada para as redes, ou aceitar e esperar o M1.5b. **Precisa estar decidido antes da spec do M1.6**, que desenha a tela | [ESTADO, M1.5](#m15--execução-assíncrona) |
+| **A execução presa em `running`** — se o fecho não rodar (`worker` morto, Redis reiniciado), a linha fica `running` para sempre. Limpar por idade, reprocessar ou deixar para operação: a spec do M1.5 deixou aberto por falta de dado de produção | [spec M1.5](specs/M1.5-execucao-assincrona.md#a-execução-presa-em-running) |
 | **O regime de laboratório sai do Marco 1 — e ninguém decidiu isso.** A [PRODUTO §4](PRODUTO.md#4-marcos) promete a camada 3 **nos dois regimes** ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); o M1.4 entregou **só produção**, e **nenhum bloco do ROADMAP retoma o laboratório** — nem o M1.5, nem o M1.6. A spec do M1.4 assumiu "o Marco 1 é só produção" **para poder existir** e marcou como pendente de confirmação. Três saídas: (1) o Marco 1 vira só produção e nasce a decisão que restringe a PRODUTO; (2) nasce um **M1.7** para o laboratório; (3) o `ruvor run` é declarado suficiente e a PRODUTO é corrigida. **Enquanto ninguém escolher, adiar é descartar sem dizer** | [ROADMAP.md](ROADMAP.md#marco-1--a-ação-e-o-risco-dela), [PRODUTO.md](PRODUTO.md#4-marcos) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |

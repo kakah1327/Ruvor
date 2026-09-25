@@ -715,3 +715,95 @@ trocada** na mesma instância: cada `_fit_for_alpha` semeia, então a ordem não
 valor nenhum; com a semeadura no `fit()`, o segundo alpha continua de onde o primeiro parou
 e muda. Espião que substitui a função de semeadura prova a contagem de chamadas, não a
 consequência — e, ao substituir, deixa de semear.
+
+
+## A ordem posicional do `crontab` do Celery não é a do cron
+
+**Quando:** ao transformar uma expressão cron de cinco campos (variável de ambiente, arquivo
+de configuração) num `celery.schedules.crontab`.
+
+**Problema:** o construtor é `crontab(minute, hour, day_of_week, day_of_month,
+month_of_year)` — o dia da semana vem em **terceiro**, e o cron o põe em quinto.
+`crontab(*"30 19 * * 1-5".split())` não falha: entrega `*` como dia da semana e `1-5` como
+**mês**, e a agenda vira "todo dia, de janeiro a maio". Ninguém percebe até junho.
+
+**Faça:** desempacote com nomes (`minute, hour, day_of_month, month_of_year, day_of_week =
+campos`) e passe **argumentos nomeados**. E teste com um valor em que as duas leituras
+divergem — dia do mês e dia da semana diferentes, como `"15 21 3 * 2"`; com `*` nos dois, o
+teste aprova as duas formas.
+
+
+## `chord` e `--concurrency` baixa: o fecho vai para o fim da fila, e a ordem do cabeçalho decide quem espera
+
+**Quando:** ao prometer "os rápidos primeiro" com um `chord` do Celery, ou ao ler o `status`
+escrito pelo corpo do `chord` para saber se o trabalho acabou.
+
+**Problema:** o Celery executa na ordem da fila, e a fila é uma para tudo. Com duas vagas, as
+tarefas lentas que chegam primeiro ocupam as duas, e as rápidas que vêm depois no cabeçalho
+esperam; os grupos dos ativos do fim da fila esperam os do começo. E o corpo do `chord` é
+enfileirado **quando** a última tarefa termina — atrás de tudo o que já estava na fila. Na
+execução real do M1.5, o IBOV ficou 2 min 15 s `running` com os dezoito resultados já
+gravados, e os modelos baratos depois das redes, na ordem alfabética, esperaram até 2 min 25 s.
+
+**Faça:** a ordem do cabeçalho e o número de filas são decisão de desenho, não detalhe; meça
+o instante da primeira linha de **cada** ativo e o atraso entre a última linha e o fecho,
+nunca só o tempo total.
+
+
+## Filho do *prefork* guarda a memória entre tarefas: meça depois, não só durante
+
+**Quando:** ao medir a memória de um worker Celery que roda TensorFlow (ou qualquer
+biblioteca que aloque muito e não devolva), para decidir `--concurrency` ou o tamanho do
+contêiner.
+
+**Problema:** os processos-filhos vivem entre tarefas, e o que eles alocam numa tarefa não
+volta na seguinte — a memória do contêiner **só sobe**: 157 MiB ocioso, 2,9 GiB
+depois da primeira rodada de quatro ativos, 5,0 GiB depois da segunda — e parada em 5,0 GiB
+com o worker ocioso, medido no M1.5 com `docker stats`, que não separa por processo. O pico
+de uma execução isolada mede a primeira rodada, não o regime.
+
+**Faça:** meça duas rodadas seguidas e o ocioso depois de cada uma. Se a curva sobe, o número
+que decide é o da rodada N, não o da primeira; o Celery tem `--max-tasks-per-child` e
+`--max-memory-per-child` para reciclar filhos, e escolher entre eles é decisão, não remendo.
+
+
+## Mutação em `backend/config/*.py` derruba a `web`, e ela não volta sozinha
+
+**Quando:** ao aplicar uma mutação de prova, ou qualquer edição que quebre a importação, em
+`backend/config/` com o ambiente de pé.
+
+**Problema:** a `web` roda o `runserver` com recarga automática. A edição quebrada derruba o
+processo, e o contêiner não se recupera quando o arquivo é revertido — a recarga não tem mais
+quem a faça. Os critérios seguintes que dependem da `web` reprovam por outra causa, e a
+mutação parece ter morto mais do que devia.
+
+**Faça:** depois de reverter uma mutação em `config/`, confira `docker compose ps` e suba a
+`web` de novo (`docker compose up -d --wait web`) antes do próximo critério.
+
+
+## `docker compose pause` marca o contêiner `unhealthy` por conta própria
+
+**Quando:** ao provar que um `healthcheck` sabe reprovar congelando o processo em vez de
+quebrá-lo.
+
+**Problema:** o Docker marca contêiner pausado como `unhealthy` com **qualquer**
+`healthcheck` — inclusive um que seja literalmente `true`. A prova aprova o `healthcheck`
+certo e também a mutação que tira a condição que se queria provar. E, ao despausar, o
+processo retoma com o relógio monotônico adiantado e pode se recuperar na hora.
+
+**Faça:** estrague a condição que o `healthcheck` observa — pare a dependência, envelheça o
+arquivo com `touch -d` — e execute o **próprio comando** do `healthcheck` (extraído do
+`docker compose config`), olhando o código de saída dele, não o estado `unhealthy` do Docker.
+
+
+## `chain(...)` do Celery não é instância de `celery.chain`
+
+**Quando:** ao conferir em teste que uma função montou uma corrente do Celery.
+
+**Problema:** `celery.chain(a, b)` devolve um `celery.canvas._chain`; `isinstance(sig,
+celery.chain)` sai falso para uma corrente correta, e a "correção" natural — relaxar o teste —
+o esvazia.
+
+**Faça:** identifique pela assinatura serializada: `sig["subtask_type"] == "chain"`, e
+confira os elos em `sig.tasks` — inclusive `immutable` no elo que não deve receber o retorno
+do anterior.
