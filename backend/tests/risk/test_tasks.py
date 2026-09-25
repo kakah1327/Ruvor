@@ -11,23 +11,45 @@ events` ao alterar a tabela). Por isso ele se divide em tres partes:
   `AddField` -- e o que pega a migration sem o `RunPython`, em que o valor do `AddField`
   valeria para todo mundo;
 - **(c) o dado real**: as oito linhas do banco, medidas na execucao real.
+
+**As tarefas** (V-02 a V-06, idempotencia, serie mudou, registry) sao exercidas chamando as
+**funcoes com sublinhado**, nunca a tarefa registrada, `.delay` ou `.apply_async`: o
+`_enqueue` e substituido em todo teste deste arquivo por um duplo que guarda o que recebeu,
+e o Redis dos testes aponta para um host que nao existe.
+
+**Onde as substituicoes miram.** `apps/risk/tasks.py` importa pelo nome, e chama pelo nome
+global **dele**, `run_experiment`, `write_results`, `load_all_model_modules` e
+`load_all_backtest_modules` -- entao e em `apps.risk.tasks.*` que os duplos entram. Mirar
+`apps.risk.compute.run_experiment` nao teria efeito nenhum na tarefa, e o V-05b aprovaria
+vazio. O `get_model` quebrado do V-05 e o do **runner** (`engine.experiments.runner`), molde
+do V-11 do M1.4: e a falha que nasce dentro do `run_experiment`.
 """
 
 from __future__ import annotations
 
 import importlib
+import math
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from types import ModuleType
+from typing import Any
 
+import numpy as np
 import pytest
+from celery import chord
 from django.apps import apps as django_apps
 from django.db import migrations
+from engine.backtesting import load_all_backtest_modules
+from engine.experiments.runner import ExperimentResult, run_experiment
+from engine.models import get_model, load_all_model_modules
+from engine.models.base import VaRModel
 
-from apps.assets.models import Asset, CollectionRun
-from apps.risk.compute import MODELS, status_for
+from apps.assets.models import Asset, CollectionRun, Price
+from apps.risk import config
+from apps.risk.compute import MODELS, status_for, write_results
 from apps.risk.models import RiskResult, RiskRun
+from apps.risk.tasks import _abrir_execucao, _compute_asset_model, _fechar_execucao
 
 MIGRATION = "apps.risk.migrations.0002_risk_run_status_e_modelos"
 
@@ -154,3 +176,376 @@ def test_v10c_b_a_migration_adiciona_as_duas_colunas_e_roda_o_backfill() -> None
     assert (status.model_name, status.name) == ("riskrun", "status")
     assert (modelos.model_name, modelos.name) == ("riskrun", "requested_models")
     assert backfill.code is modulo.backfill
+
+
+# --- as tarefas: o duplo da fila e a serie -------------------------------------------------
+
+BARATOS = ["parametric", "historical"]
+ULTIMO_PREGAO = date(2026, 9, 18)  # sexta-feira
+SABADO_NA_JANELA = date(2026, 9, 12)
+SEGUNDA_DEPOIS = date(2026, 9, 21)
+
+
+@pytest.fixture(autouse=True)
+def fila(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
+    """O duplo do `_enqueue`, em todo teste deste arquivo: guarda o que recebeu e nao fala
+    com o Redis."""
+    recebidos: list[Any] = []
+    monkeypatch.setattr("apps.risk.tasks._enqueue", recebidos.append)
+    return recebidos
+
+
+def _serie(ticker: str, quantidade: int = config.MIN_SESSIONS) -> Asset:
+    """`quantidade` pregoes em dias uteis terminando em `ULTIMO_PREGAO`, com log-retornos
+    normais de desvio 1% a partir de 100."""
+    asset = _ativo(ticker)
+    coleta = CollectionRun.objects.create(source="teste", started_at=INICIO)
+    datas: list[date] = []
+    dia = ULTIMO_PREGAO
+    while len(datas) < quantidade:
+        if dia.weekday() < 5:
+            datas.append(dia)
+        dia -= timedelta(days=1)
+    nivel = 100.0
+    retornos = np.random.default_rng(7).normal(0, 0.01, quantidade)
+    linhas = []
+    for dia, retorno in zip(sorted(datas), retornos, strict=True):
+        nivel *= math.exp(float(retorno))
+        valor = Decimal(str(nivel)).quantize(Decimal("0.000001"))
+        linhas.append(_preco(asset, dia, valor, coleta))
+    Price.objects.bulk_create(linhas)
+    return asset
+
+
+def _preco(asset: Asset, dia: date, valor: Decimal, coleta: CollectionRun) -> Price:
+    return Price(
+        asset=asset,
+        date=dia,
+        open=valor,
+        high=valor,
+        low=valor,
+        close=valor,
+        adj_close=valor,
+        volume=1000,
+        log_return=None,
+        run=coleta,
+        updated_at=INICIO,
+    )
+
+
+def _abre(models: list[str], ticker: str = "AAA3") -> RiskRun:
+    """Uma execucao aberta pela tarefa de abertura, sobre uma serie de 503 pregoes."""
+    _serie(ticker)
+    run_id = _abrir_execucao(ticker, INICIO.isoformat(), 42, models)
+    assert run_id is not None
+    return RiskRun.objects.get(pk=run_id)
+
+
+def _linhas(run: RiskRun) -> dict[tuple[str, str], RiskResult]:
+    return {(r.model_name, str(r.alpha)): r for r in RiskResult.objects.filter(run=run)}
+
+
+def _par_de_erro(run: RiskRun, model_name: str, error: str) -> None:
+    """As duas linhas do modelo sao o par do `write_failed`: `error` igual, numeros nulos."""
+    linhas = [r for (nome, _), r in _linhas(run).items() if nome == model_name]
+    assert sorted(str(r.alpha) for r in linhas) == ["0.0100", "0.0500"]
+    for linha in linhas:
+        assert linha.error == error
+        assert linha.model_category == get_model(model_name).category.value
+        assert linha.var_latest is None
+        assert linha.var_mean is None
+        assert linha.violations is None
+        assert linha.kupiec_passed is None
+        assert linha.christoffersen_passed is None
+        assert linha.dq_passed is None
+        assert linha.basel_zone is None
+        assert linha.adequate is None
+
+
+def _limpas(run: RiskRun, model_name: str) -> None:
+    linhas = [r for (nome, _), r in _linhas(run).items() if nome == model_name]
+    assert len(linhas) == 2
+    for linha in linhas:
+        assert linha.error == ""
+        assert linha.var_latest is not None
+
+
+# --- V-02: a abertura enfileira, nao executa -----------------------------------------------
+
+
+@pytest.mark.django_db
+def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
+    fila: list[Any],
+) -> None:
+    """Os nove numa ordem que nao e a de `MODELS`: a ordem do cabecalho tem de ser a pedida.
+
+    Zero `risk_result` no mesmo teste e o que separa "enfileirou nove" de "executou nove em
+    linha" -- a contagem sozinha passaria com o atalho errado.
+    """
+    _serie("AAA3")
+    pedidos = list(reversed(MODELS))
+
+    run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, pedidos)
+
+    assert run_id is not None
+    assert len(fila) == 1
+    grupo = fila[0]
+    assert isinstance(grupo, chord)
+    assert [(s.task, s.args) for s in grupo.tasks] == [
+        ("apps.risk.tasks.compute_asset_model", (run_id, nome)) for nome in pedidos
+    ]
+    assert (grupo.body.task, grupo.body.args) == (
+        "apps.risk.tasks.fechar_execucao",
+        (run_id,),
+    )
+    assert RiskResult.objects.count() == 0
+    run = RiskRun.objects.get(pk=run_id)
+    assert (run.status, run.finished_at, run.requested_models) == (
+        RiskRun.Status.RUNNING,
+        None,
+        pedidos,
+    )
+    assert run.calculated_at == INICIO
+
+
+@pytest.mark.django_db
+def test_serie_curta_na_abertura_devolve_none_sem_linha_e_sem_fila(
+    fila: list[Any],
+) -> None:
+    _serie("AAA3", config.MIN_SESSIONS - 1)
+
+    assert _abrir_execucao("AAA3", INICIO.isoformat(), 42, BARATOS) is None
+    assert RiskRun.objects.count() == 0
+    assert fila == []
+
+
+# --- V-03: transacao por tarefa ------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_v03_a_a_falha_de_escrita_de_um_modelo_nao_apaga_o_outro(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _abre(BARATOS)
+    _compute_asset_model(run.id, "parametric")
+
+    def quebra(run: RiskRun, result: ExperimentResult) -> None:
+        raise RuntimeError("escrita quebrada de proposito")
+
+    monkeypatch.setattr("apps.risk.tasks.write_results", quebra)
+    _compute_asset_model(run.id, "historical")
+
+    assert len(_linhas(run)) == 4
+    _limpas(run, "parametric")
+    _par_de_erro(run, "historical", "RuntimeError: escrita quebrada de proposito")
+
+
+@pytest.mark.django_db
+def test_v03_b_a_escrita_da_tarefa_e_tudo_ou_nada(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A escrita grava a primeira linha do par e levanta. Com a transacao da tarefa, a
+    linha boa volta atras e o par de erro entra; sem ela, a linha boa sobrevive e o
+    `write_failed` colide com a unicidade `(run, model_name, alpha)`."""
+    run = _abre(BARATOS)
+
+    def meia(run: RiskRun, result: ExperimentResult) -> None:
+        write_results(run, ExperimentResult(result.config, result.runs[:1]))
+        raise RuntimeError("meia escrita")
+
+    monkeypatch.setattr("apps.risk.tasks.write_results", meia)
+    _compute_asset_model(run.id, "parametric")
+
+    assert len(_linhas(run)) == 2
+    _par_de_erro(run, "parametric", "RuntimeError: meia escrita")
+
+
+# --- V-04 e V-06: o parcial e visivel, e sem fecho fica `running` --------------------------
+
+
+@pytest.mark.django_db
+def test_v04_tres_de_nove_dao_seis_resultados_visiveis_e_running() -> None:
+    run = _abre(list(MODELS))
+
+    for nome in ("parametric", "historical", "monte_carlo"):
+        _compute_asset_model(run.id, nome)
+
+    run.refresh_from_db()
+    assert run.results.count() == 6
+    assert (run.status, run.finished_at) == (RiskRun.Status.RUNNING, None)
+
+
+@pytest.mark.django_db
+def test_v06_sem_o_fecho_a_execucao_fica_running_e_sem_fim() -> None:
+    run = _abre(BARATOS)
+
+    for nome in BARATOS:
+        _compute_asset_model(run.id, nome)
+
+    run.refresh_from_db()
+    assert run.results.count() == 4
+    assert (run.status, run.finished_at) == (RiskRun.Status.RUNNING, None)
+
+
+# --- V-05 e V-05c: os tres fechos, relativos ao pedido --------------------------------------
+
+
+@pytest.mark.django_db
+def test_v05_ok_quando_os_dois_pedidos_gravam_limpos() -> None:
+    run = _abre(BARATOS)
+    for nome in BARATOS:
+        _compute_asset_model(run.id, nome)
+
+    _fechar_execucao([None, None], run.id)
+
+    run.refresh_from_db()
+    assert run.status == RiskRun.Status.OK
+    assert run.finished_at is not None
+
+
+@pytest.mark.django_db
+def test_v05_partial_quando_um_dos_dois_falha_no_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = get_model
+
+    def quebrado(nome: str) -> type[VaRModel]:
+        if nome == "historical":
+            raise RuntimeError("modelo quebrado de proposito")
+        return original(nome)
+
+    monkeypatch.setattr("engine.experiments.runner.get_model", quebrado)
+    run = _abre(BARATOS)
+    for nome in BARATOS:
+        _compute_asset_model(run.id, nome)
+
+    _fechar_execucao([None, None], run.id)
+
+    run.refresh_from_db()
+    assert run.results.exclude(error="").count() == 2
+    assert run.status == RiskRun.Status.PARTIAL
+    assert run.finished_at is not None
+
+
+@pytest.mark.django_db
+def test_v05_failed_quando_nenhuma_tarefa_rodou() -> None:
+    run = _abre(BARATOS)
+
+    _fechar_execucao([], run.id)
+
+    run.refresh_from_db()
+    assert run.status == RiskRun.Status.FAILED
+    assert run.finished_at is not None
+
+
+@pytest.mark.django_db
+def test_v05c_um_modelo_pedido_e_gravado_limpo_fecha_ok() -> None:
+    run = _abre(["garch_1_1"])
+    _compute_asset_model(run.id, "garch_1_1")
+
+    _fechar_execucao([None], run.id)
+
+    run.refresh_from_db()
+    _limpas(run, "garch_1_1")
+    assert run.status == RiskRun.Status.OK
+    assert run.finished_at is not None
+
+
+# --- V-05b: a tarefa nunca levanta, e grava o par de erro ----------------------------------
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("onde", ["run_experiment", "write_results"])
+def test_v05b_falha_que_escapa_do_motor_ou_da_escrita_vira_o_par_de_erro(
+    onde: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """O erro tem de **escapar** do `run_experiment`: o que nasce dentro dele o runner ja
+    isola, e a tarefa terminaria mesmo sem `try` nenhum."""
+
+    def levanta(*args: object, **kwargs: object) -> None:
+        raise ValueError("falha injetada de proposito")
+
+    monkeypatch.setattr(f"apps.risk.tasks.{onde}", levanta)
+    run = _abre(BARATOS)
+
+    _compute_asset_model(run.id, "parametric")  # retorna: a excecao nao escapa
+
+    assert len(_linhas(run)) == 2
+    _par_de_erro(run, "parametric", "ValueError: falha injetada de proposito")
+
+
+# --- idempotencia e serie mudou ------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_a_mesma_tarefa_duas_vezes_grava_duas_linhas_e_nao_levanta() -> None:
+    run = _abre(BARATOS)
+
+    _compute_asset_model(run.id, "parametric")
+    _compute_asset_model(run.id, "parametric")
+
+    assert len(_linhas(run)) == 2
+    _limpas(run, "parametric")
+
+
+@pytest.mark.django_db
+def test_pregao_novo_dentro_da_janela_vira_series_changed() -> None:
+    run = _abre(BARATOS)
+    coleta = CollectionRun.objects.create(source="teste", started_at=INICIO)
+    _preco(run.asset, SABADO_NA_JANELA, Decimal("100.000000"), coleta).save()
+
+    _compute_asset_model(run.id, "parametric")
+
+    _par_de_erro(
+        run,
+        "parametric",
+        "SeriesChanged: serie mudou desde a abertura: 504 pregoes, esperados 503",
+    )
+
+
+@pytest.mark.django_db
+def test_pregao_novo_depois_do_as_of_date_nao_entra_e_a_tarefa_calcula() -> None:
+    run = _abre(BARATOS)
+    coleta = CollectionRun.objects.create(source="teste", started_at=INICIO)
+    _preco(run.asset, SEGUNDA_DEPOIS, Decimal("100.000000"), coleta).save()
+
+    _compute_asset_model(run.id, "parametric")
+
+    _limpas(run, "parametric")
+
+
+# --- o registry nas tarefas ----------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_as_duas_tarefas_carregam_o_registry_antes_do_motor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Molde de `test_o_registry_e_carregado_antes_de_ser_consultado`, do M1.4: o registry
+    e global de processo e ja esta populado, entao so espioes enxergam a omissao."""
+    load_all_model_modules()  # populado de verdade antes de os carregadores virarem espioes
+    load_all_backtest_modules()
+    chamadas: list[str] = []
+    monkeypatch.setattr(
+        "apps.risk.tasks.load_all_model_modules",
+        lambda: chamadas.append("modelos"),
+    )
+    monkeypatch.setattr(
+        "apps.risk.tasks.load_all_backtest_modules",
+        lambda: chamadas.append("backtests"),
+    )
+
+    def motor(*args: Any, **kwargs: Any) -> ExperimentResult:
+        chamadas.append("motor")
+        return run_experiment(*args, **kwargs)
+
+    monkeypatch.setattr("apps.risk.tasks.run_experiment", motor)
+    _serie("AAA3")
+
+    run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, ["parametric"])
+    assert chamadas == ["modelos", "backtests"]
+
+    chamadas.clear()
+    assert run_id is not None
+    _compute_asset_model(run_id, "parametric")
+    assert chamadas == ["modelos", "backtests", "motor"]
