@@ -19,7 +19,8 @@ e o Redis dos testes aponta para um host que nao existe.
 
 **Onde as substituicoes miram.** `apps/risk/tasks.py` importa pelo nome, e chama pelo nome
 global **dele**, `run_experiment`, `write_results`, `load_all_model_modules` e
-`load_all_backtest_modules` -- entao e em `apps.risk.tasks.*` que os duplos entram. Mirar
+`load_all_backtest_modules` -- entao e em `apps.risk.tasks.*` que os duplos entram (o
+`enqueue_compute` tambem chama o `_enqueue` pelo nome global deste modulo). Mirar
 `apps.risk.compute.run_experiment` nao teria efeito nenhum na tarefa, e o V-05b aprovaria
 vazio. O `get_model` quebrado do V-05 e o do **runner** (`engine.experiments.runner`), molde
 do V-11 do M1.4: e a falha que nasce dentro do `run_experiment`.
@@ -47,9 +48,15 @@ from engine.models.base import VaRModel
 
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
-from apps.risk.compute import MODELS, status_for, write_results
+from apps.risk.compute import MODELS, run_compute_risk, status_for, write_results
 from apps.risk.models import RiskResult, RiskRun
-from apps.risk.tasks import _abrir_execucao, _compute_asset_model, _fechar_execucao
+from apps.risk.tasks import (
+    _abrir_execucao,
+    _compute_asset_model,
+    _fechar_execucao,
+    _recalcular_cobertos,
+    enqueue_compute,
+)
 
 MIGRATION = "apps.risk.migrations.0002_risk_run_status_e_modelos"
 
@@ -549,3 +556,162 @@ def test_as_duas_tarefas_carregam_o_registry_antes_do_motor(
     assert run_id is not None
     _compute_asset_model(run_id, "parametric")
     assert chamadas == ["modelos", "backtests", "motor"]
+
+
+# --- o leque: `enqueue_compute` e `recalcular_cobertos` ------------------------------------
+
+DEPOIS = datetime(2026, 9, 23, 18, 30, tzinfo=UTC)
+MAIS_DEPOIS = datetime(2026, 9, 23, 19, 11, tzinfo=UTC)
+
+
+def _relogio(*instantes: datetime) -> Callable[[], datetime]:
+    """Um `now()` que devolve os instantes na ordem, repetindo o ultimo."""
+    restantes = list(instantes)
+
+    def agora() -> datetime:
+        return restantes.pop(0) if len(restantes) > 1 else restantes[0]
+
+    return agora
+
+
+def _aberturas(fila: list[Any]) -> list[tuple[Any, ...]]:
+    """Os argumentos das aberturas enfileiradas; reprova se houver outra coisa na fila."""
+    assert {s.task for s in fila} <= {"apps.risk.tasks.abrir_execucao"}
+    return [tuple(s.args) for s in fila]
+
+
+def _com_preco(ticker: str, status: str = Asset.Status.ACTIVE) -> Asset:
+    """Um ativo com um preco so: candidato do ramo sem argumentos, sem serie para o piso."""
+    asset = _ativo(ticker)
+    Asset.objects.filter(pk=asset.pk).update(status=status)
+    coleta = CollectionRun.objects.create(source="teste", started_at=INICIO)
+    _preco(asset, ULTIMO_PREGAO, Decimal("100.000000"), coleta).save()
+    return asset
+
+
+@pytest.mark.django_db
+def test_enqueue_compute_produz_o_calculated_at_uma_vez_para_todos_os_ativos(
+    fila: list[Any],
+) -> None:
+    """O relogio devolve um instante diferente a cada chamada: com o `now()` no lugar
+    certo, os dois ativos recebem o primeiro. E quem enfileira nao cria `risk_run`."""
+    _serie("AAA3")
+    _serie("BBB3")
+
+    report = enqueue_compute(["BBB3", "AAA3"], now=_relogio(DEPOIS, MAIS_DEPOIS))
+
+    assert _aberturas(fila) == [
+        ("AAA3", DEPOIS.isoformat(), config.DEFAULT_SEED, list(MODELS)),
+        ("BBB3", DEPOIS.isoformat(), config.DEFAULT_SEED, list(MODELS)),
+    ]
+    assert (report.enqueued, report.skipped) == (["AAA3", "BBB3"], [])
+    assert RiskRun.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_enqueue_compute_usa_o_instante_recebido_e_nao_chama_o_relogio(
+    fila: list[Any],
+) -> None:
+    _serie("AAA3")
+
+    def relogio_proibido() -> datetime:
+        raise AssertionError("o instante recebido nao pode ser trocado pelo relogio")
+
+    enqueue_compute(
+        ["AAA3"],
+        seed=7,
+        models=["parametric"],
+        calculated_at=DEPOIS,
+        now=relogio_proibido,
+    )
+
+    assert _aberturas(fila) == [("AAA3", DEPOIS.isoformat(), 7, ["parametric"])]
+
+
+@pytest.mark.django_db
+def test_recalcular_cobertos_abre_um_por_ativo_ativo_com_preco_no_mesmo_instante(
+    fila: list[Any],
+) -> None:
+    """Sem tickers: os ativos com preco. O inativo e pulado, o sem preco nem e candidato."""
+    _com_preco("BBB3")
+    _com_preco("AAA3")
+    _com_preco("CCC3", Asset.Status.INACTIVE)
+    _ativo("DDD3")  # sem preco
+
+    _recalcular_cobertos()
+
+    aberturas = _aberturas(fila)
+    assert [a[0] for a in aberturas] == ["AAA3", "BBB3"]
+    assert len({a[1] for a in aberturas}) == 1
+    assert {(a[2], tuple(a[3])) for a in aberturas} == {
+        (config.DEFAULT_SEED, tuple(MODELS))
+    }
+    assert RiskRun.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_recalcular_cobertos_repassa_o_instante_recebido(fila: list[Any]) -> None:
+    _com_preco("AAA3")
+    _com_preco("BBB3")
+
+    _recalcular_cobertos(DEPOIS.isoformat())
+
+    assert [a[1] for a in _aberturas(fila)] == [DEPOIS.isoformat()] * 2
+
+
+# --- V-07: os dois caminhos gravam o mesmo -------------------------------------------------
+
+
+def _manifesto(run: RiskRun) -> dict[str, object]:
+    fora = {"id", "calculated_at", "finished_at"}
+    return {
+        f.name: getattr(run, f.attname)
+        for f in RiskRun._meta.fields
+        if f.name not in fora
+    }
+
+
+def _resultados(run: RiskRun) -> list[dict[str, object]]:
+    return [
+        {
+            f.name: getattr(r, f.attname)
+            for f in RiskResult._meta.fields
+            if f.name not in {"id", "run"}
+        }
+        for r in run.results.order_by("model_name", "alpha")
+    ]
+
+
+@pytest.mark.django_db
+def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(fila: list[Any]) -> None:
+    """Os nove modelos de verdade, redes incluidas, pelos dois caminhos sobre a mesma serie.
+
+    O assincrono segue o que foi **enfileirado**: a abertura sai da fila do
+    `enqueue_compute`, e as nove tarefas e o fecho saem do `chord` que a abertura entregou
+    ao `_enqueue`. Separar os nove em nove `run_experiment` nao pode mudar numero nenhum --
+    nem nas redes, em que a semeadura por `_fit_for_alpha` e o que deveria garantir isso.
+    So `calculated_at` e `finished_at` podem diferir.
+    """
+    _serie("AAA3")
+
+    run_compute_risk(["AAA3"], now=_relogio(INICIO, DEPOIS))
+    sincrona = RiskRun.objects.get()
+
+    enqueue_compute(["AAA3"], now=_relogio(MAIS_DEPOIS))
+    (abertura,) = _aberturas(fila)
+    fila.clear()
+    run_id = _abrir_execucao(*abertura)
+    assert run_id is not None
+    (grupo,) = fila
+    for tarefa in grupo.tasks:
+        _compute_asset_model(*tarefa.args)
+    _fechar_execucao([None] * len(grupo.tasks), *grupo.body.args)
+    assincrona = RiskRun.objects.get(pk=run_id)
+
+    assert assincrona.pk != sincrona.pk
+    assert sincrona.status == RiskRun.Status.OK
+    assert _manifesto(assincrona) == _manifesto(sincrona)
+    resultados_sincronos = _resultados(sincrona)
+    assert len(resultados_sincronos) == 18
+    assert _resultados(assincrona) == resultados_sincronos
+    assert assincrona.finished_at is not None

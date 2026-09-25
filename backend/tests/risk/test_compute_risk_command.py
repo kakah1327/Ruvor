@@ -24,6 +24,7 @@ import re
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from io import StringIO
+from typing import Any
 
 import numpy as np
 import pytest
@@ -31,6 +32,7 @@ from django.core.management import CommandError, call_command
 
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
+from apps.risk.compute import MODELS, NO_CANDIDATES
 from apps.risk.models import RiskResult, RiskRun
 
 pytestmark = pytest.mark.django_db
@@ -277,3 +279,155 @@ def test_falha_escreve_o_relatorio_antes_de_sair_1(
         r"^risco: 1 ativos, 0 ok, 1 falhos, 0 pulados, ", saida, re.MULTILINE
     )
     assert RiskRun.objects.count() == 0
+
+
+# --- `--async`: enfileira, nao cria `risk_run` -------------------------------------------
+
+
+@pytest.fixture
+def fila(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
+    """O duplo do `_enqueue`: guarda o que recebeu e nao fala com o Redis."""
+    recebidos: list[Any] = []
+    monkeypatch.setattr("apps.risk.tasks._enqueue", recebidos.append)
+    return recebidos
+
+
+def inativo_com_preco(ticker: str) -> Asset:
+    """Um ativo inativo com um preco: candidato pulado do ramo sem argumentos."""
+    asset = com_serie(ticker, 2)
+    Asset.objects.filter(pk=asset.pk).update(status=Asset.Status.INACTIVE)
+    return asset
+
+
+def test_v05d_async_enfileira_uma_abertura_por_ativo_e_nao_cria_risk_run(
+    fila: list[Any],
+) -> None:
+    """V-05d, pela casca. Os dois ativos tem os 503 pregoes do piso: sem isso, "nenhuma
+    `risk_run`" seria verdade ate no sincrono, que pula serie curta."""
+    com_serie("PETR4")
+    com_serie("VALE3")
+    stdout = StringIO()
+
+    call_command("compute_risk", "--async", "PETR4", "VALE3", stdout=stdout)
+
+    assert [s.task for s in fila] == ["apps.risk.tasks.abrir_execucao"] * 2
+    assert [s.args[0] for s in fila] == ["PETR4", "VALE3"]
+    assert len({s.args[1] for s in fila}) == 1  # o mesmo `calculated_at_iso`
+    assert {(s.args[2], tuple(s.args[3])) for s in fila} == {
+        (config.DEFAULT_SEED, tuple(MODELS))
+    }
+    assert RiskRun.objects.count() == 0
+    assert stdout.getvalue().splitlines()[-1] == (
+        "risco assincrono: 2 ativos, 2 enfileirados, 0 pulados; "
+        "acompanhe em gold.risk_run"
+    )
+
+
+def test_async_passa_seed_e_model_as_aberturas(fila: list[Any]) -> None:
+    com_serie("AAA3")
+
+    call_command(
+        "compute_risk",
+        "--async",
+        "AAA3",
+        "--seed",
+        "7",
+        "--model",
+        "parametric",
+        stdout=StringIO(),
+    )
+
+    assert [(s.args[0], s.args[2], s.args[3]) for s in fila] == [
+        ("AAA3", 7, ["parametric"])
+    ]
+
+
+def test_async_ticker_invalido_sai_1_e_nao_enfileira_nada(fila: list[Any]) -> None:
+    """`AAA3` e valido: quem enfileirasse antes de validar o mandaria para a fila."""
+    com_serie("AAA3")
+
+    with pytest.raises(CommandError) as info:
+        call_command("compute_risk", "--async", "AAA3", "XPTO9", stdout=StringIO())
+
+    assert str(info.value) == "tickers invalidos ou inativos: XPTO9"
+    assert info.value.returncode == 1
+    assert fila == []
+    assert RiskRun.objects.count() == 0
+
+
+def test_async_modelo_inexistente_sai_1_e_nao_enfileira_nada(fila: list[Any]) -> None:
+    com_serie("AAA3")
+
+    with pytest.raises(CommandError) as info:
+        call_command(
+            "compute_risk",
+            "--async",
+            "AAA3",
+            "--model",
+            "inexistente",
+            stdout=StringIO(),
+        )
+
+    assert str(info.value) == "modelos ausentes do registry: inexistente"
+    assert info.value.returncode == 1
+    assert fila == []
+
+
+def test_async_sem_argumentos_e_sem_candidato_pede_tickers(fila: list[Any]) -> None:
+    cria_ativo("AAA3")  # sem preco: nem candidato
+    stdout = StringIO()
+
+    call_command("compute_risk", "--async", stdout=stdout)
+
+    assert stdout.getvalue() == NO_CANDIDATES + "\n"
+    assert fila == []
+
+
+def test_async_sem_argumentos_e_so_inativos_lista_os_pulados_e_pede_tickers(
+    fila: list[Any],
+) -> None:
+    inativo_com_preco("BAZZ4")
+    stdout = StringIO()
+
+    call_command("compute_risk", "--async", stdout=stdout)
+
+    assert stdout.getvalue().splitlines() == [
+        "BAZZ4        pulado: inativo",
+        NO_CANDIDATES,
+    ]
+    assert fila == []
+
+
+def test_async_o_relatorio_e_o_literal_do_plano(fila: list[Any]) -> None:
+    """Ramo sem argumentos, com um inativo: a saida e a do plano, linha a linha.
+
+    O `IBOV` ja existe -- a migration `assets.0002` o cria, ativo e sem preco --; aqui ele
+    so ganha um preco, que e o que o torna candidato."""
+    ibov = Asset.objects.get(ticker="IBOV")
+    Price.objects.create(
+        asset=ibov,
+        date=ULTIMO_PREGAO,
+        open=Decimal("100.000000"),
+        high=Decimal("100.000000"),
+        low=Decimal("100.000000"),
+        close=Decimal("100.000000"),
+        adj_close=Decimal("100.000000"),
+        volume=1000,
+        log_return=None,
+        run=CollectionRun.objects.create(source="teste", started_at=INICIO),
+        updated_at=INICIO,
+    )
+    com_serie("PETR4", 2)
+    inativo_com_preco("BAZZ4")
+    stdout = StringIO()
+
+    call_command("compute_risk", "--async", stdout=stdout)
+
+    assert stdout.getvalue().splitlines() == [
+        "IBOV         enfileirado",
+        "PETR4        enfileirado",
+        "BAZZ4        pulado: inativo",
+        "risco assincrono: 3 ativos, 2 enfileirados, 1 pulados; "
+        "acompanhe em gold.risk_run",
+    ]
+    assert [s.args[0] for s in fila] == ["IBOV", "PETR4"]

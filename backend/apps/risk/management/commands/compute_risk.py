@@ -1,5 +1,5 @@
-"""`manage.py compute_risk [TICKER ...] [--seed N] [--model NOME ...]`: a casca de linha
-de comando sobre `run_compute_risk`.
+"""`manage.py compute_risk [TICKER ...] [--seed N] [--model NOME ...] [--async]`: a casca
+de linha de comando sobre `run_compute_risk` e, com `--async`, sobre `enqueue_compute`.
 
 Molde de `apps/analytics/management/commands/compute_metrics.py`, do M1.3, inclusive na
 importacao pelo nome -- e nao pelo modulo --, que e o ponto que
@@ -18,6 +18,11 @@ O RF-17 se aplica ao que foi **pedido**: com os nove por padrao, `ModelsMissing`
 registry incompleto; com `--model`, nome errado. E a mesma regra, e e o que impede a
 selecao de virar porta dos fundos.
 
+`--async` enfileira uma abertura por ativo e devolve: quem cria a `risk_run` e o worker
+(RF-03), entao o relatorio traz os tickers, nunca `run_id`. `InvalidTickers` e
+`ModelsMissing` valem nos dois caminhos, com as mesmas mensagens e codigo 1; `RiskFailed`
+nao existe no assincrono, porque o comando nao espera resultado.
+
 Sem `--full`: nao ha modo de recoleta neste comando.
 """
 
@@ -33,6 +38,7 @@ from apps.risk.compute import (
     RiskFailed,
     run_compute_risk,
 )
+from apps.risk.tasks import enqueue_compute
 
 
 class Command(BaseCommand):
@@ -49,12 +55,22 @@ class Command(BaseCommand):
             metavar="NOME",
             help="Repetir para varios modelos (padrao: os nove do registry)",
         )
+        parser.add_argument(
+            "--async",
+            dest="async_",
+            action="store_true",
+            help="Enfileira uma abertura por ativo no worker e devolve",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
         tickers: list[str] = options["tickers"]
         seed: int | None = options["seed"]
         models: list[str] | None = options["models"]
         try:
+            if options["async_"]:
+                queued = enqueue_compute(tickers, seed=seed, models=models)
+                self.stdout.write(queued.render() + "\n")
+                return
             report = run_compute_risk(tickers, seed=seed, models=models)
         except RiskFailed as exc:
             # O relatorio inteiro vai para stdout; a CommandError vai para stderr e sai 1.

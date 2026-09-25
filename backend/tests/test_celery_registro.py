@@ -40,6 +40,7 @@ _RISK_TASKS = {
     "apps.risk.tasks.abrir_execucao",
     "apps.risk.tasks.compute_asset_model",
     "apps.risk.tasks.fechar_execucao",
+    "apps.risk.tasks.recalcular_cobertos",
 }
 
 
