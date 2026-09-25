@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
 from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -67,6 +68,36 @@ DATABASES: dict[str, dict[str, str]] = {
 # desligado, senao a tarefa de fumaca rodaria no proprio web e nao provaria nada.
 CELERY_BROKER_URL = _required("RUVOR_REDIS_URL")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+
+def _cron(name: str, default: str) -> crontab:
+    # `or`, nao o segundo argumento do get: o compose passa a variavel VAZIA quando o .env
+    # nao a define (ver "A infraestrutura"), e vazio tem de valer o padrao
+    fields = (os.environ.get(name) or default).split()
+    if len(fields) != 5:
+        raise ImproperlyConfigured(
+            f"{name}: esperados 5 campos de cron, veio {len(fields)}"
+        )
+    minute, hour, day_of_month, month_of_year, day_of_week = fields
+    return crontab(
+        minute=minute,
+        hour=hour,
+        day_of_month=day_of_month,
+        month_of_year=month_of_year,
+        day_of_week=day_of_week,
+    )
+
+
+CELERY_BEAT_SCHEDULE = {
+    "catalogo": {
+        "task": "apps.assets.tasks.importar_ativos",
+        "schedule": _cron("RUVOR_BEAT_ASSETS_CRON", "0 7 * * 1"),
+    },
+    "precos": {
+        "task": "apps.assets.tasks.rotina_diaria",
+        "schedule": _cron("RUVOR_BEAT_PRICES_CRON", "30 19 * * 1-5"),
+    },
+}
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
