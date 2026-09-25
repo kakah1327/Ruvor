@@ -20,8 +20,16 @@ Quatro pontos em que este modulo diverge do molde, todos do plano:
 `write_risk` e chamada pelo nome global, como `write_metrics` no M1.3: e o ponto que o
 teste da transacao por ativo substitui com `monkeypatch.setattr`.
 
-`gold.risk_run` e `gold.risk_result` sao so-acrescimo (D-16, RF-11): nenhum caminho daqui
-faz `update` ou `delete`. Recalcular insere execucao nova.
+Para o caminho assincrono, a escrita se separa em quatro pedacos -- `open_run`,
+`write_results`, `write_failed` e `close_run` --, que as tarefas chamam pelo nome global.
+`write_risk` nao e montada sobre eles: o sincrono sabe o desfecho antes de escrever e cria
+a linha ja com o estado final. Os dois caminhos compartilham so a montagem do manifesto,
+`_manifest`.
+
+Nenhum `risk_result` e alterado nem apagado (D-16, RF-11): recalcular insere execucao nova.
+A `risk_run` recebe `status` e `finished_at` no fecho assincrono (`close_run`) -- metadado
+de execucao, nao resultado, e e a restricao a D-16 que a spec do M1.5 descreve. Nenhum
+caminho daqui faz `delete`.
 """
 
 from __future__ import annotations
@@ -420,6 +428,43 @@ def status_for(expected: int, written: int, with_error: int) -> str:
     return RiskRun.Status.PARTIAL
 
 
+def _manifest(
+    asset: Asset,
+    calculated_at: datetime,
+    seed: int,
+    bars: Sequence[Price],
+) -> dict[str, Any]:
+    """O manifesto de execucao (D-15), comum aos dois caminhos -- sem estado nem fim.
+
+    `bars` sao as linhas de `silver.price` que sobreviveram ao criterio do `clean_prices`
+    -- dai saem as datas, as contagens e o `price_run`. A janela de treino sai de
+    `config.TRAIN_WINDOW_DAYS`, que e a constante com que o `ExperimentConfig` e montado.
+    """
+    train_window_days = config.TRAIN_WINDOW_DAYS
+    # `log_returns` descarta o primeiro pregao: P precos dao P-1 retornos, e o que sobra
+    # depois da janela de treino e o periodo de teste.
+    test_count = len(bars) - 1 - train_window_days
+    return {
+        "asset": asset,
+        "calculated_at": calculated_at,
+        "engine_version": version(DISTRIBUTION_NAME),
+        "seed": seed,
+        "train_window_days": train_window_days,
+        "as_of_date": bars[-1].date,
+        "first_price_date": bars[0].date,
+        "price_count": len(bars),
+        "train_count": train_window_days,
+        "test_count": test_count,
+        # O **maior** `run` entre as linhas usadas, nao o `run` da linha de maior data:
+        # `Price.run` so avanca quando a linha nasce ou muda de valor, e o que interessa a
+        # auditoria e qual foi a coleta mais recente que tocou a janela.
+        "price_run_id": max(bar.run_id for bar in bars),
+        # Sempre nula: nao ha usuario autenticado antes do M2.1, e a D-15 fica cumprida
+        # pela metade, declaradamente.
+        "requested_by": None,
+    }
+
+
 def write_risk(
     asset: Asset,
     calculated_at: datetime,
@@ -428,15 +473,11 @@ def write_risk(
     bars: Sequence[Price],
     result: ExperimentResult,
 ) -> RiskRun:
-    """A execucao e os resultados dela. Sempre `create`, nunca `update` (RF-11).
+    """A execucao e os resultados dela, no caminho sincrono. Sempre `create` (RF-11).
 
     `bars` sao as linhas de `silver.price` que sobreviveram ao criterio do `clean_prices`
     -- dai saem as datas, as contagens e o `price_run`.
     """
-    train_window_days = result.config.train_window_days
-    # `log_returns` descarta o primeiro pregao: P precos dao P-1 retornos, e o que sobra
-    # depois da janela de treino e o periodo de teste.
-    test_count = len(bars) - 1 - train_window_days
     model_names = result.config.model_names
     # O desfecho e conhecido antes da escrita: o sincrono aplica a regra do fecho aqui e
     # cria a linha ja com o estado final, sem `update` (RF-08).
@@ -445,26 +486,68 @@ def write_risk(
         len(model_names) * len(config.ALPHAS), len(result.runs), with_error
     )
     run = RiskRun.objects.create(
-        asset=asset,
-        calculated_at=calculated_at,
+        **_manifest(asset, calculated_at, seed, bars),
         finished_at=finished_at,
-        engine_version=version(DISTRIBUTION_NAME),
-        seed=seed,
-        train_window_days=train_window_days,
-        as_of_date=bars[-1].date,
-        first_price_date=bars[0].date,
-        price_count=len(bars),
-        train_count=train_window_days,
-        test_count=test_count,
-        # O **maior** `run` entre as linhas usadas, nao o `run` da linha de maior data:
-        # `Price.run` so avanca quando a linha nasce ou muda de valor, e o que interessa a
-        # auditoria e qual foi a coleta mais recente que tocou a janela.
-        price_run_id=max(bar.run_id for bar in bars),
-        # Sempre nula: nao ha usuario autenticado antes do M2.1, e a D-15 fica cumprida
-        # pela metade, declaradamente.
-        requested_by=None,
         status=status,
         requested_models=list(model_names),
     )
     RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
     return run
+
+
+def open_run(
+    asset: Asset,
+    calculated_at: datetime,
+    seed: int,
+    bars: Sequence[Price],
+    models: Sequence[str],
+) -> RiskRun:
+    """Abre a execucao assincrona: `running`, sem `finished_at`, com os modelos pedidos.
+
+    O resto do manifesto e o mesmo do sincrono. Quem escreve o estado final e o
+    `finished_at` e `close_run`.
+    """
+    return RiskRun.objects.create(
+        **_manifest(asset, calculated_at, seed, bars),
+        finished_at=None,
+        status=RiskRun.Status.RUNNING,
+        requested_models=list(models),
+    )
+
+
+def write_results(run: RiskRun, result: ExperimentResult) -> None:
+    """Os resultados de um `ExperimentResult` na execucao ja aberta. So `create`."""
+    RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
+
+
+def write_failed(run: RiskRun, model_name: str, error: str) -> None:
+    """As duas linhas do modelo, uma por nivel, com `error` preenchido e numeros nulos.
+
+    Passa pelo mesmo `_row` que grava o `ModelRunResult` com erro no sincrono: e o que
+    mantem a distincao "falhou x reprovado" do M1.4 -- `model_category` e
+    `hyperparameters` saem do registry, e todo numero e o veredito ficam nulos.
+    """
+    RiskResult.objects.bulk_create(
+        [
+            _row(run, ModelRunResult(model_name=model_name, alpha=alpha, error=error))
+            for alpha in config.ALPHAS
+        ]
+    )
+
+
+def close_run(run: RiskRun, finished_at: datetime) -> str:
+    """O fecho (RF-05): conta no **banco**, aplica a regra e escreve estado e fim.
+
+    E o unico `update` sobre `gold` -- metadado de execucao na `risk_run`; nenhum
+    `risk_result` e tocado. Devolve o estado escrito.
+    """
+    results = RiskResult.objects.filter(run=run)
+    written = results.count()
+    with_error = results.exclude(error="").count()
+    status = status_for(
+        len(run.requested_models) * len(config.ALPHAS), written, with_error
+    )
+    run.status = status
+    run.finished_at = finished_at
+    run.save(update_fields=["status", "finished_at"])
+    return status

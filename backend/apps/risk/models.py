@@ -7,8 +7,10 @@ declarada: o `DEFAULT_AUTO_FIELD` ja e `BigAutoField`.
 **Este modulo nao importa o motor.** E o que permite a `web`, que nao tem `engine`
 instalado, continuar subindo com `apps.risk` em `INSTALLED_APPS`.
 
-`risk_run` e so-acrescimo (D-16): recalcular insere execucao nova, nenhum caminho do
-codigo faz `update` ou `delete`. Os resultados pendem da execucao que os originou, e por
+Nenhum `risk_result` e alterado nem apagado (D-16): recalcular insere execucao nova. A
+`risk_run` recebe `status` e `finished_at` no fecho da execucao assincrona -- metadado de
+execucao, nao resultado, e e a restricao a D-16 que a spec do M1.5 descreve. Nenhum caminho
+do codigo faz `delete`. Os resultados pendem da execucao que os originou, e por
 isso — e so por isso — a FK deles e `CASCADE`, nao `PROTECT`: o resultado nao tem vida
 propria fora da execucao que o gerou.
 """

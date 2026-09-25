@@ -31,6 +31,7 @@ from engine.experiments.runner import (
     ExperimentConfig,
     ExperimentResult,
     ModelRunResult,
+    run_experiment,
 )
 from engine.models import get_model, list_models, load_all_model_modules
 from engine.models.base import VaRModel
@@ -45,10 +46,15 @@ from apps.risk.compute import (
     ModelsMissing,
     RiskFailed,
     RiskReport,
+    close_run,
+    open_run,
     run_compute_risk,
+    write_failed,
+    write_results,
     write_risk,
 )
 from apps.risk.models import RiskResult, RiskRun
+from apps.risk.provider import SilverPriceProvider
 
 pytestmark = pytest.mark.django_db
 
@@ -611,6 +617,136 @@ def test_o_sincrono_grava_partial_quando_um_dos_modelos_falha(
     run = RiskRun.objects.get()
     assert run.results.exclude(error="").count() == 2
     assert (run.status, run.requested_models) == (RiskRun.Status.PARTIAL, BARATOS)
+
+
+# --- M1.5: os pedacos que as tarefas usam -------------------------------------------------
+
+
+def _abre(models: list[str]) -> tuple[RiskRun, list[Price]]:
+    """Uma execucao aberta sobre `AAA3`, com o registry carregado (nao ha `run_compute_risk`
+    no caminho) e as linhas que o motor vera."""
+    load_all_model_modules()
+    load_all_backtest_modules()
+    asset = com_serie("AAA3")
+    bars = list(Price.objects.filter(asset=asset).order_by("date"))
+    return open_run(asset, INICIO_1, 42, bars, models), bars
+
+
+def _calcula(run: RiskRun, bars: list[Price], models: list[str]) -> ExperimentResult:
+    """O motor de verdade, com os modelos pedidos, sobre a janela da execucao."""
+    return run_experiment(
+        ExperimentConfig(
+            ticker=run.asset.ticker,
+            start=bars[0].date.isoformat(),
+            end=bars[-1].date.isoformat(),
+            model_names=models,
+            backtest_names=list(config.BACKTESTS),
+            alphas=list(config.ALPHAS),
+            train_window_days=config.TRAIN_WINDOW_DAYS,
+            seed=run.seed,
+        ),
+        SilverPriceProvider(),
+    )
+
+
+def test_open_run_cria_running_sem_finished_at_e_com_o_manifesto() -> None:
+    run, bars = _abre(BARATOS)
+
+    run.refresh_from_db()
+    assert run.status == RiskRun.Status.RUNNING
+    assert run.finished_at is None
+    assert run.requested_models == BARATOS
+    assert run.results.count() == 0
+    # o manifesto e o mesmo que o sincrono monta
+    assert run.calculated_at == INICIO_1
+    assert run.engine_version == "0.2.0"
+    assert run.seed == 42
+    assert (run.train_window_days, run.train_count, run.test_count) == (252, 252, 250)
+    assert (run.first_price_date, run.as_of_date) == (bars[0].date, bars[-1].date)
+    assert run.price_count == 503
+    assert run.price_run_id == max(b.run_id for b in bars)
+    assert run.requested_by_id is None
+
+
+def test_write_failed_grava_as_duas_linhas_com_numeros_nulos_e_o_registry() -> None:
+    run, _ = _abre(["historical"])
+
+    write_failed(run, "historical", "RuntimeError: quebrou de proposito")
+
+    linhas = {str(r.alpha): r for r in RiskResult.objects.filter(run=run)}
+    assert sorted(linhas) == ["0.0100", "0.0500"]
+    for linha in linhas.values():
+        assert linha.model_name == "historical"
+        assert linha.error == "RuntimeError: quebrou de proposito"
+        assert linha.model_category == "traditional"
+        assert linha.hyperparameters == get_model("historical")().hyperparameters
+        assert linha.var_latest is None
+        assert linha.var_mean is None
+        assert linha.violations is None
+        assert linha.expected_violations is None
+        assert linha.kupiec_passed is None
+        assert linha.kupiec_p_value is None
+        assert linha.christoffersen_passed is None
+        assert linha.christoffersen_p_value is None
+        assert linha.dq_passed is None
+        assert linha.dq_p_value is None
+        assert linha.basel_zone is None
+        assert linha.adequate is None
+
+
+def test_close_run_escreve_ok_e_o_instante_quando_tudo_foi_gravado() -> None:
+    run, bars = _abre(BARATOS)
+    write_results(run, _calcula(run, bars, BARATOS))
+
+    assert close_run(run, FIM_1) == RiskRun.Status.OK
+
+    run.refresh_from_db()
+    assert (run.status, run.finished_at) == (RiskRun.Status.OK, FIM_1)
+    assert run.results.count() == 4
+    assert run.results.exclude(error="").count() == 0
+
+
+def test_close_run_escreve_partial_com_um_modelo_falho() -> None:
+    run, bars = _abre(BARATOS)
+    write_results(run, _calcula(run, bars, ["parametric"]))
+    write_failed(run, "historical", "RuntimeError: quebrou de proposito")
+
+    assert close_run(run, FIM_1) == RiskRun.Status.PARTIAL
+
+    run.refresh_from_db()
+    assert (run.status, run.finished_at) == (RiskRun.Status.PARTIAL, FIM_1)
+
+
+def test_close_run_escreve_partial_quando_falta_modelo_pedido() -> None:
+    """Relativo ao que foi **pedido**: dois pedidos, um so gravado, nenhum erro."""
+    run, bars = _abre(BARATOS)
+    write_results(run, _calcula(run, bars, ["parametric"]))
+
+    assert close_run(run, FIM_1) == RiskRun.Status.PARTIAL
+
+
+def test_close_run_escreve_failed_sem_nada_gravado_e_com_tudo_falho() -> None:
+    vazio, _ = _abre(BARATOS)
+    assert close_run(vazio, FIM_1) == RiskRun.Status.FAILED
+    vazio.refresh_from_db()
+    assert (vazio.status, vazio.finished_at) == (RiskRun.Status.FAILED, FIM_1)
+
+    asset = vazio.asset
+    bars = list(Price.objects.filter(asset=asset).order_by("date"))
+    falho = open_run(asset, INICIO_2, 42, bars, BARATOS)
+    for nome in BARATOS:
+        write_failed(falho, nome, "RuntimeError: quebrou de proposito")
+    assert close_run(falho, FIM_2) == RiskRun.Status.FAILED
+    falho.refresh_from_db()
+    assert (falho.status, falho.finished_at) == (RiskRun.Status.FAILED, FIM_2)
+
+
+def test_close_run_com_um_modelo_pedido_espera_um_por_nivel() -> None:
+    """Um modelo so pedido e uma execucao completa: o esperado e um por nivel, nao nove."""
+    run, bars = _abre(["parametric"])
+    write_results(run, _calcula(run, bars, ["parametric"]))
+
+    assert close_run(run, FIM_1) == RiskRun.Status.OK
 
 
 # --- V-13: o veredito e exatamente Kupiec E Christoffersen -------------------------------
