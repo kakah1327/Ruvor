@@ -58,7 +58,9 @@ services:
     build: { context: ., dockerfile: infra/backend.Dockerfile, target: worker }
     image: ruvor-worker
     hostname: worker
-    # concorrencia declarada (RF-12 do M1.5): 4 GB no conteiner, 1-2 GB por rede em treino
+    # concorrencia declarada (RF-12 do M1.5): dois treinos de rede por vez. Nenhum limite de
+    # memoria e declarado, e a execucao real mediu o worker em 2,9 GiB depois da primeira
+    # rodada e 5,0 GiB depois da segunda -- ver o ESTADO; o dono e o M1.5b.
     command: celery -A config worker --loglevel=info --concurrency=2
     environment: *backend-env
     volumes:

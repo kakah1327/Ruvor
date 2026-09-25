@@ -305,6 +305,10 @@ def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
         "apps.risk.tasks.fechar_execucao",
         (run_id,),
     )
+    # O corpo RECEBE a lista de resultados do cabecalho como primeiro argumento. Com `.si()`
+    # ele seria chamado so com `run_id`, levantaria `TypeError`, e toda execucao ficaria
+    # presa em `running` -- e `task` e `args` sao iguais nas duas formas.
+    assert grupo.body.immutable is False
     assert RiskResult.objects.count() == 0
     run = RiskRun.objects.get(pk=run_id)
     assert (run.status, run.finished_at, run.requested_models) == (
@@ -485,12 +489,25 @@ def test_v05b_falha_que_escapa_do_motor_ou_da_escrita_vira_o_par_de_erro(
 
 
 @pytest.mark.django_db
-def test_a_mesma_tarefa_duas_vezes_grava_duas_linhas_e_nao_levanta() -> None:
+def test_a_mesma_tarefa_duas_vezes_grava_duas_linhas_e_nao_levanta(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     run = _abre(BARATOS)
+    # A unicidade `(run, model_name, alpha)` sozinha ja impediria a linha duplicada; o que
+    # so o atalho de idempotencia garante e que a repeticao NAO recalcula o modelo.
+    chamadas: list[object] = []
+    original = run_experiment
+
+    def contando(*args: Any, **kwargs: Any) -> Any:
+        chamadas.append(args)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr("apps.risk.tasks.run_experiment", contando)
 
     _compute_asset_model(run.id, "parametric")
     _compute_asset_model(run.id, "parametric")
 
+    assert len(chamadas) == 1
     assert len(_linhas(run)) == 2
     _limpas(run, "parametric")
 

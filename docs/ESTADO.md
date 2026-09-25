@@ -541,7 +541,8 @@ acrescentou e a do `calculated_at` produzido por abertura, acrescentada na execu
 acusam por um caminho que não é o óbvio, e o plano registra: o import explícito de
 `apps.risk.tasks` no `celery.py` derruba o processo do pytest com `AppRegistryNotReady` — não
 há teste nomeado que reprove, porque não chega a haver teste —; o `finished_at` escrito na
-criação só o V-06 acusa, não o V-05; e a janela da tarefa, só o caso "pregão depois do
+criação não é acusado pelo V-05, que só confere `finished_at` não nulo, mas é pelo V-02, V-04,
+V-06 e o teste de `open_run` (a revisão final corrigiu o relato); e a janela da tarefa, só o caso "pregão depois do
 `as_of_date`".
 
 #### Os números da execução real
