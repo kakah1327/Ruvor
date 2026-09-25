@@ -37,6 +37,7 @@ terminado.
 | [M1.2 — Ingestão de preços](M1.2-ingestao-de-precos.md) | [M1.2](../specs/M1.2-ingestao-de-precos.md) | ✅ executado e fechado |
 | [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | [M1.3](../specs/M1.3-camadas-1-e-2.md) | ✅ executado e fechado |
 | [M1.4 — Motor de risco](M1.4-motor-de-risco.md) | [M1.4](../specs/M1.4-motor-de-risco.md) | ✅ executado e fechado |
+| [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | [M1.5](../specs/M1.5-execucao-assincrona.md) | 🟡 aprovado, em execução |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
