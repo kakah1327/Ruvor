@@ -88,10 +88,13 @@ conversas e entre agentes.
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
 | [D-30](D-30-portao-de-mockup-so-para-tela-de-produto.md) | Portão de mockup vale para tela de produto, não para casco técnico |
-| [D-31](D-31-trabalho-direto-na-main.md) | Trabalho direto na `main` enquanto o time for uma pessoa |
+| [D-31](D-31-trabalho-direto-na-main.md) | Trabalho direto na `main` enquanto o time for uma pessoa — **substituída pela D-82** |
 | [D-27](D-27-commits-sem-assinatura.md) | Commits sem assinatura de ferramenta |
 | [D-33](D-33-dia-a-dia-dentro-do-conteiner.md) | O dia a dia de backend e frontend roda dentro do contêiner |
-| [D-42](D-42-ci-avisa-e-nao-bloqueia.md) | A CI avisa e não bloqueia, enquanto valer a D-31 |
+| [D-42](D-42-ci-avisa-e-nao-bloqueia.md) | A CI avisa e não bloqueia, enquanto valer a D-31 — **substituída pela D-83** |
+| [D-82](D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md) | Ramo por bloco, e PR revisada por um dev de outra frente; substitui a D-31 |
+| [D-83](D-83-a-ci-barra-na-pr.md) | A CI barra na PR; substitui a D-42 |
+| [D-84](D-84-frentes-com-cerca-de-pastas.md) | Frentes simultâneas, cada uma com a sua cerca de pastas; restringe a D-23 |
 
 ## As três mais consequentes
 

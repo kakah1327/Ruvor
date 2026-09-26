@@ -10,6 +10,10 @@ estatística de qual deles merece confiança para aquele ativo.
 
 ## Comece por aqui
 
+0. **Qual é a sua frente?** `git branch --show-current`: o prefixo antes da `/` é a frente, e
+   **[`docs/frentes/<frente>.md`](docs/frentes/)** diz o bloco e o próximo passo. As frentes
+   trabalham ao mesmo tempo, e cada uma tem pastas onde pode escrever
+   ([`docs/FRENTES.md`](docs/FRENTES.md)). Na `main`, **não comece trabalho**: pergunte a frente.
 1. **[`docs/ESTADO.md`](docs/ESTADO.md)** — onde paramos e o que está aberto. **Leia sempre.**
 2. **[`docs/PROCESSO.md`](docs/PROCESSO.md)** — como se trabalha aqui. **Leia antes de produzir qualquer coisa.**
 3. **[`docs/aprendizados.md`](docs/aprendizados.md)** — armadilhas já descobertas. Leia antes de implementar.
@@ -33,7 +37,8 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | pilha, estrutura, banco, execução, auditoria |
 | [`docs/decisoes/`](docs/decisoes/) | decisões tomadas, com o porquê — **append-only** |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | ordem dos blocos e status |
-| [`docs/ESTADO.md`](docs/ESTADO.md) | posição atual |
+| [`docs/ESTADO.md`](docs/ESTADO.md) | posição atual, atualizada no fecho de cada bloco |
+| [`docs/FRENTES.md`](docs/FRENTES.md) e [`docs/frentes/`](docs/frentes/) | quem faz o quê, a cerca de pastas de cada frente, os contratos entre elas e o andamento de cada uma |
 | [`docs/specs/`](docs/specs/) e [`docs/planos/`](docs/planos/) | o trabalho corrente |
 | [`brand/ruvor/`](brand/ruvor/) | tokens, logo, regras e as quatro telas de referência (`mockups/`) |
 
@@ -57,7 +62,11 @@ assistente de IA ou link de sessão. A autoria é do time. Sem exceção
 ([D-27](docs/decisoes/D-27-commits-sem-assinatura.md)).
 
 **Não commitar nem enviar por iniciativa própria.** Exceto o commit por tarefa dentro do
-ramo do plano.
+ramo do bloco. **Nunca direto na `main`**: tudo entra por PR, aprovada por um dev de outra
+frente ([D-82](docs/decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md)).
+
+**Não escrever fora da cerca da sua frente** ([FRENTES.md](docs/FRENTES.md#cercas)). Precisa?
+Combina na spec, e a frente dona revisa.
 
 **Nunca inventar.** Não existe função, parâmetro, caminho ou endpoint "provável". Verifica
 antes de usar.

@@ -7,6 +7,12 @@ Cada bloco recebe spec própria → plano próprio → implementação, conforme
 
 **Legenda:** ⬜ não começou · 🟡 em andamento · ✅ fechado
 
+**Frentes trabalham ao mesmo tempo** desde 2026-09-26
+([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)): `marco1` fica com o M1.5b e o
+M1.6, `fundamentos` com o M3.1; `identidade`, com o M2.1, espera dono. A ordem dos marcos é a da entrega ao
+usuário; o que impede um bloco de começar é dependência. Quem faz o quê está em
+[FRENTES.md](FRENTES.md).
+
 ---
 
 ## Fundação

@@ -47,8 +47,10 @@ docs/
 nele sai da janela de contexto disponível para o trabalho. É mapa, não território: regras
 em poucas linhas e ponteiros para o resto.
 
-**`ESTADO.md`** é o que responde "onde paramos": módulo corrente, spec corrente, tarefa
-aberta, pendências. Atualizado ao fim de cada sessão.
+**`ESTADO.md`** é o que responde "onde paramos": o que existe, pendências, dívidas. Com frentes
+simultâneas, é atualizado **no fecho de cada bloco**; o andamento de cada frente,
+sessão a sessão, mora em **`frentes/<frente>.md`**, e cada frente escreve só no seu
+([`FRENTES.md`](FRENTES.md), [D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
 
 **`decisoes/`** é o que garante diretriz constante entre conversas. Registro numerado,
 append-only: uma decisão nunca é editada — é substituída por outra que cita a anterior.
@@ -85,6 +87,7 @@ mentiroso:
 | Atualizar | Por quê |
 |---|---|
 | `ESTADO.md` | é a primeira leitura de toda sessão |
+| `frentes/<frente>.md` | o próximo passo da frente passa a ser o bloco seguinte |
 | `ROADMAP.md` | marca o bloco fechado |
 | `aprendizados.md` | o que custou tempo e reincidiria |
 | **cabeçalho de status da spec e do plano** | ficam dizendo "aguardando revisão" para sempre |
@@ -310,10 +313,12 @@ disjuntos.
 
 **Commit por tarefa.** Dá para voltar ao ponto exato e revisar a execução passo a passo.
 
-**Sem ramo por plano, por enquanto** — o trabalho acontece direto na `main`
-([D-31](decisoes/D-31-trabalho-direto-na-main.md)). Ramo existe para isolar trabalho
-paralelo e proteger consumidores da `main`; hoje não há nem um nem outro. Volta a haver
-quando houver mais de uma pessoa desenvolvendo ao mesmo tempo, ou versão publicada.
+**Ramo por bloco, e PR para entrar na `main`**
+([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md), que substitui a
+D-31). O ramo se chama `<frente>/<bloco>-<assunto>`. Do mesmo ramo saem três PRs — spec,
+plano e implementação —, e **a aprovação de cada uma, por um dev de outra frente, é o portão
+humano**. Merge com commit de merge, nunca _squash_, para o commit por tarefa sobreviver. A CI
+roda em toda PR, e PR vermelha não entra ([D-83](decisoes/D-83-a-ci-barra-na-pr.md)).
 
 ### Quando parar
 
@@ -467,4 +472,4 @@ e só. Vale para todo commit, de qualquer agente, sem exceção.
 
 **Commitar e enviar só quando pedido.** Agente não faz `commit` nem `push` por iniciativa
 própria — exceto o commit por tarefa previsto na [§6](#6-execução), dentro do ramo do
-plano.
+bloco. Nunca direto na `main`.

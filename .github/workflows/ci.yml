@@ -1,6 +1,9 @@
 name: CI
 
+# pull_request: PR vermelha nao entra na main (D-83). O push na main continua: prova que o
+# resultado do merge tambem passa.
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:

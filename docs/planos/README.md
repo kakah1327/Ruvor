@@ -42,5 +42,7 @@ terminado.
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
 
-Uma ressalva ao copiá-lo: ele foi executado **com ramo próprio**, antes da
-[D-31](../decisoes/D-31-trabalho-direto-na-main.md). Plano novo não cria ramo.
+Ele foi executado **com ramo próprio**, antes da
+[D-31](../decisoes/D-31-trabalho-direto-na-main.md) — e desde a
+[D-82](../decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md) é assim de novo: todo
+bloco tem ramo, `<frente>/<bloco>-<assunto>`.

@@ -334,18 +334,17 @@ aplicação e o ambiente decide o resultado; `estilo` e `motor` rodam direto no 
 não executam a aplicação e a única imagem que conteria o `engine/` é a `worker`, de 3,79 GB
 ([D-43](decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)).
 
-**CI**: `.github/workflows/ci.yml`, no GitHub Actions, disparado a cada push na `main` e à
-mão. Quatro trabalhos — `estilo`, `backend`, `frontend` e `motor` — cobrindo estilo, tipos e
+**CI**: `.github/workflows/ci.yml`, no GitHub Actions, disparado a cada pull request, a cada
+push na `main` e à mão. Quatro trabalhos — `estilo`, `backend`, `frontend` e `motor` — cobrindo estilo, tipos e
 testes. A ferramenta de estilo é o `ruff` nos dois projetos Python e o `@biomejs/biome` no
 frontend, uma por lado, cada uma fazendo lint **e** formatação
 ([D-43](decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)).
 
-**A CI avisa, e não impede.** Reprova ruidosamente, sem barrar: não há proteção de ramo nem
-gatilho de `pull_request` porque o trabalho é direto na `main`
-([D-31](decisoes/D-31-trabalho-direto-na-main.md)), e não existe ponto de integração onde
-barrar. A `main` pode ficar vermelha; quando ficar, o [ESTADO.md](ESTADO.md) diz qual é a
-reprovação e quem a paga ([D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md)). Isto se inverte
-no dia em que a D-31 se inverter.
+**Não passou, não entra.** Todo bloco entra na `main` por PR
+([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md)), e PR com CI vermelha
+não é aprovada ([D-83](decisoes/D-83-a-ci-barra-na-pr.md), que substitui a D-42). O
+barramento automático depende da proteção da `main` no GitHub, que é configuração do
+repositório. Se a `main` ficar vermelha, conserta quem fez o último merge.
 
 O trabalho `motor` roda a suíte **sem** a linha de base numérica: ela foi capturada no
 Windows e não é portátil entre plataformas — 8 das 64 reprovam num Linux limpo, com o EGARCH

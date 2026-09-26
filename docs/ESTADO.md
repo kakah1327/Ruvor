@@ -1,7 +1,8 @@
 # Estado atual
 
 > **Primeira leitura de qualquer sessão.** Diz onde paramos e o que está aberto.
-> Atualizado ao fim de cada sessão de trabalho.
+> Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
+> [`frentes/`](frentes/).
 
 **Última atualização:** 2026-09-25
 
@@ -11,7 +12,13 @@
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
 **Bloco:** M1.5 fechado em 2026-09-25; **o M1.5b é o próximo**
-**Ramo:** trabalho direto na `main` ([D-31](decisoes/D-31-trabalho-direto-na-main.md))
+**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b → M1.6) e `fundamentos` (M3.1,
+com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
+escreve onde, em [FRENTES.md](FRENTES.md)
+([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
+**Ramo:** um por bloco, e PR revisada por outra frente para entrar na `main`
+([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md), que substitui a
+D-31)
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
 **fundação de dados**. `docker compose up` sobe seis serviços; o Django conecta no
@@ -35,10 +42,11 @@ app, em `apps/risk/tasks.py` e `apps/assets/tasks.py`, e o Beat dispara duas rot
 catálogo, às segundas, e os preços, de segunda a sexta, com o recálculo do risco **encadeado**
 a eles. Vinte tabelas. Ainda não há API de negócio nem tela de produto.
 
-**Existe CI.** Cada push na `main` dispara quatro trabalhos em máquina limpa — `estilo`,
-`backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos quatro. Ela
-**avisa e não bloqueia** ([D-42](decisoes/D-42-ci-avisa-e-nao-bloqueia.md)); com trabalho
-direto na `main`, não há onde barrar. `ruff` cobre os dois projetos Python, `Biome` cobre o
+**Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
+limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
+quatro. Desde 2026-09-26, **PR vermelha não entra**
+([D-83](decisoes/D-83-a-ci-barra-na-pr.md), que substitui a D-42); o barramento automático
+espera a proteção da `main` ser ligada no GitHub. `ruff` cobre os dois projetos Python, `Biome` cobre o
 frontend, e o motor entrou no estilo com a formatação provada por árvore sintática
 ([D-44](decisoes/D-44-o-motor-entra-no-estilo.md)).
 
