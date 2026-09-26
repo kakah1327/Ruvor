@@ -51,7 +51,7 @@ revisa a PR.
 |---|---|
 | `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, a app da API de leitura que o M1.6 criar, e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6/`; os serviços `worker` e `beat` no `compose.yaml` |
 | `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1; as telas de login **numa pasta própria** de `frontend/src/`, **só depois** de o M1.6 entregar o casco (ver contratos) |
-| `fundamentos` | a app nova do M3.1 em `backend/apps/` (o nome é da spec) e os testes dela; as tabelas novas em `bronze` e `silver`, com nome próprio |
+| `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
 **Migration:** cada app tem sequência própria, e ninguém cria migration em app de outra frente.
 
@@ -85,6 +85,7 @@ mudança passa pela revisão da frente que o consome.
 | **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `identidade` (telas de login) | ⬜ não existe. O kit está incompleto ([ESTADO](ESTADO.md#pendências-que-bloqueiam-trabalho-futuro)). A `identidade` faz o backend primeiro |
 | **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | ⬜ a spec do M2.1 combina com a `marco1` quem escreve a linha |
 | **`silver.asset`**: o catálogo, por ticker | `marco1` | `fundamentos` liga fundamento a ativo | ✅ existe. **Só cresce**: coluna nova pode, mudar ou tirar coluna exige a revisão da `fundamentos` |
+| **`silver.price`**: o preço diário, por ativo | `marco1` | `fundamentos` lê `asset`, `date` e `close` para os múltiplos | ✅ existe. **Só cresce**, como o catálogo: mudar o sentido dessas colunas exige a revisão da `fundamentos` |
 | **`core.user` e `core.organization`** | `identidade` | todas, no futuro | ✅ existe. A `identidade` muda. Enquanto nada fora de `accounts` depende deles, não há consumidor a proteger |
 | **`CELERY_BEAT_SCHEDULE`** | cada frente, a própria entrada | — | ✅ arquivo comum. A `fundamentos` acrescenta a sua e não mexe no horário das outras |
 

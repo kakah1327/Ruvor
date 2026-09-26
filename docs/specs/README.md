@@ -39,3 +39,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | Marco 1 · M1.3 | ✅ implementada e fechada |
 | [M1.4 — Motor de risco](M1.4-motor-de-risco.md) | Marco 1 · M1.4 | ✅ implementada e fechada |
 | [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | Marco 1 · M1.5 | ✅ implementada e fechada |
+| [M3.1 — Fundamentos](M3.1-fundamentos.md) | Marco 3 · M3.1 · frente `fundamentos` | 🟡 aprovada na revisão adversarial; aguarda a PR |
