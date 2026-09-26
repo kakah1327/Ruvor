@@ -16,9 +16,9 @@
 com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
-**Ramo:** um por bloco, e PR revisada por outra frente para entrar na `main`
-([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md), que substitui a
-D-31)
+**Ramo:** um por bloco, e PR para entrar na `main`, mesclada pelo dono da frente com a CI
+verde ([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md), que substitui a
+D-31; [D-85](decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md), que a restringe)
 
 Existem o motor numérico, o casco da aplicação, o **ambiente local em contêiner** e a
 **fundação de dados**. `docker compose up` sobe seis serviços; o Django conecta no
