@@ -11,18 +11,14 @@
 
 **Bloco:** M1.5b — Treino separado da previsão
 **Etapa:** spec aprovada na revisão adversarial, **aguardando o portão humano**
-**Ramo:** `marco1/M1.5b-treino-separado`, ainda não criado
-
-A spec ([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md))
-foi escrita na `main` antes da [D-82](../decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md),
-e está sem commit, junto com a linha dela em `specs/README.md`.
+**Ramo:** `marco1/M1.5b-treino-separado`, com a spec
+([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md))
+e a linha dela em `specs/README.md`
 
 ## Próximo passo
 
-1. Criar o ramo `marco1/M1.5b-treino-separado` a partir da `main` e commitar nele a spec e a
-   linha do índice.
-2. Abrir a PR da spec. A aprovação, por um dev de outra frente, é o portão humano.
-3. Escrever o plano no mesmo ramo, e seguir o [PROCESSO](../PROCESSO.md).
+1. Abrir a PR da spec. A aprovação, pelo dono de outra frente, é o portão humano.
+2. Escrever o plano no mesmo ramo, e seguir o [PROCESSO](../PROCESSO.md).
 
 ## Depois
 
