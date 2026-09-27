@@ -62,3 +62,72 @@ Baixadas em **2026-09-27** (data UTC do contêiner; noite de 2026-09-26 em Bras�
 
 A Camil está no ITR 2024 **e** no DFP 2025: é o par do 4º trimestre de exercício não civil,
 que cruza o ano do zip.
+
+## O IPE (M3.2)
+
+`ipe_2025.zip` e `ipe_2026.zip` são recortados do IPE real **por registro**, não por
+companhia: uma companhia grande tem centenas de linhas por ano. Cada fixture tem o membro
+único `ipe_cia_aberta_<ano>.csv`, com a data de membro da origem, o cabeçalho e **só as
+linhas dos casos abaixo**, na ordem do arquivo de origem e copiadas em bytes (latin-1 e
+`\r\n` como vieram). Nenhuma linha está editada; o que a fonte não traz — link repetido com
+campo idêntico ou divergente (RF-04b), registro mal formado (RF-06) — é declarado no teste.
+
+### Como regerar
+
+Modo próprio, que grava **só** os dois zips do IPE — sem `--only`, o `recortar.py` baixaria
+de novo ITR e DFP, que a CVM regera, e mudaria as fixtures do M3.1:
+
+```bash
+MSYS_NO_PATHCONV=1 docker compose exec -T worker python -m tests.fixtures.cvm.recortar /tmp/cvm-originais --only ipe
+```
+
+Um caso depende do catálogo (a companhia fora dele), que o `recortar.py` lê de
+`silver.asset` (`kind = stock`) no banco configurado: o modo IPE precisa do banco de pé e do
+catálogo importado, e recusa catálogo vazio. A CVM regera o zip do ano corrente **todo dia**
+(spec, "A fonte, medida"): regerar pode mudar as linhas escolhidas.
+
+| Fixture | Origem | `Last-Modified` | `content_sha256` do original | Linhas (origem → fixture) | Bytes da fixture |
+|---|---|---|---|---|---|
+| `ipe_2025.zip` | <https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/IPE/DADOS/ipe_cia_aberta_2025.zip> | Sun, 27 Sep 2026 10:01:25 GMT | `39ff61aaf973b877ec9682b0633013f027af7bb2074a28fb2b305b419080f20a` | 49.277 → 65 | 4.341 |
+| `ipe_2026.zip` | <https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/IPE/DADOS/ipe_cia_aberta_2026.zip> | Sun, 27 Sep 2026 10:00:39 GMT | `f10fcbeea612ee49ae25191b9d0745684e77f02910573065ab7304b285c9169d` | 35.408 → 69 | 5.245 |
+
+Baixadas em **2026-09-27** (data UTC do contêiner).
+
+### As linhas escolhidas
+
+As regras estão em `ipe_cases`, no `recortar.py`, e cada caso imprime o `Codigo_CVM` e o
+link — os daqui foram copiados dessa saída. Os links abaixo abreviam o prefixo comum
+`https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?Tela=ext&descTipo=IPE&CodigoInstituicao=1&`.
+
+**As nove de `CODES`, nos dois anos.** Por companhia e por ano: até **5 linhas** das três
+categorias ("Fato Relevante", "Comunicado ao Mercado", "Aviso aos Acionistas"), em rodízio
+entre elas e na ordem do arquivo (RF-03); a primeira de **`Assembleia`**, a categoria de fora
+mais frequente (a mutação 3 da T11 depende dela); e a primeira de **outra categoria de fora**.
+São 7 linhas por companhia e ano, menos a Camil em 2026, com 6: ela não tem "Fato Relevante"
+em 2026, só três "Comunicado ao Mercado" e um "Aviso aos Acionistas". O rodízio pegou também
+reapresentações (`RE`) e, em 2025, o `(Protocolo_Entrega, Versao)` repetido do Itaú (abaixo).
+
+**Os casos**, cada um com o motivo:
+
+| Ano | Caso | `Codigo_CVM` | Link (`numProtocolo`, `numSequencia`, `numVersao`) |
+|---|---|---|---|
+| 2025 | `(Protocolo_Entrega, Versao)` com dois links, do catálogo (RF-04): o primeiro repetido nas nove, `009512IPE200220250104570805-02`, versão 1, dois "Comunicado ao Mercado" | `9512` | `1337188`, `861914`, `1` e `1337189`, `861915`, `1` |
+| 2026 | o fato relevante da Petrobras de 2026-09-19, "Petrobras informa sobre adesão à nova subvenção econômica" (V-06) | `9512` | `1569745`, `1094451`, `1` |
+| 2026 | `Assunto` vazio em "Comunicado ao Mercado" (RF-05): o primeiro das nove | `9512` | `1544497`, `1069203`, `1` |
+| 2026 | `Assunto` vazio em "Aviso aos Acionistas" (RF-05): nenhuma das nove tem; o primeiro do catálogo | `14451` | `1497199`, `1021905`, `1` |
+| 2026 | o `Assunto` de **761** caracteres, o maior das três categorias em 2026, "Aviso aos Acionistas" (RF-05) | `3077` | `1525123`, `1049829`, `1` |
+| 2026 | reapresentação: a primeira `RE` com `Versao` > 1 das nove, "Comunicado ao Mercado", versão 2 | `1228` | `1491850`, `1016556`, `2` |
+| 2026 | duas linhas de companhia **fora do catálogo** e de `CODES` (RF-03): a primeira da ordem do arquivo, nas três categorias, e as duas primeiras linhas dela | `26190` | `1483373`, `1008079`, `1` e `1528345`, `1053051`, `1` |
+
+`14451` (COMPANHIA ENERGÉTICA DE BRASÍLIA - CEB) e `3077` (COMPANHIA DE FIACAO E TECIDOS CEDRO
+E CACHOEIRA) estão no catálogo mas fora de `CODES`: entram em `IPE_EXTRA_CODES`, na
+`conftest.py`, e o teste que precisa deles os põe no catálogo. `26190` (CARAMURU ALIMENTOS
+S.A.) não está no catálogo nem em nenhuma das duas constantes.
+
+Um `(Protocolo_Entrega, Versao)` a mais veio pelo rodízio, sem regra própria: o do Itaú em
+2025, `019348IPE050220250104569311-51`, versão 1, com um "Fato Relevante" (`1330895`,
+`855621`, `1`) e um "Comunicado ao Mercado" (`1330899`, `855625`, `1`) — categorias
+diferentes na mesma entrega. A fixture de 2025 tem, então, dois dos três que a spec mede.
+
+A linha de "Assembleia" da Petrobras em 2026 (`1510187`, `1034893`, `1`) tem `Assunto` de
+775 caracteres: é de categoria de fora, e não conta para o maior `Assunto` das três.
