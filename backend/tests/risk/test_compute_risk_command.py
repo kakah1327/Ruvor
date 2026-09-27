@@ -1,5 +1,5 @@
 """`manage.py compute_risk`: a casca entrega o relatorio, converte as falhas e passa as
-duas opcoes adiante.
+opcoes adiante -- `--seed`, `--model` e, desde o M1.5b, `--full`, nos dois caminhos.
 
 Todos os casos rodam **pela casca**, com `call_command`, e nunca chamando
 `run_compute_risk` direto: o M1.2 registrou como lacuna ter testado o `--full` do
@@ -189,6 +189,21 @@ def test_seed_chega_a_execucao_e_omitida_vale_o_padrao() -> None:
     assert config.DEFAULT_SEED != 7  # senao o primeiro assert passaria por acidente
 
 
+def test_full_chega_a_execucao_e_omitido_vale_falso() -> None:
+    """`full_recompute` e o que foi **pedido** (RF-08, M1.5b). O que o `--full` faz com os
+    retratos e provado em `test_snapshots.py`, com modelo caro; aqui, a ligacao."""
+    com_serie("AAA3")
+    com_serie("BBB3")
+
+    call_command(
+        "compute_risk", "AAA3", "--model", "parametric", "--full", stdout=StringIO()
+    )
+    call_command("compute_risk", "BBB3", "--model", "parametric", stdout=StringIO())
+
+    assert RiskRun.objects.get(asset__ticker="AAA3").full_recompute is True
+    assert RiskRun.objects.get(asset__ticker="BBB3").full_recompute is False
+
+
 # --- RF-17: o que falha alto antes de escrever -------------------------------------------
 
 
@@ -340,6 +355,24 @@ def test_async_passa_seed_e_model_as_aberturas(fila: list[Any]) -> None:
     assert [(s.args[0], s.args[2], s.args[3]) for s in fila] == [
         ("AAA3", 7, ["parametric"])
     ]
+    assert [s.kwargs for s in fila] == [{"full": False}]
+
+
+def test_async_passa_full_as_aberturas(fila: list[Any]) -> None:
+    """No assincrono, o `--full` viaja na abertura, que o grava na `risk_run` (RF-08)."""
+    com_serie("AAA3")
+
+    call_command(
+        "compute_risk",
+        "--async",
+        "AAA3",
+        "--model",
+        "parametric",
+        "--full",
+        stdout=StringIO(),
+    )
+
+    assert [(s.args[0], s.kwargs) for s in fila] == [("AAA3", {"full": True})]
 
 
 def test_async_ticker_invalido_sai_1_e_nao_enfileira_nada(fila: list[Any]) -> None:

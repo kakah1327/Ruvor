@@ -16,6 +16,7 @@ from scipy.optimize import minimize
 
 from engine.models.base import ModelCategory, VaREstimate, VaRModel
 from engine.models.registry import register_model
+from engine.snapshots import Snapshot, pack_beta, unpack_beta
 
 REFIT_FREQUENCY_DAYS = 252  # mesma cadencia do GARCH (Etapa 2)
 N_RESTARTS = 10
@@ -82,7 +83,21 @@ class CaviarVaR(VaRModel):
     def fit(self, returns: pd.Series) -> CaviarVaR:
         self.train_returns_ = returns
         self._initial_fit: dict[float, tuple[np.ndarray, float]] = {}
+        # retratos por alpha, por posicao (M1.5b): os recebidos por `restore` e os que o
+        # ultimo `estimate_var` percorreu -- restaurados e treinados
+        self._restored: dict[float, dict[int, Snapshot]] = {}
+        self._taken: dict[float, dict[int, Snapshot]] = {}
         return self
+
+    def restore(self, alpha: float, snapshots: list[Snapshot]) -> None:
+        """Antes de estimate_var: os pontos cobertos nao sao treinados, sao carregados."""
+        self._restored[alpha] = {s.position: s for s in snapshots}
+
+    def snapshots(self, alpha: float) -> list[Snapshot]:
+        """Depois de estimate_var -- ou depois de ela levantar: os pontos que existem ate ali,
+        restaurados e treinados, em ordem de posicao."""
+        taken = self._taken.get(alpha, {})
+        return [taken[pos] for pos in sorted(taken)]
 
     def _initial_beta(self, alpha: float) -> tuple[np.ndarray, float]:
         if alpha not in self._initial_fit:
@@ -95,7 +110,21 @@ class CaviarVaR(VaRModel):
     def estimate_var(
         self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
     ) -> VaREstimate:
-        beta, f0 = self._initial_beta(alpha)
+        restored = self._restored.get(alpha, {})
+        # publicado ANTES do treino: se um reajuste levantar, `snapshots()` devolve os
+        # pontos ja percorridos (RF-02)
+        taken: dict[int, Snapshot] = {}
+        self._taken[alpha] = taken
+
+        if 0 in restored:
+            beta = unpack_beta(restored[0].payload)
+            # o f0 e o ponto de partida da propagacao, nao parte do treino: calculado
+            # sempre, como em `_initial_beta`
+            f0 = -np.quantile(self.train_returns_.to_numpy(), alpha)
+            taken[0] = restored[0]
+        else:
+            beta, f0 = self._initial_beta(alpha)
+            taken[0] = Snapshot(position=0, payload=pack_beta(beta))
         full_returns = pd.concat([self.train_returns_, returns]).to_numpy()
         n_train = len(self.train_returns_)
 
@@ -111,13 +140,17 @@ class CaviarVaR(VaRModel):
             f_prev, r_prev = f_chunk[-1], chunk[-1]
 
             pos = chunk_end
-            if pos < len(returns):
+            if pos < len(returns) and pos in restored:
+                beta = unpack_beta(restored[pos].payload)
+                taken[pos] = restored[pos]
+            elif pos < len(returns):
                 # janela expansiva: reajusta beta com todo o dado conhecido ate aqui
                 history = full_returns[: n_train + pos]
                 f0_refit = -np.quantile(history, alpha)
                 beta = _fit_beta(
                     history, f0_refit, alpha, seed=int(alpha * 10000) + pos
                 )
+                taken[pos] = Snapshot(position=pos, payload=pack_beta(beta))
 
         var_series = pd.Series(
             np.maximum(var_values, 0) * (horizon**0.5), index=returns.index

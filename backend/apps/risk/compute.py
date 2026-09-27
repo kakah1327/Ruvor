@@ -26,6 +26,16 @@ Para o caminho assincrono, a escrita se separa em quatro pedacos -- `open_run`,
 a linha ja com o estado final. Os dois caminhos compartilham so a montagem do manifesto,
 `_manifest`.
 
+**O calculo passa por `run_models`, nos dois caminhos** (M1.5b, RF-06 a RF-09): para cada
+modelo caro e nivel, le os retratos validos -- a menos que seja `--full` --, roda o motor
+com eles, grava os que o motor expos (restaurados e treinados, **tambem com erro**: os
+parciais valem) e devolve, por (modelo caro, nivel), quantos foram reaproveitados e quantos
+treinados. As contagens saem do que o motor fez, nao do que o banco aceitou: `reused` e o
+numero de retratos passados ao motor, `trained` o que ele devolveu menos esses. Os retratos
+entram em transacao propria, **antes** da escrita dos resultados -- uma falha na escrita
+nao os leva junto. `run_experiment`, `load_valid` e `save` sao chamados pelo nome global
+**deste** modulo, e e aqui que os testes os substituem.
+
 Nenhum `risk_result` e alterado nem apagado (D-16, RF-11): recalcular insere execucao nova.
 A `risk_run` recebe `status` e `finished_at` no fecho assincrono (`close_run`) -- metadado
 de execucao, nao resultado, e e a restricao a D-16 que a spec do M1.5 descreve. Nenhum
@@ -53,11 +63,13 @@ from engine.experiments.runner import (
     run_experiment,
 )
 from engine.models import get_model, list_models, load_all_model_modules
+from engine.snapshots import Snapshot
 
 from apps.assets.models import Asset, Price
 from apps.risk import config
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.provider import SilverPriceProvider
+from apps.risk.snapshots import SnapshotKey, library_versions, load_valid, save
 
 # Os nove modelos, escritos literalmente porque o RF-17 compara o **pedido** com o
 # registry: um padrao que dissesse `list_models()` compararia o registry consigo mesmo, e
@@ -74,6 +86,13 @@ MODELS: tuple[str, ...] = (
     "monte_carlo",
     "parametric",
 )
+
+# Os quatro modelos caros, que guardam retrato (M1.5b). Escritos literalmente, e NAO
+# derivados de `category == ML`, que por acaso coincide hoje.
+EXPENSIVE: tuple[str, ...] = ("caviar", "garchnet", "gru", "lstm")
+
+#: por (modelo caro, nivel), `(reaproveitados, treinados)` -- o que o manifesto grava
+SnapshotCounts = dict[tuple[str, float], tuple[int, int]]
 
 #: o nome da distribuicao instalada, de onde sai o `engine_version` do manifesto
 DISTRIBUTION_NAME = "ruvor-engine"
@@ -189,12 +208,16 @@ def run_compute_risk(
     *,
     seed: int | None = None,
     models: list[str] | None = None,
+    full: bool = False,
     now: Callable[[], datetime] = timezone.now,
 ) -> RiskReport:
     """Calcula e grava o risco dos ativos pedidos, um de cada vez.
 
     `calculated_at` e o `now()` de **uma** chamada, compartilhado por todos os ativos da
     execucao: e o que faz "uma execucao" ser identificavel em `gold.risk_run`.
+
+    `full` e o `--full`: recalcula do zero, sem ler retrato nenhum, e grava os que treinar
+    (RF-08).
     """
     # Carregar antes de consultar: `list_models()` le o dicionario que estas duas
     # populam, e o `run_experiment` resolve os backtests por `get_backtest`.
@@ -210,7 +233,7 @@ def run_compute_risk(
     started = time.monotonic()
     calculated_at = now()
     results = [
-        _compute_asset(asset, calculated_at, effective_seed, requested, now)
+        _compute_asset(asset, calculated_at, effective_seed, requested, now, full=full)
         for asset in assets
     ]
     # Os pulados por `inativo` vao depois dos processados, como no M1.3.
@@ -283,6 +306,8 @@ def _compute_asset(
     seed: int,
     models: list[str],
     now: Callable[[], datetime],
+    *,
+    full: bool,
 ) -> AssetResult:
     bars = _bars(asset)
     # O piso do RF-10b, medido sobre a serie depois da limpeza. Abaixo dele a Basileia
@@ -296,23 +321,29 @@ def _compute_asset(
             as_of_date=bars[-1].date if bars else None,
         )
     started = time.monotonic()
-    experiment = ExperimentConfig(
-        ticker=asset.ticker,
-        # A janela inteira da serie, em ISO, com as duas bordas inclusivas: e o intervalo
-        # que o `SilverPriceProvider` implementa.
-        start=bars[0].date.isoformat(),
-        end=bars[-1].date.isoformat(),
-        model_names=list(models),
-        backtest_names=list(config.BACKTESTS),
-        alphas=list(config.ALPHAS),
-        train_window_days=config.TRAIN_WINDOW_DAYS,
+    key = SnapshotKey(
+        asset=asset,
         seed=seed,
+        engine_version=version(DISTRIBUTION_NAME),
+        train_window_days=config.TRAIN_WINDOW_DAYS,
+        first_price_date=bars[0].date,
+        library_versions=library_versions(),
     )
     try:
-        result = run_experiment(experiment, SilverPriceProvider())
+        # os retratos entram aqui, em transacao propria, antes da escrita dos resultados
+        result, counts = run_models(key, bars, models, full=full)
         finished_at = now()
         with transaction.atomic():  # a execucao e os resultados entram juntos (RF-12)
-            write_risk(asset, calculated_at, finished_at, seed, bars, result)
+            write_risk(
+                asset,
+                calculated_at,
+                finished_at,
+                seed,
+                bars,
+                result,
+                counts=counts,
+                full=full,
+            )
     except Exception as exc:
         return AssetResult(
             asset.ticker,
@@ -336,6 +367,56 @@ def _compute_asset(
         None,
         False,
     )
+
+
+def run_models(
+    key: SnapshotKey, bars: Sequence[Price], models: Sequence[str], *, full: bool
+) -> tuple[ExperimentResult, SnapshotCounts]:
+    """O calculo, com retratos: o ponto de entrada dos dois caminhos (RF-06 a RF-09).
+
+    Para cada modelo caro e nivel, os retratos validos -- nenhum, com `full` -- vao ao
+    motor por `ExperimentConfig.snapshots`. Depois, os retratos que cada `ModelRunResult`
+    expoe sao gravados, **mesmo com `error`**: os pontos anteriores a falha continuam
+    valendo (RF-02). As contagens sao por (modelo caro, **nivel**), porque cada
+    `risk_result` e de um nivel e os dois podem divergir -- um deles pode ter falhado numa
+    rodada anterior e deixado so retratos parciais.
+
+    O registry tem de estar carregado: `load_valid` e `save` leem os hiperparametros de
+    `get_model(nome)()`.
+    """
+    loaded: dict[tuple[str, float], list[Snapshot]] = {}
+    if not full:
+        for model_name in models:
+            if model_name in EXPENSIVE:
+                for alpha in config.ALPHAS:
+                    loaded[(model_name, alpha)] = load_valid(
+                        key, model_name, alpha, bars
+                    )
+    experiment = ExperimentConfig(
+        ticker=key.asset.ticker,
+        # A janela inteira da serie, em ISO, com as duas bordas inclusivas: e o intervalo
+        # que o `SilverPriceProvider` implementa.
+        start=bars[0].date.isoformat(),
+        end=bars[-1].date.isoformat(),
+        model_names=list(models),
+        backtest_names=list(config.BACKTESTS),
+        alphas=list(config.ALPHAS),
+        train_window_days=key.train_window_days,
+        seed=key.seed,
+        snapshots=loaded,
+    )
+    result = run_experiment(experiment, SilverPriceProvider())
+    counts: SnapshotCounts = {}
+    for model_run in result.runs:
+        if model_run.snapshots:
+            save(key, model_run.model_name, model_run.alpha, bars, model_run.snapshots)
+        if model_run.model_name in EXPENSIVE:
+            # `snapshots()` devolve restaurados e treinados juntos, e o `Snapshot` nao os
+            # distingue: treinado e o que voltou menos o que foi passado
+            reused = len(loaded.get((model_run.model_name, model_run.alpha), []))
+            trained = len(model_run.snapshots) - reused
+            counts[(model_run.model_name, model_run.alpha)] = (reused, trained)
+    return result, counts
 
 
 def _backtest(model_run: ModelRunResult, name: str) -> BacktestResult | None:
@@ -362,11 +443,17 @@ def _decimal(value: float | None, quantum: Decimal) -> Decimal | None:
     return None if value is None else Decimal(str(float(value))).quantize(quantum)
 
 
-def _row(run: RiskRun, model_run: ModelRunResult) -> RiskResult:
+def _row(
+    run: RiskRun, model_run: ModelRunResult, counts: tuple[int, int] | None
+) -> RiskResult:
     """Uma linha de `gold.risk_result`, a partir do `ModelRunResult`.
 
     Quando `error` nao e vazio, **todas as colunas de numero sao nulas** (RF-10, V-12): e
     assim que se distingue "o modelo falhou" de "o modelo rodou e foi reprovado".
+
+    `counts` e o par `(reaproveitados, treinados)` do seu (modelo, nivel). So e gravado
+    nos modelos caros e sem erro; nos outros casos as duas colunas ficam nulas -- "nao se
+    aplica", nao zero (RF-09).
 
     `violations` e `expected_violations` sao os do **Kupiec**, que conta o periodo de
     teste inteiro -- os da Basileia sao outros numeros, sobre os ultimos 250 pregoes, e a
@@ -380,6 +467,7 @@ def _row(run: RiskRun, model_run: ModelRunResult) -> RiskResult:
     basileia = None if failed else _backtest(model_run, "basileia")
     estimate = None if failed else model_run.estimate
     details: dict[str, Any] = {} if kupiec is None else kupiec.details
+    pair = counts if model_run.model_name in EXPENSIVE and not failed else None
     return RiskResult(
         run=run,
         model_name=model_run.model_name,
@@ -411,6 +499,8 @@ def _row(run: RiskRun, model_run: ModelRunResult) -> RiskResult:
         basel_zone=None if basileia is None else basileia.details.get("zone"),
         adequate=_verdict(model_run),
         error=error,
+        reused_snapshots=None if pair is None else pair[0],
+        trained_snapshots=None if pair is None else pair[1],
     )
 
 
@@ -472,11 +562,15 @@ def write_risk(
     seed: int,
     bars: Sequence[Price],
     result: ExperimentResult,
+    *,
+    counts: SnapshotCounts,
+    full: bool,
 ) -> RiskRun:
     """A execucao e os resultados dela, no caminho sincrono. Sempre `create` (RF-11).
 
     `bars` sao as linhas de `silver.price` que sobreviveram ao criterio do `clean_prices`
-    -- dai saem as datas, as contagens e o `price_run`.
+    -- dai saem as datas, as contagens e o `price_run`. `counts` sao as de `run_models`, e
+    `full` e o que foi **pedido** (`full_recompute`).
     """
     model_names = result.config.model_names
     # O desfecho e conhecido antes da escrita: o sincrono aplica a regra do fecho aqui e
@@ -490,8 +584,14 @@ def write_risk(
         finished_at=finished_at,
         status=status,
         requested_models=list(model_names),
+        full_recompute=full,
     )
-    RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
+    RiskResult.objects.bulk_create(
+        [
+            _row(run, model_run, counts.get((model_run.model_name, model_run.alpha)))
+            for model_run in result.runs
+        ]
+    )
     return run
 
 
@@ -501,23 +601,37 @@ def open_run(
     seed: int,
     bars: Sequence[Price],
     models: Sequence[str],
+    *,
+    full: bool,
 ) -> RiskRun:
     """Abre a execucao assincrona: `running`, sem `finished_at`, com os modelos pedidos.
 
     O resto do manifesto e o mesmo do sincrono. Quem escreve o estado final e o
-    `finished_at` e `close_run`.
+    `finished_at` e `close_run`. `full` viaja na linha (`full_recompute`): e de la que cada
+    tarefa por (ativo, modelo) o le (RF-08).
     """
     return RiskRun.objects.create(
         **_manifest(asset, calculated_at, seed, bars),
         finished_at=None,
         status=RiskRun.Status.RUNNING,
         requested_models=list(models),
+        full_recompute=full,
     )
 
 
-def write_results(run: RiskRun, result: ExperimentResult) -> None:
-    """Os resultados de um `ExperimentResult` na execucao ja aberta. So `create`."""
-    RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
+def write_results(
+    run: RiskRun, result: ExperimentResult, counts: SnapshotCounts
+) -> None:
+    """Os resultados de um `ExperimentResult` na execucao ja aberta. So `create`.
+
+    `counts` sao as de `run_models`, por (modelo caro, nivel).
+    """
+    RiskResult.objects.bulk_create(
+        [
+            _row(run, model_run, counts.get((model_run.model_name, model_run.alpha)))
+            for model_run in result.runs
+        ]
+    )
 
 
 def write_failed(run: RiskRun, model_name: str, error: str) -> None:
@@ -529,7 +643,11 @@ def write_failed(run: RiskRun, model_name: str, error: str) -> None:
     """
     RiskResult.objects.bulk_create(
         [
-            _row(run, ModelRunResult(model_name=model_name, alpha=alpha, error=error))
+            _row(
+                run,
+                ModelRunResult(model_name=model_name, alpha=alpha, error=error),
+                None,
+            )
             for alpha in config.ALPHAS
         ]
     )

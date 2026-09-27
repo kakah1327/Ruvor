@@ -38,6 +38,7 @@ terminado.
 | [M1.3 — Camadas 1 e 2](M1.3-camadas-1-e-2.md) | [M1.3](../specs/M1.3-camadas-1-e-2.md) | ✅ executado e fechado |
 | [M1.4 — Motor de risco](M1.4-motor-de-risco.md) | [M1.4](../specs/M1.4-motor-de-risco.md) | ✅ executado e fechado |
 | [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | [M1.5](../specs/M1.5-execucao-assincrona.md) | ✅ executado e fechado |
+| [M1.5b — Treino separado da previsão](M1.5b-treino-separado-da-previsao.md) | [M1.5b](../specs/M1.5b-treino-separado-da-previsao.md) | ✅ executado e fechado |
 | [M3.1 — Fundamentos](M3.1-fundamentos.md) | [M3.1](../specs/M3.1-fundamentos.md) | ✅ executado e fechado |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa

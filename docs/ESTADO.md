@@ -11,9 +11,9 @@
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** M1.5 fechado em 2026-09-25; **o M1.5b é o próximo**. Na frente `fundamentos`, o
-**M3.1 fechou em 2026-09-27**, e o próximo bloco dela não está definido
-**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b → M1.6) e `fundamentos` (M3.1,
+**Bloco:** na frente `marco1`, o **M1.5b fechou em 2026-09-27**, e **o M1.6 é o próximo**; na
+frente `fundamentos`, o **M3.1 fechou em 2026-09-27**, e o próximo bloco dela não está definido
+**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6) e `fundamentos` (M3.1 ✅,
 com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
@@ -45,8 +45,13 @@ grava em `gold` os indicadores e a capitalização, uma linha imutável por aç�
 tarefa de fumaça `config.tasks.ping`, dez tarefas de app, em `apps/risk/tasks.py`,
 `apps/assets/tasks.py` e `apps/fundamentals/tasks.py`, e o Beat dispara três rotinas — o
 catálogo, às segundas, e os preços, de segunda a sexta, com o recálculo do risco **encadeado**
-a eles; e os fundamentos, às segundas, com o cálculo dos indicadores encadeado à coleta. Vinte
-e quatro tabelas, em cinco apps. Ainda não há API de negócio nem tela de produto.
+a eles; e os fundamentos, às segundas, com o cálculo dos indicadores encadeado à coleta.
+**Desde o M1.5b o recálculo do risco não refaz o treino:** os quatro modelos caros guardam um
+retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
+treina só o que falta e reconstitui a série inteira do backtest por previsão — em segundos por
+ativo, igual campo a campo ao cálculo do zero, que `compute_risk --full` ainda faz. O motor está
+no `0.3.0`. Vinte e cinco tabelas, em cinco apps. Ainda não há API de negócio nem tela de
+produto.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -60,12 +65,14 @@ frontend, e o motor entrou no estilo com a formatação provada por árvore sint
 ([D-33](decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)); o motor segue no `.venv/` nativo.
 **Desde o M1.4 a suíte e o `mypy` do backend rodam no `worker`, não na `web`** — é o único
 contêiner que tem o motor, e `apps/risk/` o importa (RF-16b). Consequência que engana quem
-não sabe: **`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e noventa e
-três**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
-`.env` incompleto não passe despercebido. Os cinco leem o banco configurado; os 193 são os que
-pedem `django_db` e nem conseguem criar o banco de teste. **Dentro do contêiner os cinco
-exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-27, com 496 testes: `5 failed,
-298 passed, 193 errors`, os mesmos cinco de antes.
+não sabe: **`pytest backend` no hospedeiro reprova onze testes e dá erro em duzentos e
+vinte**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
+`.env` incompleto não passe despercebido. Cinco leem o banco configurado; seis são o V-17 do
+M1.5b, que confere a imagem do `worker` e lê o lock em `/repo/engine`, o caminho de dentro do
+contêiner; os 220 são os que pedem `django_db` e nem conseguem criar o banco de teste.
+**Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regressão — medido em
+2026-09-27, com 529 testes: `11 failed, 298 passed, 220 errors`, depois do merge das duas
+frentes.
 
 ## O que foi concluído
 
@@ -74,7 +81,7 @@ exigem `migrate` aplicado.** Não é regressão — medido em 2026-09-27, com 49
 - **Produto** — [PRODUTO.md](PRODUTO.md): as cinco camadas, público, marcos, requisitos candidatos
 - **Arquitetura** — [ARQUITETURA.md](ARQUITETURA.md): pilha, estrutura, banco, execução, auditoria, regimes
 - **Processo** — [PROCESSO.md](PROCESSO.md): ciclo, anatomia de spec e plano, agentes, portões
-- **88 decisões registradas** — [decisoes/](decisoes/)
+- **95 decisões registradas** — [decisoes/](decisoes/)
 - **Identidade visual** — kit em [`brand/ruvor/`](../brand/ruvor/), com as quatro telas de
   referência em `brand/ruvor/mockups/`
 - **Agentes do projeto (F6, antecipado)** — [`.claude/agents/`](../.claude/agents/):
@@ -785,27 +792,186 @@ DFP) e [D-129](decisoes/D-129-lucro-so-na-mae-vale-a-mae.md) (lucro só na mãe:
 `gold.fundamental_indicator`, nula quando falta preço de alguma classe e sempre nula para PNA e
 PNB.
 
+### M1.5b — Treino separado da previsão
+
+Spec em [`specs/M1.5b-treino-separado-da-previsao.md`](specs/M1.5b-treino-separado-da-previsao.md)
+e plano em [`planos/M1.5b-treino-separado-da-previsao.md`](planos/M1.5b-treino-separado-da-previsao.md).
+Nove tarefas, um commit por tarefa que produz — a T7 mediu as mutações e não produz —, de
+`0985228` ao commit de fecho, no ramo `marco1/M1.5b-treino-separado`, que entra na `main` por PR
+([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md),
+[D-85](decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)). **Muda número do motor** — as três
+redes, a partir do segundo trecho de teste —, com a exceção à D-21 declarada e em lista fechada.
+
+| Verificação | Resultado |
+|---|---|
+| A tabela nasce na `gold`, e a migration `0003` é reversível (V-01) | ✅ no banco de desenvolvimento, antes de haver retrato; as 24 execuções antigas ficaram `full_recompute = false` e os 432 resultados com as contagens nulas |
+| **Incremental igual ao do zero, com o motor real (V-02)** | ✅ série do zero, +1 pregão sem cruzar ponto, +1 cruzando: a `var_series` inteira igual ponto a ponto, e os dezoito `risk_result` iguais campo a campo |
+| O dia comum não treina (V-03) | ✅ `trained_snapshots == 0` e nenhuma chamada de treino, **por espião** |
+| O primeiro trecho das redes não muda (V-04) | ✅ igual bit a bit à referência do `0.2.0`, capturada no `worker` travado; roda só no `worker` |
+| `caviar` e baratos intactos (V-05); retomada entre processos bit a bit (V-06) | ✅ |
+| Impressão digital estrita, nos dois lados do `trained_through` (V-07) | ✅ decidido pelas contagens, como a spec manda |
+| Identidade completa, um retrato fabricado por componente (V-08); imutável e idempotente (V-09) | ✅ os seis componentes; e o novo gravado ao lado |
+| `--full` não lê retrato, nos dois caminhos (V-10); o manifesto diz de onde veio (V-11) | ✅ |
+| `engine/` só nos arquivos autorizados (V-12) | ✅ `git diff 0f2f7aa..HEAD --stat -- engine/src`: `seeding.py`, `snapshots.py`, `_quantile_nn.py`, `caviar.py`, `runner.py` — cinco da lista do RF-11; `base.py` intocado. Fora de `src/`, só a versão no `pyproject.toml` e os testes. `0f2f7aa` é o pai do commit da spec |
+| O tamanho dos retratos (V-13) | ✅ medido — ver abaixo |
+| **Execução real (V-14)** | ✅ os cinco passos — ver abaixo, e o que ela **não** mediu |
+| A memória do `worker` (V-15) | ✅ sem limite o pico sobe; com `--max-tasks-per-child=5`, não — ver abaixo |
+| A imagem travada (V-17); o TensorFlow não entra por `snapshots.py` (V-18); a semente deriva da execução (V-19) | ✅ |
+
+**336 testes no backend e 145 no motor** — 144 no hospedeiro, mais o V-04, que pula fora do
+`worker`; mypy (92 arquivos no backend, 35 no motor) e ruff limpos nos dois; **vinte e uma
+tabelas**; seis serviços; motor **`0.3.0`**.
+A suíte do backend leva **~8 min** no `worker` — o V-02 e os testes que o acompanham treinam as
+três redes de verdade. **O tempo dela na CI do GitHub não foi medido.**
+
+**As trinta mutações reprovaram** — as 21 da tabela da spec e 9 acrescentadas pelas tarefas —,
+**mais a da T8**, que é o V-15 sem o limite, medida em três rodadas. Três acusam por um caminho
+que vale registrar: a do modelo que ignora o `restore` **não muda as contagens** e só é pega pelos
+espiões do V-03; e duas da T3 — o otimizador casado por `path` e as chaves do `npz` em `sorted` —
+reprovam **levantando erro de forma**, não por número diferente.
+
+#### Os números da execução real
+
+Com o Beat parado desde a T1, o `worker` recriado depois do último commit de código e com
+`--max-tasks-per-child=5`. **O tempo de um ativo é a soma das durações das suas nove tarefas
+`compute_asset_model`**, lida da linha `risco … modelo=… alpha=0.05 r/t alpha=0.01 r/t N.NNs` do
+log do `worker` — não `finished_at − calculated_at`, que inclui a fila.
+
+| Ativo | Passo 1 — `--async --full` | Passo 2 — `--async`, mesma série | Passo 3 — depois da coleta |
+|---|---|---|---|
+| IBOV | 162,40 s | 8,20 s (5,0%) | 8,14 s (5,0%) |
+| ITUB4 | 175,20 s | 8,66 s (4,9%) | 10,27 s (5,9%) |
+| PETR4 | 152,65 s | 9,68 s (6,3%) | 8,04 s (5,3%) |
+| VALE3 | 140,52 s | 4,50 s (3,2%) | 6,38 s (4,5%) |
+| **do comando ao último fecho** | **5 min 35 s** | **25 s** | **25 s** |
+
+**Passo 1** (`risk_run` 49–52, `price_run` 6): as quatro `ok`, 72 resultados, nenhum erro; nos
+caros, `reused_snapshots = 0` e `trained_snapshots = 9` nos dois níveis. Os 288 retratos já
+existiam, das rodadas `--full` da T8, e **continuaram 288**: a gravação idempotente não duplicou
+nenhum. Os 72 resultados saíram iguais, campo a campo, aos da última rodada da T8 (`risk_run`
+45–48) — o treino é determinístico entre rodadas. A contagem sozinha não provaria isso: a
+unicidade não inclui o `payload`, e um retrato diferente seria descartado em silêncio. Por modelo, no ITUB4: `gru` 68,3 s,
+`lstm` 47,5 s, `garchnet` 43,1 s, `caviar` 14,0 s.
+
+**Passo 2** (`risk_run` 53–56): **nada treinado** — `9/0` nos quatro caros, nos dois níveis, nos
+quatro ativos — e o resultado **igual ao do passo 1**: 72 pares, pareados por `model_name` e
+`alpha`, e 1.080 comparações dos quinze campos restantes do `risk_result` fora os excluídos do
+RF-07, **zero divergências**; na `risk_run`, o
+manifesto igual nos quatro, com `full_recompute` `true` no passo 1 e `false` no 2. A comparação
+foi provada contra ativos trocados: acusou os 72 pares.
+
+**Passo 3** — `import_prices` real às 05:49:45 UTC (código 0; `coleta: 4 ativos, 4 ok`, `price_run`
+7) e `compute_risk --async` (`risk_run` 57–60). **Os quatro ficaram no dia comum** —
+`trained_snapshots == 0` em todos —, **e os quatro abaixo de 10%** do passo 1: de 4,5% a 5,9%.
+Mas veja "o que a execução contrariou": **a coleta, num domingo, não trouxe pregão novo.**
+
+**Passo 4 — retratos invalidados pela coleta: zero**, nos quatro ativos. A coleta só atualizou
+o último pregão (2026-09-25) de cada um, e mudou o `adj_close` de dois — IBOV (183.476,859375 →
+183.477) e PETR4 (47,990002 → 48,07) —, pregão que nenhum retrato viu: o último ponto de retreino
+(posição 2.016) enxerga até o índice 2.268 — da série de 2.494 pregões do PETR4 e da de 2.486 do
+IBOV. Por isso mudaram só o `egarch` e o
+`garch_1_1` desses dois (8 dos 72 resultados), e nenhum dos caros.
+
+**Passo 5 — o `caviar` e os cinco baratos do passo 1 iguais aos do `0.2.0`** (`risk_run` 21–24,
+mesma série): 48 pares, 720 comparações, **zero divergências**; manifesto igual, fora o
+`engine_version`. As três redes divergem nos 24 pares — é o RF-05, declarado.
+
+**V-13 — o tamanho.** `payload_bytes` dos 288 retratos, com o estado do otimizador:
+
+| Modelo | Mínimo | Médio | Máximo |
+|---|---|---|---|
+| `caviar` | 286 B | 286 B | 286 B |
+| `garchnet` | 19,5 KiB | 48,5 KiB | 158,3 KiB |
+| `gru` | 15,8 KiB | 71,3 KiB | 121,6 KiB |
+| `lstm` | 18,8 KiB | 58,1 KiB | 156,8 KiB |
+
+Uma linhagem (72 retratos) custa de **1,14 MiB** (VALE3) a **4,26 MiB** (ITUB4) — a busca de
+configuração escolhe redes de tamanhos diferentes —, **3,13 MiB em média**; a tabela inteira
+ocupa 14,3 MB para 13,1 MB de `payload` (fator 1,09). **Para 473 ações, uma linhagem: ~1,45 GiB**
+de `payload`, ~1,6 GiB com a tabela; ~2 GiB se todas custassem como o ITUB4. **O acúmulo pela taxa
+medida no passo 4 é zero** — e o número não vale nada: foi uma coleta, sem pregão e sem evento.
+A estimativa que ele não substitui: o `adj_close` do Yahoo é ajustado por provento (difere do
+`close` em ~99% dos pregões de ITUB4, PETR4 e VALE3), a D-53 rebusca a série inteira a cada evento
+novo, e então **cada provento provavelmente invalida a linhagem desde a posição 0** — cálculo
+completo e 3,1 MiB novos. A `silver.corporate_event` tem 162 eventos do ITUB4, 34 da PETR4 e 23
+da VALE3 em dez anos. **Não medido**; é o que o dia útil precisa mostrar.
+
+**V-15 — a memória** (T8), pela soma do `VmRSS` dos processos `celery` a cada 5 s. Sem limite,
+três rodadas `--full` seguidas: picos de **3,8, 5,9 e 6,7 GiB** — os filhos retêm ~190 MiB por
+tarefa de rede —, e o `worker` chegou a ~360 MiB livres. Com `--max-tasks-per-child=5`: **3,0, 2,6
+e 2,8 GiB**.
+
+**O Beat voltou** depois da execução (`docker compose up -d --no-deps beat`), saudável, com a agenda
+padrão: `0 7 * * 1` (catálogo) e `30 19 * * 1-5` (preços e risco), as duas variáveis vazias.
+
+**O que a execução contrariou.**
+
+- **O dia comum do passo 3 não teve pregão novo.** A execução foi num domingo: a coleta
+  reconformou o pregão de sexta e não acrescentou nenhum. Formalmente os quatro cumprem o
+  critério da spec — sem retrato invalidado, sem ponto cruzado —, e o custo não deve mudar com
+  um pregão a mais, porque o recálculo reconstitui a série inteira de qualquer jeito. **Mas o
+  caso "um pregão novo" em dado real ficou sem medir**, e a taxa de invalidação também. O
+  primeiro tique do Beat num dia útil (segunda, 19h30) mede os dois sem esforço: as linhas
+  `risco …` do log do `worker` trazem o tempo e o `r/t` de cada tarefa.
+- **Cerca de 40% do dia comum é reciclar filho, não prever.** Com `--max-tasks-per-child=5`, a
+  primeira tarefa de cálculo de cada filho novo do *prefork* (o `ForkPoolWorker-N` da linha de log) paga
+  ~1,7 a 1,9 s a mais — `historical`, `parametric` e `caviar`, que levam 0,06 a 0,09 s num filho
+  já usado, levaram 1,76 a 1,79 s; uma rede, ~3,2 s contra 1,1 a 1,4 s. Foram 7 das 36 tarefas
+  do passo 2, ~12 s dos 31 s somados dos quatro ativos. Num filho já usado, a rede custa 1,1 a 1,4 s pelos dois níveis — 0,55 a 0,7 s por
+  (rede, nível), **o que a sonda da spec previu** (0,58 s). O limite da memória e o custo do dia
+  comum puxam em sentidos opostos; está medido, não decidido.
+- **O preço de um retrato na posição 0 invalidado é o de um ativo novo.** Se a estimativa do
+  V-13 se confirmar, os pagadores de provento voltam ao cálculo completo a cada evento — o
+  risco que a spec declarou, agora com a razão provável: o `adj_close` retroativo. A saída que
+  a spec registra **não** é afrouxar a impressão digital; é estudar a reconformação do M1.2.
+- **A memória, medida por processo, é pior que a do M1.5**: 3,8 → 5,9 → 6,7 GiB, não os 2,9 →
+  5,0 do `docker stats`. E **não há um número de tarefas a partir do qual o filho passa a reter** —
+  retém desde a primeira. O 5 saiu do teto do pior caso, não de um joelho na curva.
+- **A máquina travou duas vezes** durante o bloco, com o TensorFlow rodando no hospedeiro e no
+  `worker` ao mesmo tempo. O WSL passou a ter teto de **8 GB** (`.wslconfig`), e a regra é um
+  comando pesado por vez ([aprendizados](aprendizados.md)).
+- **Correções do plano, sem mudar contrato**, registradas no fim dele: recriar o `worker` exige
+  `--force-recreate --no-deps`; a escolha do `--max-tasks-per-child` não tinha o "número a
+  partir do qual" que o plano supunha; o V-03 depende dos espiões, não só das contagens; duas
+  mutações da T3 reprovam por erro de forma; o `payload` não é determinístico em bytes; e a PR
+  de implementação, que o critério da T9 pede aberta, fica para o dono da frente.
+
+Sete decisões nasceram do bloco, na ordem da spec:
+[D-75](decisoes/D-75-as-redes-semeiam-em-cada-retreino-estende-a-d-63.md) (as redes semeiam em
+cada retreino; estende a D-63),
+[D-76](decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md) (alteração no
+motor em lista fechada; restringe a D-21),
+[D-77](decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) (os retratos
+moram em `gold`, com impressão digital estrita e o estado do otimizador),
+[D-78](decisoes/D-78-incremental-igual-ao-do-zero-e-full-e-a-referencia.md) (incremental igual
+ao do zero, e `--full` é a referência),
+[D-79](decisoes/D-79-os-quatro-caros-usam-retratos-e-os-cinco-baratos-nao.md) (os quatro caros
+usam retratos; os cinco baratos, não),
+[D-80](decisoes/D-80-o-retreino-de-producao-e-a-cada-252-pregoes-restringe-a-d-18.md) (o
+retreino de produção é a cada 252 pregões; restringe a D-18) e
+[D-81](decisoes/D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md) (a imagem do
+`worker` travada pelo lock, e as versões na identidade do retrato).
+
 ## Próximo passo
 
-**Escrever a spec do M1.5b — Treino separado da previsão**: a
-[D-18](decisoes/D-18-separacao-treino-previsao.md), persistir as redes treinadas e fazer a
-previsão diária ser uma passada só. É a decisão que a própria D-18 chama de "a que faz a conta
-fechar": hoje são ~2 min de CPU por ativo, e 473 ações × 2 min ≈ 16 h por rodada completa.
+O M1.5b entrou na `main` pela PR #4, em 2026-09-27. **Na frente `marco1`, a spec do M1.6 — Aplicação web**: a API de leitura, o kit completo, os mockups e as
+primeiras telas, e o cálculo sob demanda para ativo não coberto. O que ela encontra pronto: o
+risco dos ativos cobertos recalculado todo dia útil às 19h30, em **segundos por ativo** — 4,5 a
+10,3 s medidos no fecho do M1.5b, contra 141 a 175 s do cálculo completo —, e o `gold` com o
+manifesto de onde veio cada número (`reused_snapshots`, `trained_snapshots`, `full_recompute`).
+**O cálculo sob demanda de um ativo novo continua custando o completo** — ~2,5 min, a busca de
+configuração e todos os retreinos —, e a tela precisa saber disso antes de prometer resposta.
 
-O que ele já encontra pronto: a fila, com uma tarefa por (ativo, modelo) e o estado da
-execução no banco; o Beat, que roda a coleta de preços e o recálculo **todo dia útil às
-19h30**; e a execução real, que levou **4 min 46 s** para os quatro ativos com dois filhos em
-paralelo.
-
-Duas medições do M1.5 que a spec do M1.5b encontra na porta: **a memória do `worker` cresce
-a cada rodada e não volta** — 2,9 GiB depois da primeira, 5,0 GiB depois da segunda, sem
-medição por processo que diga quem aloca —; e **as redes seguram a fila**: com duas vagas, os modelos baratos esperam
-atrás delas, e os ativos do fim da fila esperam todos. Separar treino de previsão ataca as
-duas.
+**A primeira coisa a olhar, sem esforço:** o tique do Beat na segunda-feira, 19h30. É o dia
+comum com um pregão novo de verdade, que o fecho do M1.5b não teve, e a primeira medida da taxa
+de invalidação — as linhas `risco …` do log do `worker` trazem o tempo e o `r/t` de cada tarefa.
+Se os pagadores de provento aparecerem com `trained_snapshots` 9, a estimativa do V-13 se
+confirmou (ver o M1.5b, acima).
 
 **`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta quatro
-`risk_run` a cada dia útil, e `migrate risk zero` apagaria essa história junto. Ela ainda se
-reconstrói — o preço está em `silver`, e cada execução leva ~5 min —, mas só para a série de
+`risk_run` a cada dia útil, e `migrate risk zero` apagaria essa história junto — e, desde o
+M1.5b, os retratos. Ela ainda se reconstrói — o preço está em `silver`, e um `--full` dos quatro
+ativos leva ~5,5 min —, mas só para a série de
 hoje, não para a de cada dia passado.
 
 **Na frente `fundamentos`, o próximo bloco não está definido.** O ROADMAP põe o M3.2 — Contexto
@@ -833,11 +999,13 @@ fundamentos também passa pelo `worker` — pico de 2,235 GiB na carga do zero �
 | **`createsuperuser` não funciona.** O gerente exige organização e o comando não tem como fornecê-la: pôr `organization` em `REQUIRED_FIELDS` faria o `create_superuser` receber a **chave crua**, porque `ForeignKey.clean` devolve a pk (`createsuperuser.py:150,233`). Falha com `ValueError: o usuario precisa de organizacao` | `backend/apps/accounts/managers.py`, comentado no próprio arquivo | **M2.1**, que constrói o fluxo de identidade e decide como um primeiro usuário nasce. Enquanto isso, criar usuário exige `shell` |
 | **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
+| **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 
 ## Aberto e aguardando decisão
 
 | Tema | Onde |
 |---|---|
+| **A política de retenção dos retratos** — nada apaga retrato: cada invalidação cria uma linhagem nova (~3,1 MiB por ativo) e a antiga fica. Apagar é `delete` em `gold`, que a [D-16](decisoes/D-16-resultado-e-imutavel.md) proíbe, e precisa de decisão própria, com a taxa de invalidação medida em dia útil — o fecho do M1.5b mediu zero numa coleta de domingo, e estimou que cada provento invalida a linhagem inteira | [spec M1.5b](specs/M1.5b-treino-separado-da-previsao.md#os-retratos-se-acumulam-e-nada-os-apaga), [D-77](decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) |
 | **A execução presa em `running`** — se o fecho não rodar (`worker` morto, Redis reiniciado), a linha fica `running` para sempre. Limpar por idade, reprocessar ou deixar para operação: a spec do M1.5 deixou aberto por falta de dado de produção | [spec M1.5](specs/M1.5-execucao-assincrona.md#a-execução-presa-em-running) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
@@ -872,5 +1040,9 @@ bloqueia mais nada**. Uma medição do M1.4 muda a expectativa de custo: os nove
 quatro ativos e dois níveis levaram **8,5 min** sequenciais em CPU pelo caminho do
 `run_experiment` — muito abaixo da estimativa de ~1 h que a Etapa 6 carrega. Não é a mesma
 carga, mas convém remedir antes de planejar paralelização.
+
+**Desde o M1.5b o motor é o `0.3.0`**, e as três redes semeiam em cada retreino
+([D-75](decisoes/D-75-as-redes-semeiam-em-cada-retreino-estende-a-d-63.md)): os números delas
+mudam a partir do segundo trecho de teste. A Etapa 6, que ainda não rodou, rodará sobre o `0.3.0`.
 
 Ver [ROADMAP.md](ROADMAP.md#trilha-paralela--tcc).

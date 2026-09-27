@@ -15,6 +15,7 @@ from engine.backtesting.base import BacktestResult
 from engine.data.preprocessing import fetch_returns
 from engine.models import get_model
 from engine.models.base import VaREstimate
+from engine.snapshots import Snapshot
 
 
 @dataclass
@@ -29,6 +30,8 @@ class ExperimentConfig:
     train_window_days: int = 252
     #: semente da execucao; o runner a CONFIGURA, e `_fit_for_alpha` a aplica (RF-01)
     seed: int = seeding.DEFAULT_SEED
+    #: retratos a restaurar, por (modelo, alpha), antes de `estimate_var` (M1.5b, RF-06)
+    snapshots: dict[tuple[str, float], list[Snapshot]] = field(default_factory=dict)
 
 
 @dataclass
@@ -39,6 +42,9 @@ class ModelRunResult:
     error: str | None = None
     #: a estimativa que produziu os backtests; sem ela o VaR nao sai daqui (RF-04)
     estimate: VaREstimate | None = None
+    #: os retratos que o modelo expos, restaurados e treinados -- preenchido TAMBEM com
+    #: `error`: os pontos anteriores a falha continuam valendo (M1.5b, RF-02)
+    snapshots: list[Snapshot] = field(default_factory=list)
 
 
 @dataclass
@@ -94,9 +100,12 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
 
         for alpha in config.alphas:
             try:
+                if hasattr(model, "restore"):
+                    model.restore(alpha, config.snapshots.get((model_name, alpha), []))
                 estimate = model.estimate_var(
                     test_returns, alpha=alpha, horizon=config.horizon
                 )
+                snaps = model.snapshots(alpha) if hasattr(model, "snapshots") else []
 
                 aligned_returns = test_returns.reindex(
                     estimate.var_series.index
@@ -113,11 +122,23 @@ def run_experiment(config: ExperimentConfig, provider) -> ExperimentResult:
                         alpha=alpha,
                         backtests=backtests,
                         estimate=estimate,
+                        snapshots=snaps,
                     )
                 )
             except Exception as exc:  # isola falha de 1 (modelo, alpha) do restante
+                try:
+                    snaps = (
+                        model.snapshots(alpha) if hasattr(model, "snapshots") else []
+                    )
+                except Exception:  # a leitura dos parciais nunca derruba o experimento
+                    snaps = []
                 runs.append(
-                    ModelRunResult(model_name=model_name, alpha=alpha, error=str(exc))
+                    ModelRunResult(
+                        model_name=model_name,
+                        alpha=alpha,
+                        error=str(exc),
+                        snapshots=snaps,
+                    )
                 )
 
     return ExperimentResult(config=config, runs=runs)

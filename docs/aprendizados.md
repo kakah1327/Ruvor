@@ -773,6 +773,94 @@ de uma execução isolada mede a primeira rodada, não o regime.
 que decide é o da rodada N, não o da primeira; o Celery tem `--max-tasks-per-child` e
 `--max-memory-per-child` para reciclar filhos, e escolher entre eles é decisão, não remendo.
 
+**Medido por processo no M1.5b** (soma do `VmRSS` de `/proc/<pid>/status` dos processos
+`celery`, a cada 5 s — `ps` não existe na imagem): picos de **3,8 → 5,9 → 6,7 GiB** em três
+rodadas `--full` seguidas, não os 2,9 → 5,0 do `docker stats`. E **não existe um número de
+tarefas a partir do qual o filho passa a reter**: ele retém desde a primeira, ~190 MiB por
+tarefa de rede. O `--max-tasks-per-child=5` saiu do teto do pior caso, não de um joelho na
+curva; com ele, as três rodadas ficaram em 3,0, 2,6 e 2,8 GiB.
+
+
+## A máquina trava se o TensorFlow rodar no hospedeiro e no `worker` ao mesmo tempo
+
+**Quando:** ao rodar a suíte do motor no `.venv` do hospedeiro, ou qualquer coisa que importe o
+TensorFlow no Windows, enquanto o `worker` calcula — rodada de `compute_risk`, suíte do
+backend, medição de memória.
+
+**Problema:** a máquina travou duas vezes no M1.5b. O WSL2 não tinha teto de memória, e os dois
+lados carregando TensorFlow — mais os filhos do `worker` retendo memória entre tarefas —
+esgotaram a RAM do hospedeiro inteiro. Desde então o WSL está limitado a **8 GB** por
+`.wslconfig`, e o `worker` chegou a ~360 MiB livres nas rodadas sem `--max-tasks-per-child`.
+
+**Faça:** um comando pesado por vez. Nunca a suíte do motor no hospedeiro durante uma rodada
+no `worker`, nem a suíte do backend no `worker` durante a do motor. Antes de uma medição longa,
+confira a memória livre do `worker` (`/proc/meminfo`). Processo morto por falta de memória é
+parada e relato, não nova tentativa.
+
+
+## `up -d --build` não recria o `worker` quando só mudou código montado
+
+**Quando:** ao recriar o `worker` depois de um commit em `engine/` ou `backend/`, para o
+processo pai do Celery carregar o código novo antes de uma medição.
+
+**Problema:** o código do motor e do backend é **montado**, não copiado para a imagem. Se nada
+que a imagem copia mudou, o `--build` produz a mesma imagem, e o compose **não recria** o
+contêiner: o processo pai segue com o `runner`, o `compute.py` e o `tasks.py` antigos, e a
+medição mede código velho sem avisar. E sem `--no-deps` o `up` religa as dependências —
+inclusive o `beat`, que precisava ficar parado.
+
+**Faça:** `docker compose up -d --force-recreate --no-deps worker` (com `--build` antes, se o
+`Dockerfile` ou o lock mudaram), e confira o `Created` do contêiner
+(`docker inspect … --format '{{.Created}}'`) contra a hora do último commit.
+
+
+## Retomar o treino do Adam: construir o otimizador, depois pesos, depois variáveis por posição
+
+**Quando:** ao salvar e restaurar uma rede Keras para continuar o treino (`fit`) em outro
+processo, e a exigência for número igual ao do treino sem interrupção.
+
+**Problema:** restaurar só os pesos e ressemear diverge em 6,1e-3. As variáveis do otimizador
+são **preguiçosas** — não existem antes do primeiro passo —, então `assign` sobre elas falha
+ou não há o que atribuir. E os `path` delas levam o nome automático do modelo
+(`sequential_…`), que muda entre processos: casar por nome não acha nada. Errar a ordem não
+levanta — produz número diferente.
+
+**Faça:** `model.optimizer.build(model.trainable_variables)`, depois `model.set_weights(...)`,
+depois `var.assign(valor)` para cada variável de `model.optimizer.variables`, **por posição**
+(`zip(..., strict=True)`). No `npz`, reconstrua a ordem pelo **sufixo inteiro** da chave:
+em ordem lexicográfica `o_10` vem antes de `o_2`. E reuse o mesmo objeto de modelo trocando
+pesos — montar um modelo por retrato custa 4× mais.
+
+
+## `npz` não é determinístico em bytes: compare desempacotando
+
+**Quando:** ao conferir que dois retratos (ou qualquer `numpy.savez`) são iguais, ou ao pensar
+em usar o hash do `payload` como identidade.
+
+**Problema:** o `npz` é um `zip`, e o `zip` grava a hora de cada membro. Dois retratos com os
+mesmos arrays saem com bytes diferentes; comparar `payload == payload` reprova o que é igual —
+e hash do `payload` na unicidade duplicaria retrato a cada gravação.
+
+**Faça:** compare com `unpack_arrays` e `np.array_equal` por chave. A identidade do retrato
+mora nas colunas da `gold.model_snapshot`, nunca no hash do conteúdo.
+
+
+## Contagem calculada do que foi pedido não prova o que o modelo fez
+
+**Quando:** ao verificar "não treinou" (ou "não recalculou", "usou o cache") por um contador
+gravado no manifesto.
+
+**Problema:** no M1.5b, `reused_snapshots` é o número de retratos **passados** ao motor, e
+`trained_snapshots` sai por diferença. A mutação "o modelo ignora o `restore` e treina tudo"
+**não muda as contagens** — o motor devolve o mesmo número de retratos —, e o critério só
+reprova porque o V-03 tem **espiões** nas chamadas de treino. E duas mutações da T3 (otimizador
+casado por `path`, chaves do `npz` em `sorted`) reprovam **levantando erro de forma**, não por
+número diferente: acusam, mas por um caminho que outra mutação mais sutil não seguiria.
+
+**Faça:** para provar que algo **não** aconteceu, espione a chamada que faria acontecer. O
+contador serve de manifesto, não de prova. E ao registrar uma mutação, anote **como** ela
+reprova — erro ou número —, não só que reprovou.
+
 
 ## Mutação em `backend/config/*.py` derruba a `web`, e ela não volta sozinha
 
