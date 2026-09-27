@@ -19,6 +19,9 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 FROM base AS worker
 COPY engine/pyproject.toml engine/pyproject.toml
 COPY engine/src/engine/__init__.py engine/src/engine/__init__.py
-RUN pip install --no-cache-dir -e "./engine[traditional,garch,ml]"
+# o lock do motor como restricao (RF-15 do M1.5b): sem ele, todo --build pode trazer outro
+# numpy, pandas, TensorFlow ou Keras, e a imagem ja tinha saido do lock
+COPY engine/requirements-lock.txt engine/requirements-lock.txt
+RUN pip install --no-cache-dir -e "./engine[traditional,garch,ml]" -c engine/requirements-lock.txt
 WORKDIR /repo/backend
 CMD ["celery", "-A", "config", "worker", "--loglevel=info"]

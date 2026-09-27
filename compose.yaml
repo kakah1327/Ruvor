@@ -62,7 +62,11 @@ services:
     # memoria e declarado, e a execucao real mediu o worker em 2,9 GiB depois da primeira
     # rodada e 5,0 GiB depois da segunda -- ver o ESTADO; o dono e o M1.5b.
     command: celery -A config worker --loglevel=info --concurrency=2
-    environment: *backend-env
+    environment:
+      <<: *backend-env
+      # so aqui: o V-04 do M1.5b compara com uma referencia capturada neste conteiner, e
+      # pula com motivo em qualquer outro lugar
+      RUVOR_REFERENCE_ENV: worker
     volumes:
       - ./backend:/repo/backend
       - ./engine:/repo/engine
