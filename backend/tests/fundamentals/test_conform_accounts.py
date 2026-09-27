@@ -432,6 +432,62 @@ def test_rf08b_banco_com_aos_socios_nao_controladores() -> None:
     assert bradesco.net_income_parent == {JAN_2024: 17542153 * MIL}
 
 
+def test_rf08b_banco_controladora_zero_e_nao_controladores_nao_zero() -> None:
+    """Inserido no teste (declarado): no Bradesco, DRE consolidada do DFP 2024, so a
+    3.11.01 (L427) trocada para 0; a 3.11.02 "Atribuído aos Sócios não Controladores"
+    (L429) segue em 289253 e a mae 3.11 (L425) em 17542153. As filhas nao somam 0 — o que
+    so se ve se a grafia com "não" minusculo for achada."""
+    bradesco = dfp_2024_dre("906", {("3.11.01", "2024-01-01"): "0"})
+
+    assert bradesco.net_income_parent == {JAN_2024: Decimal(0)}
+    assert bradesco.missing == []
+
+
+def test_rf08b_filha_dos_nao_controladores_repetida_segue_o_rf08() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, a 3.11.01
+    (L195) e a 3.11.02 (L197) trocadas para 0, e uma 3.11.03 "Atribuído a Sócios Não
+    Controladores" sob a mesma mae 3.11 — copia da linha `ÚLTIMO` da 3.11.02 ja zerada,
+    com outro codigo. A filha dos nao controladores repetida: o RF-08b nao se aplica, e
+    vale a filha da controladora, 0 — nao a mae (L193, 37009000)."""
+
+    def repete(header: Fields, rows: list[Fields]) -> list[Fields]:
+        code = header.index("CD_CONTA")
+        (minority,) = [
+            row
+            for row in rows
+            if row[4] == "009512" and row[code] == "3.11.02" and row[8] == "ÚLTIMO"
+        ]
+        return [*rows, [*minority[:code], "3.11.03", *minority[code + 1 :]]]
+
+    member = "dfp_cia_aberta_DRE_con_2024.csv"
+    payload = edit_member(
+        fixture_zip("dfp_2024"),
+        member,
+        set_values(
+            "009512",
+            "2024-12-31",
+            {("3.11.01", "2024-01-01"): "0", ("3.11.02", "2024-01-01"): "0"},
+        ),
+    )
+    payload = edit_member(payload, member, repete)
+    petrobras = dfp_2024("9512", payload)
+
+    assert petrobras.net_income_parent == {JAN_2024: Decimal(0)}
+
+
+def test_rf08b_mae_zero_com_filhas_opostas_segue_a_filha() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, a mae 3.11
+    (L193) trocada para 0 e a 3.11.02 (L197) para -36606000; a 3.11.01 (L195) segue em
+    36606000. As filhas somam 0, mas a mae tambem e 0: vale a filha da controladora."""
+    petrobras = dfp_2024_dre(
+        "9512",
+        {("3.11", "2024-01-01"): "0", ("3.11.02", "2024-01-01"): "-36606000"},
+    )
+
+    assert petrobras.net_income_parent == {JAN_2024: 36606000 * MIL}
+    assert petrobras.missing == []
+
+
 def test_rf08b_vale_por_periodo() -> None:
     """Inserido no teste (declarado): na Petrobras, DRE consolidada do ITR 2024, em
     2024-06-30, so o periodo isolado (desde 2024-04-01) da 3.11.01 (L861) e da 3.11.02

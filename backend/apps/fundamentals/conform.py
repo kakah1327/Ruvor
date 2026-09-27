@@ -124,11 +124,13 @@ _PROFIT_CONTROLLER = Match(
         "Atribuído aos Sócios da Empresa Controladora",
     )
 )
-# RF-08b: as descricoes da filha dos nao controladores, na grafia da spec.
+# RF-08b: as descricoes da filha dos nao controladores, as duas grafias medidas nos zips
+# da `bronze` — "Atribuído a Sócios Não Controladores" e "Atribuído aos Sócios não
+# Controladores" (com "não" minusculo, nos bancos forma A). "Atribuído aos Sócios Não
+# Controladores" nao aparece na fonte, e por isso nao entra.
 _PROFIT_NONCONTROLLING = Match(
     (
         "Atribuído a Sócios Não Controladores",
-        "Atribuído aos Sócios Não Controladores",
         "Atribuído aos Sócios não Controladores",
     )
 )
