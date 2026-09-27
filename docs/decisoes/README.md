@@ -84,6 +84,13 @@ conversas e entre agentes.
 | [D-72](D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md) | O fecho escreve metadado de execução; restringe a D-16 |
 | [D-73](D-73-o-cabecalho-do-chord-sai-por-custo.md) | O cabeçalho do `chord` sai por custo, não na ordem pedida |
 | [D-74](D-74-o-marco-1-e-so-producao.md) | O Marco 1 é só produção; o laboratório vai para o Marco 2; restringe a PRODUTO §4 |
+| [D-75](D-75-as-redes-semeiam-em-cada-retreino-estende-a-d-63.md) | As redes semeiam em cada retreino, com semente derivada da execução e da posição; estende a D-63 |
+| [D-76](D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md) | Alteração no motor em lista fechada para os retratos; restringe a D-21 |
+| [D-77](D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) | Os retratos moram em `gold`, imutáveis, com impressão digital estrita sobre os preços, e guardam o estado do otimizador |
+| [D-78](D-78-incremental-igual-ao-do-zero-e-full-e-a-referencia.md) | O critério é incremental igual ao do zero, e `--full` é a referência |
+| [D-79](D-79-os-quatro-caros-usam-retratos-e-os-cinco-baratos-nao.md) | Os quatro modelos caros usam retratos; os cinco baratos, não |
+| [D-80](D-80-o-retreino-de-producao-e-a-cada-252-pregoes-restringe-a-d-18.md) | O retreino de produção é a cada 252 pregões, o do protocolo; restringe a D-18 |
+| [D-81](D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md) | A imagem do `worker` é travada pelo lock do motor, e as versões das bibliotecas entram na identidade do retrato |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b → M1.6 | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5b-treino-separado` |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6 | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5b-treino-separado` — bloco fechado, PR de implementação a abrir; o M1.6 abre ramo próprio depois do merge |
 | `identidade` | ⏸ **sem dono** — espera o próximo dev | M2.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.1-fundamentos` |
 
@@ -101,7 +101,7 @@ outras frentes.
 
 | Faixa | De quem | Usadas |
 |---|---|---|
-| D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | nenhuma ainda |
+| D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | D-85 |
 | D-100 a D-119 | `identidade` | — |
