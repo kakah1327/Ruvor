@@ -40,4 +40,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.4 — Motor de risco](M1.4-motor-de-risco.md) | Marco 1 · M1.4 | ✅ implementada e fechada |
 | [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | Marco 1 · M1.5 | ✅ implementada e fechada |
 | [M1.5b — Treino separado da previsão](M1.5b-treino-separado-da-previsao.md) | Marco 1 · M1.5b | ✅ aprovada pelo dono da frente; plano em revisão |
-| [M3.1 — Fundamentos](M3.1-fundamentos.md) | Marco 3 · M3.1 · frente `fundamentos` | 🟡 aprovada na revisão adversarial; aguarda a PR |
+| [M3.1 — Fundamentos](M3.1-fundamentos.md) | Marco 3 · M3.1 · frente `fundamentos` | ✅ aprovada (PR #2); duas correções vindas do plano entram na PR do plano |
