@@ -18,12 +18,15 @@ events` ao alterar a tabela). Por isso ele se divide em tres partes:
 e o Redis dos testes aponta para um host que nao existe.
 
 **Onde as substituicoes miram.** `apps/risk/tasks.py` importa pelo nome, e chama pelo nome
-global **dele**, `run_experiment`, `write_results`, `load_all_model_modules` e
-`load_all_backtest_modules` -- entao e em `apps.risk.tasks.*` que os duplos entram (o
-`enqueue_compute` tambem chama o `_enqueue` pelo nome global deste modulo). Mirar
-`apps.risk.compute.run_experiment` nao teria efeito nenhum na tarefa, e o V-05b aprovaria
-vazio. O `get_model` quebrado do V-05 e o do **runner** (`engine.experiments.runner`), molde
-do V-11 do M1.4: e a falha que nasce dentro do `run_experiment`.
+global **dele**, `run_models`, `write_results`, `load_all_model_modules` e
+`load_all_backtest_modules` -- entao e em `apps.risk.tasks.*` que esses duplos entram (o
+`enqueue_compute` tambem chama o `_enqueue` pelo nome global deste modulo). **O motor, desde
+o M1.5b, e chamado por `compute.run_models`**, o ponto de entrada dos dois caminhos: o
+`run_experiment` que a tarefa alcanca e o de `apps.risk.compute`, e e la que os espioes do
+motor entram -- `apps.risk.tasks.run_experiment` deixou de existir, e o `monkeypatch`
+reprova alto se alguem mirar nele. O `get_model` quebrado do V-05 e o do **runner**
+(`engine.experiments.runner`), molde do V-11 do M1.4: e a falha que nasce dentro do
+`run_experiment`.
 """
 
 from __future__ import annotations
@@ -45,11 +48,19 @@ from engine.backtesting import load_all_backtest_modules
 from engine.experiments.runner import ExperimentResult, run_experiment
 from engine.models import get_model, load_all_model_modules
 from engine.models.base import VaRModel
+from engine.snapshots import Snapshot
 
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
-from apps.risk.compute import MODELS, run_compute_risk, status_for, write_results
+from apps.risk.compute import (
+    MODELS,
+    SnapshotCounts,
+    run_compute_risk,
+    status_for,
+    write_results,
+)
 from apps.risk.models import RiskResult, RiskRun
+from apps.risk.snapshots import load_valid
 from apps.risk.tasks import (
     _abrir_execucao,
     _compute_asset_model,
@@ -136,6 +147,7 @@ def _execucao_suja(ticker: str, coleta: CollectionRun, modelos: list[str]) -> Ri
         requested_by=None,
         status=RiskRun.Status.RUNNING,
         requested_models=[],
+        full_recompute=False,
     )
     RiskResult.objects.bulk_create(
         [
@@ -353,7 +365,7 @@ def test_v03_a_a_falha_de_escrita_de_um_modelo_nao_apaga_o_outro(
     run = _abre(BARATOS)
     _compute_asset_model(run.id, "parametric")
 
-    def quebra(run: RiskRun, result: ExperimentResult) -> None:
+    def quebra(run: RiskRun, result: ExperimentResult, counts: SnapshotCounts) -> None:
         raise RuntimeError("escrita quebrada de proposito")
 
     monkeypatch.setattr("apps.risk.tasks.write_results", quebra)
@@ -373,8 +385,8 @@ def test_v03_b_a_escrita_da_tarefa_e_tudo_ou_nada(
     `write_failed` colide com a unicidade `(run, model_name, alpha)`."""
     run = _abre(BARATOS)
 
-    def meia(run: RiskRun, result: ExperimentResult) -> None:
-        write_results(run, ExperimentResult(result.config, result.runs[:1]))
+    def meia(run: RiskRun, result: ExperimentResult, counts: SnapshotCounts) -> None:
+        write_results(run, ExperimentResult(result.config, result.runs[:1]), counts)
         raise RuntimeError("meia escrita")
 
     monkeypatch.setattr("apps.risk.tasks.write_results", meia)
@@ -479,7 +491,9 @@ def test_v05c_um_modelo_pedido_e_gravado_limpo_fecha_ok() -> None:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("onde", ["run_experiment", "write_results"])
+@pytest.mark.parametrize(
+    "onde", ["apps.risk.compute.run_experiment", "apps.risk.tasks.write_results"]
+)
 def test_v05b_falha_que_escapa_do_motor_ou_da_escrita_vira_o_par_de_erro(
     onde: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -489,7 +503,7 @@ def test_v05b_falha_que_escapa_do_motor_ou_da_escrita_vira_o_par_de_erro(
     def levanta(*args: object, **kwargs: object) -> None:
         raise ValueError("falha injetada de proposito")
 
-    monkeypatch.setattr(f"apps.risk.tasks.{onde}", levanta)
+    monkeypatch.setattr(onde, levanta)
     run = _abre(BARATOS)
 
     _compute_asset_model(run.id, "parametric")  # retorna: a excecao nao escapa
@@ -515,7 +529,7 @@ def test_a_mesma_tarefa_duas_vezes_grava_duas_linhas_e_nao_levanta(
         chamadas.append(args)
         return original(*args, **kwargs)
 
-    monkeypatch.setattr("apps.risk.tasks.run_experiment", contando)
+    monkeypatch.setattr("apps.risk.compute.run_experiment", contando)
 
     _compute_asset_model(run.id, "parametric")
     _compute_asset_model(run.id, "parametric")
@@ -559,7 +573,11 @@ def test_as_duas_tarefas_carregam_o_registry_antes_do_motor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Molde de `test_o_registry_e_carregado_antes_de_ser_consultado`, do M1.4: o registry
-    e global de processo e ja esta populado, entao so espioes enxergam a omissao."""
+    e global de processo e ja esta populado, entao so espioes enxergam a omissao.
+
+    O modelo e o `caviar`, um dos caros: a leitura dos retratos (`load_valid`, uma por
+    nivel) consulta o registry pelos hiperparametros, e tem de vir **depois** dos
+    carregadores -- e antes do motor."""
     load_all_model_modules()  # populado de verdade antes de os carregadores virarem espioes
     load_all_backtest_modules()
     chamadas: list[str] = []
@@ -576,16 +594,22 @@ def test_as_duas_tarefas_carregam_o_registry_antes_do_motor(
         chamadas.append("motor")
         return run_experiment(*args, **kwargs)
 
-    monkeypatch.setattr("apps.risk.tasks.run_experiment", motor)
+    def retratos(*args: Any, **kwargs: Any) -> list[Snapshot]:
+        chamadas.append("retratos")
+        return load_valid(*args, **kwargs)
+
+    monkeypatch.setattr("apps.risk.compute.run_experiment", motor)
+    monkeypatch.setattr("apps.risk.compute.load_valid", retratos)
     _serie("AAA3")
 
-    run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, ["parametric"])
+    run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, ["caviar"])
     assert chamadas == ["modelos", "backtests"]
 
     chamadas.clear()
     assert run_id is not None
-    _compute_asset_model(run_id, "parametric")
-    assert chamadas == ["modelos", "backtests", "motor"]
+    _compute_asset_model(run_id, "caviar")
+    assert chamadas == ["modelos", "backtests", "retratos", "retratos", "motor"]
+    _limpas(RiskRun.objects.get(pk=run_id), "caviar")
 
 
 # --- o leque: `enqueue_compute` e `recalcular_cobertos` ------------------------------------
@@ -706,10 +730,19 @@ def _resultados(run: RiskRun) -> list[dict[str, object]]:
         {
             f.name: getattr(r, f.attname)
             for f in RiskResult._meta.fields
-            if f.name not in {"id", "run"}
+            # os dois do manifesto de retratos diferem por definicao (RF-07): o assincrono
+            # reaproveita o que o sincrono acabou de gravar
+            if f.name not in {"id", "run", "reused_snapshots", "trained_snapshots"}
         }
         for r in run.results.order_by("model_name", "alpha")
     ]
+
+
+def _contagens(run: RiskRun) -> dict[tuple[str, str], tuple[int | None, int | None]]:
+    return {
+        (r.model_name, str(r.alpha)): (r.reused_snapshots, r.trained_snapshots)
+        for r in run.results.all()
+    }
 
 
 @pytest.mark.django_db
@@ -720,7 +753,10 @@ def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(fila: list[Any]) -
     `enqueue_compute`, e as nove tarefas e o fecho saem do `chord` que a abertura entregou
     ao `_enqueue`. Separar os nove em nove `run_experiment` nao pode mudar numero nenhum --
     nem nas redes, em que a semeadura por `_fit_for_alpha` e o que deveria garantir isso.
-    So `calculated_at` e `finished_at` podem diferir.
+    So `calculated_at` e `finished_at` podem diferir -- e, desde o M1.5b, as duas colunas
+    do manifesto de retratos: o assincrono roda depois e reaproveita o retrato da posicao 0
+    que o sincrono gravou (com 250 retornos de teste, e o unico ponto), entao o mesmo
+    numero sai de uma restauracao, nao de um treino (RF-07).
     """
     _serie("AAA3")
 
@@ -745,3 +781,13 @@ def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(fila: list[Any]) -
     assert len(resultados_sincronos) == 18
     assert _resultados(assincrona) == resultados_sincronos
     assert assincrona.finished_at is not None
+    caros = {
+        (nome, alpha)
+        for nome in ("caviar", "garchnet", "gru", "lstm")
+        for alpha in ("0.0500", "0.0100")
+    }
+    baratos = {
+        chave: (None, None) for chave in _contagens(sincrona) if chave not in caros
+    }
+    assert _contagens(sincrona) == {**{c: (0, 1) for c in caros}, **baratos}
+    assert _contagens(assincrona) == {**{c: (1, 0) for c in caros}, **baratos}

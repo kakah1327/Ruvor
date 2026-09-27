@@ -120,15 +120,20 @@ Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêine
 **fundação de dados** — os quatro esquemas do banco, as primeiras tabelas, o **catálogo de
 ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
 comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
-de adequação por ativo —, calculado **pela fila** e **agendado** pelo Celery Beat. Ainda não
-existe API de negócio nem tela de produto.
+de adequação por ativo —, calculado **pela fila**, **agendado** pelo Celery Beat e, desde o
+M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Ainda não existe API de
+negócio nem tela de produto.
 
-- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.2.0**, 9
-  modelos de VaR, 4 testes de backtesting, 102 testes e linha de base numérica. Roda por linha
-  de comando: `ruvor run`. **Nunca importa Django**, e um teste prova isso. Os três modelos
-  neurais fixam semente por `engine/src/engine/seeding.py`
-  ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md)), e o `py.typed` deixa o
-  `mypy` do backend enxergar os tipos dele.
+- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
+  modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
+  pula fora dele — e linha de base numérica. Roda por linha de comando: `ruvor run`. **Nunca
+  importa Django**, e um teste prova isso. Os três modelos neurais fixam semente por
+  `engine/src/engine/seeding.py`, no treino e em cada retreino
+  ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md),
+  [D-75](docs/decisoes/D-75-as-redes-semeiam-em-cada-retreino-estende-a-d-63.md)); os quatro
+  modelos caros expõem e aceitam **retratos** do estado treinado, no formato de
+  `engine/src/engine/snapshots.py` ([D-76](docs/decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md));
+  e o `py.typed` deixa o `mypy` do backend enxergar os tipos dele.
 - `backend/` — projeto Django com quatro apps, `apps/accounts`, `apps/assets`,
   `apps/analytics` e `apps/risk`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
   Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as sete tarefas de
@@ -138,14 +143,15 @@ existe API de negócio nem tela de produto.
   com horário em `RUVOR_BEAT_ASSETS_CRON` e `RUVOR_BEAT_PRICES_CRON`
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
   [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 304 testes com pytest-django, que
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 336 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`, `silver.price` e
-  `silver.corporate_event`, e as quatro tabelas da `gold`, `gold.behavior_metric`,
-  `gold.return_histogram_bin`, `gold.risk_run` e `gold.risk_result` — vinte ao todo. O `AUTH_USER_MODEL`
+  `silver.corporate_event`, e as cinco tabelas da `gold`, `gold.behavior_metric`,
+  `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result` e `gold.model_snapshot` —
+  vinte e uma ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -166,7 +172,12 @@ existe API de negócio nem tela de produto.
   [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md));
   com `--async`, enfileira uma abertura por ativo e devolve — a `risk_run` nasce no `worker`
   como `running`, cada modelo grava os seus dois resultados em transação própria, e o fecho
-  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. O
+  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. Os quatro modelos caros
+  (`lstm`, `gru`, `garchnet`, `caviar`) guardam um retrato por ponto de retreino em
+  `gold.model_snapshot`, e o cálculo reaproveita os válidos, treina só o que falta e reconstitui
+  a série inteira por previsão — igual ao do zero, que `--full` faz
+  ([D-77](docs/decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) a
+  [D-81](docs/decisoes/D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md)). O
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
@@ -177,7 +188,8 @@ existe API de negócio nem tela de produto.
   `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do
   contêiner não precisa de Node instalado.
 - `compose.yaml` na raiz — `docker compose up` sobe seis serviços: `postgres`, `redis`,
-  `web`, `worker`, `beat` e `frontend`. O `worker` roda com `--concurrency=2`; o `beat` usa a
+  `web`, `worker`, `beat` e `frontend`. O `worker` roda com `--concurrency=2` e
+  `--max-tasks-per-child=5`, e a imagem dele instala o motor com o lock como restrição; o `beat` usa a
   imagem do `worker`, sem `build` próprio, e **agenda coleta real** — `docker compose stop
   beat` quando isso não for desejado. Backend e frontend rodam aí no dia a dia; o motor segue
   no `.venv/` nativo ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)).

@@ -119,3 +119,41 @@ def test_sementes_diferentes_dao_var_diferente() -> None:
     outra = _serie_de_var("lstm")
 
     assert not uma.equals(outra)
+
+
+def test_derive_combina_a_semente_da_execucao_com_a_posicao() -> None:
+    """RF-05 do M1.5b — a semente de cada retreino das redes.
+
+    Posicao 0 devolve a semente configurada, sem transformacao: e o que mantem o treino
+    inicial igual ao do motor 0.2.0 (V-04). Nas demais, as duas exigencias do RF-05:
+    posicoes diferentes dao sementes diferentes, e sementes da execucao diferentes dao
+    sementes diferentes na mesma posicao. As posicoes sao as de retreino, multiplos de 252.
+    """
+    posicoes = (0, 252, 504, 756, 1008)
+
+    seeding.configure(11)
+    assert seeding.derive(0) == 11
+    da_11 = [seeding.derive(p) for p in posicoes]
+
+    seeding.configure(12)
+    assert seeding.derive(0) == 12
+    da_12 = [seeding.derive(p) for p in posicoes]
+
+    assert len(set(da_11)) == len(posicoes)
+    assert len(set(da_12)) == len(posicoes)
+    for posicao, uma, outra in zip(posicoes, da_11, da_12, strict=True):
+        assert uma != outra, f"posicao {posicao}"
+
+
+def test_apply_semeia_com_a_semente_derivada_da_posicao(monkeypatch) -> None:
+    """`apply(position)` semeia com `derive(position)`; sem argumento, com a configurada."""
+    from tensorflow import keras
+
+    chamadas: list[int] = []
+    monkeypatch.setattr(keras.utils, "set_random_seed", chamadas.append)
+
+    seeding.configure(7)
+    seeding.apply()
+    seeding.apply(position=252)
+
+    assert chamadas == [7, seeding.derive(252)]

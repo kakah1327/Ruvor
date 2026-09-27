@@ -1,12 +1,13 @@
 """F4-01 e F4-02: os quatro esquemas existem, e as tabelas sao a lista fechada.
 
-Sao vinte tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
+Sao vinte e uma tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
 e as cinco do Django no `public` —, o M1.1 acrescentou as quatro do catalogo de ativos —
 tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e uma na
 `silver` (`asset`) — e o M1.2 acrescentou as tres dos precos: uma na `bronze`
 (`yahoo_chart`) e duas na `silver` (`price`, `corporate_event`). O M1.3 acrescentou as
 duas da camada 2, ambas na `gold` (`behavior_metric`, `return_histogram_bin`), e o M1.4
-acrescentou as duas da camada 3, tambem na `gold` (`risk_run`, `risk_result`).
+acrescentou as duas da camada 3, tambem na `gold` (`risk_run`, `risk_result`). O M1.5b
+acrescentou a dos retratos dos modelos caros, na `gold` (`model_snapshot`).
 
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
 `test_conexao_com_o_banco`: a marca conecta em `test_<nome>`, um banco que o proprio
@@ -37,6 +38,7 @@ TABELAS = {
     "core.user_groups",
     "core.user_user_permissions",
     "gold.behavior_metric",
+    "gold.model_snapshot",
     "gold.return_histogram_bin",
     "gold.risk_result",
     "gold.risk_run",

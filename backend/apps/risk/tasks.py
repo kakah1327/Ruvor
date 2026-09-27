@@ -23,14 +23,23 @@ instantes diferentes.
 
 **O registry e carregado nas duas primeiras**, pelos nomes importados aqui: o filho do
 *prefork* nasce sem ele, e o `compute_risk` sincrono so o tinha porque passa por
-`run_compute_risk`. `run_experiment`, `open_run`, `write_results`, `write_failed`,
-`close_run` e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes
-os substituem.
+`run_compute_risk`. `run_models`, `open_run`, `write_results`, `write_failed`, `close_run`
+e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes os
+substituem. O motor e chamado por `compute.run_models`, o mesmo ponto de entrada do
+sincrono (M1.5b): quem quer substituir o `run_experiment` mira
+`apps.risk.compute.run_experiment`, que e o nome que `run_models` chama.
+
+**O `--full` viaja na `risk_run`** (RF-08): `enqueue_compute` e `abrir_execucao` recebem
+`full`, a abertura o grava em `full_recompute`, e `compute_asset_model` o le da linha -- a
+assinatura dela e a do fecho nao mudam. A tarefa por (ativo, modelo) monta a identidade dos
+retratos (`SnapshotKey`) a partir da linha, e registra uma linha de log com os retratos
+reaproveitados e treinados por nivel e a duracao.
 """
 
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -40,7 +49,6 @@ from celery import chord
 from django.db import transaction
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
-from engine.experiments.runner import ExperimentConfig, run_experiment
 from engine.models import get_model, list_models, load_all_model_modules
 from engine.models.base import ModelCategory
 
@@ -51,15 +59,17 @@ from apps.risk.compute import (
     NO_CANDIDATES,
     SKIPPED_INACTIVE,
     ModelsMissing,
+    SnapshotCounts,
     _bars,
     _resolve,
     close_run,
     open_run,
+    run_models,
     write_failed,
     write_results,
 )
 from apps.risk.models import RiskResult, RiskRun
-from apps.risk.provider import SilverPriceProvider
+from apps.risk.snapshots import SnapshotKey, library_versions
 from config.celery import app
 
 logger = logging.getLogger(__name__)
@@ -113,13 +123,14 @@ def enqueue_compute(
     models: list[str] | None = None,
     calculated_at: datetime | None = None,
     now: Callable[[], datetime] = timezone.now,
+    full: bool = False,
 ) -> AsyncReport:
     """Enfileira uma abertura por ativo ativo; nao cria `risk_run` (RF-03).
 
     O que o `compute_risk --async` e o `recalcular_cobertos` compartilham. `ModelsMissing`
     e `InvalidTickers` levantam **antes** de enfileirar qualquer coisa, como no sincrono.
     `calculated_at` e o recebido ou o `now()` de **uma** chamada, o mesmo para todas as
-    aberturas.
+    aberturas. `full` vai a cada abertura, que o grava na `risk_run` (RF-08).
     """
     load_all_model_modules()
     load_all_backtest_modules()
@@ -134,7 +145,7 @@ def enqueue_compute(
     for asset in assets:
         _enqueue(
             abrir_execucao.s(
-                asset.ticker, instant.isoformat(), effective_seed, requested
+                asset.ticker, instant.isoformat(), effective_seed, requested, full=full
             )
         )
     return AsyncReport([a.ticker for a in assets], [a.ticker for a in skipped])
@@ -149,12 +160,16 @@ _COST_RANK = {
 
 
 def _abrir_execucao(
-    ticker: str, calculated_at_iso: str, seed: int, models: list[str]
+    ticker: str,
+    calculated_at_iso: str,
+    seed: int,
+    models: list[str],
+    full: bool = False,
 ) -> int | None:
     """Abre a execucao do ativo e enfileira o grupo; devolve o `run_id`.
 
     Serie abaixo de `MIN_SESSIONS` e pulo silencioso, como no sincrono: devolve `None` e
-    nao cria linha.
+    nao cria linha. `full` e gravado em `full_recompute`, de onde as tarefas o leem.
     """
     load_all_model_modules()
     load_all_backtest_modules()
@@ -168,7 +183,14 @@ def _abrir_execucao(
             config.MIN_SESSIONS,
         )
         return None
-    run = open_run(asset, datetime.fromisoformat(calculated_at_iso), seed, bars, models)
+    run = open_run(
+        asset,
+        datetime.fromisoformat(calculated_at_iso),
+        seed,
+        bars,
+        models,
+        full=full,
+    )
     # O cabecalho sai por custo, nao na ordem pedida (D-73): com a fila por ordem de
     # chegada e duas vagas no worker, as redes na frente seguravam os modelos baratos por
     # minutos. `sorted` e estavel, entao dentro da categoria vale a ordem pedida -- e o
@@ -191,12 +213,19 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
 
     Qualquer falha depois de achar a execucao vira o par de erro do modelo, pelo
     `write_failed` -- numeros nulos, `error` preenchido --, e a tarefa termina normalmente.
+
+    `full` sai de `run.full_recompute`, e a identidade dos retratos, da linha. Cada tarefa
+    que calcula -- ou grava o par de erro -- registra uma linha em `info` com os retratos
+    `reaproveitados/treinados` por nivel (`-/-` nos baratos e no que falhou) e a duracao da
+    tarefa inteira.
     """
+    started = time.monotonic()
     try:
         run = RiskRun.objects.select_related("asset").get(pk=run_id)
     except Exception:
         logger.exception("execucao %s nao encontrada; nada a gravar", run_id)
         return
+    logged: SnapshotCounts = {}
     try:
         # Repeticao do Celery nao duplica linha nem estoura a unicidade.
         if RiskResult.objects.filter(run=run, model_name=model_name).exists():
@@ -215,22 +244,27 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
                 f"serie mudou desde a abertura: {len(bars)} pregoes, "
                 f"esperados {run.price_count}"
             )
-        result = run_experiment(
-            ExperimentConfig(
-                ticker=run.asset.ticker,
-                start=run.first_price_date.isoformat(),
-                end=run.as_of_date.isoformat(),
-                model_names=[model_name],
-                backtest_names=list(config.BACKTESTS),
-                alphas=list(config.ALPHAS),
-                train_window_days=run.train_window_days,
-                seed=run.seed,
-            ),
-            SilverPriceProvider(),
+        # A identidade vem da linha -- a janela, o primeiro pregao, a semente e a versao
+        # do motor que o manifesto declara --, e as versoes de biblioteca, do que calcula.
+        key = SnapshotKey(
+            asset=run.asset,
+            seed=run.seed,
+            engine_version=run.engine_version,
+            train_window_days=run.train_window_days,
+            first_price_date=run.first_price_date,
+            library_versions=library_versions(),
         )
+        result, counts = run_models(key, bars, [model_name], full=run.full_recompute)
         with transaction.atomic():  # os dois niveis do modelo entram juntos (RF-02)
-            write_results(run, result)
+            write_results(run, result, counts)
+        # o que o log mostra e o que foi gravado: so os niveis caros sem erro
+        logged = {
+            (r.model_name, r.alpha): counts[(r.model_name, r.alpha)]
+            for r in result.runs
+            if not r.error and (r.model_name, r.alpha) in counts
+        }
     except Exception as exc:
+        logged = {}
         try:
             with transaction.atomic():
                 write_failed(run, model_name, f"{type(exc).__name__}: {exc}")
@@ -240,6 +274,21 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
                 run_id,
                 model_name,
             )
+    logger.info(
+        "risco %s run=%d modelo=%s alpha=0.05 %s/%s alpha=0.01 %s/%s %.2fs",
+        run.asset.ticker,
+        run.id,
+        model_name,
+        *_pair(logged, model_name, 0.05),
+        *_pair(logged, model_name, 0.01),
+        time.monotonic() - started,
+    )
+
+
+def _pair(counts: SnapshotCounts, model_name: str, alpha: float) -> tuple[str, str]:
+    """`reaproveitados/treinados` de um nivel para o log; `-/-` quando nao se aplica."""
+    pair = counts.get((model_name, alpha))
+    return ("-", "-") if pair is None else (str(pair[0]), str(pair[1]))
 
 
 def _fechar_execucao(_resultados: object, run_id: int) -> None:

@@ -59,10 +59,25 @@ services:
     image: ruvor-worker
     hostname: worker
     # concorrencia declarada (RF-12 do M1.5): dois treinos de rede por vez. Nenhum limite de
-    # memoria e declarado, e a execucao real mediu o worker em 2,9 GiB depois da primeira
-    # rodada e 5,0 GiB depois da segunda -- ver o ESTADO; o dono e o M1.5b.
-    command: celery -A config worker --loglevel=info --concurrency=2
-    environment: *backend-env
+    # memoria do conteiner e declarado; quem segura a memoria e o --max-tasks-per-child
+    # (RF-13 do M1.5b), escolhido pela medicao da T8 do M1.5b: tres rodadas seguidas de
+    # `compute_risk --async --full` sem limite, VmRSS por processo a cada 5 s. O pai fica em
+    # ~120 MiB; cada filho sobe a ~650 MiB so de importar o TensorFlow e retem ~190 MiB por
+    # tarefa de rede (gru, lstm, garchnet), sem devolver -- desde a primeira, nao a partir de
+    # um limiar. Uma rodada tem 44 tarefas (12 de rede), ~22 e ~6 de rede por filho; a soma
+    # dos processos teve pico de 3,8 GiB na primeira rodada, 5,9 na segunda e 6,7 na
+    # terceira, ja com a maquina sem memoria livre. Nao ha numero de tarefas "seguro", entao
+    # o limite troca teto por custo: 5 tarefas por filho segura o pior caso (5 redes seguidas,
+    # ~650 + 5 x 190 MiB = 1,6 GiB) abaixo do filho da primeira rodada (1,9 GiB), ao custo de
+    # ~9 filhos novos por rodada, cada um pagando ~3 s de importacao. Medido com o limite, as
+    # mesmas tres rodadas: pico da soma 3,0, 2,6 e 2,8 GiB; nenhum filho acima de 1,6 GiB, e
+    # a duracao da rodada nao piorou (entre 5 min 21 s e 5 min 35 s nas seis).
+    command: celery -A config worker --loglevel=info --concurrency=2 --max-tasks-per-child=5
+    environment:
+      <<: *backend-env
+      # so aqui: o V-04 do M1.5b compara com uma referencia capturada neste conteiner, e
+      # pula com motivo em qualquer outro lugar
+      RUVOR_REFERENCE_ENV: worker
     volumes:
       - ./backend:/repo/backend
       - ./engine:/repo/engine

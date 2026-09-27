@@ -38,6 +38,10 @@ class RiskRun(models.Model):
     silencio. Para o `status` isso nao basta -- `CharField` sem padrao grava string vazia
     --, e quem o guarda e teste. `requested_models` e a lista de modelos pedidos, na ordem
     do pedido: e contra ela que o estado e decidido.
+
+    `full_recompute` diz o que foi **pedido** -- `--full` ou nao --, e tambem nao tem
+    `default` (M1.5b): quem cria a linha escreve o valor. As execucoes anteriores ao M1.5b
+    nasceram `false` na migration `0003`.
     """
 
     class Status(models.TextChoices):
@@ -74,6 +78,7 @@ class RiskRun(models.Model):
     )
     status = models.CharField(max_length=10, choices=Status)
     requested_models = models.JSONField()
+    full_recompute = models.BooleanField()
 
     class Meta:
         db_table = 'gold"."risk_run'
@@ -98,6 +103,10 @@ class RiskResult(models.Model):
 
     Quando `error` nao e vazio, todas as colunas de numero sao nulas — e assim que se
     distingue "o modelo falhou" de "o modelo rodou e foi reprovado".
+
+    `reused_snapshots` e `trained_snapshots` contam os retratos que o motor restaurou e os
+    que treinou naquele (modelo, nivel) -- so nos quatro modelos caros e so sem erro; nulos
+    nos demais casos (M1.5b, RF-09).
 
     `violations` e `expected_violations` sao **os do Kupiec**, sobre o periodo de teste
     inteiro; a leitura regulatoria, que olha so os ultimos 250 pregoes, fica em
@@ -130,6 +139,8 @@ class RiskResult(models.Model):
     basel_zone = models.CharField(max_length=16, null=True)
     adequate = models.BooleanField(null=True)
     error = models.TextField(default="")
+    reused_snapshots = models.IntegerField(null=True)
+    trained_snapshots = models.IntegerField(null=True)
 
     class Meta:
         db_table = 'gold"."risk_result'
@@ -142,3 +153,69 @@ class RiskResult(models.Model):
 
     def __str__(self) -> str:
         return f"{self.run_id} {self.model_name} {self.alpha}"
+
+
+class ModelSnapshot(models.Model):
+    """Um retrato por (identidade, ponto de retreino) de um modelo caro (M1.5b, RF-02).
+
+    Imutavel: nenhum caminho do codigo faz `update` nem `delete`, e a insercao e
+    idempotente pela unicidade `model_snapshot_identity`, que cobre **todos** os onze
+    componentes da identidade (RF-03) -- os hiperparametros e as versoes de biblioteca pelo
+    hash. `created_at` nao leva `auto_now_add`: quem grava escreve o `now()`, como nas
+    outras tabelas de dado.
+
+    O retrato nao pende de nenhuma `risk_run`: e reaproveitado por execucoes seguintes, e
+    por isso a unica FK e o `asset`, com `PROTECT`.
+    """
+
+    asset = models.ForeignKey(
+        "assets.Asset",
+        on_delete=models.PROTECT,
+        related_name="model_snapshots",
+    )
+    model_name = models.CharField(max_length=32)
+    alpha = models.DecimalField(max_digits=6, decimal_places=4)
+    position = models.IntegerField()
+    trained_through = models.DateField()
+    seed = models.IntegerField()
+    engine_version = models.CharField(max_length=32)
+    train_window_days = models.IntegerField()
+    first_price_date = models.DateField()
+    hyperparameters = models.JSONField()
+    hyperparameters_hash = models.CharField(max_length=64)
+    library_versions = models.JSONField()
+    library_versions_hash = models.CharField(max_length=64)
+    price_fingerprint = models.CharField(max_length=64)
+    payload = models.BinaryField()
+    payload_bytes = models.IntegerField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'gold"."model_snapshot'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=[
+                    "asset",
+                    "model_name",
+                    "alpha",
+                    "position",
+                    "seed",
+                    "engine_version",
+                    "hyperparameters_hash",
+                    "library_versions_hash",
+                    "train_window_days",
+                    "first_price_date",
+                    "price_fingerprint",
+                ],
+                name="model_snapshot_identity",
+            )
+        ]
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["asset", "model_name", "alpha", "position"],
+                name="model_snapshot_lookup",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_id} {self.model_name} {self.alpha} {self.position}"

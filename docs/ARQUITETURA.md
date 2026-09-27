@@ -280,16 +280,25 @@ faz busca de hiperparâmetros — 8 treinos completos por modelo. Roda algumas v
 
 ### Regime de produção
 
-**Não faz nada disso.** O modelo já está treinado; responder "qual o risco do ITUB4" é uma
-passada só.
+**Não repete o treino que já fez.** Cada modelo caro (`lstm`, `gru`, `garchnet`, `caviar`)
+guarda um **retrato** do estado treinado em cada ponto de retreino, em `gold.model_snapshot`
+([D-77](decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md)). A rotina
+diária reaproveita os retratos válidos, treina só o que falta e **reconstitui a série inteira
+do backtest por previsão** — igual, número a número, ao cálculo do zero
+([D-78](decisoes/D-78-incremental-igual-ao-do-zero-e-full-e-a-referencia.md)). Os cinco modelos
+baratos refazem o backtest inteiro, porque custa menos que guardar estado
+([D-79](decisoes/D-79-os-quatro-caros-usam-retratos-e-os-cinco-baratos-nao.md)).
 
 | Quando | O que roda | Custo |
 |---|---|---|
-| **Todo dia, de madrugada** | busca preços novos; previsão com modelos já treinados; reajuste dos modelos estatísticos | milissegundos por ativo |
-| **Semanal ou mensal** | retreino das redes neurais | minutos por ativo |
+| **Todo dia útil** | busca preços novos; reconstitui a série do backtest dos modelos caros por previsão, a partir dos retratos; refaz os cinco baratos | segundos por ativo — 4,5 a 10,3 s no fecho do M1.5b |
+| **A cada 252 pregões** — o ponto de retreino do protocolo, quando a série o cruza | um retreino por (modelo caro, nível), a partir do retrato anterior | uma fração do cálculo completo — não medido em dado real |
+| **Ativo novo, ou retrato invalidado** — preço já visto mudou, ou mudou a versão do motor ou de biblioteca | busca de configuração e todos os retreinos, do ponto invalidado em diante | ~2,5 min por ativo, se desde a posição 0 — 141 a 175 s no fecho do M1.5b |
 
-Os pesos de uma rede não mudam de forma relevante de um dia para o outro; o que muda
-diariamente é o dado que entra nela.
+A cadência é a do backtest do motor, não "semanal ou mensal": qualquer outra quebraria a
+igualdade com o backtest
+([D-80](decisoes/D-80-o-retreino-de-producao-e-a-cada-252-pregoes-restringe-a-d-18.md), que
+restringe a D-18).
 
 Quando o usuário pesquisa um ativo coberto, **a resposta já está no banco.**
 
