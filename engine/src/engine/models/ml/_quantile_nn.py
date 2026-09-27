@@ -30,6 +30,7 @@ from tensorflow import keras
 
 from engine import seeding
 from engine.models.base import VaREstimate, VaRModel
+from engine.snapshots import Snapshot, pack_network, unpack_network
 
 
 def _pinball_loss(alpha: float):
@@ -84,7 +85,55 @@ class QuantileNeuralVaR(VaRModel):
     def fit(self, returns: pd.Series) -> QuantileNeuralVaR:
         self.train_returns_ = returns
         self._fitted: dict[float, dict] = {}
+        # retratos por alpha, por posicao (M1.5b): os recebidos por `restore` e os que o
+        # ultimo `estimate_var` percorreu -- restaurados e treinados
+        self._restored: dict[float, dict[int, Snapshot]] = {}
+        self._taken: dict[float, dict[int, Snapshot]] = {}
         return self
+
+    def restore(self, alpha: float, snapshots: list[Snapshot]) -> None:
+        """Antes de estimate_var: os pontos cobertos nao sao treinados, sao carregados."""
+        self._restored[alpha] = {s.position: s for s in snapshots}
+
+    def snapshots(self, alpha: float) -> list[Snapshot]:
+        """Depois de estimate_var -- ou depois de ela levantar: os pontos que existem ate ali,
+        restaurados e treinados, em ordem de posicao."""
+        taken = self._taken.get(alpha, {})
+        return [taken[pos] for pos in sorted(taken)]
+
+    @staticmethod
+    def _take(model: keras.Model, config: tuple[int, int], position: int) -> Snapshot:
+        units, n_layers = config
+        return Snapshot(
+            position=position,
+            payload=pack_network(
+                model.get_weights(),
+                [v.numpy() for v in model.optimizer.variables],
+                units,
+                n_layers,
+            ),
+        )
+
+    @staticmethod
+    def _load(model: keras.Model, snapshot: Snapshot) -> None:
+        """Pesos e otimizador no MESMO objeto de modelo, ja com o otimizador construido."""
+        state = unpack_network(snapshot.payload)
+        model.set_weights(state.weights)
+        # POR POSICAO: os `path` levam o nome automatico do modelo, que muda entre processos
+        for var, valor in zip(
+            model.optimizer.variables, state.optimizer_variables, strict=True
+        ):
+            var.assign(valor)
+
+    def _model_from_snapshot(
+        self, snapshot: Snapshot, n_features: int, alpha: float
+    ) -> tuple[keras.Model, tuple[int, int]]:
+        state = unpack_network(snapshot.payload)
+        config = (state.units, state.n_layers)
+        model = self._compile(self._build_model(n_features, *config), alpha)
+        model.optimizer.build(model.trainable_variables)  # as variaveis sao preguicosas
+        self._load(model, snapshot)
+        return model, config
 
     def _windows_and_targets(self, returns: pd.Series):
         features = self._features(returns)
@@ -152,9 +201,11 @@ class QuantileNeuralVaR(VaRModel):
     def estimate_var(
         self, returns: pd.Series, alpha: float = 0.05, horizon: int = 1
     ) -> VaREstimate:
-        if alpha not in self._fitted:
-            self._fitted[alpha] = self._fit_for_alpha(alpha)
-        model = self._fitted[alpha]["model"]
+        restored = self._restored.get(alpha, {})
+        # o dicionario e publicado ANTES do treino: se um retreino levantar, `snapshots()`
+        # devolve os pontos ja percorridos (RF-02)
+        taken: dict[int, Snapshot] = {}
+        self._taken[alpha] = taken
 
         full_returns = pd.concat([self.train_returns_, returns])
         n_train = len(self.train_returns_)
@@ -166,14 +217,29 @@ class QuantileNeuralVaR(VaRModel):
         predicted = np.empty(len(returns))
         pos = 0
         while pos < len(returns):
-            chunk_end = min(pos + self.REFIT_FREQUENCY_DAYS, len(returns))
-            window_slice = slice(test_start_window + pos, test_start_window + chunk_end)
-            predicted[pos:chunk_end] = model.predict(
-                x_full[window_slice], verbose=0
-            ).flatten()
-
-            pos = chunk_end
-            if pos < len(returns):
+            if pos == 0 and 0 in restored:
+                # o objeto de modelo e montado UMA vez por (rede, alpha); os trechos
+                # seguintes so trocam pesos e otimizador
+                model, config = self._model_from_snapshot(
+                    restored[0], x_full.shape[-1], alpha
+                )
+                taken[0] = restored[0]
+            elif pos == 0:
+                if alpha not in self._fitted:
+                    fitted = self._fit_for_alpha(alpha)
+                    # depois do ajuste final: pesos ja restaurados pelo EarlyStopping e o
+                    # otimizador da ultima epoca -- o estado de onde o retreino parte
+                    fitted["snapshot"] = self._take(
+                        fitted["model"], fitted["config"], 0
+                    )
+                    self._fitted[alpha] = fitted
+                model = self._fitted[alpha]["model"]
+                config = self._fitted[alpha]["config"]
+                taken[0] = self._fitted[alpha]["snapshot"]
+            elif pos in restored:
+                self._load(model, restored[pos])
+                taken[pos] = restored[pos]
+            else:
                 # janela expansiva: continua o treino (warm start) com tudo ja observado
                 known_windows = test_start_window + pos
                 seeding.apply(position=pos)
@@ -184,6 +250,14 @@ class QuantileNeuralVaR(VaRModel):
                     batch_size=self.BATCH_SIZE,
                     verbose=0,
                 )
+                taken[pos] = self._take(model, config, pos)
+
+            chunk_end = min(pos + self.REFIT_FREQUENCY_DAYS, len(returns))
+            window_slice = slice(test_start_window + pos, test_start_window + chunk_end)
+            predicted[pos:chunk_end] = model.predict(
+                x_full[window_slice], verbose=0
+            ).flatten()
+            pos = chunk_end
 
         var_series = pd.Series(
             np.maximum(-predicted, 0) * (horizon**0.5), index=returns.index
