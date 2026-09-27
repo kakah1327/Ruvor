@@ -136,6 +136,7 @@ def _execucao_suja(ticker: str, coleta: CollectionRun, modelos: list[str]) -> Ri
         requested_by=None,
         status=RiskRun.Status.RUNNING,
         requested_models=[],
+        full_recompute=False,
     )
     RiskResult.objects.bulk_create(
         [

@@ -490,6 +490,7 @@ def write_risk(
         finished_at=finished_at,
         status=status,
         requested_models=list(model_names),
+        full_recompute=False,
     )
     RiskResult.objects.bulk_create([_row(run, model_run) for model_run in result.runs])
     return run
@@ -512,6 +513,7 @@ def open_run(
         finished_at=None,
         status=RiskRun.Status.RUNNING,
         requested_models=list(models),
+        full_recompute=False,
     )
 
 
