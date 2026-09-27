@@ -19,12 +19,14 @@ from apps.fundamentals.conform import (
     ConformedStatement,
     conform_year,
     infer_share_scale,
+    itr_superseded_by_dfp,
 )
 from apps.fundamentals.documents import DocumentRows, documents_from_zip
 from tests.fundamentals.conftest import CODES, Fields, edit_member, fixture_zip
 
 MIL = Decimal(1000)
 PETROBRAS = "009512"  # `CD_CVM` como vem no CSV
+PETROBRAS_CNPJ = "33.000.167/0001-01"  # `CNPJ_CIA` como vem no CSV
 Q1, Q2, Q3, Q4 = (
     date(2024, 3, 31),
     date(2024, 6, 30),
@@ -72,6 +74,71 @@ def drop_petrobras(reference: str) -> Callable[[Fields, list[Fields]], list[Fiel
         ]
 
     return edit
+
+
+# Os membros do ITR 2024 que `documents_from_zip` le: o indice, as seis demonstracoes e a
+# `composicao_capital`.
+ITR_2024_MEMBERS = (
+    "itr_cia_aberta_2024.csv",
+    *(
+        f"itr_cia_aberta_{statement}_2024.csv"
+        for statement in (
+            "BPA_con",
+            "BPA_ind",
+            "BPP_con",
+            "BPP_ind",
+            "DRE_con",
+            "DRE_ind",
+        )
+    ),
+    "itr_cia_aberta_composicao_capital_2024.csv",
+)
+
+
+def itr_2024_with_petrobras_at_dfp_date() -> bytes:
+    """O ITR 2024 com um documento da Petrobras em 2024-12-31, a data do DFP 2024.
+
+    Inserido no teste (declarado — a fonte real nao tem ITR em 2024-12-31): em cada membro
+    de `ITR_2024_MEMBERS`, as linhas da Petrobras (pelo `CNPJ_CIA`) de 2024-09-30 copiadas
+    com `DT_REFER = 2024-12-31`. As de 2024-09-30 ficam: o 4o trimestre segue tendo o ITR
+    de setembro como anterior.
+    """
+
+    def copy_to_q4(header: Fields, rows: list[Fields]) -> list[Fields]:
+        cnpj, refer = header.index("CNPJ_CIA"), header.index("DT_REFER")
+        copies = []
+        for row in rows:
+            if row[cnpj] == PETROBRAS_CNPJ and row[refer] == Q3.isoformat():
+                copy = list(row)
+                copy[refer] = Q4.isoformat()
+                copies.append(copy)
+        assert copies, "sem linha da Petrobras em 2024-09-30"
+        return [*rows, *copies]
+
+    payload = fixture_zip("itr_2024")
+    for member in ITR_2024_MEMBERS:
+        payload = edit_member(payload, member, copy_to_q4)
+    return payload
+
+
+def test_rf13b_itr_na_data_do_dfp_e_descartado_e_vale_o_dfp() -> None:
+    itr = documents(itr_2024_with_petrobras_at_dfp_date(), "itr", "9512")
+    dfp = documents(fixture_zip("dfp_2024"), "dfp", "9512")
+    assert [doc.reference_date for doc in itr] == [Q1, Q2, Q3, Q4]  # o cenario montou
+
+    statements = conform_year(itr, dfp, [])
+
+    assert itr_superseded_by_dfp(itr, dfp) == [Q4]
+    assert [s.reference_date for s in statements] == [Q1, Q2, Q3, Q4]  # uma linha so
+    q4 = statements[-1]
+    assert q4.source == "dfp"
+    # os valores do DFP, iguais aos da Petrobras sem o ITR inserido: o balanco do DFP
+    # (BPA_con L139) e o 4o trimestre DFP menos o ITR de setembro (DRE_con L127)
+    assert q4 == petrobras_2024()[Q4]
+    assert q4.total_assets == 1124797000 * MIL
+    assert q4.revenue == (490829000 - 369561000) * MIL
+    # sem DFP na data, nada e descartado
+    assert itr_superseded_by_dfp(itr, []) == []
 
 
 def test_rf13_petrobras_2024_tres_trimestres_isolados_do_itr() -> None:

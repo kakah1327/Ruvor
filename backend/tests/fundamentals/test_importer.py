@@ -46,6 +46,9 @@ from tests.fundamentals.conftest import (
     fixture_zip,
     serve_range,
 )
+from tests.fundamentals.test_conform_periods import (
+    itr_2024_with_petrobras_at_dfp_date,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -794,7 +797,8 @@ FILE_LINE = re.compile(
 YEAR_LINE = re.compile(
     r"(ano|novas) \d{4}: (\d+ companhias, \d+ criados, \d+ atualizados, \d+ ausentes, "
     r"\d+ plano desconhecido, \d+ falhos|FALHOU (\d+ )?\(\w+: .*\)"
-    r"|\d+ registros mal formados descartados \(.+\))"
+    r"|\d+ registros mal formados descartados \(.+\)"
+    r"|\d+ itr descartados por dfp na mesma data \(.+\))"
 )
 CATALOG_LINE = re.compile(
     r"catalogo: (\d+ companhias novas, \d+ sem documento na cvm|FALHOU .+)"
@@ -869,3 +873,46 @@ def test_rf27_registros_mal_formados_sao_relatados_e_nao_sao_falha() -> None:
     assert not any("mal formados" in t for t in text if t.startswith("ano 2023"))
     (run,) = runs()
     assert run.status == CollectionRun.Status.OK
+
+
+# RF-13b
+
+
+def test_rf13b_itr_e_dfp_na_mesma_data_vale_o_dfp_e_nao_e_falha() -> None:
+    add_stock(PETROBRAS)
+    # declarado: o ITR 2024 com um documento da Petrobras em 2024-12-31, a data do DFP
+    # 2024 (a construcao esta em `itr_2024_with_petrobras_at_dfp_date`)
+    fake = FakeCvm({}, {})
+    serve_range(
+        fake,
+        NOW_2025,
+        {
+            ("itr", 2024): itr_2024_with_petrobras_at_dfp_date(),
+            ("dfp", 2024): fixture_zip("dfp_2024"),
+        },
+    )
+
+    report = run_import_fundamentals(fake, now=clock(NOW_2025))  # nao levanta
+
+    (run,) = runs()
+    assert run.status == CollectionRun.Status.OK
+    assert run.error == ""
+    rows = FinancialStatement.objects.filter(
+        company__code_cvm=PETROBRAS, reference_date__year=2024
+    ).order_by("reference_date")
+    assert [(r.reference_date, r.source) for r in rows] == [
+        (date(2024, 3, 31), "itr"),
+        (date(2024, 6, 30), "itr"),
+        (date(2024, 9, 30), "itr"),
+        (date(2024, 12, 31), "dfp"),
+    ]
+    text = lines(report)
+    at = next(i for i, t in enumerate(text) if t.startswith("ano 2024: "))
+    assert text[at] == (
+        "ano 2024: 1 companhias, 4 criados, 0 atualizados, 0 ausentes, "
+        "0 plano desconhecido, 0 falhos"
+    )
+    assert text[at + 1] == "ano 2024: 1 itr descartados por dfp na mesma data (9512)"
+    assert YEAR_LINE.fullmatch(text[at + 1])
+    # o ano 2025 le o ITR 2024 so como anterior: nao descarta nada
+    assert not any("itr descartados" in t for t in text if not t.startswith("ano 2024"))

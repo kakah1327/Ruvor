@@ -449,15 +449,28 @@ def conform_year(
     """As linhas de uma companhia num ano de zip, por `reference_date` crescente.
 
     `itr` e `dfp` sao os documentos do ano; `itr_prev`, os ITR do ano anterior — so
-    candidatos ao 4o trimestre (RF-14), sem linha propria.
+    candidatos ao 4o trimestre (RF-14), sem linha propria. ITR com o `reference_date` de
+    um DFP do ano e descartado antes de gerar linha: vale o DFP (RF-13b).
     """
-    current = [_conform(doc) for doc in itr]
+    superseded = set(itr_superseded_by_dfp(itr, dfp))
+    current = [_conform(doc) for doc in itr if doc.reference_date not in superseded]
     candidates = current + [_conform(doc) for doc in itr_prev]
     statements = [_statement(item, _isolated(item)) for item in current]
     for doc in dfp:
         annual = _conform(doc)
         statements.append(_statement(annual, _fourth_quarter(annual, candidates)))
     return sorted(statements, key=lambda statement: statement.reference_date)
+
+
+def itr_superseded_by_dfp(
+    itr: list[DocumentRows], dfp: list[DocumentRows]
+) -> list[date]:
+    """As datas dos ITR que um DFP do mesmo ano tem na mesma data, uma por ITR, em ordem.
+
+    E o que `conform_year` descarta (RF-13b); o importer conta para o relatorio.
+    """
+    annual = {doc.reference_date for doc in dfp}
+    return sorted(doc.reference_date for doc in itr if doc.reference_date in annual)
 
 
 def infer_share_scale(L: Decimal, N: int, E: Decimal) -> int | None:

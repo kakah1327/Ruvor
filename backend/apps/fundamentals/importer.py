@@ -27,7 +27,11 @@ from django.db.models import Max
 from django.utils import timezone
 
 from apps.assets.models import Asset, CollectionRun
-from apps.fundamentals.conform import ConformedStatement, conform_year
+from apps.fundamentals.conform import (
+    ConformedStatement,
+    conform_year,
+    itr_superseded_by_dfp,
+)
 from apps.fundamentals.cvm import KINDS, CvmClientError, CvmDownload, CvmHead
 from apps.fundamentals.documents import (
     DocumentsByCompany,
@@ -137,6 +141,8 @@ class YearResult:
     unknown_plan: int = 0
     failures: list[tuple[str, str]] = field(default_factory=list)
     malformed: dict[str, int] = field(default_factory=dict)
+    # `code_cvm` de cada ITR descartado por DFP na mesma data (RF-13b), um por ITR
+    superseded: list[str] = field(default_factory=list)
     error: str | None = None
 
     @property
@@ -159,6 +165,12 @@ class YearResult:
             lines.append(
                 f"{prefix}: {sum(self.malformed.values())} registros mal formados "
                 f"descartados ({members})"
+            )
+        if self.superseded:
+            codes = ", ".join(sorted(set(self.superseded), key=int))
+            lines.append(
+                f"{prefix}: {len(self.superseded)} itr descartados por dfp na mesma "
+                f"data ({codes})"
             )
         lines.extend(
             f"{prefix}: FALHOU {code} ({error})" for code, error in self.failures
@@ -591,7 +603,13 @@ def _conform_year(
 
     companies = created = updated = missing = unknown_plan = 0
     failures: list[tuple[str, str]] = []
+    superseded: list[str] = []
     for code in sorted(set(itr) | set(dfp) | set(itr_prev)):
+        superseded.extend(
+            code
+            for reference in itr_superseded_by_dfp(itr.get(code, []), dfp.get(code, []))
+            if reference.year == year
+        )
         try:
             conformed = [
                 statement
@@ -622,6 +640,7 @@ def _conform_year(
         unknown_plan=unknown_plan,
         failures=failures,
         malformed=malformed,
+        superseded=superseded,
     )
 
 
