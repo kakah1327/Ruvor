@@ -316,8 +316,9 @@ disjuntos.
 **Ramo por bloco, e PR para entrar na `main`**
 ([D-82](decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md), que substitui a
 D-31). O ramo se chama `<frente>/<bloco>-<assunto>`. Do mesmo ramo saem três PRs — spec,
-plano e implementação —, e **a aprovação de cada uma, por um dev de outra frente, é o portão
-humano**. Merge com commit de merge, nunca _squash_, para o commit por tarefa sobreviver. A CI
+plano e implementação —, e **o merge de cada uma pelo dono da frente, com a CI verde, é o portão
+humano** ([D-85](decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md), que restringe a D-82 —
+revisão de outra frente só é obrigatória em PR que muda contrato entre frentes). Merge com commit de merge, nunca _squash_, para o commit por tarefa sobreviver. A CI
 roda em toda PR, e PR vermelha não entra ([D-83](decisoes/D-83-a-ci-barra-na-pr.md)).
 
 ### Quando parar

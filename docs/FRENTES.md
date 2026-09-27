@@ -37,7 +37,9 @@ contratos e próximo passo prontos — para quem entrar no time; até lá, ningu
 dela.
 
 **Ramo:** `<frente>/<bloco>-<assunto>`. Um ramo por bloco, com três PRs: spec, plano e
-implementação. **A aprovação da PR, por um dev de outra frente, é o portão humano.** Merge com
+implementação. **O merge da PR pelo dono da frente, com a CI verde, é o portão
+humano** ([D-85](decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md), que restringe a D-82);
+PR que muda contrato entre frentes passa também pela frente que o consome. Merge com
 commit de merge, nunca _squash_.
 
 ---
@@ -101,7 +103,7 @@ outras frentes.
 |---|---|---|
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | nenhuma ainda |
 | D-82 a D-84 | a divisão em frentes | todas |
-| D-85 a D-99 | `marco1` | — |
+| D-85 a D-99 | `marco1` | D-85 |
 | D-100 a D-119 | `identidade` | — |
 | D-120 a D-139 | `fundamentos` | — |
 

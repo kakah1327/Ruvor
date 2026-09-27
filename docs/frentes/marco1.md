@@ -10,19 +10,16 @@
 ## Agora
 
 **Bloco:** M1.5b — Treino separado da previsão
-**Etapa:** spec aprovada na revisão adversarial, **aguardando o portão humano**
-**Ramo:** `marco1/M1.5b-treino-separado`, ainda não criado
-
-A spec ([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md))
-foi escrita na `main` antes da [D-82](../decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md),
-e está sem commit, junto com a linha dela em `specs/README.md`.
+**Etapa:** spec aprovada pelo dono da frente (2026-09-26), PR #1 a mesclar pelo dono ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)); **plano escrito, em revisão**
+**Ramo:** `marco1/M1.5b-treino-separado`, com a spec
+([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md))
+e a linha dela em `specs/README.md`
 
 ## Próximo passo
 
-1. Criar o ramo `marco1/M1.5b-treino-separado` a partir da `main` e commitar nele a spec e a
-   linha do índice.
-2. Abrir a PR da spec. A aprovação, por um dev de outra frente, é o portão humano.
-3. Escrever o plano no mesmo ramo, e seguir o [PROCESSO](../PROCESSO.md).
+1. Mesclar a PR #1 (spec), com a CI verde — o dono da frente é o portão
+   ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)).
+2. Fechar a revisão do plano, e abrir a PR dele no mesmo ramo.
 
 ## Depois
 
@@ -46,3 +43,4 @@ são esperadas por outras frentes, e convém que saiam cedo:
 | Data | O que aconteceu |
 |---|---|
 | 2026-09-26 | frente criada pela D-84; a spec do M1.5b chega aprovada na revisão adversarial |
+| 2026-09-26 | spec do M1.5b aprovada pelo dono da frente; plano escrito no ramo; D-85: o dono da frente mescla a própria PR |
