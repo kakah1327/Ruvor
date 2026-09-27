@@ -11,8 +11,12 @@
 
 ## Agora
 
-**Etapa:** não começou
-**Ramo:** `fundamentos/M3.1-fundamentos`, ainda não criado
+**Etapa:** spec aprovada pela revisão adversarial (3ª rodada) — [`specs/M3.1-fundamentos.md`](../specs/M3.1-fundamentos.md);
+falta o portão humano: a PR da spec, revisada pela `marco1`, que também muda `FRENTES.md` (cerca
+com `gold`, contrato de `silver.price`)
+**Ramo:** `fundamentos/M3.1-fundamentos`, criado em 2026-09-26, sem commit
+**Máquina:** pronta — Docker Desktop instalado, seis serviços `healthy`, `migrate` aplicado,
+`pytest tests` no `worker` com 304 passando (2026-09-26)
 
 ## Próximo passo
 
@@ -68,3 +72,6 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | Data | O que aconteceu |
 |---|---|
 | 2026-09-26 | frente criada pela D-84 |
+| 2026-09-26 | fonte escolhida com o dono: dados abertos da CVM. Escopo: catálogo inteiro, 10 anos, até `gold`, bancos entram (lucro, PL, ROE e múltiplos valem; receita, margens e dívida nulas pelo plano), capitalização por classe, `bronze` com o zip inteiro. Spec escrita; a medição achou a escala das ações variando por companhia |
+| 2026-09-26 | máquina preparada (304 testes no `worker`). Revisão adversarial 1 reprovou: 4 graves, 15 médios, 10 leves, todos absorvidos. Decidido com o dono: a dívida bruta inclui arrendamento; exercício não civil tem regra genérica; a dívida de tipos do Celery não se paga no M3.1 |
+| 2026-09-26 | revisão 2 reprovou (3 graves: contas de bancos forma A e seguradoras, motivos da capitalização, units); revisão 3 **aprovou** (0 graves, 3 médios, 9 leves). Tudo absorvido. Spec pronta para a PR |
