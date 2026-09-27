@@ -105,7 +105,7 @@ outras frentes.
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | D-85 |
 | D-100 a D-119 | `identidade` | — |
-| D-120 a D-139 | `fundamentos` | — |
+| D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da
 spec seguinte.

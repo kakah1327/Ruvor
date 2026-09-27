@@ -91,6 +91,15 @@ conversas e entre agentes.
 | [D-79](D-79-os-quatro-caros-usam-retratos-e-os-cinco-baratos-nao.md) | Os quatro modelos caros usam retratos; os cinco baratos, não |
 | [D-80](D-80-o-retreino-de-producao-e-a-cada-252-pregoes-restringe-a-d-18.md) | O retreino de produção é a cada 252 pregões, o do protocolo; restringe a D-18 |
 | [D-81](D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md) | A imagem do `worker` é travada pelo lock do motor, e as versões das bibliotecas entram na identidade do retrato |
+| [D-120](D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) | Fundamento vem dos dados abertos da CVM (DFP e ITR), por HTTP direto |
+| [D-121](D-121-a-bronze-guarda-o-zip-inteiro-e-so-quando-o-conteudo-muda.md) | A `bronze` guarda o zip inteiro, e o conteúdo só de novo quando mudou |
+| [D-122](D-122-conta-se-localiza-pela-descricao-sob-mae-fixa.md) | Conta se localiza pela descrição sob mãe fixa definida, não pelo código; a companhia tem plano de contas |
+| [D-123](D-123-resultado-por-trimestre-isolado-e-12-meses-por-soma.md) | O resultado é guardado por trimestre isolado; o 4º trimestre é o DFP menos o ITR anterior; 12 meses é a soma de quatro trimestres |
+| [D-124](D-124-capitalizacao-soma-as-classes-e-a-escala-das-acoes-e-inferida.md) | A capitalização soma as classes e é nula quando falta preço de alguma; a escala das ações é inferida pelo LPA |
+| [D-126](D-126-companhia-e-entidade-ligada-ao-ticker-por-valor.md) | A companhia vira entidade em `silver.company`, ligada ao ticker por valor, sem FK em `silver.asset` |
+| [D-127](D-127-coleta-de-fundamentos-semanal-e-encadeada-restringe-a-d-69.md) | A coleta de fundamentos é semanal e encadeia o cálculo; restringe a D-69 |
+| [D-128](D-128-itr-e-dfp-na-mesma-data-vale-o-dfp.md) | ITR e DFP na mesma data: vale o DFP |
+| [D-129](D-129-lucro-so-na-mae-vale-a-mae.md) | Lucro só na mãe: vale a mãe; e o LPA não cai para a `3.99` |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
@@ -103,6 +112,7 @@ conversas e entre agentes.
 | [D-83](D-83-a-ci-barra-na-pr.md) | A CI barra na PR; substitui a D-42 |
 | [D-84](D-84-frentes-com-cerca-de-pastas.md) | Frentes simultâneas, cada uma com a sua cerca de pastas; restringe a D-23 |
 | [D-85](D-85-o-dono-da-frente-aprova-a-propria-pr.md) | O dono da frente aprova e faz o merge da própria PR; restringe a D-82 |
+| [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes
 

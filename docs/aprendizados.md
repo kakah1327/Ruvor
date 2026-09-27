@@ -548,6 +548,13 @@ mensagem culpa o caminho, não a conversão, e o mesmo comando funciona no Power
 **Faça:** prefixe com `MSYS_NO_PATHCONV=1` — `MSYS_NO_PATHCONV=1 docker compose exec -T -w
 /repo worker ...`. Vale também para `docker run -v /x:/y` e para qualquer `--flag=/caminho`.
 
+**Não é só o `-w`: argumento posicional também é convertido.** Um caminho do contêiner passado
+como argumento comum ao comando executado lá dentro (`... python script.py /tmp/saida`) chega
+convertido, e **sem erro nenhum** — o comando grava em outro lugar e sai 0. Na T2 do M3.1 isso
+gravou 47 MB de download **dentro do repositório**. Use `MSYS_NO_PATHCONV=1` em todo `docker
+compose exec` que leve caminho do contêiner, em qualquer posição, e confira `git status` depois
+de comando que grava arquivo.
+
 
 ## Ajuste do `arch` com `convergence_flag != 0` não é estimativa; e o ponto de partida padrão muda com a plataforma
 
@@ -895,3 +902,99 @@ o esvazia.
 **Faça:** identifique pela assinatura serializada: `sig["subtask_type"] == "chain"`, e
 confira os elos em `sig.tasks` — inclusive `immutable` no elo que não deve receber o retorno
 do anterior.
+
+
+## CSV dos dados abertos da CVM tem registro mal formado
+
+**Quando:** ao ler os CSVs dos zips de ITR e DFP da CVM (`dados.cvm.gov.br`) — ou qualquer CSV de
+dado aberto governamental — com o módulo `csv`.
+
+**Problema:** há registros com **aspas desbalanceadas** e com **quebra de linha dentro de
+campo**. O `csv` não levanta: junta linhas, ou parte uma em duas, e devolve registro com mais ou
+menos campos que o cabeçalho. Com `DictReader`, o valor de uma coluna vai parar em outra, ou
+vira `None`, e a conta segue calada com número errado.
+
+**Faça:** compare o número de campos de cada registro com o do cabeçalho, **descarte** o que
+difere e **conte** por membro do zip — o relatório diz quantos (`registros mal formados
+descartados`). Nunca aceite em silêncio nem tente consertar. É o que `apps/fundamentals/documents.py`
+faz.
+
+
+## Conta da CVM se localiza por descrição sob mãe definida, nunca por código
+
+**Quando:** ao extrair um campo — patrimônio, lucro, dívida, caixa — das demonstrações (BPA, BPP,
+DRE) dos dados abertos da CVM.
+
+**Problema:** o código não diz o que a conta é: o PL é `2.03` no plano geral, `2.07` ou `2.08`
+nos bancos; o lucro é `3.11`, `3.09` ou `3.13`. E a **mesma descrição aparece em dois níveis**:
+no BPP da Petrobras (DFP 2024), `2.01.04` "Empréstimos e Financiamentos" (R$ 68,8 bi, com
+arrendamento) e a filha `2.01.04.01`, de mesma descrição (R$ 15,9 bi, sem). Procurar a
+descrição em qualquer nível soma os dois ou pega o errado. A grafia também varia: "Atribuído a"
+e "Atribuído aos", "Não" e "não".
+
+**Faça:** localize a mãe de nível 1, **fixa** (`ST_CONTA_FIXA = S`), por descrição, e a filha
+**só direta** (código da mãe mais um segmento), por descrição igual, depois de `strip()`. Zero
+ou mais de uma linha → nulo, contado. Antes de acrescentar grafia à regra, **meça na fonte** que
+ela existe: a spec do M3.1 chegou a listar uma que não existe nos 22 zips. Regra em
+[D-122](decisoes/D-122-conta-se-localiza-pela-descricao-sob-mae-fixa.md).
+
+
+## A quantidade de ações da CVM não tem escala
+
+**Quando:** ao usar a `composicao_capital` dos dados abertos da CVM — capitalização, LPA, VPA.
+
+**Problema:** `QT_ACAO_*` vem **sem escala declarada**, e ela varia por companhia: a Petrobras
+informa em unidades (7.442.454.142 ON), a Vale e o Itaú em **milhares** (4.539.008 ON). Nenhuma
+coluna diz qual. Tratar tudo como unidade faz a capitalização da Vale sair mil vezes menor, sem
+erro. E a tabela só existe de 2020 em diante.
+
+**Faça:** infira a escala pelo LPA que a própria companhia informa (filhas de "Lucro Básico por
+Ação", no **acumulado**, sem `ESCALA_MOEDA`), aceite só dentro de uma tolerância estreita e
+devolva **nulo** fora dela. Espere nulo em cerca de um terço dos documentos, quase todos por
+insumo ausente ([D-124](decisoes/D-124-capitalizacao-soma-as-classes-e-a-escala-das-acoes-e-inferida.md)).
+
+
+## `Index.name` do Django tem limite de 30 caracteres
+
+**Quando:** ao declarar `models.Index(..., name=...)` num modelo, sobretudo com nome derivado da
+tabela.
+
+**Problema:** nome com mais de 30 caracteres reprova no `manage.py check` com `models.E034` — e o
+`makemigrations`, que roda as mesmas verificações. O limite é só do `Index`: o `UniqueConstraint` do mesmo
+modelo, `fundamental_indicator_asset_calculated_at`, tem 41 e passa, então copiar o padrão de
+nome da restrição para o índice quebra.
+
+**Faça:** abrevie o nome do índice (`fund_indicator_asset_recent`) e declare o nome **no plano**,
+já dentro do limite, para a tarefa não descobrir no `check`.
+
+
+## Conteúdo literal do plano sai do `ruff format` com outra quebra de linha
+
+**Quando:** ao verificar, por `grep` ou comparação de texto, que um trecho literal do plano entrou
+no código — registro de tarefa, entrada do Beat, lista de constantes.
+
+**Problema:** o critério de aceite roda `ruff format --check`, e o formatador quebra a linha
+longa do literal. No M3.1, `importar_fundamentos = app.task(name="...")(_importar_fundamentos)`
+tinha uma linha no plano e três no código; no M1.5, o literal do Beat também foi reformatado. Um
+`grep` pela linha do plano não acha nada, e parece que o contrato não foi cumprido — ou, numa
+varredura negativa, aprova vazio.
+
+**Faça:** procure por **conteúdo**, não por linha: o nome registrado, a chave, o valor — ou compare
+a árvore sintática. E escreva no plano que o literal é contrato de conteúdo, sujeito ao
+formatador.
+
+
+## Cenário de teste que não isola o eixo deixa a mutação passar
+
+**Quando:** ao escrever o teste de um filtro ou de uma regra que vem numa cadeia ordenada — "a
+primeira que casa decide" —, e ao medir a mutação que o tira.
+
+**Problema:** no M3.1, a mutação 35 (tirar o filtro de ticker **ativo** da classe) **passava**. O
+teste punha um ticker inativo numa classe **sem ticker ativo**, e a regra seguinte da cadeia
+(`missing_class_price`) dava o mesmo resultado com ou sem o filtro. O teste existia, estava
+verde, e não observava o filtro.
+
+**Faça:** monte o cenário em que **só** o eixo testado muda o resultado — aqui, um código antigo
+inativo **na mesma classe** de um ticker ativo, que sem o filtro vira `ambiguous_class`. Pergunte "que
+outra regra daria esta mesma saída?" antes de dar o teste por bom, e aplique a mutação de verdade
+([Teste de reprovação que nunca foi aplicado não é teste](#teste-de-reprovação-que-nunca-foi-aplicado-não-é-teste)).

@@ -52,6 +52,7 @@ ruvor/
 │       ├── assets/          ações, catálogo, preços
 │       ├── analytics/       camada 2 — comportamento
 │       ├── risk/            camada 3 — execução, manifesto
+│       ├── fundamentals/    balanços da CVM, indicadores fundamentalistas
 │       ├── portfolios/      carteiras
 │       ├── accounts/        organizações, usuários, permissões
 │       └── audit/
@@ -119,8 +120,8 @@ PostgreSQL**:
 |---|---|---|---|
 | `core` | nenhuma — é o dado operacional | organização, usuário, e depois carteiras, limites e chaves de API | a aplicação |
 | `bronze` | **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
-| `silver` | **Prata** | o catálogo de ativos — uma linha por ação negociada, mais o Ibovespa —, os preços diários limpos e conformados, com retorno logarítmico, e os eventos corporativos; e depois validação | base de trabalho |
-| `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, agregados de carteira | é o que a plataforma serve |
+| `silver` | **Prata** | o catálogo de ativos — uma linha por ação negociada, mais o Ibovespa —, os preços diários limpos e conformados, com retorno logarítmico, e os eventos corporativos; as companhias abertas da CVM e os balanços trimestrais conformados delas, um por (companhia, data de referência); e depois validação | base de trabalho |
+| `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, indicadores fundamentalistas por ação, agregados de carteira | é o que a plataforma serve |
 
 Os quatro esquemas existem desde a primeira migration do F4. O `core` é esquema à parte
 porque dado operacional não é camada de linhagem, e empurrá-lo para dentro de `bronze` ou de
@@ -363,11 +364,12 @@ caindo em outro ótimo local de uma superfície quase plana. Está registrado co
 
 **Produção**: forma definida (web + worker + beat + Postgres + Redis); hospedagem em aberto.
 O **beat** é o agendador do Celery, **um só por ambiente** — dois duplicariam cada disparo.
-Não calcula: agenda o catálogo e os preços, e o recálculo do risco vem encadeado aos preços
+Não calcula: agenda o catálogo, os preços e a coleta dos fundamentos na CVM; o recálculo do
+risco vem encadeado aos preços, e o cálculo dos indicadores fundamentalistas, à coleta
 ([D-69](decisoes/D-69-o-agendamento-e-encadeado.md)). Usa a mesma imagem do worker, porque
 importa as tarefas de app, que chegam no motor. Os horários são variáveis de ambiente
-(`RUVOR_BEAT_ASSETS_CRON`, `RUVOR_BEAT_PRICES_CRON`), e o valor de produção depende da
-hospedagem.
+(`RUVOR_BEAT_ASSETS_CRON`, `RUVOR_BEAT_PRICES_CRON`, `RUVOR_BEAT_FUNDAMENTALS_CRON`), e o
+valor de produção depende da hospedagem.
 Inclinação para PaaS (Render/Railway, ~US$ 20–50/mês) em vez de VPS — o time não tem
 capacidade de operação sobrando, e essas horas sairiam do produto.
 

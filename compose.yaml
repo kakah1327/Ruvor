@@ -102,6 +102,7 @@ services:
       <<: *backend-env
       RUVOR_BEAT_ASSETS_CRON: ${RUVOR_BEAT_ASSETS_CRON:-}
       RUVOR_BEAT_PRICES_CRON: ${RUVOR_BEAT_PRICES_CRON:-}
+      RUVOR_BEAT_FUNDAMENTALS_CRON: ${RUVOR_BEAT_FUNDAMENTALS_CRON:-}
     volumes:
       - ./backend:/repo/backend
       # o Beat nao calcula, mas importa: a descoberta automatica chega em `engine`, e a

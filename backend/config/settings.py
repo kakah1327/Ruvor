@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.assets",
     "apps.analytics",
     "apps.risk",
+    "apps.fundamentals",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -96,6 +97,10 @@ CELERY_BEAT_SCHEDULE = {
     "precos": {
         "task": "apps.assets.tasks.rotina_diaria",
         "schedule": _cron("RUVOR_BEAT_PRICES_CRON", "30 19 * * 1-5"),
+    },
+    "fundamentos": {
+        "task": "apps.fundamentals.tasks.rotina_fundamentos",
+        "schedule": _cron("RUVOR_BEAT_FUNDAMENTALS_CRON", "0 8 * * 1"),
     },
 }
 

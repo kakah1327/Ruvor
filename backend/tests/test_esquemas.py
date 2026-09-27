@@ -1,12 +1,14 @@
 """F4-01 e F4-02: os quatro esquemas existem, e as tabelas sao a lista fechada.
 
-Sao vinte e uma tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
+Sao vinte e cinco tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
 e as cinco do Django no `public` —, o M1.1 acrescentou as quatro do catalogo de ativos —
 tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e uma na
 `silver` (`asset`) — e o M1.2 acrescentou as tres dos precos: uma na `bronze`
 (`yahoo_chart`) e duas na `silver` (`price`, `corporate_event`). O M1.3 acrescentou as
 duas da camada 2, ambas na `gold` (`behavior_metric`, `return_histogram_bin`), e o M1.4
-acrescentou as duas da camada 3, tambem na `gold` (`risk_run`, `risk_result`). O M1.5b
+acrescentou as duas da camada 3, tambem na `gold` (`risk_run`, `risk_result`). O M3.1
+acrescentou as quatro dos fundamentos: uma na `bronze` (`cvm_file`), duas na `silver`
+(`company`, `financial_statement`) e uma na `gold` (`fundamental_indicator`). O M1.5b
 acrescentou a dos retratos dos modelos caros, na `gold` (`model_snapshot`).
 
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
@@ -32,12 +34,14 @@ TABELAS = {
     "bronze.b3_company_detail",
     "bronze.b3_company_listing",
     "bronze.collection_run",
+    "bronze.cvm_file",
     "bronze.yahoo_chart",
     "core.organization",
     "core.user",
     "core.user_groups",
     "core.user_user_permissions",
     "gold.behavior_metric",
+    "gold.fundamental_indicator",
     "gold.model_snapshot",
     "gold.return_histogram_bin",
     "gold.risk_result",
@@ -48,7 +52,9 @@ TABELAS = {
     "public.django_content_type",
     "public.django_migrations",
     "silver.asset",
+    "silver.company",
     "silver.corporate_event",
+    "silver.financial_statement",
     "silver.price",
 }
 
