@@ -47,6 +47,8 @@ FIRST_YEAR = 2016  # RF-03: o intervalo vai de 2016 ao ano corrente
 Q2 = Decimal("0.01")  # as casas de `DecimalField(22, 2)`
 
 Kind = Literal["itr", "dfp"]
+# A coleta serve tambem o IPE (M3.2, RF-02b); a conformacao do M3.1 segue em `Kind`.
+CollectKind = Literal["itr", "dfp", "ipe"]
 FileStatus = Literal["novo", "inalterado", "nao modificado", "ausente", "falhou"]
 Label = Literal["ano", "novas"]
 
@@ -100,7 +102,7 @@ class UnexpectedStatus(Exception):
 class FileResult:
     """Uma linha de arquivo do relatorio: o que aconteceu com um (tipo, ano)."""
 
-    kind: str
+    kind: CollectKind
     year: int
     status: FileStatus
     size: int | None = None
@@ -381,7 +383,7 @@ def _error(exc: BaseException) -> str:
 def _collect(
     source: CvmSource,
     run: CollectionRun,
-    kind: Kind,
+    kind: CollectKind,
     year: int,
     *,
     full: bool,
@@ -423,11 +425,11 @@ def _collect(
         return FileResult(kind, year, "falhou", error=_error(exc))
 
 
-def _unexpected(kind: str, year: int, message: str) -> FileResult:
+def _unexpected(kind: CollectKind, year: int, message: str) -> FileResult:
     return FileResult(kind, year, "falhou", error=_error(UnexpectedStatus(message)))
 
 
-def _is_last_seen(kind: str, year: int, last_modified: str | None) -> bool:
+def _is_last_seen(kind: CollectKind, year: int, last_modified: str | None) -> bool:
     """O `Last-Modified` e o do ultimo visto: maior `id` com 200 e `content_sha256`.
 
     Nulo nunca e igual; sem ultimo visto, nunca e (RF-04).
@@ -445,7 +447,7 @@ def _is_last_seen(kind: str, year: int, last_modified: str | None) -> bool:
     return seen == last_modified
 
 
-def _current_digest(kind: str, year: int) -> str | None:
+def _current_digest(kind: CollectKind, year: int) -> str | None:
     """O `content_sha256` da versao corrente: maior `id` com `payload` (RF-05)."""
     return (
         CvmFile.objects.filter(kind=kind, year=year, payload__isnull=False)
@@ -457,7 +459,7 @@ def _current_digest(kind: str, year: int) -> str | None:
 
 def _store(
     run: CollectionRun,
-    kind: str,
+    kind: CollectKind,
     year: int,
     download: CvmDownload,
     digest: str | None,
@@ -480,9 +482,14 @@ def _store(
 
 def _current_versions(
     exclude_run: CollectionRun | None = None,
+    kinds: tuple[str, ...] = KINDS,
 ) -> dict[tuple[str, int], int]:
-    """(tipo, ano) → `id` da versao corrente, sem carregar o `payload`."""
-    rows = CvmFile.objects.filter(payload__isnull=False)
+    """(tipo, ano) → `id` da versao corrente, sem carregar o `payload`.
+
+    So os tipos de `kinds`: o padrao, `KINDS`, deixa o IPE fora dos indices do M3.1, que o
+    leriam como ITR ou DFP e falhariam (M3.2, RF-02b).
+    """
+    rows = CvmFile.objects.filter(payload__isnull=False, kind__in=kinds)
     if exclude_run is not None:
         rows = rows.exclude(run=exclude_run)
     return {
