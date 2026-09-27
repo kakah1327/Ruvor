@@ -1,5 +1,5 @@
-"""Fundamentos da CVM: o zip cru na `bronze`, a companhia e o balanco na `silver`, os
-indicadores na `gold`.
+"""Fundamentos e contexto da CVM: o zip cru na `bronze`, a companhia, o balanco e os
+comunicados na `silver`, os indicadores e a comparacao com os pares na `gold`.
 
 O esquema vai embutido no `db_table`, com aspas no meio, como em `assets`: e o contrato da
 D-38 — mudar as aspas muda o esquema em que a tabela nasce. A chave primaria nao e
@@ -7,7 +7,9 @@ declarada: o `default_auto_field` do app e `BigAutoField`.
 
 `cvm_file` e so-acrescimo, sem unicidade (D-16). `company` e `financial_statement` sao o
 estado conformado corrente, atualizado por reconformacao (RF-18). `fundamental_indicator` e
-imutavel: recalcular insere linha nova, como `gold.behavior_metric` (D-55).
+imutavel: recalcular insere linha nova, como `gold.behavior_metric` (D-55). `disclosure` e o
+estado corrente do IPE, so a versao vigente (RF-04a do M3.2); `peer_comparison` e imutavel
+como o indicador de que depende.
 
 `silver.company` **nao tem FK para `silver.asset`**: a ligacao e por valor,
 `company.code_cvm = asset.code_cvm`.
@@ -35,6 +37,7 @@ class CvmFile(models.Model):
     class Kind(models.TextChoices):
         ITR = "itr"
         DFP = "dfp"
+        IPE = "ipe"
 
     run = models.ForeignKey(
         "assets.CollectionRun",
@@ -205,3 +208,102 @@ class FundamentalIndicator(models.Model):
 
     def __str__(self) -> str:
         return f"{self.asset_id} {self.calculated_at:%Y-%m-%d %H:%M:%S}"
+
+
+class Disclosure(models.Model):
+    """Um documento do IPE, estado corrente (RF-04a). Sem FK para a companhia (D-126)."""
+
+    class Category(models.TextChoices):
+        FATO_RELEVANTE = "fato_relevante"
+        COMUNICADO = "comunicado"
+        AVISO_ACIONISTAS = "aviso_acionistas"
+
+    code_cvm = models.CharField(max_length=20)
+    cnpj = models.CharField(max_length=14)
+    company_name = models.CharField(max_length=200)
+    year = models.IntegerField()
+    link = models.CharField(max_length=300, unique=True)
+    protocol = models.CharField(max_length=40)
+    version = models.IntegerField()
+    presentation = models.CharField(max_length=2)
+    category = models.CharField(max_length=24, choices=Category)
+    kind = models.CharField(max_length=200, blank=True)
+    species = models.CharField(max_length=200, blank=True)
+    title = models.CharField(max_length=500)
+    reference_date = models.DateField(null=True)
+    delivered_on = models.DateField()
+    run = models.ForeignKey(
+        "assets.CollectionRun",
+        on_delete=models.PROTECT,
+        related_name="disclosures_written",
+    )
+    updated_at = models.DateTimeField()
+
+    class Meta:
+        db_table = 'silver"."disclosure'
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["code_cvm", "year"], name="disclosure_code_year"),
+            models.Index(
+                fields=["code_cvm", "-delivered_on"], name="disclosure_code_recent"
+            ),
+        ]
+
+
+class PeerComparison(models.Model):
+    """A posição de uma ação entre os pares, numa execução. Imutável (D-55)."""
+
+    class Level(models.TextChoices):
+        SEGMENT = "segment"
+        SUBSECTOR = "subsector"
+        NONE = "none"
+
+    indicator = models.OneToOneField(
+        FundamentalIndicator, on_delete=models.PROTECT, related_name="peer_comparison"
+    )
+    asset = models.ForeignKey(
+        "assets.Asset", on_delete=models.PROTECT, related_name="peer_comparisons"
+    )
+    calculated_at = models.DateTimeField()
+    peer_level = models.CharField(max_length=10, choices=Level)
+    group_sector = models.CharField(max_length=120, null=True)
+    group_subsector = models.CharField(max_length=120, null=True)
+    group_segment = models.CharField(max_length=120, null=True)
+    roe_peer_median = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    roe_percentile = models.DecimalField(max_digits=5, decimal_places=4, null=True)
+    roe_peer_count = models.IntegerField(null=True)
+    net_margin_peer_median = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    net_margin_percentile = models.DecimalField(
+        max_digits=5, decimal_places=4, null=True
+    )
+    net_margin_peer_count = models.IntegerField(null=True)
+    ebit_margin_peer_median = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    ebit_margin_percentile = models.DecimalField(
+        max_digits=5, decimal_places=4, null=True
+    )
+    ebit_margin_peer_count = models.IntegerField(null=True)
+    net_debt_to_equity_peer_median = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    net_debt_to_equity_percentile = models.DecimalField(
+        max_digits=5, decimal_places=4, null=True
+    )
+    net_debt_to_equity_peer_count = models.IntegerField(null=True)
+    pe_peer_median = models.DecimalField(max_digits=18, decimal_places=6, null=True)
+    pe_percentile = models.DecimalField(max_digits=5, decimal_places=4, null=True)
+    pe_peer_count = models.IntegerField(null=True)
+    pb_peer_median = models.DecimalField(max_digits=18, decimal_places=6, null=True)
+    pb_percentile = models.DecimalField(max_digits=5, decimal_places=4, null=True)
+    pb_peer_count = models.IntegerField(null=True)
+
+    class Meta:
+        db_table = 'gold"."peer_comparison'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["asset", "calculated_at"],
+                name="peer_comparison_asset_calculated_at",
+            )
+        ]
