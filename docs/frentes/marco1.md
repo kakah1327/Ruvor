@@ -10,7 +10,7 @@
 ## Agora
 
 **Bloco:** M1.5b — Treino separado da previsão
-**Etapa:** spec aprovada pelo dono da frente (2026-09-26), PR #1 a mesclar pelo dono ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)); **plano escrito, em revisão**
+**Etapa:** spec aprovada pelo dono da frente (2026-09-26), PR #1 a mesclar pelo dono ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)); **plano aprovado (2026-09-26), implementação a começar pela T1**
 **Ramo:** `marco1/M1.5b-treino-separado`, com a spec
 ([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md))
 e a linha dela em `specs/README.md`
