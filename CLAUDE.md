@@ -62,8 +62,9 @@ assistente de IA ou link de sessão. A autoria é do time. Sem exceção
 ([D-27](docs/decisoes/D-27-commits-sem-assinatura.md)).
 
 **Não commitar nem enviar por iniciativa própria.** Exceto o commit por tarefa dentro do
-ramo do bloco. **Nunca direto na `main`**: tudo entra por PR, aprovada por um dev de outra
-frente ([D-82](docs/decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md)).
+ramo do bloco. **Nunca direto na `main`**: tudo entra por PR, com a CI verde, aprovada e
+mesclada pelo dono da frente ([D-82](docs/decisoes/D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md),
+[D-85](docs/decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)).
 
 **Não escrever fora da cerca da sua frente** ([FRENTES.md](docs/FRENTES.md#cercas)). Precisa?
 Combina na spec, e a frente dona revisa.

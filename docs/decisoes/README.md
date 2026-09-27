@@ -95,6 +95,7 @@ conversas e entre agentes.
 | [D-82](D-82-ramo-por-bloco-e-pr-revisada-por-outra-frente.md) | Ramo por bloco, e PR revisada por um dev de outra frente; substitui a D-31 |
 | [D-83](D-83-a-ci-barra-na-pr.md) | A CI barra na PR; substitui a D-42 |
 | [D-84](D-84-frentes-com-cerca-de-pastas.md) | Frentes simultâneas, cada uma com a sua cerca de pastas; restringe a D-23 |
+| [D-85](D-85-o-dono-da-frente-aprova-a-propria-pr.md) | O dono da frente aprova e faz o merge da própria PR; restringe a D-82 |
 
 ## As três mais consequentes
 
