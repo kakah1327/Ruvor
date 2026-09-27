@@ -12,13 +12,16 @@
 ## Agora
 
 **Bloco:** M3.2 — Contexto (camada 5: comunicados da companhia à CVM e comparação com os pares)
-**Etapa:** spec aprovada (PR #6 mesclada); plano pronto — [`planos/M3.2-contexto.md`](../planos/M3.2-contexto.md), revisão adversarial aprovada na rodada 2; falta a PR — [`specs/M3.2-contexto.md`](../specs/M3.2-contexto.md)
+**Etapa:** implementação T1 a T12 feita; falta o FECHA — spec ([PR #6](../specs/M3.2-contexto.md)) e plano ([PR #7](../planos/M3.2-contexto.md)) mesclados
 **Ramo:** `fundamentos/M3.2-contexto`, criado em 2026-09-27 a partir da `main` com o M3.1 mesclado (PR #5)
 
 ## Próximo passo
 
-1. PR do plano; o portão é o merge pelo dono da frente (D-85).
-2. Depois do merge, a implementação, a partir da T1. A PR de implementação passa pela `marco1`.
+1. Revisão final da implementação contra a spec.
+2. O FECHA do plano ("O que fica para o FECHA"): ESTADO, ROADMAP, índices, `CLAUDE.md`,
+   `aprendizados.md` e as decisões D-130 a D-134.
+3. A PR de implementação, que passa pela `marco1` (o serviço `beat`, `tests/risk/test_beat.py`,
+   os comentários das tarefas e o override do `pyproject.toml`).
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -58,6 +61,7 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-26 | revisão 2 reprovou (3 graves: contas de bancos forma A e seguradoras, motivos da capitalização, units); revisão 3 **aprovou** (0 graves, 3 médios, 9 leves). Tudo absorvido. Spec pronta para a PR |
 | 2026-09-27 | implementação T1 a T11, dezenove commits. A T11 reprovou a V-08 (ITR e DFP na mesma data) → RF-13b e T11b, vale o DFP; carga refeita do zero, 4 min 43 s, 339 companhias, V-13 igual à divulgação de PETR4, VALE3 e ITUB4. Revisão final: a primeira reprovou (lucro só na mãe saía 0) → RF-08b e T11c, vale a mãe; a segunda **aprovou**. **Bloco fechado**, D-120 a D-129 |
 | 2026-09-27 | M3.1 mesclado (PR #5, revisado pela `marco1`). M3.2 escolhido; decidido com o dono: notícias pelo IPE da CVM, pares pelo segmento com recuo para o subsetor, comparação pelos fundamentos do M3.1, coleta diária em entrada própria do Beat |
+| 2026-09-27 | M3.2: spec e plano mesclados (PRs #6 e #7). Implementação T1 a T12, um commit por tarefa. As 26 mutações da T11 reprovam, todas com código 1. V-05 a V-10 conferem. A carga real do IPE levou 118 s, com pico de ~152 MiB, e gravou 80.900 comunicados de 339 companhias. Os 80.842 da spec contavam pares (protocolo, versão) distintos; a conta por link soma os 58 pares repetidos. Na comparação, 471 ações: 390 por segmento, 64 por subsetor e 17 sem grupo (12 companhias, como medido). Suíte com 622 testes |
 | 2026-09-27 | auto-revisão da spec do M3.2: o IPE vazava para os índices do M3.1 (`_current_versions` sem filtro; `cvm_url` recusava `ipe`) → RF-02b; a comparação não cabia na transação do indicador → duas fases (RF-10, RF-15); vinte e sete tabelas, não vinte e seis. Decidido com o dono: **a dívida de tipos do Celery se paga no M3.2** (RF-20, D-134), medida no `worker` com `celery-types` 0.26.0. |
 | 2026-09-27 | revisão adversarial 1 **reprovou** (3 graves: grupo de pares pelo nome, que se repete entre setores; o que a coleta conforma; reapresentações acumulando na `silver`; 4 médios, 8 leves). Decidido com o dono: pares pela tupla (setor, subsetor, segmento), 12 companhias sem grupo hoje; a coleta conforma os anos novos e o histórico inteiro da companhia nova; a versão superada sai da `silver`. Tudo absorvido (RF-04a, RF-04b, RF-07b, RF-11, RF-15) |
 | 2026-09-27 | revisão adversarial 2 **aprovou** (0 graves, 3 médios, 3 leves). Absorvidos: o RF-04b media links divergentes que a fonte não traz (são todos idênticos); o RF-07b ganhou ordem, exclusão dos anos de (a) e o rótulo `novas {A}`; o conjunto do RF-04a passou a ser o conformado, e link que muda de companhia é atualizado; a mensagem do `CommandError` entra no inventário. Spec pronta para a PR |
