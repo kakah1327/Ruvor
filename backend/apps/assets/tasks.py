@@ -1,9 +1,9 @@
 """As tarefas de coleta que o Beat agenda: o catalogo, os precos e a rotina diaria.
 
 Molde de `config/tasks.py`: funcao com sublinhado, registrada com
-`app.task(name=...)(funcao)` -- sob mypy estrito, `@app.task` reprova com
-untyped-decorator. Os nomes de registro sao contrato: sao eles que vao no
-`CELERY_BEAT_SCHEDULE`.
+`app.task(name=...)(funcao)` -- a funcao com sublinhado e o ponto que os testes
+chamam e substituem; os tipos vem do `celery-types` (D-134). Os nomes de registro
+sao contrato: sao eles que vao no `CELERY_BEAT_SCHEDULE`.
 
 - `importar_ativos` e `importar_precos` sao cascas sobre os comandos de `manage.py`;
 - `importar_precos` **captura o `CommandError`** e devolve o que aconteceu (RF-10): o

@@ -79,7 +79,7 @@ def test_beat_tem_as_duas_entradas_de_preco_e_risco_e_a_de_fundamentos() -> None
 
 
 def test_nenhuma_entrada_do_beat_aponta_para_o_risco() -> None:
-    tasks = [entry["task"] for entry in settings.CELERY_BEAT_SCHEDULE.values()]
+    tasks = [str(entry["task"]) for entry in settings.CELERY_BEAT_SCHEDULE.values()]
     assert not [t for t in tasks if t.startswith("apps.risk.tasks.")], tasks
 
 

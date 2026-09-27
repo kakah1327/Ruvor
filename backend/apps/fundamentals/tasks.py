@@ -1,9 +1,9 @@
 """As tarefas de fundamentos que o Beat agenda: a coleta da CVM e o calculo dos indicadores.
 
 Molde literal de `apps/assets/tasks.py`: funcao com sublinhado, registrada com
-`app.task(name=...)(funcao)` -- sob mypy estrito, `@app.task` reprova com
-untyped-decorator. Os nomes de registro sao contrato: e o de `rotina_fundamentos` que vai
-no `CELERY_BEAT_SCHEDULE` (RF-30).
+`app.task(name=...)(funcao)` -- a funcao com sublinhado e o ponto que os testes
+chamam e substituem; os tipos vem do `celery-types` (D-134). Os nomes de registro sao
+contrato: e o de `rotina_fundamentos` que vai no `CELERY_BEAT_SCHEDULE` (RF-30).
 
 - `importar_fundamentos` e `calcular_fundamentos` sao cascas sobre os comandos de
   `manage.py` (RF-28);

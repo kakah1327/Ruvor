@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14", "ruff==0.16.6"]
+dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14", "ruff==0.16.6", "celery-types==0.26.0"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -37,12 +37,6 @@ plugins = ["mypy_django_plugin.main"]
 # derrubaria o mypy sem a variavel; settings_test a preenche.
 [tool.django-stubs]
 django_settings_module = "config.settings_test"
-
-# O Celery nao publica py.typed nem stubs. Restrito ao modulo dele: o codigo do
-# repositorio continua sob verificacao estrita.
-[[tool.mypy.overrides]]
-module = ["celery", "celery.*"]
-ignore_missing_imports = true
 
 # O motor tem verificacao de tipos propria, com a configuracao dele. Reverifica-lo sob o
 # `strict` do backend duplicaria o trabalho e reprovaria os dois modulos que a D-21 congela
