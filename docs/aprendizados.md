@@ -333,6 +333,12 @@ ressalva: a tarefa resultante é `Any` de qualquer forma, então isso remove o a
 perda de tipagem. Adotar o pacote `celery-types` é a saída de verdade, quando houver tarefas
 o bastante para pagar por ela.
 
+**Desfecho (M3.2, 2026-09-27):** o `celery-types==0.26.0` entrou no extra `dev`, e o override de
+`celery`/`celery.*` saiu ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)).
+Com os tipos, `@app.task` passa limpo no `mypy` estrito, e o único erro novo na suíte inteira foi
+um `object` sem `startswith` num teste. A forma `app.task(name=...)(_funcao)` **ficou**, mas
+agora pelo ponto de teste, não pelo `mypy`.
+
 
 ## Volume anônimo de `node_modules` sobrevive à recriação do contêiner
 
@@ -998,3 +1004,36 @@ verde, e não observava o filtro.
 inativo **na mesma classe** de um ticker ativo, que sem o filtro vira `ambiguous_class`. Pergunte "que
 outra regra daria esta mesma saída?" antes de dar o teste por bom, e aplique a mutação de verdade
 ([Teste de reprovação que nunca foi aplicado não é teste](#teste-de-reprovação-que-nunca-foi-aplicado-não-é-teste)).
+
+
+## O worktree não é o que o contêiner monta
+
+**Quando:** ao implementar num `git worktree` (em `.claude/worktrees/`) e rodar a suíte "no
+`worker`", como o PROCESSO manda.
+
+**Problema:** o `compose.yaml` monta `./backend` e `./engine` do diretório em que o `docker
+compose up` rodou, o checkout principal. `docker compose exec worker pytest` roda o código
+**do checkout principal**, não o do worktree: o teste novo "não existe", ou pior, a suíte passa
+sobre o código velho. O worktree também não tem `.env`, e `docker compose` dentro dele reprova na
+interpolação.
+
+**Faça:** do checkout principal, rode um contêiner avulso com o worktree montado por cima:
+`MSYS_NO_PATHCONV=1 docker compose run --rm --no-deps -v "<worktree>/backend:/repo/backend" -v
+"<worktree>/engine:/repo/engine" worker sh -c "python -m pytest ..."`. Ele usa o mesmo banco do
+serviço; duas suítes ao mesmo tempo disputam o banco de teste, então rode uma de cada vez. Para
+`docker compose config` no worktree, passe `--env-file` apontando para o `.env` do principal.
+
+
+## A contagem da medição tem de usar a identidade que a spec decidiu
+
+**Quando:** ao medir a fonte para a spec e escrever o número que a execução real vai conferir.
+
+**Problema:** a spec do M3.2 mediu **80.842** comunicados e a carga real gravou **80.900**. A
+diferença não era da fonte: a medição contou pares (protocolo, versão) distintos, e a spec
+decidiu que a identidade é o link ([D-131](decisoes/D-131-documento-do-ipe-se-identifica-pelo-link.md)).
+Os 58 pares repetidos com links diferentes, que a própria spec cita, somam uma linha cada. A
+diferença só se explicou porque o número esperado era "perto de", e a consulta por par devolveu
+exatamente 80.842.
+
+**Faça:** conte a medição pela mesma chave que o requisito usa, e registre a consulta junto do
+número. Quando a execução divergir, recalcule pelas duas chaves antes de supor que a fonte mudou.

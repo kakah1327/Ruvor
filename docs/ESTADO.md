@@ -12,9 +12,10 @@
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
 **Bloco:** na frente `marco1`, o **M1.5b fechou em 2026-09-27**, e **o M1.6 é o próximo**; na
-frente `fundamentos`, o **M3.1 fechou em 2026-09-27**, e o próximo bloco dela não está definido
-**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6) e `fundamentos` (M3.1 ✅,
-com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
+frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não
+está definido
+**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6) e `fundamentos` (M3.1 ✅ e
+M3.2 ✅, com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
 **Ramo:** um por bloco, e PR para entrar na `main`, mesclada pelo dono da frente com a CI
@@ -27,7 +28,8 @@ PostgreSQL e tem fila Celery sobre Redis, com o **Celery Beat** agendando a cole
 num banco vazio cria os quatro esquemas
 — `core`, `bronze`, `silver` e `gold` —, as tabelas `core.organization` e `core.user` e a
 organização fixa do Marco 1 (`slug` `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`,
-`silver.price`, `silver.corporate_event`, `silver.company` e `silver.financial_statement`. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
+`silver.price`, `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
+`silver.disclosure`. `manage.py import_assets` consulta a B3 e conforma o **catálogo de ações**:
 473 na coleta de 2026-09-21. `manage.py import_prices` consulta o Yahoo e conforma
 `silver.price` e `silver.corporate_event`: dez anos de PETR4, VALE3, ITUB4 e Ibovespa, ~2.490
 pregões cada, com retorno logarítmico. `manage.py compute_metrics` lê a `silver` e povoa a
@@ -41,16 +43,21 @@ testes e o veredito de adequação. **Desde o M1.5 isso também roda pela fila:*
 `ok`, `partial` ou `failed`. **Desde o M3.1 há fundamentos:** `manage.py import_fundamentals`
 guarda na `bronze` os zips de ITR e DFP da CVM desde 2016 e conforma companhias e balanços
 trimestrais em `silver` — 339 companhias, as do catálogo —, e `manage.py compute_fundamentals`
-grava em `gold` os indicadores e a capitalização, uma linha imutável por ação. Há, além da
-tarefa de fumaça `config.tasks.ping`, dez tarefas de app, em `apps/risk/tasks.py`,
-`apps/assets/tasks.py` e `apps/fundamentals/tasks.py`, e o Beat dispara três rotinas — o
-catálogo, às segundas, e os preços, de segunda a sexta, com o recálculo do risco **encadeado**
-a eles; e os fundamentos, às segundas, com o cálculo dos indicadores encadeado à coleta.
+grava em `gold` os indicadores e a capitalização, uma linha imutável por ação. **Desde o M3.2
+há contexto:** `manage.py import_disclosures` guarda na `bronze` os zips do IPE da CVM e conforma
+em `silver.disclosure` os fatos relevantes, comunicados ao mercado e avisos aos acionistas das
+companhias do catálogo, só na versão corrente — 80.900 —, e o `compute_fundamentals`, depois dos
+indicadores, grava em `gold.peer_comparison` a posição de cada ação entre os pares do segmento da
+B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, onze tarefas de app, em
+`apps/risk/tasks.py`, `apps/assets/tasks.py` e `apps/fundamentals/tasks.py`, tipadas pelo
+`celery-types`, e o Beat dispara quatro rotinas — o catálogo, às segundas, e os preços, de segunda
+a sexta, com o recálculo do risco **encadeado** a eles; os fundamentos, às segundas, com o cálculo
+dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 20h.
 **Desde o M1.5b o recálculo do risco não refaz o treino:** os quatro modelos caros guardam um
 retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
 treina só o que falta e reconstitui a série inteira do backtest por previsão — em segundos por
 ativo, igual campo a campo ao cálculo do zero, que `compute_risk --full` ainda faz. O motor está
-no `0.3.0`. Vinte e cinco tabelas, em cinco apps. Ainda não há API de negócio nem tela de
+no `0.3.0`. Vinte e sete tabelas, em cinco apps. Ainda não há API de negócio nem tela de
 produto.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
@@ -69,10 +76,10 @@ não sabe: **`pytest backend` no hospedeiro reprova onze testes e dá erro em du
 vinte**, de propósito — o `settings_test.py` fixa valores de banco inexistentes para que um
 `.env` incompleto não passe despercebido. Cinco leem o banco configurado; seis são o V-17 do
 M1.5b, que confere a imagem do `worker` e lê o lock em `/repo/engine`, o caminho de dentro do
-contêiner; os 220 são os que pedem `django_db` e nem conseguem criar o banco de teste.
+contêiner; os erros são os testes que pedem `django_db` e nem conseguem criar o banco de teste.
 **Dentro do contêiner os cinco exigem `migrate` aplicado.** Não é regressão — medido em
 2026-09-27, com 529 testes: `11 failed, 298 passed, 220 errors`, depois do merge das duas
-frentes.
+frentes; e no fecho do M3.2, com 622: `11 failed, 357 passed, 254 errors`.
 
 ## O que foi concluído
 
@@ -952,6 +959,113 @@ retreino de produção é a cada 252 pregões; restringe a D-18) e
 [D-81](decisoes/D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md) (a imagem do
 `worker` travada pelo lock, e as versões na identidade do retrato).
 
+### M3.2 — Contexto
+
+Spec em [`specs/M3.2-contexto.md`](specs/M3.2-contexto.md) e plano em
+[`planos/M3.2-contexto.md`](planos/M3.2-contexto.md). Frente `fundamentos`, no ramo
+`fundamentos/M3.2-contexto`: onze commits de tarefa, de `98f49db` a `bc7f29c`, mais o de fecho —
+T1 a T10 e T12; a T11 não produz. A T8 foi commitada antes da T2 (o `peers.py` é puro e não
+depende dos modelos), contra a ordem numérica que o plano pede; nada mais mudou por isso. A PR
+de implementação passa também pela `marco1`: escreve no serviço `beat` do `compose.yaml`, em
+`tests/risk/test_beat.py`, no comentário das tarefas de `apps/assets`, `apps/risk` e `config`, e
+remove um override do `backend/pyproject.toml`.
+
+| Verificação | Resultado |
+|---|---|
+| Esquemas, a suíte, estilo e migrations (V-01, V-03, V-04) | ✅ 622 testes no `worker`; `test_esquemas` com as vinte e sete; `mypy` estrito limpo em 135 arquivos; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudanças |
+| A volta da `0002` (V-02, num banco descartável) | ✅ `migrate fundamentals 0001` e `migrate` com código 0; depois da volta, `bronze.cvm_file` com `[('itr', 1)]` — a linha `ipe` saiu, a `itr` ficou |
+| Sem dependência nova (V-05) | ✅ `project.dependencies` iguais às do merge-base: as cinco de sempre |
+| **Carga real do IPE, V-06** (2026-09-27, **118 s**) | ✅ código 0; `coleta: 11 arquivos, 11 novos`; **80.900** linhas em `silver.disclosure`, de **339 companhias** — 17.618 fatos relevantes, 50.793 comunicados ao mercado e 12.489 avisos aos acionistas; a Petrobras em 2026-09-19 com "Petrobras informa sobre adesão à nova subvenção econômica" |
+| **Segunda coleta e `--reconform 2024`, V-07** | ✅ os 11 `nao modificado`; `ano 2024: 328 companhias, 0 criados, 0 atualizados, 0 removidos, 0 falhos` |
+| **Cálculo com os preços do dia, V-08** | ✅ `comparacao: 471 acoes, 17 sem grupo, 0 falhas` e `calculo: 471 acoes, 0 sem balanco, 0 fora de escala, 0 falhas`; 471 `peer_comparison` para 471 indicadores, nenhuma com `asset` ou `calculated_at` diferente do indicador; menor `peer_count` não nulo, 3 |
+| A variável do Beat chega ao serviço (V-09) | ✅ `RUVOR_BEAT_DISCLOSURES_CRON='15 21 3 * 2'` no `docker compose config` do `beat` |
+| Os tipos do Celery (V-10) | ✅ nenhum override de `celery`; `celery-types` 0.26.0 no `worker`. A imagem **não** foi reconstruída para o V-10: a que roda já tinha o pacote |
+
+622 testes no backend; vinte e sete tabelas; cinco apps; onze tarefas de app mais o `ping`;
+quatro entradas no Beat e quatro variáveis `RUVOR_BEAT_*`.
+
+**As 26 mutações da T11 reprovaram, todas com código 1**, e a árvore voltou limpa depois de cada
+uma. A primeira linha `FAILED` de cada uma:
+
+| # | Mutação | Reprovou em |
+|---|---|---|
+| 1 | identidade por (protocolo, versão) | `test_rf04_mesmo_protocolo_e_versao_com_dois_links_sao_duas_linhas` |
+| 2, 3 | uma categoria a menos; `"Assembleia"` a mais | `test_rf03_as_tres_categorias_entram_com_o_valor_da_tabela` |
+| 4 | título sem o recuo para `Tipo`/`Especie` | `test_rf05_assunto_vazio_recua_para_o_tipo` |
+| 5 | truncar em 500 + `…` | `test_rf05_assunto_de_761_vira_500_com_reticencias` |
+| 6 | reconformar gravando sempre | `test_rf04_reconformar_igual_nao_cria_nem_atualiza_nem_remove` |
+| 7 | não remover o link superado | `test_rf04a_versao_superada_por_reapresentacao_e_removida` |
+| 8 | `year_links` pelo zip inteiro | `test_rf04a_link_que_vai_para_categoria_de_fora_e_removido` |
+| 9 | remoção pelos links da companhia | `test_rf04a_link_que_passa_da_que_ordena_primeiro_para_a_seguinte` |
+| 10 | coleta sem o caminho (b) | `test_rf07b_b_companhia_nova_com_tudo_nao_modificado` |
+| 11 | (b) calculado depois de (a) | `test_rf07b_a_e_b_na_mesma_coleta` |
+| 12 | link divergente aceito | `test_rf04b_duplicada_com_assunto_diferente_e_conflito_sem_documento` |
+| 13, 14 | `_current_versions` sem `kinds`; `ipe` em `KINDS` | `test_rf02b_ipe_na_bronze_nao_chega_aos_indices_do_m31` |
+| 15 | sem o recuo para o subsetor | `test_rf11_segmento_de_tres_fica_no_segmento` |
+| 16 | grupo pelo nome do segmento | `test_rf11_segmento_de_mesmo_nome_noutro_subsetor_nao_se_mistura` |
+| 17 | grupo contando tickers | `test_rf11_companhia_de_dois_tickers_conta_uma_vez_no_tamanho_do_grupo` |
+| 18 | percentil com `<=` | `test_rf13_n_impar` |
+| 19 | mediana sem a própria ação | `test_rf13_n_par_media_dos_dois_centrais` |
+| 20 | `n < 3` sem anular | `test_rf13_n_dois_com_grupo_de_tres_companhias_e_nulo` |
+| 21 | grupo dos valores calculados | `test_rf10_acao_que_falhou_na_primeira_fase_fica_fora_do_grupo` |
+| 22 | segunda fase numa transação só | `test_rf15_falha_na_comparacao_de_uma_acao_reverte_so_ela` |
+| 23 | quarta entrada com `crontab(*campos)` | `test_rf17_horario_de_comunicados_vem_da_variavel_com_campos_nomeados` |
+| 24 | sem a linha do `compose.yaml` | V-09: `RUVOR_BEAT_DISCLOSURES_CRON=None` |
+| 25 | o override de `celery.*` de volta | V-10: `[{'module': ['celery', 'celery.*'], 'ignore_missing_imports': True}]` |
+| 26 | a volta da `0002` sem apagar o `ipe` | V-02: `[('ipe', 1), ('itr', 1)]` depois da volta |
+
+**Revisão final em uma rodada: aprovou**, com 0 graves, 0 médios e 3 leves. Dois viraram
+registro aqui: a ordem dos commits e a saída das verificações, que é esta tabela. O terceiro
+fica registrado sem correção: uma exceção **fora** do laço por ação da segunda fase — na consulta
+das linhas ou no próprio `compare_all` — propaga crua, sem `FundamentalsFailed`, e o relatório
+da primeira fase se perde, embora os indicadores fiquem gravados. A spec só cobre a falha por
+ação, e hoje o `compare_all` não tem caminho plausível de exceção.
+
+#### Os números da execução real
+
+A carga do IPE do zero (2026-09-27) levou **118 s** para 11 arquivos, ~20 MiB. Memória do
+contêiner que rodou a carga: **pico de ~152 MiB**, amostrado a cada 3 s — o IPE é pequeno perto
+do ITR e do DFP, cujo pico foi 2,235 GiB. As linhas `ano` cobrem 2016 a 2026, de 242 a 331
+companhias e de 4.782 (2016) a 9.806 (2021) comunicados por ano.
+
+**V-08**, a comparação na execução de 2026-09-27: 390 ações no segmento (285 companhias), 64 no
+subsetor (42) e 17 sem grupo (**12 companhias, o mesmo número medido no catálogo pela spec**).
+
+| Ativo | Grupo | `roe`: percentil, mediana dos pares, pares |
+|---|---|---|
+| PETR4 | segmento Petróleo. Gás e Biocombustíveis / Exploração. Refino e Distribuição | 1,0000 · 0,1126 · 7 |
+| VALE3 | segmento Materiais Básicos / Mineração / Minerais Metálicos | 0,0000 · 0,0953 · 4 |
+| ITUB4 | segmento Financeiro / Intermediários Financeiros / Bancos | 0,8235 · 0,1396 · 18 |
+
+`pe` e `pb` saíram **nulos em todas**: só PETR4, VALE3, ITUB4 e o Ibovespa têm preço, e as três
+companhias estão em segmentos diferentes — nenhum grupo chega a 3 valores. É o que a spec previu
+("A comparação de `pe` e `pb` sai quase sempre vazia hoje").
+
+**O que a execução contrariou.**
+
+- **80.900, não 80.842.** A spec mediu 80.842 comunicados, e a carga gravou 58 a mais. Não é a
+  fonte: a medição contou pares (protocolo, versão) distintos, e a identidade decidida é o link
+  ([D-131](decisoes/D-131-documento-do-ipe-se-identifica-pelo-link.md)). A consulta por par sobre
+  a `silver` carregada devolve exatamente 80.842, e os 58 são os pares repetidos com links
+  diferentes que a própria spec cita. Virou aprendizado.
+- **O worktree não é o que o contêiner monta.** A implementação correu num `git worktree`, e o
+  `worker` monta o `./backend` do checkout principal: a suíte "no `worker`" rodaria o código
+  velho. Tudo foi rodado em contêiner avulso com o worktree montado por cima. Virou aprendizado.
+
+Cinco decisões nasceram do bloco:
+[D-130](decisoes/D-130-noticia-e-o-que-a-companhia-divulga-na-cvm.md) (a notícia é o que a
+companhia divulga na CVM, não a imprensa),
+[D-131](decisoes/D-131-documento-do-ipe-se-identifica-pelo-link.md) (o documento se identifica
+pelo link, e a `silver` guarda só a versão corrente),
+[D-132](decisoes/D-132-pares-sao-o-segmento-da-b3-pela-tupla.md) (os pares são o segmento da B3,
+ou o subsetor, pela tupla; a posição é o percentil),
+[D-133](decisoes/D-133-coleta-de-comunicados-diaria-restringe-a-d-127.md) (a coleta de
+comunicados é diária, em entrada própria; restringe a D-127) e
+[D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md) (as tarefas Celery são
+tipadas por `celery-types`).
+
+**A dívida de tipos do Celery está quitada** (ver "Dívida registrada").
+
 ## Próximo passo
 
 O M1.5b entrou na `main` pela PR #4, em 2026-09-27. **Na frente `marco1`, a spec do M1.6 — Aplicação web**: a API de leitura, o kit completo, os mockups e as
@@ -974,12 +1088,14 @@ M1.5b, os retratos. Ela ainda se reconstrói — o preço está em `silver`, e u
 ativos leva ~5,5 min —, mas só para a série de
 hoje, não para a de cada dia passado.
 
-**Na frente `fundamentos`, o próximo bloco não está definido.** O ROADMAP põe o M3.2 — Contexto
-depois do M3.1, e a escolha é do dono da frente ([frentes/fundamentos.md](frentes/fundamentos.md)).
-O que o M3.1 deixa para quem vier: a tela dos fundamentos é de outro bloco, depois do casco do
-M1.6, e precisa mostrar de quando é o preço (`price_date`) e o que entra na dívida; e a coleta de
-fundamentos também passa pelo `worker` — pico de 2,235 GiB na carga do zero —, às segundas às
-8h, uma hora depois do catálogo.
+**Na frente `fundamentos`, o próximo bloco não está definido.** O M3.2 fecha o Marco 3 do
+ROADMAP para esta frente, e a escolha é do dono dela ([frentes/fundamentos.md](frentes/fundamentos.md)).
+O que o M3.1 e o M3.2 deixam para quem vier: as telas dos fundamentos e do contexto são de outro
+bloco, depois do casco do M1.6. A dos fundamentos precisa mostrar de quando é o preço
+(`price_date`) e o que entra na dívida. A do contexto precisa chamar os documentos de
+"comunicados da companhia à CVM", não de notícias, e mostrar o grupo de pares e o nível. A coleta
+de fundamentos passa pelo `worker` — pico de 2,235 GiB na carga do zero —, às segundas às 8h; a
+de comunicados, de segunda a sexta às 20h, é leve.
 
 ---
 
@@ -992,7 +1108,7 @@ fundamentos também passa pelo `worker` — pico de 2,235 GiB na carga do zero �
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
-| Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue | `backend/pyproject.toml`; `backend/config/tasks.py`, `backend/apps/risk/tasks.py`, `backend/apps/assets/tasks.py` e `backend/apps/fundamentals/tasks.py` registram sem decorador por isso | **Antes do próximo bloco, de qualquer frente, que crie tarefa Celery** — prazo novo, do M3.1; esse bloco combina a mudança com a `marco1` na spec dele ([spec M3.1](specs/M3.1-fundamentos.md#a-dívida-de-tipos-do-celery-não-se-paga-aqui)) |
+| ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |

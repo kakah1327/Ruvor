@@ -9,7 +9,7 @@ Cada bloco recebe spec própria → plano próprio → implementação, conforme
 
 **Frentes trabalham ao mesmo tempo** desde 2026-09-26
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)): `marco1` fica com o M1.5b e o
-M1.6, `fundamentos` com o M3.1; `identidade`, com o M2.1, espera dono. A ordem dos marcos é a da entrega ao
+M1.6, `fundamentos` com o M3.1 e o M3.2; `identidade`, com o M2.1, espera dono. A ordem dos marcos é a da entrega ao
 usuário; o que impede um bloco de começar é dependência. Quem faz o quê está em
 [FRENTES.md](FRENTES.md).
 
@@ -80,7 +80,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 | | Bloco | Entrega |
 |---|---|---|
 | ✅ | **M3.1 — Fundamentos** | camada 4, com fonte adequada para B3 (Yahoo não serve) — dados abertos da CVM (ITR e DFP, 2016 em diante) em `bronze`, companhias e balanços trimestrais em `silver`, indicadores e capitalização em `gold`; `import_fundamentals`, `compute_fundamentals` e a coleta semanal encadeada no Beat. Fechado em 2026-09-27, frente `fundamentos`: 339 companhias, 471 ações calculadas, e lucro, PL e dívida de PETR4, VALE3 e ITUB4 iguais à divulgação das companhias. **EBITDA fica de fora** |
-| ⬜ | **M3.2 — Contexto** | camada 5: notícias e comparação setorial |
+| ✅ | **M3.2 — Contexto** | camada 5: notícias e comparação setorial — os comunicados da companhia à CVM (IPE: fato relevante, comunicado ao mercado e aviso aos acionistas) em `silver.disclosure`, só na versão corrente, coletados de segunda a sexta pela quarta entrada do Beat; e a comparação com os pares do segmento da B3, ou do subsetor, em `gold.peer_comparison`, gravada pelo `compute_fundamentals` depois dos indicadores. Fechado em 2026-09-27, frente `fundamentos`: 80.900 comunicados de 339 companhias, 471 ações comparadas, 17 sem grupo. **Imprensa e o texto do documento ficam de fora** ([D-130](decisoes/D-130-noticia-e-o-que-a-companhia-divulga-na-cvm.md)) |
 
 ---
 
