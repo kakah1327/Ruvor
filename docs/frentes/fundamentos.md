@@ -12,15 +12,13 @@
 ## Agora
 
 **Bloco:** M3.2 — Contexto (camada 5: comunicados da companhia à CVM e comparação com os pares)
-**Etapa:** spec na PR #6 (portão); plano pronto — [`planos/M3.2-contexto.md`](../planos/M3.2-contexto.md), revisão adversarial aprovada na rodada 2; falta a PR — [`specs/M3.2-contexto.md`](../specs/M3.2-contexto.md)
+**Etapa:** spec aprovada (PR #6 mesclada); plano pronto — [`planos/M3.2-contexto.md`](../planos/M3.2-contexto.md), revisão adversarial aprovada na rodada 2; falta a PR — [`specs/M3.2-contexto.md`](../specs/M3.2-contexto.md)
 **Ramo:** `fundamentos/M3.2-contexto`, criado em 2026-09-27 a partir da `main` com o M3.1 mesclado (PR #5)
 
 ## Próximo passo
 
-1. PR da spec, com a mudança do `FRENTES.md` (o M3.2 na linha da frente). O portão é o merge
-   pelo dono da frente (D-85). A spec toca arquivos da `marco1` (RF-17, RF-18, RF-20): a
-   PR pede a revisão dela.
-2. Depois do merge, o plano.
+1. PR do plano; o portão é o merge pelo dono da frente (D-85).
+2. Depois do merge, a implementação, a partir da T1. A PR de implementação passa pela `marco1`.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -66,3 +64,4 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-27 | PR #6 da spec aberta. Plano escrito, doze tarefas (T1 os tipos do Celery, antes de tudo; T11 as 26 mutações; T12 a execução real); o formato do IPE conferido no zip de 2026 (datas ISO, latin-1, `
 `). |
 | 2026-09-27 | revisão do plano: a 1 **reprovou** (1 grave: a remoção do RF-04a dependia da ordem das companhias → `year_links`, o conjunto conformado do ano inteiro; 7 médios, quase todos mutações que o critério não pegava); a 2 **aprovou** (0 graves, 0 médios, 3 leves, absorvidos). Plano pronto para a PR |
+| 2026-09-27 | PR #6 (spec) mesclada pelo dono da frente, sem revisão da `marco1` registrada na PR. PR do plano aberta |
