@@ -129,23 +129,26 @@ existe API de negócio nem tela de produto.
   neurais fixam semente por `engine/src/engine/seeding.py`
   ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md)), e o `py.typed` deixa o
   `mypy` do backend enxergar os tipos dele.
-- `backend/` — projeto Django com quatro apps, `apps/accounts`, `apps/assets`,
-  `apps/analytics` e `apps/risk`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as sete tarefas de
+- `backend/` — projeto Django com cinco apps, `apps/accounts`, `apps/assets`,
+  `apps/analytics`, `apps/risk` e `apps/fundamentals`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as dez tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, uma por (ativo, modelo),
-  o fecho e o leque `recalcular_cobertos`) e `apps/assets/tasks.py` (catálogo, preços e a
-  `rotina_diaria`, que encadeia preços → risco). O `CELERY_BEAT_SCHEDULE` tem duas entradas,
-  com horário em `RUVOR_BEAT_ASSETS_CRON` e `RUVOR_BEAT_PRICES_CRON`
+  o fecho e o leque `recalcular_cobertos`), `apps/assets/tasks.py` (catálogo, preços e a
+  `rotina_diaria`, que encadeia preços → risco) e `apps/fundamentals/tasks.py` (a coleta da
+  CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois). O `CELERY_BEAT_SCHEDULE` tem
+  três entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`, `RUVOR_BEAT_PRICES_CRON` e
+  `RUVOR_BEAT_FUNDAMENTALS_CRON`
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
   [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 304 testes com pytest-django, que
+  Configuração por variáveis `RUVOR_*`; mypy estrito; 496 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
-  `ruvor`), as quatro tabelas da `bronze`, e `silver.asset`, `silver.price` e
-  `silver.corporate_event`, e as quatro tabelas da `gold`, `gold.behavior_metric`,
-  `gold.return_histogram_bin`, `gold.risk_run` e `gold.risk_result` — vinte ao todo. O `AUTH_USER_MODEL`
+  `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
+  `silver.corporate_event`, `silver.company` e `silver.financial_statement`, e as cinco tabelas
+  da `gold`, `gold.behavior_metric`, `gold.return_histogram_bin`, `gold.risk_run`,
+  `gold.risk_result` e `gold.fundamental_indicator` — vinte e quatro ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -166,7 +169,12 @@ existe API de negócio nem tela de produto.
   [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md));
   com `--async`, enfileira uma abertura por ativo e devolve — a `risk_run` nasce no `worker`
   como `running`, cada modelo grava os seus dois resultados em transação própria, e o fecho
-  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. O
+  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. `manage.py
+  import_fundamentals` guarda na `bronze` os zips de ITR e DFP da CVM desde 2016 e conforma
+  companhias e balanços trimestrais em `silver`, com `--reconform` para refazê-la sem rede;
+  `manage.py compute_fundamentals` grava em `gold` os indicadores e a capitalização, uma linha
+  imutável por ação ([D-120](docs/decisoes/D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) a
+  [D-129](docs/decisoes/D-129-lucro-so-na-mae-vale-a-mae.md)). O
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que

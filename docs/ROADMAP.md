@@ -46,7 +46,7 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 |---|---|---|
 | ✅ | **M1.1 — Catálogo de ativos** | lista de papéis da B3 com nome, setor e situação; base da busca — fechado em 2026-09-21, 473 ações + Ibovespa |
 | ✅ | **M1.2 — Ingestão de preços** | histórico + atualização incremental, `bronze` com data de coleta, `silver.price` e eventos — fechado em 2026-09-22, quatro ativos de dez anos |
-| ✅ | **M1.3 — Camadas 1 e 2** | identidade, preço, gráfico, volume, dividendos, retornos, volatilidade, quedas, **distribuição de retornos** e relação com o Ibovespa — fechado em 2026-09-24, `gold` povoado pelos quatro ativos. **O tamanho não entra:** capitalização de mercado não tem fonte no repositório e é do M3.1 |
+| ✅ | **M1.3 — Camadas 1 e 2** | identidade, preço, gráfico, volume, dividendos, retornos, volatilidade, quedas, **distribuição de retornos** e relação com o Ibovespa — fechado em 2026-09-24, `gold` povoado pelos quatro ativos. **O tamanho não entrou aqui:** a capitalização de mercado não tinha fonte no repositório, e o M3.1 a entregou em `gold.fundamental_indicator` — soma das classes, nula quando falta preço de alguma classe, e sempre nula para PNA e PNB, que a CVM não separa ([D-124](decisoes/D-124-capitalizacao-soma-as-classes-e-a-escala-das-acoes-e-inferida.md)) |
 | ✅ | **M1.4 — Motor de risco** | semente fixa nos três modelos neurais, manifesto de execução e o veredito de adequação por (modelo, nível) — `manage.py compute_risk` no contêiner `worker`, `gold.risk_run` e `gold.risk_result` (a migração é do F2a). Fechado em 2026-09-24, quatro ativos × 18 resultados. **A fila não é deste bloco:** a linha original dizia "integração com a fila", o M1.5 dizia a mesma coisa, e a spec do M1.4 resolveu a divergência **a favor do M1.5** — aqui o comando é síncrono |
 | ✅ | **M1.5 — Execução assíncrona** | fila, modo A com transação por (ativo, modelo), estado da execução, Beat e o agendamento das ingestões (`import_assets`, `import_prices`) — `compute_risk --async`, sete tarefas em `apps/*/tasks.py` e o serviço `beat`. Fechado em 2026-09-25: a execução real reproduziu os 72 resultados do M1.4 campo a campo, e um tique real do Beat rodou coleta e recálculo sozinho. **Não derruba os 2 min por ativo** — quem faz isso é o M1.5b |
 | ⬜ | **M1.5b — Treino separado da previsão** | a [D-18](decisoes/D-18-separacao-treino-previsao.md): persistir as redes treinadas e fazer a previsão diária ser uma passada só. **É a decisão que a própria D-18 chama de "a que faz a conta fechar"**: hoje são ~2 min por ativo, e 473 ações × 2 min ≈ **16 h** por rodada completa. Nasceu ao dividir o M1.5, que ficara com quatro frentes |
@@ -79,7 +79,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M3.1 — Fundamentos** | camada 4, com fonte adequada para B3 (Yahoo não serve) |
+| ✅ | **M3.1 — Fundamentos** | camada 4, com fonte adequada para B3 (Yahoo não serve) — dados abertos da CVM (ITR e DFP, 2016 em diante) em `bronze`, companhias e balanços trimestrais em `silver`, indicadores e capitalização em `gold`; `import_fundamentals`, `compute_fundamentals` e a coleta semanal encadeada no Beat. Fechado em 2026-09-27, frente `fundamentos`: 339 companhias, 471 ações calculadas, e lucro, PL e dívida de PETR4, VALE3 e ITUB4 iguais à divulgação das companhias. **EBITDA fica de fora** |
 | ⬜ | **M3.2 — Contexto** | camada 5: notícias e comparação setorial |
 
 ---

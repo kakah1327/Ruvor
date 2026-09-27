@@ -11,21 +11,24 @@
 
 ## Agora
 
-**Etapa:** spec aprovada (PR #2, mesclada em 2026-09-26); plano aprovado na quinta revisão contra
-a spec — [`planos/M3.1-fundamentos.md`](../planos/M3.1-fundamentos.md); falta o portão do plano
-(a PR dele, que leva também duas correções da spec vindas da revisão do plano)
+**Etapa:** **M3.1 fechado em 2026-09-27** — implementado, verificado contra a CVM real e com o
+fecho escrito ([ESTADO](../ESTADO.md#m31--fundamentos)). Falta o portão da implementação: a PR
+dela, aberta deste ramo ou a abrir, com a CI verde e o merge pelo dono da frente
+([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)) — e **revisada pela `marco1`**,
+porque escreve no serviço `beat` do `compose.yaml` e em `tests/risk/test_beat.py`, que são da
+cerca dela.
 **Ramo:** `fundamentos/M3.1-fundamentos`, criado em 2026-09-26
-**Máquina:** pronta — Docker Desktop instalado, seis serviços `healthy`, `migrate` aplicado,
-`pytest tests` no `worker` com 304 passando (2026-09-26)
+**Máquina:** `pytest tests` no `worker` com 496 passando (2026-09-27); a `bronze` do banco de
+desenvolvimento tem os 22 zips da CVM da carga do zero
 
 ## Próximo passo
 
-1. **Portão do plano:** merge da PR do plano pelo dono da frente, com a CI verde
-   ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)).
-2. **Implementação**, tarefa a tarefa, T1 a T11 do plano, um commit por tarefa neste ramo. A PR de
-   implementação passa também pela `marco1` (serviço `beat` e `tests/risk/test_beat.py`).
-3. A T2 baixa de novo os zips da CVM para recortar as fixtures: os CSVs medidos na spec não foram
-   guardados.
+1. **Portão da implementação:** a PR, a revisão da `marco1` e o merge.
+2. **O próximo bloco da frente não está definido.** O ROADMAP põe o M3.2 — Contexto (camada 5:
+   notícias e comparação setorial) depois do M3.1, mas nada o amarra a esta frente. **Pergunta ao
+   dono da frente:** o M3.2, outro bloco, ou encerrar a frente?
+3. Quando o próximo bloco criar tarefa Celery, a dívida de tipos vence antes dele
+   ([ESTADO](../ESTADO.md#dívida-registrada)): a spec combina a mudança com a `marco1`.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -63,3 +66,4 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-26 | máquina preparada (304 testes no `worker`). Revisão adversarial 1 reprovou: 4 graves, 15 médios, 10 leves, todos absorvidos. Decidido com o dono: a dívida bruta inclui arrendamento; exercício não civil tem regra genérica; a dívida de tipos do Celery não se paga no M3.1 |
 | 2026-09-26 | spec mesclada (PR #2). Plano escrito; cinco revisões contra a spec, as quatro primeiras reprovaram (T11 que não reprovava, companhia nova sem histórico, mutações sem teste), a quinta **aprovou**. Duas correções da spec vieram dessa revisão |
 | 2026-09-26 | revisão 2 reprovou (3 graves: contas de bancos forma A e seguradoras, motivos da capitalização, units); revisão 3 **aprovou** (0 graves, 3 médios, 9 leves). Tudo absorvido. Spec pronta para a PR |
+| 2026-09-27 | implementação T1 a T11, dezenove commits. A T11 reprovou a V-08 (ITR e DFP na mesma data) → RF-13b e T11b, vale o DFP; carga refeita do zero, 4 min 43 s, 339 companhias, V-13 igual à divulgação de PETR4, VALE3 e ITUB4. Revisão final: a primeira reprovou (lucro só na mãe saía 0) → RF-08b e T11c, vale a mãe; a segunda **aprovou**. **Bloco fechado**, D-120 a D-129 |
