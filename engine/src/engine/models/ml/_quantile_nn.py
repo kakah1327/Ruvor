@@ -176,6 +176,7 @@ class QuantileNeuralVaR(VaRModel):
             if pos < len(returns):
                 # janela expansiva: continua o treino (warm start) com tudo ja observado
                 known_windows = test_start_window + pos
+                seeding.apply(position=pos)
                 model.fit(
                     x_full[:known_windows],
                     y_full[:known_windows],

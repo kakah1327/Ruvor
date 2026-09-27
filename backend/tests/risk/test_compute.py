@@ -355,7 +355,7 @@ def test_v14_o_manifesto_esta_completo_e_o_price_run_e_o_maior_da_janela() -> No
     assert run.asset_id == asset.pk
     assert run.calculated_at == INICIO_1
     assert run.finished_at == FIM_1
-    assert run.engine_version == "0.2.0"
+    assert run.engine_version == "0.3.0"
     assert run.seed == config.DEFAULT_SEED == 42
     assert run.train_window_days == 252
     assert run.as_of_date == ULTIMO_PREGAO
@@ -659,7 +659,7 @@ def test_open_run_cria_running_sem_finished_at_e_com_o_manifesto() -> None:
     assert run.results.count() == 0
     # o manifesto e o mesmo que o sincrono monta
     assert run.calculated_at == INICIO_1
-    assert run.engine_version == "0.2.0"
+    assert run.engine_version == "0.3.0"
     assert run.seed == 42
     assert (run.train_window_days, run.train_count, run.test_count) == (252, 252, 250)
     assert (run.first_price_date, run.as_of_date) == (bars[0].date, bars[-1].date)
