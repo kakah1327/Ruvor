@@ -118,6 +118,9 @@ def load_valid(
     # `log_returns` descarta o primeiro pregao: P precos dao P-1 retornos, e o que sobra
     # depois da janela de treino e o periodo de teste.
     test_count = len(bars) - 1 - key.train_window_days
+    # A varredura nao traz o `payload`: a identidade filtra no banco, mas a impressao
+    # digital depende do prefixo de cada posicao, e as linhagens invalidadas -- que nada
+    # apaga -- passariam por aqui com os bytes delas. So os devolvidos carregam o payload.
     rows = ModelSnapshot.objects.filter(
         asset=key.asset,
         model_name=model_name,
@@ -128,23 +131,31 @@ def load_valid(
         library_versions_hash=canonical_hash(key.library_versions),
         train_window_days=key.train_window_days,
         first_price_date=key.first_price_date,
-    ).values_list("position", "price_fingerprint", "payload")
-    found = {
-        (position, fingerprint): bytes(payload)
-        for position, fingerprint, payload in rows
-    }
-    valid: list[Snapshot] = []
+    ).values_list("position", "price_fingerprint", "pk")
+    # a unicidade `model_snapshot_identity` garante uma linha por (posicao, impressao)
+    found = {(position, fingerprint): pk for position, fingerprint, pk in rows}
+    chosen: list[tuple[int, int]] = []
     position = 0
     while position < test_count:
         fingerprint = price_fingerprint(
             bars, trained_through_index(position, key.train_window_days)
         )
-        payload = found.get((position, fingerprint))
-        if payload is None:
+        pk = found.get((position, fingerprint))
+        if pk is None:
             break
-        valid.append(Snapshot(position=position, payload=payload))
+        chosen.append((position, pk))
         position += step
-    return valid
+    if not chosen:
+        return []
+    payloads = dict(
+        ModelSnapshot.objects.filter(pk__in=[pk for _, pk in chosen]).values_list(
+            "pk", "payload"
+        )
+    )
+    return [
+        Snapshot(position=position, payload=bytes(payloads[pk]))
+        for position, pk in chosen
+    ]
 
 
 def save(

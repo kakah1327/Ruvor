@@ -394,12 +394,19 @@ def calcula(
 
 
 def calcula_assincrono(
-    fila: list[Any], modelos: list[str], relogio: Relogio, *, full: bool
+    fila: list[Any],
+    modelos: list[str],
+    relogio: Relogio,
+    *,
+    full: bool,
+    seed: int | None = None,
 ) -> RiskRun:
     """Uma execucao assincrona sobre `AAA3`, seguindo o que foi **enfileirado**: a abertura
     sai da fila do `enqueue_compute`, com os argumentos nomeados, e as tarefas e o fecho,
-    do `chord` que a abertura entregou."""
-    enqueue_compute(["AAA3"], models=modelos, full=full, calculated_at=relogio())
+    do `chord` que a abertura entregou. Sem `seed`, a semente padrao do backend."""
+    enqueue_compute(
+        ["AAA3"], seed=seed, models=modelos, full=full, calculated_at=relogio()
+    )
     (abertura,) = fila
     fila.clear()
     run_id = _abrir_execucao(*abertura.args, **abertura.kwargs)
@@ -648,6 +655,35 @@ def test_v10_full_nao_le_retratos_nem_duplica_nos_dois_caminhos(
 
     assert assincrona.full_recompute is True
     assert contagens(assincrona) == esperado(LIGACAO, (0, 2))
+    assert ModelSnapshot.objects.count() == 8
+
+
+# --- a semente da tarefa vem da `risk_run` ---------------------------------------------
+
+
+def test_tarefa_monta_a_identidade_com_a_semente_da_execucao(fila: list[Any]) -> None:
+    """A `SnapshotKey` da tarefa por (ativo, modelo) sai da `risk_run`: com os retratos da
+    semente 42 no banco, uma execucao assincrona com a semente 7 nao os reaproveita e grava
+    os seus. Uma tarefa que montasse a chave com a semente padrao reaproveitaria os dois."""
+    com_serie("AAA3", PREGOES_LIGACAO)
+    relogio = Relogio()
+    modelos = [MODELO]
+    primeira = calcula_assincrono(fila, modelos, relogio, full=False, seed=42)
+    assert primeira.seed == 42
+    assert contagens(primeira) == esperado(modelos, (0, 2))
+    assert sorted(
+        ModelSnapshot.objects.values_list("seed", "alpha", "position")
+    ) == sorted(
+        (42, Decimal(nivel), posicao) for nivel in NIVEIS for posicao in (0, 252)
+    )
+
+    segunda = calcula_assincrono(fila, modelos, relogio, full=False, seed=7)
+
+    assert segunda.seed == 7
+    assert contagens(segunda) == esperado(modelos, (0, 2))
+    assert sorted(
+        ModelSnapshot.objects.filter(seed=7).values_list("alpha", "position")
+    ) == sorted((Decimal(nivel), posicao) for nivel in NIVEIS for posicao in (0, 252))
     assert ModelSnapshot.objects.count() == 8
 
 

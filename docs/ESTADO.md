@@ -740,8 +740,9 @@ unicidade não inclui o `payload`, e um retrato diferente seria descartado em si
 `lstm` 47,5 s, `garchnet` 43,1 s, `caviar` 14,0 s.
 
 **Passo 2** (`risk_run` 53–56): **nada treinado** — `9/0` nos quatro caros, nos dois níveis, nos
-quatro ativos — e o resultado **igual ao do passo 1**: 72 pares, 1.080 comparações dos quinze
-campos do `risk_result` fora os excluídos do RF-07, **zero divergências**; na `risk_run`, o
+quatro ativos — e o resultado **igual ao do passo 1**: 72 pares, pareados por `model_name` e
+`alpha`, e 1.080 comparações dos quinze campos restantes do `risk_result` fora os excluídos do
+RF-07, **zero divergências**; na `risk_run`, o
 manifesto igual nos quatro, com `full_recompute` `true` no passo 1 e `false` no 2. A comparação
 foi provada contra ativos trocados: acusou os 72 pares.
 
@@ -753,7 +754,8 @@ Mas veja "o que a execução contrariou": **a coleta, num domingo, não trouxe p
 **Passo 4 — retratos invalidados pela coleta: zero**, nos quatro ativos. A coleta só atualizou
 o último pregão (2026-09-25) de cada um, e mudou o `adj_close` de dois — IBOV (183.476,859375 →
 183.477) e PETR4 (47,990002 → 48,07) —, pregão que nenhum retrato viu: o último ponto de retreino
-(posição 2.016) enxerga até o índice 2.268 da série de 2.494. Por isso mudaram só o `egarch` e o
+(posição 2.016) enxerga até o índice 2.268 — da série de 2.494 pregões do PETR4 e da de 2.486 do
+IBOV. Por isso mudaram só o `egarch` e o
 `garch_1_1` desses dois (8 dos 72 resultados), e nenhum dos caros.
 
 **Passo 5 — o `caviar` e os cinco baratos do passo 1 iguais aos do `0.2.0`** (`risk_run` 21–24,
