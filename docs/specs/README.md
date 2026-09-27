@@ -41,4 +41,5 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.5 — Execução assíncrona](M1.5-execucao-assincrona.md) | Marco 1 · M1.5 | ✅ implementada e fechada |
 | [M1.5b — Treino separado da previsão](M1.5b-treino-separado-da-previsao.md) | Marco 1 · M1.5b | ✅ implementada e fechada |
 | [M3.1 — Fundamentos](M3.1-fundamentos.md) | Marco 3 · M3.1 · frente `fundamentos` | ✅ implementada e fechada |
+| [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | Marco 1 · M1.6a | ✅ aprovada pelo dono da frente; plano em elaboração |
 | [M3.2 — Contexto](M3.2-contexto.md) | Marco 3 · M3.2 · frente `fundamentos` | ✅ implementada e fechada |

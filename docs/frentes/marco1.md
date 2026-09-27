@@ -9,23 +9,20 @@
 
 ## Agora
 
-**Bloco:** M1.5b — Treino separado da previsão, **fechado em 2026-09-27**
-**Etapa:** implementação concluída — T1 a T9, um commit por tarefa que produz (a T7 mediu as
-mutações e não produz), com a execução real e o fecho na T9; **a PR de implementação ainda não
-foi aberta**
-**Ramo:** `marco1/M1.5b-treino-separado`, com a spec
-([`specs/M1.5b-treino-separado-da-previsao.md`](../specs/M1.5b-treino-separado-da-previsao.md)),
-o plano ([`planos/M1.5b-treino-separado-da-previsao.md`](../planos/M1.5b-treino-separado-da-previsao.md))
-e as decisões D-75 a D-81
+**Bloco:** M1.6a — Fundação da aplicação (o M1.5b fechou em 2026-09-27, pela PR #4)
+**Etapa:** spec aprovada pelo dono da frente (2026-09-27); PR da spec passa pela `fundamentos`; plano em elaboração
+**Ramo:** `marco1/M1.6-aplicacao-web`, com a spec
+([`specs/M1.6a-fundacao-da-aplicacao.md`](../specs/M1.6a-fundacao-da-aplicacao.md)) e a
+[D-86](../decisoes/D-86-convencoes-da-api-http.md)
 
 ## Próximo passo
 
-1. Abrir a PR de implementação do M1.5b e mesclá-la com a CI verde — o dono da frente é o portão
-   ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)).
+1. Fechar a revisão da spec do M1.6a e abrir a PR dela — **passa também pela frente
+   `fundamentos`**, porque traz a D-86, contrato entre frentes.
 2. Conferir no log do `worker` o primeiro tique do Beat num dia útil (segunda, 19h30): é o dia
    comum com um pregão novo de verdade, que a execução real do fecho não teve — a coleta de
    domingo não trouxe pregão (ver o [ESTADO](../ESTADO.md)).
-3. **M1.6 — Aplicação web**: escrever a spec, num ramo novo `marco1/M1.6-…` a partir da `main`.
+3. **M1.6b — As telas**, depois de o M1.6a entrar e a vitrine do kit estar aprovada.
 
 ## Depois
 
