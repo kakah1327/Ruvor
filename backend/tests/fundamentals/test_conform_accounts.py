@@ -17,8 +17,7 @@ import pytest
 
 from apps.fundamentals.conform import Accounts, conform_accounts
 from apps.fundamentals.documents import DocumentRows, documents_from_zip
-from tests.fundamentals.conftest import fixture_zip
-from tests.fundamentals.test_documents import CODES, Fields, edit_member
+from tests.fundamentals.conftest import CODES, Fields, edit_member, fixture_zip
 
 MIL = Decimal(1000)
 JAN_2024 = date(2024, 1, 1)

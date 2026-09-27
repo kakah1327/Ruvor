@@ -6,48 +6,10 @@ alteracao e declarada no teste que a faz. As fixtures nao sao editadas.
 
 from __future__ import annotations
 
-import io
-import zipfile
-from collections.abc import Callable
 from datetime import date
 
 from apps.fundamentals.documents import documents_from_zip
-from tests.fundamentals.conftest import fixture_zip
-
-# Os nove codigos das fixtures, normalizados como em `silver.asset.code_cvm`.
-CODES = {"9512", "4170", "19348", "906", "23159", "24805", "18627", "1228", "24228"}
-EOL = "\r\n"  # o fim de linha dos CSVs da CVM
-
-Fields = list[str]
-
-
-def edit_member(
-    payload: bytes,
-    member: str,
-    edit: Callable[[Fields, list[Fields]], list[Fields]],
-) -> bytes:
-    """O zip `payload` com o membro `member` reescrito por `edit(cabecalho, linhas)`.
-
-    As linhas chegam partidas em campos por `;` (as fixtures nao tem `;` dentro de campo),
-    em latin-1; `edit` devolve as linhas novas. Os outros membros vao sem mudanca.
-    """
-    out = io.BytesIO()
-    with (
-        zipfile.ZipFile(io.BytesIO(payload)) as source,
-        zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as target,
-    ):
-        for info in source.infolist():
-            data = source.read(info)
-            if info.filename == member:
-                lines = data.decode("latin-1").split(EOL)
-                assert lines[-1] == "", "membro sem fim de linha no fim"
-                header = lines[0].split(";")
-                rows = [line.split(";") for line in lines[1:-1]]
-                new_rows = edit(header, rows)
-                text = EOL.join(";".join(row) for row in [header, *new_rows]) + EOL
-                data = text.encode("latin-1")
-            target.writestr(info, data)
-    return out.getvalue()
+from tests.fundamentals.conftest import CODES, Fields, edit_member, fixture_zip
 
 
 def test_rf15_capital_se_liga_pelo_cnpj_do_indice() -> None:

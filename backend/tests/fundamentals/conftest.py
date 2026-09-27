@@ -1,13 +1,14 @@
 """Infraestrutura comum dos testes de `apps.fundamentals`: fixtures e a fonte falsa.
 
-`fixture_zip`, `empty_zip` e `serve_range` sao funcoes comuns, nao fixtures do pytest, e se
-importam por `from tests.fundamentals.conftest import ...`.
+`fixture_zip`, `empty_zip`, `edit_member` e `serve_range` sao funcoes comuns, nao fixtures
+do pytest, e se importam por `from tests.fundamentals.conftest import ...`.
 """
 
 from __future__ import annotations
 
 import io
 import zipfile
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -32,11 +33,46 @@ REQUIRED_MEMBERS = (
 )
 CAPITAL_MEMBER = "composicao_capital_"
 
+# Os nove codigos das fixtures, normalizados como em `silver.asset.code_cvm`.
+CODES = {"9512", "4170", "19348", "906", "23159", "24805", "18627", "1228", "24228"}
+EOL = "\r\n"  # o fim de linha dos CSVs da CVM
+
+Fields = list[str]
+
 
 def fixture_zip(nome: str) -> bytes:
     """Le `tests/fixtures/cvm/<nome>.zip`; `nome` vem com ou sem a extensao."""
     arquivo = nome if nome.endswith(".zip") else f"{nome}.zip"
     return (FIXTURES_DIR / arquivo).read_bytes()
+
+
+def edit_member(
+    payload: bytes,
+    member: str,
+    edit: Callable[[Fields, list[Fields]], list[Fields]],
+) -> bytes:
+    """O zip `payload` com o membro `member` reescrito por `edit(cabecalho, linhas)`.
+
+    As linhas chegam partidas em campos por `;` (as fixtures nao tem `;` dentro de campo),
+    em latin-1; `edit` devolve as linhas novas. Os outros membros vao sem mudanca.
+    """
+    out = io.BytesIO()
+    with (
+        zipfile.ZipFile(io.BytesIO(payload)) as source,
+        zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as target,
+    ):
+        for info in source.infolist():
+            data = source.read(info)
+            if info.filename == member:
+                lines = data.decode("latin-1").split(EOL)
+                assert lines[-1] == "", "membro sem fim de linha no fim"
+                header = lines[0].split(";")
+                rows = [line.split(";") for line in lines[1:-1]]
+                new_rows = edit(header, rows)
+                text = EOL.join(";".join(row) for row in [header, *new_rows]) + EOL
+                data = text.encode("latin-1")
+            target.writestr(info, data)
+    return out.getvalue()
 
 
 def empty_zip(kind: str, year: int) -> bytes:

@@ -1,8 +1,9 @@
 """Conformacao de um documento da CVM: das linhas cruas as contas, em reais.
 
 Puro — sem ORM e sem `zipfile`: recebe `DocumentRows` ja montados por
-`documents.documents_from_zip`. Esta parte cobre as contas; os periodos (trimestre
-isolado, 4o trimestre) e as acoes sao da conformacao por ano.
+`documents.documents_from_zip`. `conform_accounts` da as contas de um documento;
+`conform_year` junta os documentos de uma companhia num ano de zip e decide os periodos
+(trimestre isolado, 4o trimestre) e as acoes (RF-13 a RF-15).
 
 A ordem e a da spec, e cada passo e uma regra dela:
 
@@ -17,6 +18,7 @@ A ordem e a da spec, e cada passo e uma regra dela:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -204,27 +206,9 @@ class Accounts:
 
 def conform_accounts(doc: DocumentRows) -> Accounts:
     """As contas de `doc`, pelos seis passos do modulo."""
-    # 1. duplicatas
-    statements: dict[tuple[Scope, StatementName], list[Row]] = {
-        ("consolidated", "bpa"): _unique(doc.bpa_con),
-        ("consolidated", "bpp"): _unique(doc.bpp_con),
-        ("consolidated", "dre"): _unique(doc.dre_con),
-        ("individual", "bpa"): _unique(doc.bpa_ind),
-        ("individual", "bpp"): _unique(doc.bpp_ind),
-        ("individual", "dre"): _unique(doc.dre_ind),
-    }
-    # 2. versao
-    statements = {key: latest_version(rows) for key, rows in statements.items()}
+    # 1. duplicatas, 2. versao, 3. escopo
+    scope, scoped = scoped_statements(doc)
     capital = latest_version(_unique(doc.capital))
-    # 3. escopo
-    scope: Scope = (
-        "consolidated"
-        if any(rows for (s, _), rows in statements.items() if s == "consolidated")
-        else "individual"
-    )
-    scoped: dict[StatementName, list[Row]] = {
-        name: rows for (s, name), rows in statements.items() if s == scope
-    }
     version = _document_version(scoped, doc.index_rows)
     index_row = next((r for r in doc.index_rows if int(r["VERSAO"]) == version), None)
     # 4. escala
@@ -276,6 +260,33 @@ def conform_accounts(doc: DocumentRows) -> Accounts:
         missing=[field for field in FIELDS if field in missing],
         capital=capital,
     )
+
+
+def scoped_statements(
+    doc: DocumentRows,
+) -> tuple[Scope, dict[StatementName, list[Row]]]:
+    """Os passos 1 a 3: sem duplicatas, na maior `VERSAO`, e so as do escopo."""
+    # 1. duplicatas
+    statements: dict[tuple[Scope, StatementName], list[Row]] = {
+        ("consolidated", "bpa"): _unique(doc.bpa_con),
+        ("consolidated", "bpp"): _unique(doc.bpp_con),
+        ("consolidated", "dre"): _unique(doc.dre_con),
+        ("individual", "bpa"): _unique(doc.bpa_ind),
+        ("individual", "bpp"): _unique(doc.bpp_ind),
+        ("individual", "dre"): _unique(doc.dre_ind),
+    }
+    # 2. versao
+    statements = {key: latest_version(rows) for key, rows in statements.items()}
+    # 3. escopo
+    scope: Scope = (
+        "consolidated"
+        if any(rows for (s, _), rows in statements.items() if s == "consolidated")
+        else "individual"
+    )
+    scoped: dict[StatementName, list[Row]] = {
+        name: rows for (s, name), rows in statements.items() if s == scope
+    }
+    return scope, scoped
 
 
 def latest_version(rows: list[Row]) -> list[Row]:
@@ -383,3 +394,224 @@ def _document_version(
 
 def _any_name(scoped: dict[StatementName, list[Row]]) -> str:
     return next((row["DENOM_CIA"] for rows in scoped.values() for row in rows), "")
+
+
+# Conformacao por ano: o trimestre isolado, o 4o trimestre e as acoes (RF-13 a RF-15).
+
+FOURTH_QUARTER_DAYS = range(88, 94)  # de 88 a 93 dias entre o ITR e o DFP (RF-14)
+BASIC_EPS_LABEL = "Lucro Básico por Ação"
+
+
+@dataclass(frozen=True)
+class ConformedStatement:
+    """Uma linha de `silver.financial_statement`, sem `company`, `run` e `updated_at`.
+
+    Mais `missing` (o `ausentes` do RF-08, do documento), e `name` e `cnpj`, para o
+    `silver.company` do RF-19. Os campos de resultado sao do **trimestre isolado**.
+    """
+
+    reference_date: date
+    fiscal_year_start: date | None
+    source: Literal["itr", "dfp"]
+    version: int
+    received_date: date | None
+    scope: Scope
+    account_plan: str
+    total_assets: Decimal | None
+    cash: Decimal | None
+    gross_debt: Decimal | None
+    equity_parent: Decimal | None
+    revenue: Decimal | None
+    ebit: Decimal | None
+    net_income_parent: Decimal | None
+    shares_on: int | None
+    shares_pn: int | None
+    shares_scale: int | None
+    share_composition: bool
+    missing: list[str]
+    name: str
+    cnpj: str
+
+
+@dataclass(frozen=True)
+class _Conformed:
+    """Um documento com as contas e a DRE do escopo (passos 1 a 3)."""
+
+    doc: DocumentRows
+    accounts: Accounts
+    dre: list[Row]
+    fiscal_year_start: date | None  # o menor `DT_INI_EXERC` da DRE; nulo sem DRE
+
+
+def conform_year(
+    itr: list[DocumentRows], dfp: list[DocumentRows], itr_prev: list[DocumentRows]
+) -> list[ConformedStatement]:
+    """As linhas de uma companhia num ano de zip, por `reference_date` crescente.
+
+    `itr` e `dfp` sao os documentos do ano; `itr_prev`, os ITR do ano anterior — so
+    candidatos ao 4o trimestre (RF-14), sem linha propria.
+    """
+    current = [_conform(doc) for doc in itr]
+    candidates = current + [_conform(doc) for doc in itr_prev]
+    statements = [_statement(item, _isolated(item)) for item in current]
+    for doc in dfp:
+        annual = _conform(doc)
+        statements.append(_statement(annual, _fourth_quarter(annual, candidates)))
+    return sorted(statements, key=lambda statement: statement.reference_date)
+
+
+def infer_share_scale(L: Decimal, N: int, E: Decimal) -> int | None:
+    if not L or N <= 0 or not E or (L / E) < 0:
+        return None
+    best = min((1, 1000), key=lambda k: abs(math.log(float(L / (N * k) / E))))
+    return best if abs(math.log(float(L / (N * best) / E))) < math.log(2) else None
+
+
+def _conform(doc: DocumentRows) -> _Conformed:
+    accounts = conform_accounts(doc)
+    _, scoped = scoped_statements(doc)
+    dre = scoped["dre"]
+    starts = [date.fromisoformat(row["DT_INI_EXERC"]) for row in dre]
+    return _Conformed(doc, accounts, dre, min(starts) if starts else None)
+
+
+def _isolated(item: _Conformed) -> dict[str, Decimal | None]:
+    """ITR: o valor do **maior** `DT_INI_EXERC` de cada campo de resultado (RF-14)."""
+    results: dict[str, Decimal | None] = {}
+    for field in RESULT_FIELDS:
+        values: dict[date, Decimal | None] = getattr(item.accounts, field)
+        results[field] = values[max(values)] if values else None
+    return results
+
+
+def _accumulated(values: dict[date, Decimal | None]) -> Decimal | None:
+    """O acumulado do exercicio: o valor do **menor** `DT_INI_EXERC`."""
+    return values[min(values)] if values else None
+
+
+def _fourth_quarter(
+    annual: _Conformed, candidates: list[_Conformed]
+) -> dict[str, Decimal | None]:
+    """DFP: o anual menos o acumulado do ITR anterior, campo a campo (RF-14)."""
+    previous = _previous_itr(annual, candidates)
+    results: dict[str, Decimal | None] = {}
+    for field in RESULT_FIELDS:
+        total = _accumulated(getattr(annual.accounts, field))
+        partial = (
+            None
+            if previous is None
+            else _accumulated(getattr(previous.accounts, field))
+        )
+        results[field] = None if total is None or partial is None else total - partial
+    return results
+
+
+def _previous_itr(
+    annual: _Conformed, candidates: list[_Conformed]
+) -> _Conformed | None:
+    """O ITR do mesmo exercicio com o maior `DT_REFER` anterior ao do DFP — se valer.
+
+    Nao vale, e da nulo, fora de 88 a 93 dias do DFP ou em outro escopo. ITR sem DRE
+    (`fiscal_year_start` nulo) nunca e candidato.
+    """
+    if annual.fiscal_year_start is None:
+        return None
+    reference = annual.doc.reference_date
+    same_year = [
+        item
+        for item in candidates
+        if item.fiscal_year_start == annual.fiscal_year_start
+        and item.doc.reference_date < reference
+    ]
+    if not same_year:
+        return None
+    previous = max(same_year, key=lambda item: item.doc.reference_date)
+    if (reference - previous.doc.reference_date).days not in FOURTH_QUARTER_DAYS:
+        return None
+    if previous.accounts.scope != annual.accounts.scope:
+        return None
+    return previous
+
+
+def _statement(
+    item: _Conformed, results: dict[str, Decimal | None]
+) -> ConformedStatement:
+    accounts = item.accounts
+    shares_on, shares_pn, shares_scale = _shares(item)
+    return ConformedStatement(
+        reference_date=item.doc.reference_date,
+        fiscal_year_start=item.fiscal_year_start,
+        source=item.doc.kind,
+        version=accounts.version,
+        received_date=accounts.received_date,
+        scope=accounts.scope,
+        account_plan=accounts.account_plan,
+        total_assets=accounts.total_assets,
+        cash=accounts.cash,
+        gross_debt=accounts.gross_debt,
+        equity_parent=accounts.equity_parent,
+        revenue=results["revenue"],
+        ebit=results["ebit"],
+        net_income_parent=results["net_income_parent"],
+        shares_on=shares_on,
+        shares_pn=shares_pn,
+        shares_scale=shares_scale,
+        share_composition=bool(accounts.capital),
+        missing=accounts.missing,
+        name=accounts.name,
+        cnpj=accounts.cnpj,
+    )
+
+
+def _shares(item: _Conformed) -> tuple[int | None, int | None, int | None]:
+    """`shares_on`, `shares_pn` e `shares_scale` (RF-15); os tres nulos se inconclusivo.
+
+    `L` e o lucro acumulado, em reais; `N`, o total integralizado menos o total em
+    tesouraria, como veio; `E`, o LPA basico do mesmo `DT_INI_EXERC` de `L`, sem escala.
+    Mais de uma linha de `composicao_capital` na maior `VERSAO` e inconclusivo.
+    """
+    capital = item.accounts.capital
+    profits = item.accounts.net_income_parent
+    if len(capital) != 1 or not profits:
+        return None, None, None
+    (row,) = capital
+    period = min(profits)
+    profit = profits[period]
+    eps = _basic_eps(item.dre, period)
+    total = _difference(row, "QT_ACAO_TOTAL_CAP_INTEGR", "QT_ACAO_TOTAL_TESOURO")
+    on = _difference(row, "QT_ACAO_ORDIN_CAP_INTEGR", "QT_ACAO_ORDIN_TESOURO")
+    pn = _difference(row, "QT_ACAO_PREF_CAP_INTEGR", "QT_ACAO_PREF_TESOURO")
+    if profit is None or eps is None or total is None or on is None or pn is None:
+        return None, None, None
+    scale = infer_share_scale(profit, total, eps)
+    if scale is None:
+        return None, None, None
+    return on * scale, pn * scale, scale
+
+
+def _basic_eps(dre: list[Row], period: date) -> Decimal | None:
+    """A primeira filha direta, por `CD_CONTA`, de "Lucro Básico por Ação", com valor
+    diferente de zero, no periodo `period` — em reais por acao, **sem** `ESCALA_MOEDA`."""
+    rows = [row for row in dre if row["DT_INI_EXERC"] == period.isoformat()]
+    parents = {
+        row["CD_CONTA"] for row in rows if row["DS_CONTA"].strip() == BASIC_EPS_LABEL
+    }
+    children = sorted(
+        (
+            row
+            for row in rows
+            if "." in row["CD_CONTA"]
+            and row["CD_CONTA"].rsplit(".", 1)[0] in parents
+            and Decimal(row["VL_CONTA"]) != 0
+        ),
+        key=lambda row: row["CD_CONTA"],
+    )
+    return Decimal(children[0]["VL_CONTA"]) if children else None
+
+
+def _difference(row: Row, integral: str, treasury: str) -> int | None:
+    """`integral - treasury`, em inteiros; nulo se algum dos dois nao e numero."""
+    try:
+        return int(row[integral]) - int(row[treasury])
+    except (KeyError, ValueError):
+        return None
