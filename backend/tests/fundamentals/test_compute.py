@@ -341,6 +341,22 @@ def test_rf24b_ticker_inativo_nao_e_da_classe() -> None:
     assert not FundamentalIndicator.objects.filter(asset__ticker="VALE5").exists()
 
 
+@pytest.mark.usefixtures("silver")
+def test_rf24b_codigo_antigo_inativo_da_mesma_classe_nao_e_ambiguo() -> None:
+    # Insercao declarada: VALX3, um codigo antigo ON da Vale, com o code_cvm da Vale e
+    # inativo. A classe ON segue com um so ticker ativo, VALE3; se o inativo contasse,
+    # seriam dois e sairia `ambiguous_class`.
+    add_stock("VALX3", VALE, status=Asset.Status.INACTIVE)
+    add_base_prices()
+
+    computing()
+
+    vale = row("VALE3")
+    assert vale.market_cap is not None
+    assert vale.market_cap_missing is None
+    assert not FundamentalIndicator.objects.filter(asset__ticker="VALX3").exists()
+
+
 # RF-25
 
 
