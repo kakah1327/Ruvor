@@ -16,6 +16,7 @@ RF-16 substitui com `monkeypatch.setattr("apps.fundamentals.importer.write_compa
 from __future__ import annotations
 
 import zipfile
+import zlib
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -265,9 +266,18 @@ def run_import_fundamentals(
     coleta normal. `full` e `reconform` juntos levantam `ValueError`, antes de tudo."""
     if full and reconform is not None:
         raise ValueError("full e reconform sao mutuamente exclusivos")
-    run = CollectionRun.objects.create(source=SOURCE, started_at=now())
+    started_at = now()
+    current_year = timezone.localdate(started_at).year  # uma vez por execucao (RF-03)
+    run = CollectionRun.objects.create(source=SOURCE, started_at=started_at)
     try:
-        report = _run(source, run, full=full, reconform=reconform, now=now)
+        report = _run(
+            source,
+            run,
+            full=full,
+            reconform=reconform,
+            now=now,
+            current_year=current_year,
+        )
     except BaseException as exc:  # a collection_run nunca fica `running`
         run.status = CollectionRun.Status.FAILED
         run.error = f"interrompida: {type(exc).__name__}: {exc}"
@@ -287,6 +297,7 @@ def _run(
     full: bool,
     reconform: list[int] | None,
     now: Callable[[], datetime],
+    current_year: int,
 ) -> ImportReport:
     files: list[FileResult] = []
     changed_years: set[int] = set()
@@ -296,17 +307,21 @@ def _run(
     if reconform is None:
         # RF-17 (b): ANTES de (a), sem `Company` no inicio, pela `bronze` anterior a coleta
         new_companies = _new_catalog_companies(run, index_cache, catalog_failures)
-        for kind, year in _range(now):  # RF-03: por ano crescente, itr antes de dfp
-            result = _collect(source, run, kind, year, full=full, now=now)
+        # RF-03: por ano crescente, itr antes de dfp
+        for kind, year in _range(current_year):
+            result = _collect(
+                source, run, kind, year, full=full, current_year=current_year
+            )
             files.append(result)
             if result.status == "novo":
                 changed_years.add(year)
-        years = _years_to_conform(changed_years, now)  # RF-17 (a): A e A+1
+        years = _years_to_conform(changed_years, current_year)  # RF-17 (a): A e A+1
     else:
-        years = set(reconform) or set(_all_years(now))
+        years = set(reconform) or set(_all_years(current_year))
     year_results = [_conform_year(run, y, now) for y in sorted(years)]
     if reconform is None and new_companies:
-        rest = sorted(set(_all_years(now)) - years)  # so os anos que (a) nao conformou
+        # so os anos que (a) nao conformou
+        rest = sorted(set(_all_years(current_year)) - years)
         year_results += [
             _conform_year(run, y, now, only=new_companies, label="novas") for y in rest
         ]
@@ -337,22 +352,22 @@ def _close(
     run.save(update_fields=["status", "error", "finished_at"])
 
 
-def _current_year(now: Callable[[], datetime]) -> int:
-    return timezone.localdate(now()).year
+def _all_years(current_year: int) -> range:
+    return range(FIRST_YEAR, current_year + 1)
 
 
-def _all_years(now: Callable[[], datetime]) -> range:
-    return range(FIRST_YEAR, _current_year(now) + 1)
-
-
-def _range(now: Callable[[], datetime]) -> list[tuple[Kind, int]]:
+def _range(current_year: int) -> list[tuple[Kind, int]]:
     """RF-03: ITR e DFP de 2016 ao ano corrente, por ano crescente, `itr` antes de `dfp`."""
-    return [(cast("Kind", kind), year) for year in _all_years(now) for kind in KINDS]
+    return [
+        (cast("Kind", kind), year)
+        for year in _all_years(current_year)
+        for kind in KINDS
+    ]
 
 
-def _years_to_conform(changed: set[int], now: Callable[[], datetime]) -> set[int]:
+def _years_to_conform(changed: set[int], current_year: int) -> set[int]:
     """RF-17 (a): cada ano com `payload` novo e o seguinte, dentro do intervalo."""
-    valid = set(_all_years(now))
+    valid = set(_all_years(current_year))
     return {y for year in changed for y in (year, year + 1)} & valid
 
 
@@ -370,14 +385,15 @@ def _collect(
     year: int,
     *,
     full: bool,
-    now: Callable[[], datetime],
+    current_year: int,
 ) -> FileResult:
     """`HEAD`, decisao pelo ultimo visto, `GET`, hash e a linha na `bronze`.
 
-    Captura so `CvmClientError` e `BadZipFile` — nunca `Exception`: um `AssertionError`
-    da fonte falsa tem de estourar o teste, nao virar `FALHOU`.
+    `current_year` e o ano local do `now()` lido uma vez por execucao. Captura so
+    `CvmClientError` e os erros de zip ruim — `BadZipFile`, e `zlib.error` e `EOFError`
+    de membro corrompido —, nunca `Exception`: um `AssertionError` da fonte falsa tem de
+    estourar o teste, nao virar `FALHOU`.
     """
-    current_year = _current_year(now)
     try:
         head = source.head(kind, year)
         if head.http_status == 404 and year == current_year:
@@ -395,7 +411,7 @@ def _collect(
         payload = download.payload or b""
         try:
             digest = content_sha256(payload)
-        except zipfile.BadZipFile:
+        except (zipfile.BadZipFile, zlib.error, EOFError):
             _store(run, kind, year, download, None, None)
             raise
         if digest == _current_digest(kind, year):
@@ -403,7 +419,7 @@ def _collect(
             return FileResult(kind, year, "inalterado", size=len(payload))
         _store(run, kind, year, download, digest, payload)
         return FileResult(kind, year, "novo", size=len(payload))
-    except (CvmClientError, zipfile.BadZipFile) as exc:
+    except (CvmClientError, zipfile.BadZipFile, zlib.error, EOFError) as exc:
         return FileResult(kind, year, "falhou", error=_error(exc))
 
 

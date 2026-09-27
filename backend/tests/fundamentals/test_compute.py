@@ -39,7 +39,7 @@ from apps.fundamentals.compute import (
     run_compute_fundamentals,
 )
 from apps.fundamentals.importer import run_import_fundamentals
-from apps.fundamentals.indicators import IndicatorValues
+from apps.fundamentals.indicators import IndicatorValues, StatementView
 from apps.fundamentals.models import FinancialStatement, FundamentalIndicator
 from tests.fundamentals.conftest import FakeCvm, fixture_zip, serve_range
 
@@ -369,9 +369,12 @@ def test_rf25_falha_na_escrita_de_uma_acao_reverte_so_ela(
     written: list[str] = []
 
     def second_breaks(
-        asset: Asset, calculated_at: datetime, values: IndicatorValues
+        asset: Asset,
+        calculated_at: datetime,
+        values: IndicatorValues,
+        statement: StatementView,
     ) -> None:
-        real(asset, calculated_at, values)
+        real(asset, calculated_at, values, statement)
         written.append(asset.ticker)
         if len(written) == 2:  # grava e so entao levanta
             assert FundamentalIndicator.objects.filter(asset=asset).exists()
@@ -483,6 +486,43 @@ def test_rf27_comando_grava_e_escreve_o_relatorio_em_stdout(
 
 
 @pytest.mark.usefixtures("silver")
+def test_rf25_a_linha_aponta_para_o_balanco_usado_no_calculo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Inserido no teste (declarado): entre o calculo e a escrita da VALE3, um balanco da
+    Vale 92 dias depois do mais recente — copia dele, com outra `reference_date`. O
+    balanco mais recente muda; a linha da `gold` segue apontando para o do calculo."""
+    add_base_prices()
+    used = latest_statement(VALE)
+    real = compute.write_indicator
+
+    def newer_before_writing(
+        asset: Asset,
+        calculated_at: datetime,
+        values: IndicatorValues,
+        statement: StatementView,
+    ) -> None:
+        if asset.ticker == "VALE3":
+            copy = FinancialStatement.objects.get(pk=used.pk)
+            copy.pk = None
+            copy._state.adding = True
+            copy.reference_date = used.reference_date + timedelta(days=92)
+            copy.save()
+        real(asset, calculated_at, values, statement)
+
+    monkeypatch.setattr(
+        "apps.fundamentals.compute.write_indicator", newer_before_writing
+    )
+
+    run_compute_fundamentals(now=clock(NOW))
+
+    assert latest_statement(VALE).pk != used.pk  # o cenario montou
+    vale = row("VALE3")
+    assert vale.statement_id == used.pk
+    assert vale.total_assets == used.total_assets
+
+
+@pytest.mark.usefixtures("silver")
 def test_rf25_comando_com_falha_escreve_o_relatorio_e_sai_1(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -490,10 +530,12 @@ def test_rf25_comando_com_falha_escreve_o_relatorio_e_sai_1(
     with_clock(monkeypatch)
     real = compute.write_indicator
 
-    def vale_breaks(asset: Asset, calculated_at: datetime, values: Any) -> None:
+    def vale_breaks(
+        asset: Asset, calculated_at: datetime, values: Any, statement: Any
+    ) -> None:
         if asset.ticker == "VALE3":
             raise RuntimeError("gravacao quebrou")
-        real(asset, calculated_at, values)
+        real(asset, calculated_at, values, statement)
 
     monkeypatch.setattr("apps.fundamentals.compute.write_indicator", vale_breaks)
     stdout = StringIO()

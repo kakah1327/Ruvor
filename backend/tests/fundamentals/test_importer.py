@@ -28,7 +28,7 @@ import pytest
 from django.utils import timezone
 
 from apps.assets.models import Asset, CollectionRun
-from apps.fundamentals import importer
+from apps.fundamentals import importer, zipdata
 from apps.fundamentals.conform import ConformedStatement
 from apps.fundamentals.cvm import CvmClientError, CvmDownload, CvmHead, cvm_url
 from apps.fundamentals.importer import (
@@ -439,7 +439,94 @@ def test_rf04_zip_ruim_nao_conta_como_visto() -> None:
     )
 
 
+def test_rf04_ano_corrente_lido_uma_vez_na_virada_do_ano() -> None:
+    """O relogio vira o ano no meio da execucao: a primeira leitura e 2025-12-31 23:59 e
+    as seguintes, 2026-01-01. O intervalo e o 404 do ano corrente sao os de 2025 — o ano
+    lido uma vez so. Declarado: o HEAD do ITR 2025 responde 404."""
+    fake = FakeCvm({}, {})
+    first = datetime(2025, 12, 31, 23, 59, tzinfo=SP)
+    serve_range(fake, first, {})
+    replace_last(fake, ("itr", 2025), head=CvmHead(404, None))
+    moments = iter([first])
+
+    def turning() -> datetime:
+        return next(moments, datetime(2026, 1, 1, 0, 1, tzinfo=SP))
+
+    report = run_import_fundamentals(fake, now=turning)  # nao levanta
+
+    text = lines(report)
+    assert "itr 2025: ausente" in text
+    assert text[-1] == (
+        "coleta: 20 arquivos, 19 novos, 0 inalterados, 0 nao modificados, "
+        "1 ausentes, 0 falhos"
+    )
+    assert not any(year == 2026 for _, _, year in fake.calls)
+    (run,) = runs()
+    assert run.status == CollectionRun.Status.OK
+
+
 # RF-05
+
+
+def corrupted_member(payload: bytes, member: str) -> bytes:
+    """Modificacao declarada: o zip com o primeiro byte comprimido de `member` trocado por
+    `0xff` — bloco *deflate* de tipo invalido, e a leitura do membro levanta `zlib.error`.
+    O diretorio do zip fica intacto: o zip abre, o membro nao se le."""
+    with zipfile.ZipFile(io.BytesIO(payload)) as source:
+        info = source.getinfo(member)
+    assert info.compress_type == zipfile.ZIP_DEFLATED
+    data = bytearray(payload)
+    offset = info.header_offset
+    name_len = int.from_bytes(data[offset + 26 : offset + 28], "little")
+    extra_len = int.from_bytes(data[offset + 28 : offset + 30], "little")
+    data[offset + 30 + name_len + extra_len] = 0xFF
+    return bytes(data)
+
+
+def test_rf05_membro_corrompido_e_arquivo_falho_sem_payload_nem_hash() -> None:
+    corrupted = corrupted_member(
+        fixture_zip("itr_2024"), "itr_cia_aberta_DRE_con_2024.csv"
+    )
+    fake = FakeCvm({}, {})
+    serve_range(fake, NOW_2025, {("itr", 2024): corrupted})
+
+    report = importing(fake, NOW_2025)
+
+    assert (
+        "itr 2024: FALHOU (error: Error -3 while decompressing data: invalid block type)"
+        in lines(report)
+    )
+    (row,) = CvmFile.objects.filter(kind="itr", year=2024)
+    assert (row.http_status, row.content_sha256, row.payload) == (200, None, None)
+    (run,) = runs()
+    assert run.status == CollectionRun.Status.FAILED
+    assert run.error == "itr 2024"
+
+
+def test_rf05_eof_na_leitura_do_zip_e_arquivo_falho(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Declarado: o hash de conteudo do ITR 2024 levanta `EOFError` — o que o `zipfile`
+    levanta quando o membro acaba antes do tamanho declarado."""
+    real = zipdata.content_sha256
+    target = fixture_zip("itr_2024")
+
+    def truncated(payload: bytes) -> str:
+        if payload == target:
+            raise EOFError("membro truncado")
+        return real(payload)
+
+    monkeypatch.setattr("apps.fundamentals.importer.content_sha256", truncated)
+    fake = FakeCvm({}, {})
+    serve_range(fake, NOW_2025, {("itr", 2024): target})
+
+    report = importing(fake, NOW_2025)
+
+    assert "itr 2024: FALHOU (EOFError: membro truncado)" in lines(report)
+    (row,) = CvmFile.objects.filter(kind="itr", year=2024)
+    assert (row.http_status, row.content_sha256, row.payload) == (200, None, None)
+    (run,) = runs()
+    assert run.status == CollectionRun.Status.FAILED
 
 
 def test_rf05_linha_por_get_e_payload_so_quando_o_conteudo_e_novo() -> None:

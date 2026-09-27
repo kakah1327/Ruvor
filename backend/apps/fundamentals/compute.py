@@ -189,6 +189,7 @@ def _statements(codes: set[str]) -> dict[str, list[StatementView]]:
 
 def _view(row: FinancialStatement) -> StatementView:
     return StatementView(
+        pk=row.pk,
         reference_date=row.reference_date,
         scope=row.scope,
         account_plan=row.account_plan,
@@ -257,13 +258,14 @@ def _compute_asset(
 ) -> AssetResult:
     try:
         values = compute_indicators(inputs)  # fora da transacao: e puro
+        statement = inputs.statements[values.statement_index]
         with transaction.atomic():  # RF-25: uma transacao por acao
-            write_indicator(asset, calculated_at, values)
+            write_indicator(asset, calculated_at, values, statement)
     except Exception as exc:
         return AssetResult(asset.ticker, error=f"{type(exc).__name__}: {exc}")
     return AssetResult(
         asset.ticker,
-        reference_date=inputs.statements[values.statement_index].reference_date,
+        reference_date=statement.reference_date,
         pe=values.pe,
         market_cap=values.market_cap,
         market_cap_missing=values.market_cap_missing,
@@ -272,19 +274,20 @@ def _compute_asset(
 
 
 def write_indicator(
-    asset: Asset, calculated_at: datetime, values: IndicatorValues
+    asset: Asset,
+    calculated_at: datetime,
+    values: IndicatorValues,
+    statement: StatementView,
 ) -> None:
     """A linha de indicadores de `asset` nesta execucao. Sempre `create` (RF-20).
 
-    O `statement` e o de indice `values.statement_index` entre os balancos da companhia em
-    `reference_date` decrescente -- a mesma ordem de `IndicatorInputs.statements`.
+    O `statement` e o balanco de onde `values` saiu, o de indice `values.statement_index`
+    em `IndicatorInputs.statements`: a linha aponta para o `pk` dele, sem buscar de novo —
+    um balanco gravado entre o calculo e a escrita nao troca o documento da linha.
     """
-    statement = FinancialStatement.objects.filter(
-        company__code_cvm=asset.code_cvm
-    ).order_by("-reference_date")[values.statement_index]
     FundamentalIndicator.objects.create(
         asset=asset,
         calculated_at=calculated_at,
-        statement=statement,
+        statement_id=statement.pk,
         **{field: getattr(values, field) for field in VALUE_FIELDS},
     )

@@ -238,6 +238,43 @@ def test_rf14_sem_o_itr_de_setembro_o_quarto_trimestre_e_nulo() -> None:
     assert q4.equity_parent == (367514000 - 1508000) * MIL  # BPP_con L315 - L363
 
 
+def test_rf14_itr_de_outro_exercicio_nao_e_o_anterior() -> None:
+    """Inserido no teste (declarado): na DRE consolidada do ITR 2024, o acumulado da
+    Petrobras de 2024-09-30 (L896, L964, L1032 e as demais linhas `ÚLTIMO` desde
+    2024-01-01) com `DT_INI_EXERC = 2023-10-01` — o ITR de setembro, 92 dias antes do DFP,
+    passa a ser de outro exercicio. O do mesmo exercicio mais proximo e o de 2024-06-30,
+    184 dias antes: o 4o trimestre sai nulo."""
+
+    def other_year(header: Fields, rows: list[Fields]) -> list[Fields]:
+        refer, start = header.index("DT_REFER"), header.index("DT_INI_EXERC")
+        order = header.index("ORDEM_EXERC")
+        changed = 0
+        for row in rows:
+            if (
+                row[4] == PETROBRAS
+                and row[refer] == Q3.isoformat()
+                and row[order] == "ÚLTIMO"
+                and row[start] == "2024-01-01"
+            ):
+                row[start] = "2023-10-01"
+                changed += 1
+        assert changed, "sem acumulado da Petrobras em 2024-09-30"
+        return rows
+
+    itr = edit_member(
+        fixture_zip("itr_2024"), "itr_cia_aberta_DRE_con_2024.csv", other_year
+    )
+
+    petrobras = petrobras_2024(itr=itr)
+
+    assert petrobras[Q3].fiscal_year_start == date(2023, 10, 1)  # o cenario montou
+    assert petrobras[Q4].fiscal_year_start == date(2024, 1, 1)
+    assert petrobras[Q4].revenue is None
+    assert petrobras[Q4].ebit is None
+    assert petrobras[Q4].net_income_parent is None
+    assert petrobras[Q4].total_assets == 1124797000 * MIL  # BPA_con L139
+
+
 def test_rf14_escopos_diferentes_anulam_o_quarto_trimestre() -> None:
     """Removido no teste (declarado): as linhas da Petrobras de 2024-09-30 no BPA, BPP e
     DRE consolidados do ITR 2024 — o ITR de setembro passa a ser individual; o DFP segue
@@ -301,6 +338,40 @@ def test_rf15_escala_das_acoes_petrobras_unidade_vale_e_itau_mil() -> None:
     assert itau.shares_pn == (4817814 - 28031) * 1000
     assert petrobras.share_composition and vale.share_composition
     assert itau.share_composition
+
+
+def test_rf15_a_mae_lucro_basico_por_acao_nao_e_o_lpa() -> None:
+    """Inserido no teste (declarado): na DRE consolidada do DFP 2024, a mae 3.99.01
+    "Lucro Básico por Ação" da Petrobras, linha `ÚLTIMO` (L201), trocada de 0 para
+    0.00284 — diferente de zero e da filha 3.99.01.01 (2.84, L203). Com a mae como `E`, a
+    escala seria mil; com a filha, e unidade."""
+
+    def mother(header: Fields, rows: list[Fields]) -> list[Fields]:
+        code, value = header.index("CD_CONTA"), header.index("VL_CONTA")
+        order = header.index("ORDEM_EXERC")
+        changed = 0
+        for row in rows:
+            if (
+                row[4] == PETROBRAS
+                and row[code] == "3.99.01"
+                and row[order] == "ÚLTIMO"
+            ):
+                row[value] = "0.0028400000"
+                changed += 1
+        assert changed == 1
+        return rows
+
+    payload = edit_member(
+        fixture_zip("dfp_2024"), "dfp_cia_aberta_DRE_con_2024.csv", mother
+    )
+    petrobras = dfp_2024("9512", payload)
+
+    # E = 2.84, a filha: L / N = 2.8402 por acao, unidade — como sem a edicao
+    assert petrobras.shares_scale == 1
+    assert petrobras.shares_on == 7442454142 - 222760
+    assert petrobras.shares_pn == 5602042788 - 155541409
+    lucro, acoes = 36606000 * MIL, 13044496930 - 155764169
+    assert infer_share_scale(lucro, acoes, Decimal("0.00284")) == 1000
 
 
 def test_rf15_petrobras_itr_2025_usa_o_lpa_acumulado() -> None:

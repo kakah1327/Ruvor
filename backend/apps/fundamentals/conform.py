@@ -86,6 +86,10 @@ class Rule:
     `when_child_present` e o caso (a) do `equity_parent` consolidado: se a mae dessa
     parcela tem ao menos uma filha com a descricao dela, o campo e so essa parcela; senao,
     `parcels` — o caso (b).
+
+    `mother_when_split_is_zero` e o RF-08b do `net_income_parent` consolidado: a parcela
+    dos nao controladores, filha da mesma mae de `parcels`. Se o valor de `parcels` mais o
+    dela da 0 e a mae e diferente de 0, o campo e a mae. Filha ausente conta como 0.
     """
 
     field: str
@@ -94,6 +98,7 @@ class Rule:
     parcels: tuple[Parcel, ...]
     only_general: bool = False
     when_child_present: Parcel | None = None
+    mother_when_split_is_zero: Parcel | None = None
 
 
 # A tabela Contas da spec. As descricoes sao copiadas dela, byte a byte.
@@ -117,6 +122,14 @@ _PROFIT_CONTROLLER = Match(
     (
         "Atribuído a Sócios da Empresa Controladora",
         "Atribuído aos Sócios da Empresa Controladora",
+    )
+)
+# RF-08b: as descricoes da filha dos nao controladores, na grafia da spec.
+_PROFIT_NONCONTROLLING = Match(
+    (
+        "Atribuído a Sócios Não Controladores",
+        "Atribuído aos Sócios Não Controladores",
+        "Atribuído aos Sócios não Controladores",
     )
 )
 _PROFIT_INDIVIDUAL = Match(
@@ -171,6 +184,7 @@ RULES: tuple[Rule, ...] = (
         "consolidated",
         "dre",
         (Parcel(_PROFIT_CONSOLIDATED, _PROFIT_CONTROLLER),),
+        mother_when_split_is_zero=Parcel(_PROFIT_CONSOLIDATED, _PROFIT_NONCONTROLLING),
     ),
     Rule("net_income_parent", "individual", "dre", (Parcel(_PROFIT_INDIVIDUAL),)),
 )
@@ -324,7 +338,29 @@ def locate(rows: list[Row], rule: Rule, period_key: str | None) -> Decimal | Non
         if value is None:
             return None
         total += parcel.sign * value
+    split = rule.mother_when_split_is_zero
+    if split is not None:
+        return _mother_when_split_is_zero(rows, split, total)
     return total
+
+
+def _mother_when_split_is_zero(
+    rows: list[Row], noncontrolling: Parcel, controller: Decimal
+) -> Decimal:
+    """RF-08b: a mae, se a filha da controladora e a dos nao controladores somam 0 e a
+    mae e diferente de 0; senao, `controller`. A filha dos nao controladores ausente conta
+    como 0; repetida, a regra nao se aplica."""
+    mothers = _parents(rows, noncontrolling)
+    if len(mothers) != 1:
+        return controller
+    children = _children(rows, noncontrolling)
+    if len(children) > 1:
+        return controller
+    minority = _value(children[0]) if children else Decimal(0)
+    mother = _value(mothers[0])
+    if controller + minority == 0 and mother != 0:
+        return mother
+    return controller
 
 
 def _parcel_value(rows: list[Row], parcel: Parcel) -> Decimal | None:

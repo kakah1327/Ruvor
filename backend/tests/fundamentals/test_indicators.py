@@ -78,6 +78,7 @@ NOT_GENERAL_NULLS = (
 
 def statement(reference_date: date, **overrides: object) -> StatementView:
     base_fields: dict[str, object] = {
+        "pk": 1,
         "reference_date": reference_date,
         "scope": "consolidated",
         "account_plan": "general",

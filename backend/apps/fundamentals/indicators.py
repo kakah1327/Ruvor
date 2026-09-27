@@ -67,8 +67,10 @@ REASON_NULLS: dict[str, tuple[str, ...]] = {
 
 @dataclass(frozen=True)
 class StatementView:
-    """As colunas de `silver.financial_statement` que o calculo usa."""
+    """As colunas de `silver.financial_statement` que o calculo usa, e o `pk` da linha —
+    a escrita liga a `gold` ao documento de onde os valores sairam, sem buscar de novo."""
 
+    pk: int
     reference_date: date
     scope: str
     account_plan: str

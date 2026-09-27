@@ -9,6 +9,7 @@ no zip, pelo teste, e declarado nele.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
 from decimal import Decimal
 from typing import Literal
@@ -325,3 +326,129 @@ def test_rf10_vale_recebe_o_dt_receb_da_v3() -> None:
     # 2025-03-17; as demonstracoes so tem a v3
     assert vale.version == 3
     assert vale.received_date == date(2025, 3, 17)
+
+
+# RF-08b
+
+
+def set_values(
+    cd_cvm: str, refer: str, values: dict[tuple[str, str], str | None]
+) -> Callable[[Fields, list[Fields]], list[Fields]]:
+    """Edicao das linhas `ÚLTIMO` de `cd_cvm` em `refer`: `(CD_CONTA, DT_INI_EXERC)` →
+    novo `VL_CONTA`, ou `None` para tirar a linha. Toda chave tem de casar uma linha."""
+
+    def edit(header: Fields, rows: list[Fields]) -> list[Fields]:
+        code, start = header.index("CD_CONTA"), header.index("DT_INI_EXERC")
+        order, value = header.index("ORDEM_EXERC"), header.index("VL_CONTA")
+        seen: set[tuple[str, str]] = set()
+        out: list[Fields] = []
+        for row in rows:
+            key = (row[code], row[start])
+            if (
+                row[4] == cd_cvm
+                and row[1] == refer
+                and row[order] == "ÚLTIMO"
+                and key in values
+            ):
+                seen.add(key)
+                new = values[key]
+                if new is None:
+                    continue
+                row[value] = new
+            out.append(row)
+        assert seen == set(values), set(values) - seen
+        return out
+
+    return edit
+
+
+def dfp_2024_dre(code: str, values: dict[tuple[str, str], str | None]) -> Accounts:
+    cd_cvm = code.zfill(6)
+    payload = edit_member(
+        fixture_zip("dfp_2024"),
+        "dfp_cia_aberta_DRE_con_2024.csv",
+        set_values(cd_cvm, "2024-12-31", values),
+    )
+    return dfp_2024(code, payload)
+
+
+def test_rf08b_filhas_zeradas_vale_a_mae() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, a 3.11.01
+    (L195) e a 3.11.02 (L197) trocadas para 0; a mae 3.11 (L193) fica em 37009000."""
+    petrobras = dfp_2024_dre(
+        "9512",
+        {("3.11.01", "2024-01-01"): "0.0000000000", ("3.11.02", "2024-01-01"): "0"},
+    )
+
+    assert petrobras.net_income_parent == {JAN_2024: 37009000 * MIL}
+    assert petrobras.missing == []
+
+
+def test_rf08b_filha_dos_nao_controladores_ausente_conta_como_zero() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, a 3.11.01
+    (L195) trocada para 0 e a linha `ÚLTIMO` da 3.11.02 (L197) tirada."""
+    petrobras = dfp_2024_dre(
+        "9512", {("3.11.01", "2024-01-01"): "0", ("3.11.02", "2024-01-01"): None}
+    )
+
+    assert petrobras.net_income_parent == {JAN_2024: 37009000 * MIL}
+
+
+def test_rf08b_filhas_que_nao_somam_zero_seguem_a_filha() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, so a
+    3.11.01 (L195) trocada para 0; a 3.11.02 (L197) segue em 403000."""
+    petrobras = dfp_2024_dre("9512", {("3.11.01", "2024-01-01"): "0"})
+
+    assert petrobras.net_income_parent == {JAN_2024: Decimal(0)}
+    # sem edicao, as filhas nao somam 0: a 3.11.01 (L195)
+    assert dfp_2024("9512").net_income_parent == {JAN_2024: 36606000 * MIL}
+
+
+def test_rf08b_mae_e_filhas_zeradas_da_zero() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do DFP 2024, a 3.11
+    (L193), a 3.11.01 (L195) e a 3.11.02 (L197) trocadas para 0."""
+    petrobras = dfp_2024_dre(
+        "9512",
+        {
+            ("3.11", "2024-01-01"): "0",
+            ("3.11.01", "2024-01-01"): "0",
+            ("3.11.02", "2024-01-01"): "0",
+        },
+    )
+
+    assert petrobras.net_income_parent == {JAN_2024: Decimal(0)}
+    assert petrobras.missing == []
+
+
+def test_rf08b_banco_com_aos_socios_nao_controladores() -> None:
+    """Inserido no teste (declarado): no Bradesco, DRE consolidada do DFP 2024, a 3.11.01
+    "Atribuído aos Sócios da Empresa Controladora" (L427) e a 3.11.02 "Atribuído aos
+    Sócios não Controladores" (L429) trocadas para 0; a mae 3.11 (L425) fica."""
+    bradesco = dfp_2024_dre(
+        "906",
+        {("3.11.01", "2024-01-01"): "0", ("3.11.02", "2024-01-01"): "0"},
+    )
+
+    assert bradesco.net_income_parent == {JAN_2024: 17542153 * MIL}
+
+
+def test_rf08b_vale_por_periodo() -> None:
+    """Inserido no teste (declarado): na Petrobras, DRE consolidada do ITR 2024, em
+    2024-06-30, so o periodo isolado (desde 2024-04-01) da 3.11.01 (L861) e da 3.11.02
+    (L865) trocado para 0. A mae isolada 3.11 (L857) vale -2515000; o acumulado (desde
+    2024-01-01) segue a filha, L860."""
+    payload = edit_member(
+        fixture_zip("itr_2024"),
+        "itr_cia_aberta_DRE_con_2024.csv",
+        set_values(
+            "009512",
+            "2024-06-30",
+            {("3.11.01", "2024-04-01"): "0", ("3.11.02", "2024-04-01"): "0"},
+        ),
+    )
+    petrobras = conform_accounts(document(payload, "itr", "9512", date(2024, 6, 30)))
+
+    assert petrobras.net_income_parent == {
+        JAN_2024: 21095000 * MIL,
+        date(2024, 4, 1): -2515000 * MIL,
+    }
