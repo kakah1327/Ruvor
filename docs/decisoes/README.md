@@ -100,6 +100,11 @@ conversas e entre agentes.
 | [D-127](D-127-coleta-de-fundamentos-semanal-e-encadeada-restringe-a-d-69.md) | A coleta de fundamentos é semanal e encadeia o cálculo; restringe a D-69 |
 | [D-128](D-128-itr-e-dfp-na-mesma-data-vale-o-dfp.md) | ITR e DFP na mesma data: vale o DFP |
 | [D-129](D-129-lucro-so-na-mae-vale-a-mae.md) | Lucro só na mãe: vale a mãe; e o LPA não cai para a `3.99` |
+| [D-130](D-130-noticia-e-o-que-a-companhia-divulga-na-cvm.md) | A notícia do Ruvor é o que a companhia divulga na CVM (IPE), não a imprensa |
+| [D-131](D-131-documento-do-ipe-se-identifica-pelo-link.md) | Um documento do IPE se identifica pelo link, e a `silver` guarda só a versão corrente |
+| [D-132](D-132-pares-sao-o-segmento-da-b3-pela-tupla.md) | Os pares são o segmento da B3, ou o subsetor, pela tupla; a posição é o percentil |
+| [D-133](D-133-coleta-de-comunicados-diaria-restringe-a-d-127.md) | A coleta de comunicados é diária, em entrada própria do Beat; restringe a D-127 |
+| [D-134](D-134-tarefas-celery-tipadas-por-celery-types.md) | As tarefas Celery são tipadas por `celery-types` |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

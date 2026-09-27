@@ -1,4 +1,4 @@
-"""Cliente dos zips de ITR e DFP do portal de dados abertos da CVM.
+"""Cliente dos zips de ITR, DFP e IPE do portal de dados abertos da CVM.
 
 So faz HTTP e repete. Nenhuma regra de negocio mora aqui: nao abre o zip, nao calcula
 hash, nao decide se o arquivo e novo nem se o 404 e do ano corrente — isso e do
@@ -23,9 +23,15 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Final
 
 BASE_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC"
+# `KINDS` e o intervalo do `import_fundamentals`; o IPE fica de fora dele e entra so em
+# `URL_KINDS`, os tipos que `cvm_url` aceita (M3.2, RF-02b). Sem `Final`, `IPE` seria
+# `str`, e nao o literal que o `importer` pede.
 KINDS = ("itr", "dfp")
+IPE: Final = "ipe"
+URL_KINDS = (*KINDS, IPE)
 MAX_ATTEMPTS = 3
 BACKOFF_SECONDS: tuple[float, ...] = (
     1,
@@ -65,7 +71,7 @@ def _user_agent() -> str:
 
 def cvm_url(kind: str, year: int) -> str:
     """A URL do zip de `kind` e `year`: o tipo em maiuscula no caminho, minuscula no nome."""
-    if kind not in KINDS:
+    if kind not in URL_KINDS:
         raise ValueError(f"tipo de documento desconhecido: {kind!r}")
     return f"{BASE_URL}/{kind.upper()}/DADOS/{kind}_cia_aberta_{year}.zip"
 

@@ -136,25 +136,26 @@ negócio nem tela de produto.
   e o `py.typed` deixa o `mypy` do backend enxergar os tipos dele.
 - `backend/` — projeto Django com cinco apps, `apps/accounts`, `apps/assets`,
   `apps/analytics`, `apps/risk` e `apps/fundamentals`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as dez tarefas de
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as onze tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, uma por (ativo, modelo),
   o fecho e o leque `recalcular_cobertos`), `apps/assets/tasks.py` (catálogo, preços e a
   `rotina_diaria`, que encadeia preços → risco) e `apps/fundamentals/tasks.py` (a coleta da
-  CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois). O `CELERY_BEAT_SCHEDULE` tem
-  três entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`, `RUVOR_BEAT_PRICES_CRON` e
-  `RUVOR_BEAT_FUNDAMENTALS_CRON`
+  CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois, e a `importar_comunicados`). O
+  `CELERY_BEAT_SCHEDULE` tem quatro entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`,
+  `RUVOR_BEAT_PRICES_CRON`, `RUVOR_BEAT_FUNDAMENTALS_CRON` e `RUVOR_BEAT_DISCLOSURES_CRON`
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
   [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
-  Configuração por variáveis `RUVOR_*`; mypy estrito; 529 testes com pytest-django, que
+  Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
+  `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)); 622 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
   as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
-  `silver.corporate_event`, `silver.company` e `silver.financial_statement`, e as seis tabelas
-  da `gold`, `gold.behavior_metric`, `gold.return_histogram_bin`, `gold.risk_run`,
-  `gold.risk_result`, `gold.model_snapshot` e `gold.fundamental_indicator` — vinte e cinco ao
-  todo. O `AUTH_USER_MODEL`
+  `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
+  `silver.disclosure`, e as sete tabelas da `gold`, `gold.behavior_metric`,
+  `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
+  `gold.fundamental_indicator` e `gold.peer_comparison` — vinte e sete ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -185,7 +186,14 @@ negócio nem tela de produto.
   companhias e balanços trimestrais em `silver`, com `--reconform` para refazê-la sem rede;
   `manage.py compute_fundamentals` grava em `gold` os indicadores e a capitalização, uma linha
   imutável por ação ([D-120](docs/decisoes/D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) a
-  [D-129](docs/decisoes/D-129-lucro-so-na-mae-vale-a-mae.md)). O
+  [D-129](docs/decisoes/D-129-lucro-so-na-mae-vale-a-mae.md)) e, depois deles, a comparação de
+  cada ação com os pares do segmento da B3, ou do subsetor, em `gold.peer_comparison`
+  ([D-132](docs/decisoes/D-132-pares-sao-o-segmento-da-b3-pela-tupla.md)); `manage.py
+  import_disclosures` guarda na `bronze` os zips do IPE da CVM desde 2016 e conforma em `silver`
+  os fatos relevantes, comunicados ao mercado e avisos aos acionistas das companhias do
+  catálogo, só na versão corrente
+  ([D-130](docs/decisoes/D-130-noticia-e-o-que-a-companhia-divulga-na-cvm.md),
+  [D-131](docs/decisoes/D-131-documento-do-ipe-se-identifica-pelo-link.md)). O
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que

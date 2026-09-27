@@ -1,7 +1,8 @@
 """Infraestrutura comum dos testes de `apps.fundamentals`: fixtures e a fonte falsa.
 
-`fixture_zip`, `empty_zip`, `edit_member` e `serve_range` sao funcoes comuns, nao fixtures
-do pytest, e se importam por `from tests.fundamentals.conftest import ...`.
+`fixture_zip`, `empty_zip`, `empty_ipe_zip`, `ipe_rows`, `edit_member` e `serve_range` sao
+funcoes comuns, nao fixtures do pytest, e se importam por
+`from tests.fundamentals.conftest import ...`.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from pathlib import Path
 
 from django.utils import timezone
 
-from apps.fundamentals.cvm import KINDS, CvmDownload, CvmHead, cvm_url
+from apps.fundamentals.cvm import IPE, KINDS, CvmDownload, CvmHead, cvm_url
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "cvm"
 FIRST_YEAR = 2016  # RF-03: o intervalo vai de 2016 ao ano corrente
@@ -35,6 +36,10 @@ CAPITAL_MEMBER = "composicao_capital_"
 
 # Os nove codigos das fixtures, normalizados como em `silver.asset.code_cvm`.
 CODES = {"9512", "4170", "19348", "906", "23159", "24805", "18627", "1228", "24228"}
+# As companhias de fora de `CODES` que estao nas fixtures do IPE por um caso do README:
+# 3077, o `Assunto` de 761 caracteres; 14451, o "Aviso aos Acionistas" de `Assunto`
+# vazio. O teste que precisa delas as poe no catalogo.
+IPE_EXTRA_CODES = {"3077", "14451"}
 EOL = "\r\n"  # o fim de linha dos CSVs da CVM
 
 Fields = list[str]
@@ -96,6 +101,36 @@ def empty_zip(kind: str, year: int) -> bytes:
     return buffer.getvalue()
 
 
+def empty_ipe_zip(year: int) -> bytes:
+    """Zip valido do IPE de `year`, sem documento: o membro unico so com o cabecalho,
+    copiado em bytes do `ipe_2026.zip`."""
+    buffer = io.BytesIO()
+    with (
+        zipfile.ZipFile(io.BytesIO(fixture_zip("ipe_2026"))) as source,
+        zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as target,
+    ):
+        data = source.read("ipe_cia_aberta_2026.csv")
+        header = data[: data.index(b"\n") + 1]
+        target.writestr(f"ipe_cia_aberta_{year}.csv", header)
+    return buffer.getvalue()
+
+
+def ipe_rows(payload: bytes, year: int) -> tuple[Fields, list[Fields]]:
+    """O cabecalho e as linhas do membro `ipe_cia_aberta_<year>.csv`, partidos por `;`.
+
+    A mesma leitura de `edit_member`, para montar variacoes com ele: as fixtures do IPE
+    nao tem `;` nem aspas dentro de campo (o `recortar.py` recusa a linha que tenha).
+    """
+    with zipfile.ZipFile(io.BytesIO(payload)) as source:
+        data = source.read(f"ipe_cia_aberta_{year}.csv")
+    lines = data.decode("latin-1").split(EOL)
+    assert lines[-1] == "", "membro sem fim de linha no fim"
+    header = lines[0].split(";")
+    rows = [line.split(";") for line in lines[1:-1]]
+    assert all(len(row) == len(header) for row in rows), "linha com ; dentro de campo"
+    return header, rows
+
+
 class FakeCvm:
     """Fonte de zips alimentada por cenario, no lugar do `CvmClient`.
 
@@ -148,21 +183,23 @@ def serve_range(
     now: datetime,
     fixtures: dict[tuple[str, int], bytes],
     generation: int = 1,
+    kinds: tuple[str, ...] = KINDS,
 ) -> None:
     """Acrescenta a `fake` as respostas de uma coleta inteira, de 2016 ao ano de `now`.
 
-    Para cada (tipo, ano) do intervalo, um `HEAD` e um `GET` com status 200: o zip de
-    `fixtures`, se houver, senao `empty_zip`. O `Last-Modified` e
+    Para cada (tipo, ano) do intervalo, com o tipo em `kinds` (o padrao, ITR e DFP; o
+    IPE, com `kinds=(IPE,)`), um `HEAD` e um `GET` com status 200: o zip de `fixtures`,
+    se houver, senao `empty_zip` (ou `empty_ipe_zip`, no IPE). O `Last-Modified` e
     `gen-{generation}-{tipo}-{ano}`: o mesmo `generation` repete o cabecalho (a coleta
     seguinte sai `nao modificado`); outro o muda. O ano corrente e o de `now` no fuso do
     projeto.
     """
     last_year = timezone.localdate(now).year
     for year in range(FIRST_YEAR, last_year + 1):
-        for kind in KINDS:
+        for kind in kinds:
             payload = fixtures.get((kind, year))
             if payload is None:
-                payload = empty_zip(kind, year)
+                payload = empty_ipe_zip(year) if kind == IPE else empty_zip(kind, year)
             last_modified = f"gen-{generation}-{kind}-{year}"
             fake.heads.setdefault((kind, year), []).append(CvmHead(200, last_modified))
             fake.gets.setdefault((kind, year), []).append(
