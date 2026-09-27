@@ -66,8 +66,8 @@ resolve quem fizer o merge por último.
 - `backend/config/settings.py` (`INSTALLED_APPS`, `CELERY_BEAT_SCHEDULE`), `backend/config/urls.py`
 - `compose.yaml`, `.env.example`, `.github/workflows/ci.yml`
 - `backend/pyproject.toml`, `engine/pyproject.toml`, `frontend/package.json`
-- `CLAUDE.md`, `docs/ROADMAP.md`, `docs/ESTADO.md`, `docs/ARQUITETURA.md`, `docs/PRODUTO.md`,
-  `docs/aprendizados.md`
+- `CLAUDE.md`, `README.md`, `docs/ROADMAP.md`, `docs/ESTADO.md`, `docs/ARQUITETURA.md`,
+  `docs/PRODUTO.md`, `docs/aprendizados.md`
 - os índices `docs/specs/README.md`, `docs/planos/README.md`, `docs/decisoes/README.md`: cada
   frente só acrescenta a própria linha
 
