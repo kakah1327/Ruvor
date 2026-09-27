@@ -46,6 +46,7 @@ from apps.risk.compute import (
     ModelsMissing,
     RiskFailed,
     RiskReport,
+    SnapshotCounts,
     close_run,
     open_run,
     run_compute_risk,
@@ -484,9 +485,21 @@ def test_v10_escrita_que_levanta_no_segundo_ativo_reverte_so_ele(
         seed: int,
         bars: list[Price],
         result: ExperimentResult,
+        *,
+        counts: SnapshotCounts,
+        full: bool,
     ) -> RiskRun:
         vistos.append(asset.ticker)
-        run = write_risk(asset, calculated_at, finished_at, seed, bars, result)
+        run = write_risk(
+            asset,
+            calculated_at,
+            finished_at,
+            seed,
+            bars,
+            result,
+            counts=counts,
+            full=full,
+        )
         if asset.ticker == "BBB3":
             # grava a execucao e os resultados e so entao levanta: sem isso nao haveria o
             # que reverter, e o teste passaria verde com a transacao no lugar errado.
@@ -629,7 +642,7 @@ def _abre(models: list[str]) -> tuple[RiskRun, list[Price]]:
     load_all_backtest_modules()
     asset = com_serie("AAA3")
     bars = list(Price.objects.filter(asset=asset).order_by("date"))
-    return open_run(asset, INICIO_1, 42, bars, models), bars
+    return open_run(asset, INICIO_1, 42, bars, models, full=False), bars
 
 
 def _calcula(run: RiskRun, bars: list[Price], models: list[str]) -> ExperimentResult:
@@ -696,7 +709,7 @@ def test_write_failed_grava_as_duas_linhas_com_numeros_nulos_e_o_registry() -> N
 
 def test_close_run_escreve_ok_e_o_instante_quando_tudo_foi_gravado() -> None:
     run, bars = _abre(BARATOS)
-    write_results(run, _calcula(run, bars, BARATOS))
+    write_results(run, _calcula(run, bars, BARATOS), {})
 
     assert close_run(run, FIM_1) == RiskRun.Status.OK
 
@@ -708,7 +721,7 @@ def test_close_run_escreve_ok_e_o_instante_quando_tudo_foi_gravado() -> None:
 
 def test_close_run_escreve_partial_com_um_modelo_falho() -> None:
     run, bars = _abre(BARATOS)
-    write_results(run, _calcula(run, bars, ["parametric"]))
+    write_results(run, _calcula(run, bars, ["parametric"]), {})
     write_failed(run, "historical", "RuntimeError: quebrou de proposito")
 
     assert close_run(run, FIM_1) == RiskRun.Status.PARTIAL
@@ -720,7 +733,7 @@ def test_close_run_escreve_partial_com_um_modelo_falho() -> None:
 def test_close_run_escreve_partial_quando_falta_modelo_pedido() -> None:
     """Relativo ao que foi **pedido**: dois pedidos, um so gravado, nenhum erro."""
     run, bars = _abre(BARATOS)
-    write_results(run, _calcula(run, bars, ["parametric"]))
+    write_results(run, _calcula(run, bars, ["parametric"]), {})
 
     assert close_run(run, FIM_1) == RiskRun.Status.PARTIAL
 
@@ -733,7 +746,7 @@ def test_close_run_escreve_failed_sem_nada_gravado_e_com_tudo_falho() -> None:
 
     asset = vazio.asset
     bars = list(Price.objects.filter(asset=asset).order_by("date"))
-    falho = open_run(asset, INICIO_2, 42, bars, BARATOS)
+    falho = open_run(asset, INICIO_2, 42, bars, BARATOS, full=False)
     for nome in BARATOS:
         write_failed(falho, nome, "RuntimeError: quebrou de proposito")
     assert close_run(falho, FIM_2) == RiskRun.Status.FAILED
@@ -744,7 +757,7 @@ def test_close_run_escreve_failed_sem_nada_gravado_e_com_tudo_falho() -> None:
 def test_close_run_com_um_modelo_pedido_espera_um_por_nivel() -> None:
     """Um modelo so pedido e uma execucao completa: o esperado e um por nivel, nao nove."""
     run, bars = _abre(["parametric"])
-    write_results(run, _calcula(run, bars, ["parametric"]))
+    write_results(run, _calcula(run, bars, ["parametric"]), {})
 
     assert close_run(run, FIM_1) == RiskRun.Status.OK
 
@@ -822,7 +835,16 @@ def test_v13_o_veredito_e_o_e_logico_dos_dois_e_ignora_dq_e_basileia() -> None:
         backtest_names=list(config.BACKTESTS),
     )
 
-    write_risk(asset, INICIO_1, FIM_1, 42, bars, ExperimentResult(experiment, runs))
+    write_risk(
+        asset,
+        INICIO_1,
+        FIM_1,
+        42,
+        bars,
+        ExperimentResult(experiment, runs),
+        counts={},
+        full=False,
+    )
 
     veredito = {
         (r.model_name, str(r.alpha)): (
@@ -856,7 +878,16 @@ def test_as_violacoes_gravadas_sao_as_do_kupiec() -> None:
         backtest_names=list(config.BACKTESTS),
     )
 
-    write_risk(asset, INICIO_1, FIM_1, 42, bars, ExperimentResult(experiment, [modelo]))
+    write_risk(
+        asset,
+        INICIO_1,
+        FIM_1,
+        42,
+        bars,
+        ExperimentResult(experiment, [modelo]),
+        counts={},
+        full=False,
+    )
 
     linha = RiskResult.objects.get()
     assert linha.violations == 12
