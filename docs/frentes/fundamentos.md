@@ -11,34 +11,21 @@
 
 ## Agora
 
-**Etapa:** spec aprovada pela revisão adversarial (3ª rodada) — [`specs/M3.1-fundamentos.md`](../specs/M3.1-fundamentos.md);
-falta o portão humano: a PR da spec, revisada pela `marco1`, que também muda `FRENTES.md` (cerca
-com `gold`, contrato de `silver.price`)
-**Ramo:** `fundamentos/M3.1-fundamentos`, criado em 2026-09-26, sem commit
+**Etapa:** spec aprovada (PR #2, mesclada em 2026-09-26); plano aprovado na quinta revisão contra
+a spec — [`planos/M3.1-fundamentos.md`](../planos/M3.1-fundamentos.md); falta o portão do plano
+(a PR dele, que leva também duas correções da spec vindas da revisão do plano)
+**Ramo:** `fundamentos/M3.1-fundamentos`, criado em 2026-09-26
 **Máquina:** pronta — Docker Desktop instalado, seis serviços `healthy`, `migrate` aplicado,
 `pytest tests` no `worker` com 304 passando (2026-09-26)
 
 ## Próximo passo
 
-1. Ler, nesta ordem: [`CLAUDE.md`](../../CLAUDE.md), [`PROCESSO.md`](../PROCESSO.md),
-   [`aprendizados.md`](../aprendizados.md) e [`FRENTES.md`](../FRENTES.md).
-2. Preparar a máquina e provar que ela funciona, antes de qualquer código. O único
-   pré-requisito é o Docker com `compose`; o detalhe está no [`README`](../../README.md#executar).
-
-   ```bash
-   cp .env.example .env
-   docker compose up -d --build --wait
-   docker compose exec -T worker python manage.py migrate
-   docker compose exec -T worker pytest tests
-   ```
-
-   A suíte tem de passar inteira **no `worker`**. No hospedeiro ela reprova de propósito — o
-   README explica por quê. A primeira construção demora: a imagem do `worker` passa de 3 GB,
-   por causa do TensorFlow. O `.venv/` nativo só serve ao motor, que está fora desta frente.
-3. Criar o ramo a partir da `main`.
-4. **Escrever a spec do M3.1**, conversando com o dono da frente. **A primeira pergunta é a
-   fonte:** o Yahoo não serve para fundamentos da B3, e nenhuma fonte está escolhida. Vira
-   decisão da faixa desta frente, com o porquê.
+1. **Portão do plano:** merge da PR do plano pelo dono da frente, com a CI verde
+   ([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)).
+2. **Implementação**, tarefa a tarefa, T1 a T11 do plano, um commit por tarefa neste ramo. A PR de
+   implementação passa também pela `marco1` (serviço `beat` e `tests/risk/test_beat.py`).
+3. A T2 baixa de novo os zips da CVM para recortar as fixtures: os CSVs medidos na spec não foram
+   guardados.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -74,4 +61,5 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-26 | frente criada pela D-84 |
 | 2026-09-26 | fonte escolhida com o dono: dados abertos da CVM. Escopo: catálogo inteiro, 10 anos, até `gold`, bancos entram (lucro, PL, ROE e múltiplos valem; receita, margens e dívida nulas pelo plano), capitalização por classe, `bronze` com o zip inteiro. Spec escrita; a medição achou a escala das ações variando por companhia |
 | 2026-09-26 | máquina preparada (304 testes no `worker`). Revisão adversarial 1 reprovou: 4 graves, 15 médios, 10 leves, todos absorvidos. Decidido com o dono: a dívida bruta inclui arrendamento; exercício não civil tem regra genérica; a dívida de tipos do Celery não se paga no M3.1 |
+| 2026-09-26 | spec mesclada (PR #2). Plano escrito; cinco revisões contra a spec, as quatro primeiras reprovaram (T11 que não reprovava, companhia nova sem histórico, mutações sem teste), a quinta **aprovou**. Duas correções da spec vieram dessa revisão |
 | 2026-09-26 | revisão 2 reprovou (3 graves: contas de bancos forma A e seguradoras, motivos da capitalização, units); revisão 3 **aprovou** (0 graves, 3 médios, 9 leves). Tudo absorvido. Spec pronta para a PR |
