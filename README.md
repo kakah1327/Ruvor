@@ -144,17 +144,19 @@ Para derrubar tudo, `docker compose down`; com `-v`, leva junto o volume do banc
 
 ### Agendamento (Celery Beat)
 
-O serviço `beat` dispara duas rotinas, no fuso de São Paulo: o **catálogo de ações**, uma vez
-por semana, e os **preços**, de segunda a sexta — com o **recálculo do risco** encadeado a
-eles, e não agendado à parte. Ele só agenda: quem executa é o `worker`. O `beat` não tem
+O serviço `beat` dispara três rotinas, no fuso de São Paulo: o **catálogo de ações**, uma vez
+por semana; os **preços**, de segunda a sexta — com o **recálculo do risco** encadeado a
+eles, e não agendado à parte —; e os **fundamentos**, uma vez por semana — a coleta da CVM
+com o **cálculo dos indicadores** encadeado a ela. Ele só agenda: quem executa é o `worker`. O `beat` não tem
 `build` próprio e usa a imagem `ruvor-worker`, que o `docker compose up --build` constrói.
 
 | Variável | O que controla | Padrão |
 |---|---|---|
 | `RUVOR_BEAT_ASSETS_CRON` | a agenda semanal do catálogo | `0 7 * * 1` — segunda, 7h |
 | `RUVOR_BEAT_PRICES_CRON` | a agenda de preços e, por tabela, a do risco | `30 19 * * 1-5` — segunda a sexta, 19h30 |
+| `RUVOR_BEAT_FUNDAMENTALS_CRON` | a agenda semanal da coleta da CVM e, por tabela, a do cálculo dos indicadores | `0 8 * * 1` — segunda, 8h |
 
-As duas são cron de cinco campos (minuto, hora, dia do mês, mês, dia da semana) e saem do
+As três são cron de cinco campos (minuto, hora, dia do mês, mês, dia da semana) e saem do
 `.env`; ausentes ou vazias, vale o padrão. Mudou, repita o `docker compose up -d --wait`.
 
 Para ver o que o Beat disparou: `docker compose logs beat` (com `-f` para acompanhar). O
@@ -207,7 +209,7 @@ proxy.
 
 Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md)). O conjunto precisa estar de pé
-(`docker compose up -d --wait`) para as doze primeiras linhas.
+(`docker compose up -d --wait`) para as catorze primeiras linhas.
 
 | O quê | Comando |
 |---|---|
@@ -216,6 +218,8 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Importar os preços | `docker compose exec -T web python manage.py import_prices PETR4 VALE3 ITUB4 IBOV` na primeira vez, depois sem argumentos — consulta o Yahoo |
 | Calcular as métricas de comportamento | `docker compose exec -T web python manage.py compute_metrics` — lê `silver`, escreve em `gold`; aceita tickers como argumento. Não sai para a rede |
 | Calcular o risco (VaR e backtesting) | `docker compose exec -T worker python manage.py compute_risk` — lê `silver`, escreve em `gold`; aceita tickers, `--seed N` e `--model NOME` (repetível). Roda no `worker`, que é quem tem o motor. Não sai para a rede. Com `--async`, enfileira uma execução por ativo no `worker` e devolve na hora — o resultado aparece em `gold` quando as tarefas terminam |
+| Importar os fundamentos | `docker compose exec -T worker python manage.py import_fundamentals` — consulta a CVM, guarda em `bronze` os zips de ITR e DFP de cada ano desde 2016 e conforma companhias e balanços trimestrais em `silver`. A primeira vez baixa tudo (~404 MiB, ~5 minutos); depois, só o arquivo que a CVM mudou. `--full` baixa todos de novo; `--reconform [ANO ...]` refaz a `silver` dos anos dados (todos, sem ano) a partir da `bronze`, sem sair para a rede. Os dois não vão juntos |
+| Calcular os indicadores fundamentalistas | `docker compose exec -T worker python manage.py compute_fundamentals` — lê `silver`, grava uma linha por ação em `gold`. Não sai para a rede. Os múltiplos por preço só saem para ação com preço de até 10 dias em `silver.price`: rode `import_prices` antes |
 | Testes do backend | `docker compose exec -T worker pytest tests` |
 | Tipos do backend | `docker compose exec -T worker mypy` |
 | Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |
@@ -240,14 +244,14 @@ aponta as violações e `ruff format --check` reprova sem reescrever — quem ap
 hospedeiro, e a segunda metade rodaria fora do contêiner. O caminho é `.` porque o diretório
 de trabalho do contêiner `web` já é `/repo/backend`.
 
-**`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e quarenta e oito, e é de propósito.** O
+**`pytest backend` no hospedeiro reprova cinco testes e dá erro em cento e oitenta e nove, e é de propósito.** O
 `backend/config/settings_test.py` fixa valores de banco inexistentes (`nao-usar`) justamente
 para que um `.env` incompleto não passe despercebido. No hospedeiro, tudo que toca o banco
 falha com `OperationalError: failed to resolve host 'nao-usar'`: o `test_conexao_com_o_banco`
 desde o F3, e desde o F4 os quatro que leem o esquema, a organização e a coluna
 `organization_id` — `test_esquemas.py` (dois), `test_organizacao.py` e o
-`test_a_coluna_organization_id_e_not_null`. Os cento e quarenta e oito são os que pedem `django_db`, que
-nem conseguem criar o banco de teste — medido em 2026-09-25, com 304 testes. Todos só passam
+`test_a_coluna_organization_id_e_not_null`. Os cento e oitenta e nove são os que pedem `django_db`, que
+nem conseguem criar o banco de teste — medido em 2026-09-27, com 481 testes. Todos só passam
 dentro do contêiner, onde as variáveis
 vêm do `compose` **e o banco está migrado**. Não é regressão: é a suíte rodando fora da casa
 dela.
