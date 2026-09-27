@@ -1,34 +1,26 @@
 # Frente `fundamentos`
 
 **Dono:** kakah1327 (Kauã)
-**Bloco:** M3.1 — Fundamentos: a camada 4, com fonte adequada para a B3
+**Blocos:** M3.1 — Fundamentos ✅ (camada 4) → **M3.2 — Contexto** (camada 5)
 ([ROADMAP](../ROADMAP.md#marco-3--tudo-sobre-a-ação-completo)).
-**Cerca:** uma app nova em `backend/apps/`, os testes dela e as tabelas novas em `bronze` e
-`silver`. Detalhe em [FRENTES.md](../FRENTES.md#cercas).
+**Cerca:** a app `apps/fundamentals`, os testes dela e as tabelas novas em `bronze`, `silver` e
+`gold`, da própria app. Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 **Faixa de decisões:** D-120 a D-139.
 
 ---
 
 ## Agora
 
-**Etapa:** **M3.1 fechado em 2026-09-27** — implementado, verificado contra a CVM real e com o
-fecho escrito ([ESTADO](../ESTADO.md#m31--fundamentos)). Falta o portão da implementação: a PR
-dela, aberta deste ramo ou a abrir, com a CI verde e o merge pelo dono da frente
-([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)) — e **revisada pela `marco1`**,
-porque escreve no serviço `beat` do `compose.yaml` e em `tests/risk/test_beat.py`, que são da
-cerca dela.
-**Ramo:** `fundamentos/M3.1-fundamentos`, criado em 2026-09-26
-**Máquina:** `pytest tests` no `worker` com 496 passando (2026-09-27); a `bronze` do banco de
-desenvolvimento tem os 22 zips da CVM da carga do zero
+**Bloco:** M3.2 — Contexto (camada 5: comunicados da companhia à CVM e comparação com os pares)
+**Etapa:** spec pronta, revisão adversarial aprovada na rodada 2; falta a PR — [`specs/M3.2-contexto.md`](../specs/M3.2-contexto.md)
+**Ramo:** `fundamentos/M3.2-contexto`, criado em 2026-09-27 a partir da `main` com o M3.1 mesclado (PR #5)
 
 ## Próximo passo
 
-1. **Portão da implementação:** a PR, a revisão da `marco1` e o merge.
-2. **O próximo bloco da frente não está definido.** O ROADMAP põe o M3.2 — Contexto (camada 5:
-   notícias e comparação setorial) depois do M3.1, mas nada o amarra a esta frente. **Pergunta ao
-   dono da frente:** o M3.2, outro bloco, ou encerrar a frente?
-3. Quando o próximo bloco criar tarefa Celery, a dívida de tipos vence antes dele
-   ([ESTADO](../ESTADO.md#dívida-registrada)): a spec combina a mudança com a `marco1`.
+1. PR da spec, com a mudança do `FRENTES.md` (o M3.2 na linha da frente). O portão é o merge
+   pelo dono da frente (D-85). A spec toca arquivos da `marco1` (RF-17, RF-18, RF-20): a
+   PR pede a revisão dela.
+2. Depois do merge, o plano.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -67,3 +59,7 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-26 | spec mesclada (PR #2). Plano escrito; cinco revisões contra a spec, as quatro primeiras reprovaram (T11 que não reprovava, companhia nova sem histórico, mutações sem teste), a quinta **aprovou**. Duas correções da spec vieram dessa revisão |
 | 2026-09-26 | revisão 2 reprovou (3 graves: contas de bancos forma A e seguradoras, motivos da capitalização, units); revisão 3 **aprovou** (0 graves, 3 médios, 9 leves). Tudo absorvido. Spec pronta para a PR |
 | 2026-09-27 | implementação T1 a T11, dezenove commits. A T11 reprovou a V-08 (ITR e DFP na mesma data) → RF-13b e T11b, vale o DFP; carga refeita do zero, 4 min 43 s, 339 companhias, V-13 igual à divulgação de PETR4, VALE3 e ITUB4. Revisão final: a primeira reprovou (lucro só na mãe saía 0) → RF-08b e T11c, vale a mãe; a segunda **aprovou**. **Bloco fechado**, D-120 a D-129 |
+| 2026-09-27 | M3.1 mesclado (PR #5, revisado pela `marco1`). M3.2 escolhido; decidido com o dono: notícias pelo IPE da CVM, pares pelo segmento com recuo para o subsetor, comparação pelos fundamentos do M3.1, coleta diária em entrada própria do Beat |
+| 2026-09-27 | auto-revisão da spec do M3.2: o IPE vazava para os índices do M3.1 (`_current_versions` sem filtro; `cvm_url` recusava `ipe`) → RF-02b; a comparação não cabia na transação do indicador → duas fases (RF-10, RF-15); vinte e sete tabelas, não vinte e seis. Decidido com o dono: **a dívida de tipos do Celery se paga no M3.2** (RF-20, D-134), medida no `worker` com `celery-types` 0.26.0. |
+| 2026-09-27 | revisão adversarial 1 **reprovou** (3 graves: grupo de pares pelo nome, que se repete entre setores; o que a coleta conforma; reapresentações acumulando na `silver`; 4 médios, 8 leves). Decidido com o dono: pares pela tupla (setor, subsetor, segmento), 12 companhias sem grupo hoje; a coleta conforma os anos novos e o histórico inteiro da companhia nova; a versão superada sai da `silver`. Tudo absorvido (RF-04a, RF-04b, RF-07b, RF-11, RF-15) |
+| 2026-09-27 | revisão adversarial 2 **aprovou** (0 graves, 3 médios, 3 leves). Absorvidos: o RF-04b media links divergentes que a fonte não traz (são todos idênticos); o RF-07b ganhou ordem, exclusão dos anos de (a) e o rótulo `novas {A}`; o conjunto do RF-04a passou a ser o conformado, e link que muda de companhia é atualizado; a mensagem do `CommandError` entra no inventário. Spec pronta para a PR |
