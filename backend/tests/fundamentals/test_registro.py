@@ -1,4 +1,5 @@
-"""As tres tarefas de fundamentos entram por descoberta automatica (RF-29).
+"""As quatro tarefas de fundamentos entram por descoberta automatica (RF-29; a quarta, a
+dos comunicados, e do M3.2).
 
 Molde de `test_tarefas_de_app_entram_por_descoberta_automatica`, em
 `tests/test_celery_registro.py`: em subprocesso, porque `app.task` registra com
@@ -36,6 +37,7 @@ _FUNDAMENTALS_TASKS = {
     "apps.fundamentals.tasks.importar_fundamentos",
     "apps.fundamentals.tasks.calcular_fundamentos",
     "apps.fundamentals.tasks.rotina_fundamentos",
+    "apps.fundamentals.tasks.importar_comunicados",
 }
 
 

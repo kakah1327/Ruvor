@@ -65,16 +65,22 @@ def _settings_em_subprocesso(prices_cron: str) -> subprocess.CompletedProcess[st
     )
 
 
-# --- V-08: preco e risco com duas entradas; fundamentos e outra corrente (D-127) -----------
+# --- V-08: preco e risco com duas entradas; fundamentos e comunicados a parte (D-127) ------
 
 
-def test_beat_tem_as_duas_entradas_de_preco_e_risco_e_a_de_fundamentos() -> None:
+def test_beat_tem_as_duas_entradas_de_preco_e_risco_e_as_de_fundamentos_e_comunicados() -> (
+    None
+):
     schedule = settings.CELERY_BEAT_SCHEDULE
-    assert set(schedule) == {"catalogo", "precos", "fundamentos"}
+    assert set(schedule) == {"catalogo", "precos", "fundamentos", "comunicados"}
     assert schedule["catalogo"]["task"] == "apps.assets.tasks.importar_ativos"
     assert schedule["precos"]["task"] == "apps.assets.tasks.rotina_diaria"
     assert (
         schedule["fundamentos"]["task"] == "apps.fundamentals.tasks.rotina_fundamentos"
+    )
+    assert (
+        schedule["comunicados"]["task"]
+        == "apps.fundamentals.tasks.importar_comunicados"
     )
 
 

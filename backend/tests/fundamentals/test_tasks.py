@@ -1,4 +1,4 @@
-"""As tarefas de fundamentos (RF-28), sem rede e sem Redis.
+"""As tarefas de fundamentos (RF-28) e a de comunicados (RF-16 do M3.2), sem rede e sem Redis.
 
 `call_command` e `_enqueue` sao substituidos pelo nome em `apps.fundamentals.tasks`, que e
 onde as tarefas os chamam. A corrente e conferida pela assinatura serializada:
@@ -14,6 +14,7 @@ from django.core.management.base import CommandError
 
 from apps.fundamentals.tasks import (
     _calcular_fundamentos,
+    _importar_comunicados,
     _importar_fundamentos,
     _rotina_fundamentos,
 )
@@ -92,3 +93,41 @@ def test_rf28_calcular_devolve_a_saida_do_comando(
 
     assert _calcular_fundamentos() == "saida de compute_fundamentals\n"
     assert chamadas == ["compute_fundamentals"]
+
+
+# RF-16 do M3.2: a coleta dos comunicados
+
+
+def test_rf16_comunicados_devolve_a_falha_do_comando_em_vez_de_levantar(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def falha(*args: object, **kwargs: object) -> NoReturn:
+        raise CommandError("coleta com falhas: 009512")
+
+    monkeypatch.setattr("apps.fundamentals.tasks.call_command", falha)
+
+    assert _importar_comunicados() == "FALHOU: coleta com falhas: 009512"
+
+
+def test_rf16_comunicados_propaga_o_que_nao_e_command_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def quebra(*args: object, **kwargs: object) -> NoReturn:
+        raise RuntimeError("a coleta nao chegou a rodar")
+
+    monkeypatch.setattr("apps.fundamentals.tasks.call_command", quebra)
+
+    with pytest.raises(RuntimeError, match="nao chegou a rodar"):
+        _importar_comunicados()
+
+
+def test_rf16_comunicados_devolve_a_saida_do_comando(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    chamadas: list[str] = []
+    monkeypatch.setattr(
+        "apps.fundamentals.tasks.call_command", _comando_que_escreve(chamadas)
+    )
+
+    assert _importar_comunicados() == "saida de import_disclosures\n"
+    assert chamadas == ["import_disclosures"]
