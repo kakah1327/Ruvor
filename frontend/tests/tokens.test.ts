@@ -4,6 +4,8 @@
  * M1.6a — os tokens do kit: V-01 (o claro bate com os mockups), V-02 (a escala
  * tipográfica, parte dos tokens), V-04 (contraste nos dois temas e nas duas cópias do
  * escuro), V-06 (tokens.json igual a tokens.css) e RF-05 (as duas cópias do escuro).
+ * E a folha de componentes: V-02 (parte da folha), V-05 (foco visível) e RF-06 (a folha
+ * só estiliza classe com o prefixo ruvor-).
  *
  * Lê brand/ruvor/ — no contêiner, a montagem só de leitura em /repo/brand/ruvor.
  */
@@ -17,6 +19,7 @@ import {
   readBrand,
   resolve,
   ruleColor,
+  rules,
   ruleValue,
 } from "./kit";
 
@@ -353,5 +356,107 @@ describe("RF-05 — os temas", () => {
     const themed = Object.keys(parseVars(TOKENS_CSS, LIGHT));
     const unthemed = Object.keys(parseVars(TOKENS_CSS, UNTHEMED));
     expect(themed.filter((name) => unthemed.includes(name))).toEqual([]);
+  });
+});
+
+// --- A folha de componentes: V-02 (parte da folha), V-05 e o que ela não estiliza -------
+
+const COMPONENTS_CSS = readBrand("components.css");
+const COMPONENTS_TEXT = COMPONENTS_CSS.replace(/\/\*[\s\S]*?\*\//g, "");
+const COMPONENT_RULES = rules(COMPONENTS_CSS);
+// A lista de seletores, partida só nas vírgulas de fora de parênteses (:not(a, b)).
+function selectorParts(selector: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < selector.length; index += 1) {
+    const char = selector[index];
+    if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    else if (char === "," && depth === 0) {
+      parts.push(selector.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+  parts.push(selector.slice(start).trim());
+  return parts;
+}
+
+describe("V-02 — a folha não tem tamanho de fonte literal", () => {
+  it("todo font-size é var(...) ou inherit", () => {
+    const values = [
+      ...COMPONENTS_TEXT.matchAll(/(?<![\w-])font-size\s*:\s*([^;}]+)/g),
+    ].map((match) => match[1].trim());
+    expect(values.length).toBeGreaterThan(0);
+    expect(
+      values.filter((value) => !/^(var\(--ruvor-[\w-]+\)|inherit)$/.test(value)),
+    ).toEqual([]);
+  });
+
+  it("nenhum atalho font: com número em px, em, rem ou %", () => {
+    const values = [...COMPONENTS_TEXT.matchAll(/(?<![\w-])font\s*:\s*([^;}]+)/g)].map(
+      (match) => match[1].trim(),
+    );
+    expect(values.filter((value) => /\d\s*(px|em|rem|%)/.test(value))).toEqual([]);
+  });
+});
+
+const INTERACTIVE = [
+  ".ruvor-btn",
+  ".ruvor-input",
+  ".ruvor-select",
+  ".ruvor-choice",
+  ".ruvor-nav__link",
+];
+
+describe("V-05 — foco visível", () => {
+  it.each(INTERACTIVE)("%s tem :focus-visible com outline", (base) => {
+    const focus = COMPONENT_RULES.filter((rule) =>
+      selectorParts(rule.selector).includes(`${base}:focus-visible`),
+    );
+    expect(focus.length, `${base}:focus-visible`).toBeGreaterThan(0);
+    const outlines = focus.flatMap((rule) =>
+      [...rule.body.matchAll(/(?<![\w-])outline\s*:\s*([^;]+)/g)].map((m) =>
+        m[1].trim(),
+      ),
+    );
+    expect(outlines.length, `${base}:focus-visible sem outline`).toBeGreaterThan(0);
+    for (const value of outlines) expect(value).not.toMatch(/^(none|0)\b/);
+  });
+
+  it("nenhum outline: none ou 0 na folha", () => {
+    expect(COMPONENTS_TEXT).not.toMatch(/outline(-style|-width)?\s*:\s*(none|0)\b/);
+  });
+});
+
+describe("RF-06 — a folha só estiliza classe", () => {
+  it("encontra as regras", () => {
+    expect(COMPONENT_RULES.length).toBeGreaterThan(0);
+  });
+
+  it("só tem @media e @keyframes como @-regra", () => {
+    const atRules = [...COMPONENTS_TEXT.matchAll(/@([\w-]+)/g)].map(
+      (match) => match[1],
+    );
+    expect(atRules.filter((name) => name !== "media" && name !== "keyframes")).toEqual(
+      [],
+    );
+  });
+
+  it("todo seletor tem classe ruvor- e nenhum é html, body ou título solto", () => {
+    // Os passos de @keyframes (from, to, porcentagens) não entram: rules() pula a @-regra.
+    const bad = COMPONENT_RULES.flatMap((rule) => selectorParts(rule.selector)).filter(
+      (part) =>
+        !/\.ruvor-[\w-]/.test(part) ||
+        /(^|[\s>+~(,])(html|body|h[1-6])(?![\w-])/.test(part),
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it("toda classe da folha tem o prefixo ruvor-", () => {
+    const classes = [...COMPONENTS_TEXT.matchAll(/\.(-?[a-z_][\w-]*)/gi)]
+      .map((match) => match[1])
+      .filter((name) => !/^\d/.test(name));
+    expect(classes.filter((name) => !name.startsWith("ruvor-"))).toEqual([]);
   });
 });

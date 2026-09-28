@@ -15,7 +15,7 @@ export function readBrand(name: string): string {
   return readFileSync(fileURLToPath(new URL(name, BRAND)), "utf8");
 }
 
-interface Rule {
+export interface Rule {
   readonly selector: string;
   readonly body: string;
 }
@@ -28,7 +28,7 @@ function normalizeSelector(selector: string): string {
 }
 
 /** As regras de estilo, inclusive as de dentro de @media; as @-regras não entram. */
-function rules(css: string): Rule[] {
+export function rules(css: string): Rule[] {
   const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const found: Rule[] = [];
   const walk = (source: string): void => {

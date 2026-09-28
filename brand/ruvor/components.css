@@ -1,0 +1,638 @@
+/*
+ * Folha de componentes da Ruvor — a forma de produto dos componentes de
+ * mockups/foundation.css (RF-06 do M1.6a).
+ *
+ * Toda classe leva o prefixo ruvor-: a folha é importada pelo frontend inteiro, e não
+ * estiliza html, body, títulos soltos nem seletor sem classe. O estilo de base da página
+ * fica em .ruvor-app, que a página aplica por classe. Cor e tamanho de fonte só por token
+ * (tokens.css); transparent e currentColor não são cor da marca. Espaços, raios e larguras
+ * ficam como no mockup.
+ *
+ * Estados (RF-03): :hover, :focus-visible (anel obrigatório, nunca retirado), :active,
+ * :disabled e [aria-disabled="true"], [aria-busy="true"] e, no campo, [aria-invalid="true"].
+ */
+
+/* --- Base da página --------------------------------------------------------------- */
+
+.ruvor-app {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ruvor-canvas);
+  color: var(--ruvor-ink);
+  font-family: var(--ruvor-font-sans);
+  font-size: var(--ruvor-type-body-size);
+  font-weight: var(--ruvor-type-body-weight);
+  line-height: var(--ruvor-type-body-leading);
+  letter-spacing: var(--ruvor-type-body-tracking);
+}
+
+/* --- Barra superior e navegação -------------------------------------------------- */
+
+.ruvor-topbar {
+  box-sizing: border-box;
+  height: 60px;
+  background: var(--ruvor-topbar);
+  color: var(--ruvor-topbar-text);
+  border-bottom: 1px solid var(--ruvor-topbar-edge);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 0 26px;
+  gap: 38px;
+}
+
+.ruvor-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ruvor-brand img {
+  display: block;
+  width: 23px;
+  height: 23px;
+}
+
+.ruvor-brand b {
+  font-size: var(--ruvor-type-brand-size);
+  font-weight: var(--ruvor-type-brand-weight);
+  line-height: var(--ruvor-type-brand-leading);
+  letter-spacing: var(--ruvor-type-brand-tracking);
+}
+
+.ruvor-nav {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 24px;
+}
+
+.ruvor-nav__link {
+  display: flex;
+  align-items: center;
+  position: relative;
+  color: var(--ruvor-topbar-link);
+  text-decoration: none;
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-nav__link:hover {
+  color: var(--ruvor-topbar-text);
+}
+
+.ruvor-nav__link:focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+.ruvor-nav__link--on {
+  color: var(--ruvor-topbar-text);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-nav__link--on::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--ruvor-decision);
+}
+
+.ruvor-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ruvor-topbar-account);
+}
+
+.ruvor-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ruvor-avatar);
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-label-size);
+  font-weight: var(--ruvor-type-label-weight);
+  line-height: normal;
+}
+
+/* --- Área de trabalho ------------------------------------------------------------ */
+
+.ruvor-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  max-width: 1440px;
+  width: 100%;
+  margin: auto;
+  background: var(--ruvor-paper);
+  min-height: calc(100vh - 60px);
+}
+
+.ruvor-content {
+  padding: 34px 40px 48px;
+}
+
+.ruvor-rail {
+  background: var(--ruvor-surface-2);
+  border-left: 1px solid var(--ruvor-border);
+  padding: 28px 24px;
+}
+
+.ruvor-page-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* --- Títulos --------------------------------------------------------------------- */
+
+.ruvor-eyebrow {
+  margin: 0 0 9px;
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-label-size);
+  font-weight: var(--ruvor-type-label-weight);
+  line-height: var(--ruvor-type-label-leading);
+  letter-spacing: var(--ruvor-type-label-tracking);
+  text-transform: uppercase;
+  color: var(--ruvor-decision);
+}
+
+.ruvor-display {
+  margin: 0;
+  font-size: var(--ruvor-type-display-size);
+  font-weight: var(--ruvor-type-display-weight);
+  line-height: var(--ruvor-type-display-leading);
+  letter-spacing: var(--ruvor-type-display-tracking);
+}
+
+.ruvor-h2 {
+  margin: 0;
+  font-size: var(--ruvor-type-h2-size);
+  font-weight: var(--ruvor-type-h2-weight);
+  line-height: var(--ruvor-type-h2-leading);
+  letter-spacing: var(--ruvor-type-h2-tracking);
+}
+
+.ruvor-h3 {
+  margin: 0;
+  font-size: var(--ruvor-type-h3-size);
+  font-weight: var(--ruvor-type-h3-weight);
+  line-height: var(--ruvor-type-h3-leading);
+  letter-spacing: var(--ruvor-type-h3-tracking);
+}
+
+.ruvor-sub {
+  color: var(--ruvor-text-muted);
+  max-width: 68ch;
+  margin: 10px 0 0;
+}
+
+/* --- Botão ----------------------------------------------------------------------- */
+
+.ruvor-btn {
+  box-sizing: border-box;
+  font: inherit;
+  font-weight: var(--ruvor-type-small-weight);
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-sm);
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  padding: 9px 13px;
+  cursor: pointer;
+}
+
+.ruvor-btn:hover:not(:disabled, [aria-disabled="true"]) {
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-btn:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-btn:active:not(:disabled, [aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
+.ruvor-btn--primary {
+  background: var(--ruvor-decision);
+  border-color: var(--ruvor-decision);
+  color: var(--ruvor-on-decision);
+}
+
+.ruvor-btn--primary:hover:not(:disabled, [aria-disabled="true"]) {
+  background: var(--ruvor-decision-hover);
+  border-color: var(--ruvor-decision-hover);
+}
+
+.ruvor-btn--ghost {
+  background: transparent;
+}
+
+.ruvor-btn--ghost:hover:not(:disabled, [aria-disabled="true"]) {
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-btn:disabled,
+.ruvor-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ruvor-btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* --- Campo ----------------------------------------------------------------------- */
+
+.ruvor-field {
+  display: grid;
+  gap: 6px;
+}
+
+.ruvor-label {
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-input,
+.ruvor-select {
+  box-sizing: border-box;
+  font: inherit;
+  width: 100%;
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-sm);
+  background: var(--ruvor-surface);
+  padding: 10px 11px;
+  color: var(--ruvor-ink);
+}
+
+.ruvor-input:hover:not(:disabled),
+.ruvor-select:hover:not(:disabled) {
+  border-color: var(--ruvor-text-muted);
+}
+
+.ruvor-input:focus-visible,
+.ruvor-select:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-input:disabled,
+.ruvor-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ruvor-input[aria-busy="true"],
+.ruvor-select[aria-busy="true"] {
+  cursor: progress;
+}
+
+.ruvor-input[aria-invalid="true"],
+.ruvor-select[aria-invalid="true"] {
+  border-color: var(--ruvor-critical);
+}
+
+.ruvor-hint {
+  font-size: var(--ruvor-type-micro-size);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-field__error {
+  font-size: var(--ruvor-type-micro-size);
+  font-weight: var(--ruvor-type-micro-weight);
+  color: var(--ruvor-critical-text);
+}
+
+/* --- Escolha --------------------------------------------------------------------- */
+
+.ruvor-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.ruvor-choice {
+  box-sizing: border-box;
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-sm);
+  padding: 12px;
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  cursor: pointer;
+}
+
+.ruvor-choice:hover:not(:disabled, [aria-disabled="true"], .ruvor-choice--on) {
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-choice:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-choice--on {
+  border-color: var(--ruvor-decision);
+  box-shadow: inset 0 0 0 1px var(--ruvor-decision);
+  background: var(--ruvor-choice-selected);
+}
+
+.ruvor-choice:disabled,
+.ruvor-choice[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ruvor-choice b {
+  display: block;
+}
+
+.ruvor-choice small {
+  color: var(--ruvor-text-muted);
+}
+
+/* --- Painel e grade -------------------------------------------------------------- */
+
+.ruvor-panel {
+  background: var(--ruvor-surface);
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-md);
+  box-shadow: var(--ruvor-shadow-panel);
+}
+
+.ruvor-panel__head {
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--ruvor-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ruvor-panel__body {
+  padding: 18px;
+}
+
+.ruvor-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.ruvor-grid--2 {
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
+.ruvor-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ruvor-divider {
+  border-top: 1px solid var(--ruvor-border);
+}
+
+/* --- Tag, ponto e ícone de sinal ------------------------------------------------- */
+
+.ruvor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 99px;
+  padding: 4px 9px;
+  font-size: var(--ruvor-type-micro-size);
+  font-weight: var(--ruvor-type-micro-weight);
+}
+
+.ruvor-tag--decision {
+  background: var(--ruvor-decision-soft);
+  color: var(--ruvor-decision-text);
+}
+
+.ruvor-tag--review {
+  background: var(--ruvor-review-soft);
+  color: var(--ruvor-review-text);
+}
+
+.ruvor-tag--evidence {
+  background: var(--ruvor-evidence-soft);
+  color: var(--ruvor-evidence-text);
+}
+
+.ruvor-tag--validated {
+  background: var(--ruvor-validated-soft);
+  color: var(--ruvor-validated-text);
+}
+
+.ruvor-tag--critical {
+  background: var(--ruvor-critical-soft);
+  color: var(--ruvor-critical-text);
+}
+
+.ruvor-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ruvor-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px 10px 10px 3px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.ruvor-icon svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ruvor-icon--decision {
+  background: var(--ruvor-decision-soft);
+  color: var(--ruvor-decision);
+}
+
+.ruvor-icon--review {
+  background: var(--ruvor-review-soft);
+  color: var(--ruvor-icon-review);
+}
+
+.ruvor-icon--evidence {
+  background: var(--ruvor-evidence-soft);
+  color: var(--ruvor-evidence);
+}
+
+.ruvor-icon--validated {
+  background: var(--ruvor-validated-soft);
+  color: var(--ruvor-validated);
+}
+
+.ruvor-icon--critical {
+  background: var(--ruvor-critical-soft);
+  color: var(--ruvor-critical);
+}
+
+/* --- Sinal, ranking e barra ------------------------------------------------------ */
+
+.ruvor-signal {
+  display: flex;
+  gap: 11px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ruvor-border);
+}
+
+.ruvor-signal p {
+  margin: 4px 0 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-rank {
+  display: grid;
+  grid-template-columns: 28px 1fr 120px 32px;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ruvor-rank-rule);
+}
+
+.ruvor-bar {
+  display: block;
+  height: 7px;
+  border-radius: 9px;
+  background: var(--ruvor-bar-track);
+  overflow: hidden;
+}
+
+.ruvor-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 9px;
+  background: var(--ruvor-validated);
+}
+
+/* --- Tabela ---------------------------------------------------------------------- */
+
+.ruvor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ruvor-table th {
+  text-align: left;
+  padding: 9px 12px;
+  background: var(--ruvor-table-head);
+  color: var(--ruvor-text-muted);
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-label-size);
+  font-weight: var(--ruvor-type-label-weight);
+  line-height: normal;
+  letter-spacing: var(--ruvor-type-label-tracking-table);
+  text-transform: uppercase;
+}
+
+.ruvor-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--ruvor-table-rule);
+  vertical-align: middle;
+}
+
+.ruvor-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.ruvor-num {
+  font-family: var(--ruvor-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Destaque, código e esqueleto ------------------------------------------------ */
+
+.ruvor-callout {
+  border-radius: var(--ruvor-radius-md);
+  padding: 17px;
+  background: var(--ruvor-callout);
+}
+
+.ruvor-callout--critical {
+  background: var(--ruvor-critical-soft);
+}
+
+.ruvor-code {
+  background: var(--ruvor-code-bg);
+  color: var(--ruvor-code-text);
+  border-radius: var(--ruvor-radius-md);
+  padding: 18px;
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-small-size);
+  line-height: var(--ruvor-type-code-leading);
+  white-space: pre-wrap;
+}
+
+/* O anel sobre fundo escuro: dentro da barra e do bloco de código. */
+.ruvor-topbar :focus-visible,
+.ruvor-code :focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+/* Carregando, quando é bloco: o elemento leva .ruvor-skeleton e aria-busy="true". */
+.ruvor-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ruvor-skeleton-base),
+    var(--ruvor-skeleton-shine),
+    var(--ruvor-skeleton-base)
+  );
+  background-size: 200% 100%;
+  animation: ruvor-shimmer 1.8s infinite;
+}
+
+@keyframes ruvor-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruvor-skeleton {
+    animation: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .ruvor-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .ruvor-rail {
+    display: none;
+  }
+
+  .ruvor-content {
+    padding: 28px;
+  }
+
+  .ruvor-grid--2,
+  .ruvor-grid--3 {
+    grid-template-columns: 1fr;
+  }
+
+  .ruvor-nav {
+    display: none;
+  }
+}
