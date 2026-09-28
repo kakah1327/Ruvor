@@ -248,8 +248,16 @@ const PAIRS: readonly Pair[] = [
   ["code-text", "code-bg", 4.5],
   ["validated", "bg", 4.5],
   ["critical", "bg", 4.5],
-  ["decision", "paper", 4.5],
-  ["decision", "surface", 4.5],
+  // O eyebrow: sobre a página, o painel, o trilho, o callout e o cabeçalho de tabela, a
+  // escolha marcada e o fundo crítico.
+  ...[
+    "paper",
+    "surface",
+    "surface-2",
+    "callout",
+    "critical-soft",
+    "choice-selected",
+  ].map((bg): Pair => ["decision", bg, 4.5]),
   ["critical-text", "surface", 4.5],
   ...["paper", "canvas", "surface", "surface-2"].map((bg): Pair => ["focus", bg, 3]),
   ["focus-on-dark", "topbar", 3],
@@ -424,9 +432,55 @@ describe("V-05 — foco visível", () => {
     for (const value of outlines) expect(value).not.toMatch(/^(none|0)\b/);
   });
 
+  // G1: a regra genérica do anel sobre fundo escuro vem depois do link da barra na folha;
+  // com o ancestral fora do :where(), ela empata em especificidade (0,2,0) e anula o
+  // outline-offset: -6px do link — o anel sairia da barra.
+  it("o anel genérico da barra e do código não anula o recuo do link", () => {
+    const outsideWhere = (part: string): string =>
+      part.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, "");
+    const generic = COMPONENT_RULES.filter(
+      (rule) =>
+        /(?<![\w-])outline-offset\s*:/.test(rule.body) &&
+        selectorParts(rule.selector).some(
+          (part) =>
+            part.includes(":focus-visible") &&
+            /\.ruvor-(topbar|code)(?![\w-])/.test(part) &&
+            !part.includes(".ruvor-nav__link"),
+        ),
+    );
+    expect(
+      generic.length,
+      "a regra genérica do anel sobre fundo escuro",
+    ).toBeGreaterThan(0);
+    for (const rule of generic) {
+      for (const part of selectorParts(rule.selector)) {
+        expect(outsideWhere(part), rule.selector).not.toMatch(
+          /\.ruvor-(topbar|code)(?![\w-])/,
+        );
+      }
+    }
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-nav__link:focus-visible", "outline-offset"),
+    ).toBe("-6px");
+  });
+
   it("nenhum outline: none ou 0 na folha", () => {
     expect(COMPONENTS_TEXT).not.toMatch(/outline(-style|-width)?\s*:\s*(none|0)\b/);
   });
+});
+
+// M1: o hover do campo não pode vencer a borda crítica do inválido.
+describe("RF-03 — o campo inválido mantém a borda no hover", () => {
+  it.each([".ruvor-input", ".ruvor-select"])(
+    "%s:hover exclui [aria-invalid]",
+    (base) => {
+      const hovers = COMPONENT_RULES.flatMap((rule) =>
+        selectorParts(rule.selector),
+      ).filter((part) => part.startsWith(`${base}:hover`));
+      expect(hovers.length, `${base}:hover`).toBeGreaterThan(0);
+      for (const part of hovers) expect(part).toContain('[aria-invalid="true"]');
+    },
+  );
 });
 
 describe("RF-06 — a folha só estiliza classe", () => {

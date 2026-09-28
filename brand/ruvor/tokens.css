@@ -70,7 +70,7 @@
   --ruvor-surface-2: #323338;
   --ruvor-border: #45464B;
   --ruvor-text-muted: #A4A4A9;
-  --ruvor-decision: #D07E8E;
+  --ruvor-decision: #D38595;
   --ruvor-decision-soft: #41282E;
   --ruvor-decision-text: #E7AAB5;
   --ruvor-review: #D1B06A;
@@ -104,7 +104,7 @@
   --ruvor-skeleton-shine: #3A3B40;
   --ruvor-icon-review: #D1B06A;
   --ruvor-control-hover: #323338;
-  --ruvor-decision-hover: #DB8E9C;
+  --ruvor-decision-hover: #E0A0AC;
   --ruvor-focus: #E7AAB5;
   --ruvor-focus-on-dark: #E7AAB5;
 }
@@ -122,7 +122,7 @@
     --ruvor-surface-2: #323338;
     --ruvor-border: #45464B;
     --ruvor-text-muted: #A4A4A9;
-    --ruvor-decision: #D07E8E;
+    --ruvor-decision: #D38595;
     --ruvor-decision-soft: #41282E;
     --ruvor-decision-text: #E7AAB5;
     --ruvor-review: #D1B06A;
@@ -156,7 +156,7 @@
     --ruvor-skeleton-shine: #3A3B40;
     --ruvor-icon-review: #D1B06A;
     --ruvor-control-hover: #323338;
-    --ruvor-decision-hover: #DB8E9C;
+    --ruvor-decision-hover: #E0A0AC;
     --ruvor-focus: #E7AAB5;
     --ruvor-focus-on-dark: #E7AAB5;
   }

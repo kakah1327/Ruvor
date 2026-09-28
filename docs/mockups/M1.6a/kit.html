@@ -119,6 +119,9 @@
   .kit-skeleton { height: var(--ruvor-space-5); border-radius: var(--ruvor-radius-sm); }
   .kit-skeleton--tall { height: calc(var(--ruvor-space-7) * 2); border-radius: var(--ruvor-radius-md); }
   .kit-code-link { color: inherit; }
+  /* A área de largura total, de exemplo: a folha lhe dá a altura da janela menos a barra;
+     aqui ela é reduzida, só na vitrine, para caber na seção. */
+  .kit-frame > .ruvor-workspace--full { min-height: calc(var(--ruvor-space-7) * 6); }
 
   /*
    * Estados forçados — SÓ NA VITRINE. Cópia das regras de :hover, :focus-visible e :active
@@ -132,14 +135,13 @@
   .ruvor-btn.is-active { transform: translateY(1px); }
   .ruvor-btn--primary.is-hover { background: var(--ruvor-decision-hover); border-color: var(--ruvor-decision-hover); }
   .ruvor-btn--ghost.is-hover { background: var(--ruvor-control-hover); }
-  .ruvor-input.is-hover,
-  .ruvor-select.is-hover { border-color: var(--ruvor-text-muted); }
+  .ruvor-input.is-hover:not([aria-invalid="true"]),
+  .ruvor-select.is-hover:not([aria-invalid="true"]) { border-color: var(--ruvor-text-muted); }
   .ruvor-input.is-focus,
   .ruvor-select.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
   .ruvor-choice.is-hover { background: var(--ruvor-control-hover); }
   .ruvor-choice.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
-  .ruvor-topbar .is-focus,
-  .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
+  :where(.ruvor-topbar, .ruvor-code) .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
     .kit-themes { grid-template-columns: 1fr; }
@@ -183,9 +185,9 @@
       <p class="ruvor-sub" id="kit-fonte">Fonte em uso: verificando…</p>
     </div>
     <div class="kit-switch ruvor-push" role="group" aria-label="Tema da página">
-      <button class="ruvor-btn" type="button" data-set-theme="light">Claro</button>
-      <button class="ruvor-btn" type="button" data-set-theme="dark">Escuro</button>
-      <button class="ruvor-btn" type="button" data-set-theme="system">Sistema</button>
+      <button class="ruvor-btn" type="button" data-set-theme="light" aria-pressed="false">Claro</button>
+      <button class="ruvor-btn" type="button" data-set-theme="dark" aria-pressed="false">Escuro</button>
+      <button class="ruvor-btn ruvor-btn--primary" type="button" data-set-theme="system" aria-pressed="true">Sistema</button>
     </div>
   </div>
 
@@ -396,6 +398,7 @@
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-4">Ativo</label><input class="ruvor-input" id="k-in-4" value="PETR4.SA" disabled></div><span class="kit-note">:disabled</span></div>
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-5">Ativo</label><input class="ruvor-input" id="k-in-5" value="PETR4.SA" aria-busy="true"></div><span class="kit-note">aria-busy</span></div>
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-6">Ativo</label><input class="ruvor-input" id="k-in-6" value="PETR9.SA" aria-invalid="true" aria-describedby="k-in-6-erro"><span class="ruvor-field__error" id="k-in-6-erro">Ticker não encontrado no catálogo da B3.</span></div><span class="kit-note">aria-invalid, mensagem por aria-describedby</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-7">Ativo</label><input class="ruvor-input is-hover" id="k-in-7" value="PETR9.SA" aria-invalid="true" aria-describedby="k-in-7-erro"><span class="ruvor-field__error" id="k-in-7-erro">Ticker não encontrado no catálogo da B3.</span></div><span class="kit-note">aria-invalid + hover (forçado): a borda crítica fica</span></div>
       </div>
     </div>
 
@@ -408,6 +411,7 @@
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-4">Confiança</label><select class="ruvor-select" id="k-se-4" disabled><option>99%</option></select></div><span class="kit-note">:disabled</span></div>
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-5">Confiança</label><select class="ruvor-select" id="k-se-5" aria-busy="true"><option>Carregando…</option></select></div><span class="kit-note">aria-busy</span></div>
         <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-6">Horizonte</label><select class="ruvor-select" id="k-se-6" aria-invalid="true" aria-describedby="k-se-6-erro"><option>Selecione</option></select><span class="ruvor-field__error" id="k-se-6-erro">Escolha um horizonte.</span></div><span class="kit-note">aria-invalid, mensagem por aria-describedby</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-7">Horizonte</label><select class="ruvor-select is-hover" id="k-se-7" aria-invalid="true" aria-describedby="k-se-7-erro"><option>Selecione</option></select><span class="ruvor-field__error" id="k-se-7-erro">Escolha um horizonte.</span></div><span class="kit-note">aria-invalid + hover (forçado): a borda crítica fica</span></div>
       </div>
     </div>
 
@@ -447,8 +451,8 @@
     <div class="kit-block">
       <h3 class="ruvor-h3">Carregando em bloco — <code class="kit-token">.ruvor-skeleton</code></h3>
       <div class="kit-row">
-        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton" aria-busy="true" aria-label="Carregando"></div><div class="ruvor-skeleton kit-skeleton" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">linhas</span></div>
-        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton--tall" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">bloco; para com prefers-reduced-motion</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton" role="status" aria-busy="true" aria-label="Carregando"></div><div class="ruvor-skeleton kit-skeleton" role="status" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">linhas</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton--tall" role="status" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">bloco; para com prefers-reduced-motion</span></div>
       </div>
     </div>
   </section>
@@ -572,7 +576,8 @@ garch      -3,61%    adequado</div>
 
     <div class="kit-block">
       <h3 class="ruvor-h3">Área de trabalho de largura total — <code class="kit-token">.ruvor-workspace--full</code>, <code class="kit-token">.ruvor-page-head</code>, <code class="kit-token">.ruvor-push</code>, <code class="kit-token">.ruvor-form-grid</code></h3>
-      <p class="kit-note">Sem trilho. A área ocupa a altura da janela menos a barra, como na folha.</p>
+      <p class="kit-note">Sem trilho. Na folha, a área ocupa a altura da janela menos a barra; nesta
+        vitrine a altura mínima é reduzida, só para o exemplo caber na seção.</p>
       <div class="kit-frame">
         <div class="ruvor-workspace ruvor-workspace--full">
           <div class="ruvor-content">
@@ -694,6 +699,14 @@ garch      -3,61%    adequado</div>
     }).join("").toUpperCase();
   }
 
+  // O traço de cada ícone, o mesmo das seções de sinais.
+  var ICON_SVG = {
+    decision: '<path d="M5 21V4"/><path d="M5 4h12l-3 4 3 4H5"/>',
+    review: '<path d="M18 8a8 8 0 1 0 1 8"/><path d="m17 4 2 4-4 1"/>',
+    evidence: '<path d="m3 17 5-5 4 4 8-9"/>',
+    validated: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    critical: '<path d="M12 3v11"/><circle cx="12" cy="18" r="2"/><path d="M5 22h14"/>'
+  };
   var SEMANTICS = [["decision", "Decisão"], ["review", "Monitorar"], ["evidence", "250 pregões"],
     ["validated", "Validado"], ["critical", "Revisão necessária"]];
   document.querySelectorAll("[data-contrast]").forEach(function (panel) {
@@ -703,6 +716,7 @@ garch      -3,61%    adequado</div>
       var row = el("div", "kit-pair");
       var tag = el("span", "ruvor-tag ruvor-tag--" + s[0], s[1]);
       var icon = el("span", "ruvor-icon ruvor-icon--" + s[0]);
+      icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICON_SVG[s[0]] + "</svg>";
       var txt = el("span", "kit-note");
       row.appendChild(tag);
       row.appendChild(icon);

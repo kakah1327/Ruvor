@@ -289,8 +289,9 @@
   color: var(--ruvor-ink);
 }
 
-.ruvor-input:hover:not(:disabled),
-.ruvor-select:hover:not(:disabled) {
+/* O inválido fica fora do hover: senão a borda crítica cederia ao passar o ponteiro. */
+.ruvor-input:hover:not(:disabled, [aria-invalid="true"]),
+.ruvor-select:hover:not(:disabled, [aria-invalid="true"]) {
   border-color: var(--ruvor-text-muted);
 }
 
@@ -601,9 +602,10 @@
   white-space: pre-wrap;
 }
 
-/* O anel sobre fundo escuro: dentro da barra e do bloco de código. */
-.ruvor-topbar :focus-visible,
-.ruvor-code :focus-visible {
+/* O anel sobre fundo escuro: dentro da barra e do bloco de código. O :where() zera a
+   especificidade do ancestral, para a regra de um componente — o recuo de -6px do link da
+   barra — não ser anulada por esta, que vem depois na cascata. */
+:where(.ruvor-topbar, .ruvor-code) :focus-visible {
   outline: 2px solid var(--ruvor-focus-on-dark);
   outline-offset: 2px;
 }
