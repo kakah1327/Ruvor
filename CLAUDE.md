@@ -144,7 +144,11 @@ existe tela de produto.
   `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
   pedido aberto por ativo em `core.compute_request`, teto global e expiração
   ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
-  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); a
+  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); e as
+  rotas de conta, `auth/*` e `organization/users*`, com sessão do Django e CSRF — quem não entrou
+  recebe 401 `not_authenticated`, e toda view que exige conta declara `AccountReady`
+  ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md),
+  [D-102](docs/decisoes/D-102-papeis-admin-e-member-por-organizacao.md)); a
   `apps/api` não importa o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
   Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as treze tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
@@ -161,7 +165,7 @@ existe tela de produto.
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 943 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1021 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -176,7 +180,7 @@ existe tela de produto.
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
   [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem
   papel `admin` ou `member` na organização, e a organização pode ser pessoal. `apps/accounts`
-  tem a regra das rotas de conta como serviço (`services.py`), sem importar o DRF, o bloqueio de
+  tem a regra das rotas de conta como serviço (`services.py`), sem importar o DRF, e as views dela por cima, o bloqueio de
   entrada por (e-mail, IP) no cache do Django — Redis, banco 1, `RUVOR_CACHE_URL` —, a auditoria
   `core.access_event`, que só cresce, e `manage.py create_organization`; o `createsuperuser` põe
   o superusuário na `ruvor` ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)
