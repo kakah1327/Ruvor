@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — os estados da tela do ativo (mockup, M1.6b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup dos estados da tela do ativo (T4 do plano M1.6b). O desenho é o do ativo.html
+   * aprovado (T3); o casco e o rodapé, os do busca.html aprovado (T2). Dado montado à mão:
+   * os corpos de /risk, /metrics e da identidade estão escritos neste arquivo, com os campos
+   * reais de backend/apps/api/serializers.py e views.py. Não pede nada à API.
+   *
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal.
+   *
+   * Prefixos: bsc- é o estilo local do casco, copiado do busca.html; atv- é o estilo local da
+   * tela do ativo, copiado do ativo.html; est- é estilo local NOVO deste mockup (o painel de
+   * estado, a barra de progresso, o gráfico vazio); mk- é a moldura do mockup e não é tela.
+   * O que for componente vai ao kit pela T5.
+   */
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-cases { display: flex; flex-direction: column; gap: var(--ruvor-space-7); }
+  .mk-case { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
+  .mk-case[hidden] { display: none; }
+  .mk-case__head { display: flex; flex-direction: column; gap: var(--ruvor-space-1); padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-case__head b { color: var(--ruvor-ink); font-family: var(--ruvor-font-mono); }
+  .mk-case__head p { margin: 0; }
+  .mk-case__head summary { cursor: pointer; }
+  .mk-json { margin: var(--ruvor-space-2) 0 0; max-height: 320px; overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); }
+  .mk-motivos { width: 100%; }
+  .mk-motivos td:first-child, .mk-motivos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+
+  /* --- Casco (do busca.html) -------------------------------------------------------- */
+  .bsc-shell { grid-template-rows: 1fr auto; }
+  .bsc-brand { color: inherit; text-decoration: none; border-radius: var(--ruvor-radius-sm); }
+  .bsc-top-search { position: relative; width: 100%; max-width: 440px; }
+  .bsc-theme { display: inline-flex; padding: 2px; gap: 2px; border: 1px solid var(--ruvor-avatar); border-radius: var(--ruvor-radius-sm); }
+  .bsc-theme__btn { font: inherit; font-size: var(--ruvor-type-micro-size); font-weight: var(--ruvor-type-micro-weight); padding: 5px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ruvor-topbar-link); cursor: pointer; }
+  .bsc-theme__btn:hover { color: var(--ruvor-topbar-text); }
+  .bsc-theme__btn[aria-pressed="true"] { background: var(--ruvor-avatar); color: var(--ruvor-topbar-text); }
+  .bsc-field { position: relative; }
+  .bsc-field > .ruvor-glyph { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ruvor-text-muted); pointer-events: none; }
+  .bsc-field .ruvor-input { padding-left: 36px; padding-right: 40px; }
+  .bsc-field .ruvor-input::-webkit-search-cancel-button { display: none; }
+  .bsc-field .ruvor-input::placeholder { color: var(--ruvor-text-muted); opacity: 1; }
+  .bsc-field--lg .ruvor-input { font-size: var(--ruvor-type-h3-size); padding-block: 14px; padding-left: 44px; border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow-panel); }
+  .bsc-field--lg > .ruvor-glyph { left: 16px; }
+  .bsc-field--bar .ruvor-input { padding-block: 7px; }
+  .bsc-notfound { max-width: 620px; }
+  .bsc-notfound .bsc-field { margin-top: var(--ruvor-space-5); }
+  .bsc-path { font-family: var(--ruvor-font-mono); color: var(--ruvor-ink); }
+  .bsc-footer { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--ruvor-space-3) var(--ruvor-space-6); padding: var(--ruvor-space-5) 40px; border-top: 1px solid var(--ruvor-border); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .bsc-footer p { margin: 0; display: flex; align-items: flex-start; gap: var(--ruvor-space-2); max-width: 72ch; }
+  .bsc-footer .ruvor-glyph { margin-top: 1px; }
+  @keyframes bsc-spin { to { transform: rotate(360deg); } }
+  .bsc-spin { animation: bsc-spin 1.2s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .bsc-spin { animation: none; } }
+
+  /* --- A tela do ativo (do ativo.html) ---------------------------------------------- */
+  .atv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .atv-section { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
+  .atv-stack { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
+  .atv-section__head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--ruvor-space-2) var(--ruvor-space-4); }
+  .atv-section__head .ruvor-sub { margin: 0; }
+  .atv-muted { color: var(--ruvor-text-muted); }
+  .atv-why { margin: 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); max-width: 70ch; }
+  .atv-skel { height: calc(var(--ruvor-space-7) * 2); border-radius: var(--ruvor-radius-md); }
+  .atv-skel--short { height: var(--ruvor-space-6); }
+  .atv-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-3); }
+  .atv-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--ruvor-space-5); }
+  .atv-head__id { flex: 1 1 320px; min-width: 0; }
+  .atv-head__name { margin: var(--ruvor-space-2) 0 0; font-size: var(--ruvor-type-h3-size); font-weight: var(--ruvor-type-h3-weight); }
+  .atv-tags { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); margin-top: var(--ruvor-space-3); }
+  .atv-crumbs { margin: var(--ruvor-space-3) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--ruvor-space-1) var(--ruvor-space-2); color: var(--ruvor-text-muted); }
+  .atv-crumbs li + li::before { content: "›"; margin-right: var(--ruvor-space-2); }
+  .atv-last { flex: 0 1 320px; min-width: 0; padding: var(--ruvor-space-4); }
+  .atv-last__value { font-size: var(--ruvor-type-display-size); font-weight: var(--ruvor-type-display-weight); letter-spacing: var(--ruvor-type-display-tracking); line-height: var(--ruvor-type-display-leading); margin: var(--ruvor-space-2) 0; }
+  .atv-stat { display: flex; flex-direction: column; gap: var(--ruvor-space-1); min-width: 0; }
+  .atv-stat__label { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); }
+  .atv-stat__value { font-size: var(--ruvor-type-h2-size); font-weight: var(--ruvor-type-h2-weight); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); }
+  .atv-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--ruvor-space-5) var(--ruvor-space-5); }
+  .atv-blocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ruvor-space-4); }
+  .atv-blocks > .atv-wide { grid-column: 1 / -1; }
+  .atv-block__note { margin: var(--ruvor-space-4) 0 0; }
+  .atv-events { width: 100%; }
+  .atv-events td:last-child, .atv-events th:last-child { text-align: right; }
+  .atv-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ruvor-space-4); }
+  .atv-level { display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
+  .atv-range { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-2); }
+  .atv-range b { font-size: var(--ruvor-type-display-size); letter-spacing: var(--ruvor-type-display-tracking); line-height: var(--ruvor-type-display-leading); }
+  .atv-range small { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); }
+  .atv-ok-list { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); margin: 0; padding: 0; list-style: none; }
+  .atv-verdict-head { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); margin: 0; }
+  .atv-tag--neutral { background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); }
+  .atv-legend { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2) var(--ruvor-space-4); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .atv-models { table-layout: fixed; }
+  .atv-models col.atv-c-model { width: 34%; }
+  .atv-toggle { display: inline-flex; align-items: center; gap: var(--ruvor-space-2); font: inherit; font-weight: var(--ruvor-type-small-weight); color: var(--ruvor-ink); background: transparent; border: 0; padding: 0; cursor: pointer; text-align: left; }
+  .atv-toggle:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
+  .atv-toggle .ruvor-glyph { transition: transform .15s; }
+  .atv-toggle[aria-expanded="true"] .ruvor-glyph { transform: rotate(90deg); }
+  .atv-cat { display: block; margin-left: calc(16px + var(--ruvor-space-2)); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .atv-cell { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .atv-cell .ruvor-bar { width: 100%; max-width: 220px; }
+  .atv-bar .ruvor-bar__fill { background: var(--ruvor-evidence); }
+  .atv-loss b { font-size: var(--ruvor-type-h3-size); }
+  .atv-rail .ruvor-eyebrow { color: var(--ruvor-text-muted); margin: 0; }
+  .atv-rail__inner { display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
+  .atv-trail { margin: 0; display: flex; flex-direction: column; }
+  .atv-trail > div { display: flex; justify-content: space-between; gap: var(--ruvor-space-3); padding: 9px 0; border-bottom: 1px solid var(--ruvor-border); }
+  .atv-trail dt { color: var(--ruvor-text-muted); }
+  .atv-trail dd { margin: 0; text-align: right; font-weight: var(--ruvor-type-small-weight); min-width: 0; overflow-wrap: anywhere; }
+
+  /* --- Novo neste mockup: os estados ------------------------------------------------ */
+  /* A seção de risco com a trilha ao lado, como no ativo.html; abaixo de 1000 px, embaixo. */
+  .est-split { display: grid; grid-template-columns: minmax(0, 1fr) 292px; gap: 0; border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-md); overflow: hidden; background: var(--ruvor-paper); }
+  .est-split > .est-split__main { padding: var(--ruvor-space-5); min-width: 0; }
+  .est-split > .ruvor-rail { display: block; }
+  /* O painel de estado: o sinal, o título, a frase, o andamento e a ação. */
+  .est-state { display: flex; align-items: flex-start; gap: var(--ruvor-space-3); }
+  .est-state__body { display: flex; flex-direction: column; gap: var(--ruvor-space-2); min-width: 0; flex: 1; }
+  .est-state__title { margin: 0; font-size: var(--ruvor-type-h3-size); font-weight: var(--ruvor-type-h3-weight); line-height: var(--ruvor-type-h3-leading); }
+  .est-state__text { margin: 0; max-width: 70ch; }
+  .est-state__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); margin-top: var(--ruvor-space-2); }
+  .est-state--notice { padding: var(--ruvor-space-3) var(--ruvor-space-4); border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-md); background: var(--ruvor-surface); }
+  .est-state--notice .est-state__title { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); line-height: var(--ruvor-type-small-leading); }
+  .est-state .ruvor-icon .bsc-spin { transform-origin: center; }
+  /* A barra de progresso (RF-17, E4): a trilha e o preenchimento do kit, com a cor da evidência. */
+  .est-progress { display: block; width: 100%; max-width: 420px; height: 7px; border-radius: 9px; background: var(--ruvor-bar-track); overflow: hidden; }
+  .est-progress__fill { display: block; height: 100%; border-radius: 9px; background: var(--ruvor-evidence); }
+  a.ruvor-btn.est-link-btn { text-decoration: none; }
+  /* A resposta do pedido, junto do botão. */
+  .est-reply { margin: 0; font-size: var(--ruvor-type-small-size); }
+  .est-reply--critical { color: var(--ruvor-critical-text); }
+  .est-reply--muted { color: var(--ruvor-text-muted); }
+  /* O gráfico vazio: a área do gráfico, com a frase no meio. */
+  .est-empty { display: grid; place-items: center; min-height: 200px; padding: var(--ruvor-space-5); border: 1px dashed var(--ruvor-border); border-radius: var(--ruvor-radius-md); text-align: center; }
+  .est-empty p { margin: 0; max-width: 46ch; }
+  .est-empty p + p { margin-top: var(--ruvor-space-1); }
+
+  @media (max-width: 1000px) {
+    .atv-blocks, .atv-levels { grid-template-columns: minmax(0, 1fr); }
+    .est-split { grid-template-columns: minmax(0, 1fr); }
+    .est-split > .ruvor-rail { border-left: 0; border-top: 1px solid var(--ruvor-border); }
+  }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .ruvor-topbar { height: auto; min-height: 60px; grid-template-columns: auto auto; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
+    .bsc-top-search { grid-column: 1 / -1; grid-row: 2; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .ruvor-content { padding: var(--ruvor-space-5) var(--ruvor-space-4) var(--ruvor-space-6); }
+    .ruvor-display { font-size: var(--ruvor-type-h2-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); }
+    .bsc-footer { grid-template-columns: 1fr; padding: var(--ruvor-space-5) var(--ruvor-space-4); }
+    .est-split > .est-split__main { padding: var(--ruvor-space-4) var(--ruvor-space-3); }
+    .est-split > .ruvor-rail { padding: var(--ruvor-space-4) var(--ruvor-space-3); }
+    .atv-models col.atv-c-model { width: 30%; }
+    .ruvor-table.atv-models td, .ruvor-table.atv-models th { padding-inline: 6px; }
+    .atv-toggle { gap: var(--ruvor-space-1); min-width: 0; }
+    .atv-toggle > span { min-width: 0; overflow-wrap: anywhere; }
+    .atv-stats { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+    .est-state { flex-direction: column; }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></symbol>
+  <symbol id="i-chart-line" viewBox="0 0 256 256"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></symbol>
+  <symbol id="i-calendar-blank" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></symbol>
+  <symbol id="i-scales" viewBox="0 0 256 256"><path d="M239.43,133l-32-80h0a8,8,0,0,0-9.16-4.84L136,62V40a8,8,0,0,0-16,0V65.58L54.26,80.19A8,8,0,0,0,48.57,85h0v.06L16.57,165a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32a7.92,7.92,0,0,0-.57-3L66.92,93.77,120,82V208H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16H136V78.42L187,67.1,160.57,133a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32A7.92,7.92,0,0,0,239.43,133ZM56,184c-7.53,0-22.76-3.61-23.93-14.64L56,109.54l23.93,59.82C78.76,180.39,63.53,184,56,184Zm144-32c-7.53,0-22.76-3.61-23.93-14.64L200,77.54l23.93,59.82C222.76,148.39,207.53,152,200,152Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-duo-x-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+  <symbol id="i-duo-warning" viewBox="0 0 256 256"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M1.6b · estados da tela do ativo · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Seção de risco">
+    <span>Risco:</span>
+    <button class="ruvor-btn" type="button" data-mk="todos">todos</button>
+    <button class="ruvor-btn" type="button" data-mk="E2">E2</button>
+    <button class="ruvor-btn" type="button" data-mk="E3">E3</button>
+    <button class="ruvor-btn" type="button" data-mk="E4">E4</button>
+    <button class="ruvor-btn" type="button" data-mk="E5">E5</button>
+    <button class="ruvor-btn" type="button" data-mk="E6">E6 · E6b</button>
+    <button class="ruvor-btn" type="button" data-mk="E7">E7</button>
+    <button class="ruvor-btn" type="button" data-mk="E8">E8</button>
+    <button class="ruvor-btn" type="button" data-mk="E9">E9</button>
+    <button class="ruvor-btn" type="button" data-mk="carregando">carregando e erro</button>
+    <button class="ruvor-btn" type="button" data-mk="pedido">respostas do pedido</button>
+    <button class="ruvor-btn" type="button" data-mk="motivos">os motivos</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Fora do risco">
+    <span>Fora do risco:</span>
+    <button class="ruvor-btn" type="button" data-mk="comportamento">comportamento</button>
+    <button class="ruvor-btn" type="button" data-mk="cabecalho">sem preço e índice</button>
+    <button class="ruvor-btn" type="button" data-mk="nao-encontrado">ativo não encontrado</button>
+    <button class="ruvor-btn" type="button" data-mk="erro-secao">erro de uma seção</button>
+  </div>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand bsc-brand" href="busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="bsc-top-search" role="search">
+    <div class="bsc-field bsc-field--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="bsc-theme" role="group" data-t-aria="casco.tema.rotulo">
+    <button class="bsc-theme__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+    <button class="bsc-theme__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+    <button class="bsc-theme__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full bsc-shell">
+  <main class="ruvor-content">
+    <div class="mk-cases" id="cases"></div>
+  </main>
+
+  <footer class="bsc-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------- formatação (pt-BR), a do ativo.html
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fLoss = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fPct1 = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fPctS = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: "exceptZero" });
+const fMoney = NF({ style: "currency", currency: "BRL" });
+const fMoneyEv = NF({ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 6 });
+const fInt = NF({ maximumFractionDigits: 0 });
+const fDec1 = NF({ minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fP = NF({ minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const fInstantF = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const lossFromVar = (v) => 1 - Math.exp(-v);
+const minus = (s) => s.replace(/^-/, "−");
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+const fInstant = (s) => fInstantF.format(new Date(s)).replace(",", " às");
+const fPval = (dec) => (Number(dec) < 0.001 ? "< 0,001" : fP.format(Number(dec)));
+
+// ---------------------------------------------------------------- os textos (RF-21)
+// casco.* e rodape.*: do busca.html (T2), literais. ativo.*, comportamento.* e risco.* que já
+// existiam: do ativo.html (T3), literais. O que NASCE aqui está marcado "novo (T4)".
+const NIVEL_N = { "0.0500": 20, "0.0100": 100 };
+const TEXTOS = {
+  // casco.* e rodape.* — do busca.html
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.irParaBusca": "Ir para a busca",
+  "busca.campo.placeholder": "Código ou nome, como PETR4",
+  "busca.campo.rotulo": "Buscar ativo por código ou nome",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3 e preços do Yahoo Finance.",
+
+  // ativo.* — do ativo.html
+  "ativo.tipo.stock": "ação",
+  "ativo.tipo.index": "índice",
+  "ativo.situacao.active": "em negociação",
+  "ativo.situacao.inactive": "inativo",
+  "ativo.listagem": (s) => `segmento de listagem ${s}`,
+  "ativo.classificacao": "Classificação na B3",
+  "ativo.ultimoFechamento.rotulo": "Último fechamento",
+  "ativo.ultimoFechamento": (data) => `O preço de fechamento do último pregão coletado, ${data}, como foi negociado na bolsa — sem ajuste por proventos.`,
+  "ativo.semPreco": "sem preço coletado ainda",
+  "ativo.preco.titulo": "Preço ajustado",
+  "ativo.precoAjustado": "Preço corrigido por proventos e desdobramentos: os valores antigos são ajustados para que a linha mostre quanto a ação rendeu de fato, sem os saltos dos pagamentos. É a mesma série que vai aos modelos de risco.",
+  "ativo.eventos.titulo": "Proventos e desdobramentos",
+  "ativo.eventos.periodo": (d) => `nos 12 meses até ${d}`,
+  "ativo.eventos.col.data": "Data",
+  "ativo.eventos.col.tipo": "Tipo",
+  "ativo.eventos.col.valor": "Valor ou proporção",
+  "ativo.eventos.dividend": "provento",
+  "ativo.eventos.split": "desdobramento",
+  "ativo.eventos.valor": (v) => `${v} por ação`,
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "ativo.tentarDeNovo": "Tentar de novo",
+  // ativo.* — novo (T4)
+  "ativo.preco.vazio": "Ainda não há preços coletados deste ativo.",
+  "ativo.preco.vazio.nota": "A série de preços é coletada junto com o cálculo do risco.",
+  "ativo.naoEncontrado.sobrancelha": "Código desconhecido",
+  "ativo.naoEncontrado.titulo": "Ativo não encontrado.",
+  "ativo.naoEncontrado": (t) => `O catálogo não tem nenhum ativo com o código ${t}.`,
+  "ativo.naoEncontrado.dica": "Confira o código, ou busque pelo nome da empresa.",
+
+  // comportamento.* — do ativo.html
+  "comportamento.sobrancelha": "O que já aconteceu",
+  "comportamento.titulo": "Comportamento",
+  "comportamento.ate": (d) => `até ${d}`,
+  "comportamento.intro": "Como a ação se comportou até aqui: quanto rendeu, quanto oscilou, quanto já caiu e como se move junto com o Ibovespa.",
+  "comportamento.bloco.retornos": "Retornos",
+  "comportamento.bloco.volatilidade": "Volatilidade",
+  "comportamento.bloco.ibov": "Relação com o Ibovespa",
+  "comportamento.bloco.distribuicao": "Distribuição dos retornos diários",
+  "comportamento.nota.retornos": "Variação do preço ajustado, que já inclui proventos e desdobramentos.",
+  "comportamento.nulo.janela": (n) => `a série é mais curta que ${n} meses`,
+  "comportamento.nulo.referencia": "o Ibovespa é a própria referência",
+  "comportamento.histogramaCurto": "A série é curta demais para a distribuição: ela pede 60 meses de pregões.",
+  "comportamento.rotulo.return_1m": "1 mês",
+  "comportamento.rotulo.return_3m": "3 meses",
+  "comportamento.rotulo.return_6m": "6 meses",
+  "comportamento.rotulo.return_12m": "12 meses",
+  "comportamento.rotulo.return_36m": "36 meses",
+  "comportamento.rotulo.return_60m": "60 meses",
+  "comportamento.rotulo.return_120m": "120 meses",
+  "comportamento.rotulo.return_ytd": "No ano",
+  "comportamento.rotulo.volatility_12m": "12 meses",
+  "comportamento.rotulo.volatility_60m": "60 meses",
+  "comportamento.rotulo.beta_60m": "Beta, 60 meses",
+  "comportamento.rotulo.correlation_60m": "Correlação, 60 meses",
+  "comportamento.rotulo.skewness": "Assimetria",
+  "comportamento.rotulo.excess_kurtosis": "Curtose em excesso",
+  "comportamento.return_1m": (x) => `No último mês, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_3m": (x) => `Nos últimos 3 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_6m": (x) => `Nos últimos 6 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_12m": (x) => `Nos últimos 12 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_ytd": (x) => `Desde o primeiro pregão do ano, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.volatility_12m": (v) => `O quanto o preço oscilou no último ano, em base anual: num ano como esse, variações de ${v} para cima ou para baixo são o normal.`,
+  // comportamento.* — novo (T4)
+  "comportamento.naoCalculado": "O comportamento ainda não foi calculado.",
+  "comportamento.naoCalculado.nota": "Ele é calculado junto com o risco: o mesmo pedido, na seção de risco, calcula os dois.",
+  "comportamento.irParaRisco": "Ir para o risco",
+
+  // risco.* — do ativo.html
+  "risco.sobrancelha": "O que pode acontecer",
+  "risco.titulo": "Quanto se pode perder em 1 dia",
+  "risco.intro": "Nove métodos estimam, cada um do seu jeito, o limite da perda de um dia. A plataforma não escolhe nenhum: eles aparecem lado a lado, com o resultado dos testes de cada um.",
+  "risco.horizonte": "em 1 dia",
+  "risco.nivel.0.0500": "A 95%",
+  "risco.nivel.0.0100": "A 99%",
+  "risco.faixa": (min, max) => `${min} a ${max}`,
+  "risco.perda95": "A 95%, o limite é o valor que a perda de um dia deve respeitar em 19 de cada 20 dias. Em 1 dia a cada 20, espera-se que a perda passe dele.",
+  "risco.perda99": "A 99%, o limite é o valor que a perda de um dia deve respeitar em 99 de cada 100 dias. Em 1 dia a cada 100, espera-se que a perda passe dele.",
+  "risco.discordancia": (min, max, n, total, cadaN, unico) => {
+    if (n === 0) return "Nenhum modelo calculou este nível: o cálculo falhou em todos. A trilha do cálculo mostra o que houve.";
+    if (n === 1) return `Só um modelo calculou este nível, e não há faixa para comparar: ele põe em ${unico} o limite que a perda de um dia só deve passar em 1 dia a cada ${cadaN}.`;
+    const quem = n === total ? "Os nove modelos põem" : `${n} de ${total} modelos calcularam; ${total - n} ${total - n === 1 ? "falhou" : "falharam"}. Eles põem`;
+    return `${quem} entre ${min} e ${max} o limite que a perda de um dia só deve passar em 1 dia a cada ${cadaN}. A distância entre eles também é informação: modelos próximos indicam uma leitura mais sólida; distantes, um momento mais incerto, em que o número depende mais do método.`;
+  },
+  "risco.naoRejeitados.titulo": "Não rejeitados pelos testes",
+  "risco.naoRejeitados": (k, julgados, total) => {
+    const faltam = total - julgados;
+    const semJulgar = faltam > 0 ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.` : "";
+    if (julgados === 0) return "Não foi possível julgar nenhum modelo neste nível: o cálculo falhou em todos, e isso não conta como reprovação.";
+    if (k === 0) return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste.${semJulgar}`;
+    const quem = k === 1 ? `1 dos ${julgados} modelos julgados passou` : `${k} dos ${julgados} modelos julgados passaram`;
+    return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste — não garante o número de hoje —, e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
+  },
+  "risco.tabela.titulo": "Os nove modelos",
+  "risco.tabela.intro": "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam a mesma escala nas duas colunas. Abra um modelo para ver os testes.",
+  "risco.tabela.col.modelo": "Modelo",
+  "risco.tabela.col.0.0500": "Perda a 95% em 1 dia",
+  "risco.tabela.col.0.0100": "Perda a 99% em 1 dia",
+  "risco.tabela.abrir": (m) => `Ver os testes de ${m}`,
+  "risco.categoria.traditional": "Tradicionais",
+  "risco.categoria.garch": "GARCH",
+  "risco.categoria.ml": "Aprendizado de máquina",
+  "risco.modelo.historical": "Histórico",
+  "risco.modelo.parametric": "Paramétrico",
+  "risco.modelo.monte_carlo": "Monte Carlo",
+  "risco.modelo.garch_1_1": "GARCH(1,1)",
+  "risco.modelo.egarch": "EGARCH",
+  "risco.modelo.lstm": "LSTM",
+  "risco.modelo.gru": "GRU",
+  "risco.modelo.garchnet": "GARCHNet",
+  "risco.modelo.caviar": "CAViaR",
+  "risco.tag.adequado": "adequado",
+  "risco.tag.naoAdequado": "não adequado",
+  "risco.tag.naoJulgado": "não julgado",
+  "risco.veredito": "O veredito junta dois testes feitos no período de teste: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou no passado, não de quanto o número de hoje está certo.",
+  "risco.trilha.titulo": "Trilha do cálculo",
+  "risco.trilha": "O que entrou neste cálculo — a série, a divisão entre treino e teste e a versão do método —, para que ele possa ser conferido e refeito.",
+  "risco.trilha.asOf": "Último pregão usado",
+  "risco.trilha.firstPrice": "Primeiro pregão",
+  "risco.trilha.priceCount": "Pregões",
+  "risco.trilha.train": "Treino",
+  "risco.trilha.test": "Teste",
+  "risco.trilha.window": "Janela de treino",
+  "risco.trilha.calculatedAt": "Calculado em",
+  "risco.trilha.finishedAt": "Terminou em",
+  "risco.trilha.engine": "Versão do motor",
+  "risco.trilha.seed": "Semente",
+  "risco.trilha.priceRun": "Coleta de preço",
+  "risco.trilha.status": "Situação",
+  "risco.trilha.pregoes": (n) => `${n} pregões`,
+  "risco.trilha.coleta": (fonte, quando) => `${fonte}, ${quando}`,
+  "risco.trilha.fonte.yahoo-chart": "Yahoo Finance",
+  "risco.trilha.status.ok": "concluído, os nove modelos calcularam",
+  "risco.trilha.status.partial": (n) => `parcial: ${n} de 9 modelos falharam`,
+  "risco.trilha.status.failed": "o cálculo falhou inteiro",
+
+  // risco.estado.* — novo (T4): os estados da seção (RF-17)
+  "risco.carregando": "Carregando o risco deste ativo.",
+  "risco.estado.atualiza": "Esta parte da página se atualiza sozinha.",
+  "risco.estado.recalculando": (w, e) => `Recalculando: ${w} de ${e} resultados`,
+  "risco.estado.recalculando.nota": "Os números abaixo são os do último cálculo. Quando o novo terminar, a página mostra os dele.",
+  "risco.estado.recalculando.notaFalha": "Um cálculo novo está em andamento. Quando terminar, a página mostra o resultado dele.",
+  "risco.estado.E3.titulo": "O último cálculo falhou.",
+  "risco.estado.E3": "Nenhum modelo chegou a um resultado. A rotina diária calcula o risco deste ativo de novo, sem precisar de pedido. A trilha do cálculo mostra o que entrou nele.",
+  "risco.estado.E4": (w, e) => `Calculando: ${w} de ${e} resultados`,
+  "risco.estado.E4.nota": "Cada modelo grava um resultado por nível, 95% e 99%.",
+  "risco.estado.E5.fila": "Na fila",
+  "risco.estado.E5.fila.nota": "O pedido foi aceito e espera a vez de começar.",
+  "risco.estado.E5.coletando": "Coletando preços e métricas",
+  "risco.estado.E5.coletando.nota": "Antes do risco, o Ruvor coleta a série de preços do ativo e calcula o comportamento dele. Depois, os nove modelos começam.",
+  "risco.estado.serieCurta.titulo": "Série curta demais para o risco",
+  "risco.estado.serieCurta.nota": "Com menos que isso — cerca de dois anos de bolsa —, os modelos não têm como treinar e ser testados. Por isso esta página não oferece o cálculo.",
+  "risco.estado.E7.titulo": "O cálculo não terminou.",
+  "risco.estado.E7.nota": "Você pode pedir o cálculo de novo.",
+  "risco.estado.E8.titulo": "O risco deste ativo ainda não foi calculado.",
+  "risco.estado.E8": "O cálculo coleta a série de preços, calcula o comportamento e roda os nove modelos. Leva cerca de 2 minutos, e esta parte da página acompanha o andamento.",
+  "risco.estado.E9.titulo": "Ativo inativo na B3: o risco não é calculado.",
+  "risco.estado.E9": "O cálculo é feito só para ativos em negociação.",
+  // risco.pedido.* — novo (T4): o botão e as respostas do POST (RF-19)
+  "risco.pedido.calcular": "Calcular o risco",
+  "risco.pedido.deNovo": "Calcular de novo",
+  "risco.pedido.enviando": "Enviando o pedido…",
+  "risco.pedido.filaCheia": "Muitos cálculos na fila agora; tente em alguns minutos.",
+  "risco.pedido.erro": (msg) => `O pedido de cálculo não foi aceito. ${msg}`,
+  "risco.pedido.semResposta": "O pedido de cálculo não teve resposta do servidor. Tente de novo em instantes.",
+
+  // motivos.* — novo (T4): a tradução de cada motivo de backend/apps/api/ondemand.py (RF-18)
+  "motivos.calculado": "O cálculo terminou.",
+  "motivos.serieCurta": (n, min) => `A série tem ${n} pregões; o risco pede no mínimo ${min}.`,
+  "motivos.falhouColeta": "A coleta dos preços deste ativo falhou.",
+  "motivos.falhouMetricas": "Os preços foram coletados, mas o cálculo do comportamento falhou.",
+  "motivos.falhouAbertura": "Os preços e o comportamento ficaram prontos, mas o cálculo do risco não conseguiu começar.",
+  "motivos.execucaoFalhou": "O cálculo do risco começou, mas nenhum modelo chegou a um resultado.",
+  "motivos.brokerRecusou": "O pedido não chegou a entrar na fila de cálculo, por uma falha do servidor.",
+  "motivos.expirado": (n) => `O pedido passou de ${n} minutos sem terminar e foi encerrado.`,
+  "motivos.desconhecido": (raw) => `O pedido terminou sem um motivo conhecido (${raw}).`,
+};
+const T = (k, ...a) => { const v = TEXTOS[k]; if (v === undefined) throw new Error(`texto sem chave: ${k}`); return typeof v === "function" ? v(...a) : v; };
+
+// traduzirMotivo (RF-18): igualdade para os seis sem número, as duas expressões para os com
+// número, e a genérica com o texto cru entre parênteses. É o contrato do plano.
+const MOTIVO_FIXO = {
+  "calculado": "motivos.calculado",
+  "falhou na coleta": "motivos.falhouColeta",
+  "falhou nas metricas": "motivos.falhouMetricas",
+  "falhou na abertura": "motivos.falhouAbertura",
+  "a execucao falhou": "motivos.execucaoFalhou",
+  "o broker recusou o pedido": "motivos.brokerRecusou",
+};
+function traduzirMotivo(reason) {
+  if (MOTIVO_FIXO[reason]) return T(MOTIVO_FIXO[reason]);
+  let m = /^serie curta \((\d+) pregoes, minimo (\d+)\)$/.exec(reason);
+  if (m) return T("motivos.serieCurta", fInt.format(Number(m[1])), fInt.format(Number(m[2])));
+  m = /^expirado \((\d+) min\)$/.exec(reason);
+  if (m) return T("motivos.expirado", fInt.format(Number(m[1])));
+  return T("motivos.desconhecido", reason);
+}
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph ${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const why = (text) => `<p class="atv-why">${esc(text)}</p>`;
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ================================================================ OS DADOS, MONTADOS À MÃO
+// Campos e formas de backend/apps/api/serializers.py e views.py (risk_body). Os valores dos
+// resultados do E2 são os do ITUB4 de 28/09/2026; o resto é exemplo.
+const MODEL_ORDER = ["historical", "parametric", "monte_carlo", "garch_1_1", "egarch", "lstm", "gru", "garchnet", "caviar"];
+const CATEGORY = { historical: "traditional", parametric: "traditional", monte_carlo: "traditional", garch_1_1: "garch", egarch: "garch", lstm: "ml", gru: "ml", garchnet: "ml", caviar: "ml" };
+const ALPHAS = ["0.0500", "0.0100"];
+const REQUESTED = ["caviar", "egarch", "garch_1_1", "garchnet", "gru", "historical", "lstm", "monte_carlo", "parametric"];
+const EXPECTED = { "0.0500": "112.100000", "0.0100": "22.420000" };
+const EXPENSIVE = new Set(["lstm", "gru", "garchnet", "caviar"]);
+
+// [modelo, alpha, var_latest, violations, kupiec, p, christoffersen, p, dq, p, basel_zone]
+const ITUB4_ROWS = [
+  ["caviar", "0.0500", "0.0217407320", 111, true, "0.9149804203", true, "0.2234912656", true, "0.0822961852", "verde"],
+  ["caviar", "0.0100", "0.0338442495", 50, false, "0.0000004681", true, "0.9093560071", false, "0.0000000000", "verde"],
+  ["egarch", "0.0500", "0.0251732986", 48, false, "0.0000000000", true, "0.3836873586", false, "0.0000000000", "verde"],
+  ["egarch", "0.0100", "0.0356030767", 7, false, "0.0001294158", true, "0.8341001847", false, "0.0000001958", "verde"],
+  ["garch_1_1", "0.0500", "0.0238448280", 60, false, "0.0000000341", true, "0.7581813487", false, "0.0000000000", "verde"],
+  ["garch_1_1", "0.0100", "0.0337241953", 11, false, "0.0071560451", false, "0.0425144077", false, "0.0000000000", "verde"],
+  ["garchnet", "0.0500", "0.0207766276", 99, true, "0.1956363075", true, "0.8498096930", false, "0.0001152198", "verde"],
+  ["garchnet", "0.0100", "0.0358051807", 23, true, "0.9024318174", false, "0.0213059479", false, "0.0000000000", "verde"],
+  ["gru", "0.0500", "0.0222668573", 125, true, "0.2193084720", true, "0.9911516116", false, "0.0000005294", "verde"],
+  ["gru", "0.0100", "0.0443396494", 25, true, "0.5907847060", true, "0.2826383810", false, "0.0000000000", "verde"],
+  ["historical", "0.0500", "0.0219731950", 187, false, "0.0000000000", true, "0.9132476275", false, "0.0000000000", "amarela"],
+  ["historical", "0.0100", "0.0442407499", 23, true, "0.9024318174", true, "0.2347888016", false, "0.0000000000", "verde"],
+  ["lstm", "0.0500", "0.0212986898", 108, true, "0.6894281766", true, "0.7201196944", false, "0.0000000079", "verde"],
+  ["lstm", "0.0100", "0.0357897505", 23, true, "0.9024318174", false, "0.0213059479", false, "0.0000000000", "verde"],
+  ["monte_carlo", "0.0500", "0.0270853844", 111, true, "0.9149804203", true, "0.8240898313", false, "0.0000000021", "verde"],
+  ["monte_carlo", "0.0100", "0.0387973740", 40, false, "0.0007777083", false, "0.0377800417", false, "0.0000000000", "verde"],
+  ["parametric", "0.0500", "0.0268547403", 115, true, "0.7795680277", true, "0.6423416334", false, "0.0000000033", "verde"],
+  ["parametric", "0.0100", "0.0385039846", 42, false, "0.0002097796", false, "0.0498567433", false, "0.0000000000", "verde"],
+];
+const result = ([m, alpha, v, viol, kp, kpv, cp, cpv, dp, dpv, zone]) => ({
+  model_name: m, model_category: CATEGORY[m], alpha, hyperparameters: {},
+  var_latest: v, var_mean: v, violations: viol, expected_violations: EXPECTED[alpha],
+  kupiec_passed: kp, kupiec_p_value: kpv, christoffersen_passed: cp, christoffersen_p_value: cpv,
+  dq_passed: dp, dq_p_value: dpv, basel_zone: zone, adequate: kp && cp, error: "",
+  reused_snapshots: EXPENSIVE.has(m) ? 9 : null, trained_snapshots: EXPENSIVE.has(m) ? 0 : null,
+});
+const run = (over) => ({
+  id: 63, calculated_at: "2026-09-28T19:30:06.911063-03:00", finished_at: "2026-09-28T19:30:36.192174-03:00",
+  status: "ok", engine_version: "0.3.0", seed: 42, train_window_days: 252,
+  as_of_date: "2026-09-28", first_price_date: "2016-09-22", price_count: 2495, train_count: 252, test_count: 2242,
+  price_run: { id: 11, source: "yahoo-chart", started_at: "2026-09-28T19:30:00.285416-03:00", finished_at: "2026-09-28T19:30:02.697254-03:00" },
+  requested_models: REQUESTED, full_recompute: false, results: [], ...over,
+});
+const inProgress = (w, e = 18) => ({ id: 64, calculated_at: "2026-09-29T19:30:05.120000-03:00", requested_models: REQUESTED, results_written: w, results_expected: e });
+const request = (over) => ({ id: 41, status: "queued", requested_at: "2026-09-29T14:02:11.402000-03:00", finished_at: null, reason: "", error: "", risk_run_id: null, ...over });
+const risk = (ticker, over) => ({ ticker, covered: true, latest: null, in_progress: null, request: null, ...over });
+
+const B = {
+  E2: risk("ITUB4", { latest: run({ results: ITUB4_ROWS.map(result) }), in_progress: inProgress(12) }),
+  E3: risk("ABCB4", { latest: run({ id: 90, status: "failed", as_of_date: "2026-09-28", first_price_date: "2016-09-22", price_count: 2491, test_count: 2238, results: [] }), request: null }),
+  E3r: risk("ABCB4", { latest: run({ id: 90, status: "failed", as_of_date: "2026-09-28", first_price_date: "2016-09-22", price_count: 2491, test_count: 2238, results: [] }), in_progress: inProgress(3) }),
+  E4: risk("AALR3", { in_progress: inProgress(7), request: request({ status: "running", risk_run_id: 88 }) }),
+  E5q: risk("AALR3", { covered: false, request: request({ status: "queued" }) }),
+  E5r: risk("AALR3", { covered: false, request: request({ status: "running" }) }),
+  E6: risk("AGXY3", { request: request({ status: "done", finished_at: "2026-09-29T14:02:40.910000-03:00", reason: "serie curta (312 pregoes, minimo 503)" }) }),
+  E6b: risk("AGXY3", { covered: true }),
+  E8: risk("AALR3", { covered: false }),
+  E8r: risk("AALR3", { request: request({ status: "done", finished_at: "2026-09-29T14:04:02.000000-03:00", reason: "calculado", risk_run_id: 88 }) }),
+  E9: risk("AZEV11", { covered: false }),
+};
+const E7_REASONS = [
+  ["failed", "falhou na coleta", "texto do erro da coleta (exemplo)"],
+  ["failed", "falhou nas metricas", "texto do erro das métricas (exemplo)"],
+  ["failed", "falhou na abertura", "texto do erro da abertura (exemplo)"],
+  ["failed", "a execucao falhou", "risk_run 88 fechou failed"],
+  ["failed", "o broker recusou o pedido", "texto do erro do broker (exemplo)"],
+  ["expired", "expirado (30 min)", ""],
+  ["failed", "motivo novo que a tela ainda não conhece", ""],
+];
+// Identidades (AssetDetailSerializer) e métricas (BehaviorMetricSerializer), à mão.
+const ASSET_SEM_PRECO = { ticker: "AALR3", name: "ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A.", trading_name: "ALLIAR", kind: "stock", sector: "Saúde", subsector: "Serv.Méd.Hospit..Análises e Diagnósticos", segment: "Serv.Méd.Hospit..Análises e Diagnósticos", listing_segment: "NM", status: "active", has_prices: false, last_price: null };
+const ASSET_IBOV = { ticker: "IBOV", name: "Índice Bovespa", trading_name: "IBOVESPA", kind: "index", sector: null, subsector: null, segment: null, listing_segment: null, status: "active", has_prices: true, last_price: { date: "2026-09-28", close: "182991.125000", adj_close: "182991.125000" } };
+const METRIC_IBOV_REL = { beta_60m: null, correlation_60m: null, benchmark_observations: null };
+const METRIC_CURTA = {
+  calculated_at: "2026-09-29T14:02:39.100000-03:00", as_of_date: "2026-09-26", first_price_date: "2024-07-01", price_count: 552,
+  return_1m: "0.0312000000", return_3m: "-0.0450000000", return_6m: "0.0820000000", return_12m: "0.1470000000",
+  return_36m: null, return_60m: null, return_120m: null, return_ytd: "0.0960000000",
+  volatility_12m: "0.3120000000", volatility_60m: null,
+  skewness: null, excess_kurtosis: null, statistical_observations: null,
+};
+const EVENTS_ITUB4 = { ticker: "ITUB4", results: [
+  { date: "2026-09-01", kind: "dividend", amount: "0.021700", numerator: null, denominator: null },
+  { date: "2026-08-01", kind: "dividend", amount: "0.021700", numerator: null, denominator: null },
+] };
+
+// ================================================================ AS PEÇAS DA TELA
+function riskHead() {
+  return `<div class="atv-section__head"><div><p class="ruvor-eyebrow">${esc(T("risco.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("risco.titulo"))}</h2></div></div>
+    <p class="ruvor-sub">${esc(T("risco.intro"))}</p>`;
+}
+function riskSection(state, body) {
+  return `<section class="atv-section" data-risk-state="${state}">${riskHead()}<div aria-live="polite">${body}</div></section>`;
+}
+// O painel de estado. tone: evidence | review | critical; icon: id do símbolo.
+function statePanel({ tone = "evidence", icon = "i-duo-info", spin = false, title, text = "", progress = null, notes = [], actions = "", notice = false }) {
+  const bar = progress
+    ? `<span class="est-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${progress.e}" aria-valuenow="${progress.w}" aria-label="${esc(title)}"><span class="est-progress__fill" style="width: ${(100 * progress.w / progress.e).toFixed(1)}%"></span></span>`
+    : "";
+  const inner = `<span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"${spin ? ' class="bsc-spin"' : ""}><use href="#${icon}"/></svg></span>
+    <div class="est-state__body">
+      <p class="est-state__title">${esc(title)}</p>
+      ${text ? `<p class="est-state__text">${esc(text)}</p>` : ""}
+      ${bar}
+      ${notes.map((n) => why(n)).join("")}
+      ${actions ? `<div class="est-state__actions">${actions}</div>` : ""}
+    </div>`;
+  return notice
+    ? `<div class="est-state est-state--notice">${inner}</div>`
+    : `<div class="ruvor-panel"><div class="ruvor-panel__body est-state">${inner}</div></div>`;
+}
+const btnCalc = (key = "risco.pedido.calcular", busy = false) =>
+  `<button class="ruvor-btn ruvor-btn--primary" type="button"${busy ? ' aria-busy="true" disabled' : ""}>${busy ? glyph("i-spinner-gap", "bsc-spin") : glyph("i-chart-line")}<span>${esc(T(key))}</span></button>`;
+function sectionError() {
+  return `<div class="ruvor-callout ruvor-callout--critical atv-error" role="alert"><span>${esc(T("ativo.erroSecao"))}</span><button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("ativo.tentarDeNovo"))}</span></button></div>`;
+}
+const skeleton = () => `<div class="ruvor-skeleton atv-skel" role="status" aria-busy="true"><span class="atv-sr">${esc(T("risco.carregando"))}</span></div>`;
+
+// ---- o risco, do ativo.html (E2): "em 1 dia" só junto da faixa e no cabeçalho das colunas
+function discordancia(results, alpha) {
+  const v = results.filter((r) => r.alpha === alpha && r.var_latest != null).map((r) => lossFromVar(Number(r.var_latest)));
+  if (v.length === 0) return null;
+  return { min: Math.min(...v), max: Math.max(...v), n: v.length, total: MODEL_ORDER.length };
+}
+function naoRejeitados(results, alpha) {
+  const at = results.filter((r) => r.alpha === alpha);
+  return { adequados: MODEL_ORDER.filter((m) => at.some((r) => r.model_name === m && r.adequate === true)), julgados: at.filter((r) => r.adequate !== null).length };
+}
+const verdictTag = (r) => (r == null || r.adequate == null
+  ? `<span class="ruvor-tag atv-tag--neutral">${esc(T("risco.tag.naoJulgado"))}</span>`
+  : r.adequate ? `<span class="ruvor-tag ruvor-tag--validated">${esc(T("risco.tag.adequado"))}</span>`
+               : `<span class="ruvor-tag ruvor-tag--review">${esc(T("risco.tag.naoAdequado"))}</span>`);
+function levelPanel(results, alpha) {
+  const d = discordancia(results, alpha);
+  const nr = naoRejeitados(results, alpha);
+  const cadaN = NIVEL_N[alpha];
+  const range = d == null ? "—" : d.n === 1 ? fLoss.format(d.min) : T("risco.faixa", fLoss.format(d.min), fLoss.format(d.max));
+  const perda = alpha === "0.0500" ? T("risco.perda95") : T("risco.perda99");
+  const disc = T("risco.discordancia", d && fLoss.format(d.min), d && fLoss.format(d.max), d?.n ?? 0, MODEL_ORDER.length, cadaN, d && fLoss.format(d.min));
+  const list = nr.adequados.map((m) => `<li><span class="ruvor-tag ruvor-tag--validated">${glyph("i-check-circle", "ruvor-glyph--sm")}${esc(T(`risco.modelo.${m}`))}</span></li>`).join("");
+  return `<article class="ruvor-panel"><div class="ruvor-panel__body atv-level">
+    <p class="ruvor-eyebrow">${esc(T(`risco.nivel.${alpha}`))}</p>
+    <p class="atv-range"><b class="ruvor-num">${esc(range)}</b><small>${esc(T("risco.horizonte"))}</small></p>
+    ${why(perda)}
+    ${why(disc)}
+    <div class="ruvor-divider"></div>
+    <p class="atv-verdict-head">${esc(T("risco.naoRejeitados.titulo"))}</p>
+    ${list ? `<ul class="atv-ok-list">${list}</ul>` : ""}
+    ${why(T("risco.naoRejeitados", nr.adequados.length, nr.julgados, MODEL_ORDER.length))}
+  </div></article>`;
+}
+function modelsTable(results) {
+  const at = (m, a) => results.find((r) => r.model_name === m && r.alpha === a) ?? null;
+  const all = results.filter((r) => r.var_latest != null).map((r) => lossFromVar(Number(r.var_latest)));
+  const scale = Math.max(...all, 0) || 1;
+  const cell = (r) => {
+    if (r == null || r.var_latest == null) return `<td><div class="atv-cell"><span class="atv-loss"><b class="ruvor-num">—</b></span>${verdictTag(r)}</div></td>`;
+    const l = lossFromVar(Number(r.var_latest));
+    return `<td><div class="atv-cell"><span class="atv-loss"><b class="ruvor-num">${esc(fLoss.format(l))}</b></span><span class="ruvor-bar atv-bar" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * l / scale).toFixed(1)}%"></span></span>${verdictTag(r)}</div></td>`;
+  };
+  const rows = MODEL_ORDER.map((m) => `<tr data-model="${m}">
+      <td><button class="atv-toggle" type="button" aria-expanded="false" aria-label="${esc(T("risco.tabela.abrir", T(`risco.modelo.${m}`)))}">${glyph("i-caret-right")}<span>${esc(T(`risco.modelo.${m}`))}</span></button><span class="atv-cat">${esc(T(`risco.categoria.${CATEGORY[m]}`))}</span></td>
+      ${cell(at(m, "0.0500"))}${cell(at(m, "0.0100"))}
+    </tr>`).join("");
+  return `<section class="ruvor-panel">
+    <div class="ruvor-panel__head">${glyph("i-scales")}<h3 class="ruvor-h3">${esc(T("risco.tabela.titulo"))}</h3></div>
+    <div class="ruvor-panel__body">
+      ${why(T("risco.tabela.intro"))}
+      <div class="atv-legend" style="margin: var(--ruvor-space-3) 0 var(--ruvor-space-2); align-items: center">${verdictTag({ adequate: true })}${verdictTag({ adequate: false })}${verdictTag(null)}</div>
+      ${why(T("risco.veredito"))}
+    </div>
+    <table class="ruvor-table atv-models">
+      <colgroup><col class="atv-c-model"><col><col></colgroup>
+      <thead><tr><th scope="col">${esc(T("risco.tabela.col.modelo"))}</th><th scope="col">${esc(T("risco.tabela.col.0.0500"))}</th><th scope="col">${esc(T("risco.tabela.col.0.0100"))}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </section>`;
+}
+function trail(l) {
+  const status = l.status === "ok" ? T("risco.trilha.status.ok")
+    : l.status === "partial" ? T("risco.trilha.status.partial", MODEL_ORDER.length - new Set(l.results.filter((r) => !r.error).map((r) => r.model_name)).size)
+    : T("risco.trilha.status.failed");
+  const item = (k, v) => `<div><dt>${esc(T(`risco.trilha.${k}`))}</dt><dd>${esc(v)}</dd></div>`;
+  return `${why(T("risco.trilha"))}
+    <dl class="atv-trail">
+      ${item("asOf", fDate(l.as_of_date))}
+      ${item("firstPrice", fDate(l.first_price_date))}
+      ${item("priceCount", fInt.format(l.price_count))}
+      ${item("train", T("risco.trilha.pregoes", fInt.format(l.train_count)))}
+      ${item("test", T("risco.trilha.pregoes", fInt.format(l.test_count)))}
+      ${item("window", T("risco.trilha.pregoes", fInt.format(l.train_window_days)))}
+      ${item("calculatedAt", fInstant(l.calculated_at))}
+      ${item("finishedAt", l.finished_at ? fInstant(l.finished_at) : "—")}
+      ${item("engine", l.engine_version)}
+      ${item("seed", String(l.seed))}
+      ${item("priceRun", l.price_run ? T("risco.trilha.coleta", TEXTOS[`risco.trilha.fonte.${l.price_run.source}`] ?? l.price_run.source, fInstant(l.price_run.finished_at ?? l.price_run.started_at)) : "—")}
+      ${item("status", status)}
+    </dl>`;
+}
+function withTrail(section, latest) {
+  return `<div class="est-split"><div class="est-split__main">${section}</div>
+    <aside class="ruvor-rail atv-rail"><div class="atv-rail__inner"><p class="ruvor-eyebrow">${esc(T("risco.trilha.titulo"))}</p>${trail(latest)}</div></aside></div>`;
+}
+
+// ---- cabeçalho e comportamento, do ativo.html
+function head(a) {
+  const crumbs = [a.sector, a.subsector, a.segment].filter(Boolean).map((s) => `<li>${esc(s)}</li>`).join("");
+  const lp = a.last_price;
+  return `<section class="atv-head">
+    <div class="atv-head__id">
+      <p class="ruvor-eyebrow">${esc(a.trading_name)}</p>
+      <h1 class="ruvor-display">${esc(a.ticker)}</h1>
+      <p class="atv-head__name">${esc(a.name)}</p>
+      <div class="atv-tags">
+        <span class="ruvor-tag ruvor-tag--evidence">${esc(T(`ativo.tipo.${a.kind}`))}</span>
+        <span class="ruvor-tag ${a.status === "active" ? "ruvor-tag--validated" : "ruvor-tag--review"}">${esc(T(`ativo.situacao.${a.status}`))}</span>
+        ${a.listing_segment ? `<span class="ruvor-tag atv-tag--neutral">${esc(T("ativo.listagem", a.listing_segment))}</span>` : ""}
+      </div>
+      ${crumbs ? `<ol class="atv-crumbs" aria-label="${esc(T("ativo.classificacao"))}">${crumbs}</ol>` : ""}
+    </div>
+    <div class="ruvor-panel atv-last">
+      <p class="ruvor-eyebrow">${esc(T("ativo.ultimoFechamento.rotulo"))}</p>
+      ${lp ? `<p class="atv-last__value ruvor-num">${esc(fMoney.format(Number(lp.close)))}</p>${why(T("ativo.ultimoFechamento", fDate(lp.date)))}`
+           : `<p class="atv-last__value">—</p>${why(T("ativo.semPreco"))}`}
+    </div>
+  </section>`;
+}
+function pricePanel(inner) {
+  return `<section class="ruvor-panel"><div class="ruvor-panel__head">${glyph("i-chart-line")}<h2 class="ruvor-h3">${esc(T("ativo.preco.titulo"))}</h2></div><div class="ruvor-panel__body">${inner}</div></section>`;
+}
+function stat(key, value, phrase) {
+  return `<div class="atv-stat"><span class="atv-stat__label">${esc(T(`comportamento.rotulo.${key}`))}</span><span class="atv-stat__value ruvor-num">${esc(value)}</span>${phrase ? why(phrase) : ""}</div>`;
+}
+function block(titleKey, inner, note, wide = false) {
+  return `<section class="ruvor-panel${wide ? " atv-wide" : ""}"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(titleKey))}</h3></div><div class="ruvor-panel__body">${inner}${note ? `<p class="atv-why atv-block__note">${esc(note)}</p>` : ""}</div></section>`;
+}
+function behaviorHead(asof) {
+  return `<div class="atv-section__head"><div><p class="ruvor-eyebrow">${esc(T("comportamento.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("comportamento.titulo"))}</h2></div>${asof ? `<span class="ruvor-tag ruvor-tag--evidence">${esc(T("comportamento.ate", fDate(asof)))}</span>` : ""}</div>
+    <p class="ruvor-sub">${esc(T("comportamento.intro"))}</p>`;
+}
+
+// ================================================================ OS CASOS
+// Cada caso: a vista do seletor, o rótulo da moldura, o corpo que o gerou e a tela.
+const cases = [];
+const add = (view, tag, what, body, screen) => cases.push({ view, tag, what, body, screen });
+
+// E2 — o risco e o recálculo
+add("E2", "E2", "latest ok · in_progress presente (12 de 18) · request nulo — o risco continua na tela", B.E2,
+  withTrail(riskSection("E2", `<div class="atv-stack">
+    ${statePanel({ notice: true, icon: "i-spinner-gap", spin: true, title: T("risco.estado.recalculando", 12, 18), progress: { w: 12, e: 18 }, notes: [T("risco.estado.recalculando.nota")] })}
+    <div class="atv-levels">${ALPHAS.map((a) => levelPanel(B.E2.latest.results, a)).join("")}</div>
+    ${modelsTable(B.E2.latest.results)}
+  </div>`), B.E2.latest));
+
+// E3 — o último cálculo falhou, sem botão; e com recálculo
+add("E3", "E3", "latest failed (nenhum resultado gravado) · in_progress nulo — sem botão: o POST daria 409", B.E3,
+  withTrail(riskSection("E3", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E3.titulo"), text: T("risco.estado.E3") })), B.E3.latest));
+add("E3", "E3 com recálculo", "latest failed · in_progress presente (3 de 18) — o acompanhamento segue (RF-20)", B.E3r,
+  withTrail(riskSection("E3", `<div class="atv-stack">
+    ${statePanel({ notice: true, icon: "i-spinner-gap", spin: true, title: T("risco.estado.recalculando", 3, 18), progress: { w: 3, e: 18 }, notes: [T("risco.estado.recalculando.notaFalha")] })}
+    ${statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E3.titulo"), text: T("risco.estado.E3") })}
+  </div>`), B.E3r.latest));
+
+// E4 — calculando, com barra
+add("E4", "E4", "latest nulo · in_progress presente (7 de 18) · request running", B.E4,
+  riskSection("E4", statePanel({ icon: "i-spinner-gap", spin: true, title: T("risco.estado.E4", 7, 18), progress: { w: 7, e: 18 }, notes: [T("risco.estado.E4.nota"), T("risco.estado.atualiza")] })));
+
+// E5 — na fila; coletando
+add("E5", "E5 · na fila", "latest nulo · in_progress nulo · request queued", B.E5q,
+  riskSection("E5", statePanel({ icon: "i-clock", title: T("risco.estado.E5.fila"), text: T("risco.estado.E5.fila.nota"), notes: [T("risco.estado.atualiza")] })));
+add("E5", "E5 · coletando", "latest nulo · in_progress nulo · request running (a cadeia ainda não abriu a execução)", B.E5r,
+  riskSection("E5", statePanel({ icon: "i-spinner-gap", spin: true, title: T("risco.estado.E5.coletando"), text: T("risco.estado.E5.coletando.nota"), notes: [T("risco.estado.atualiza")] })));
+
+// E6 e E6b — série curta, sem botão
+add("E6", "E6", "request done, motivo \"serie curta (312 pregoes, minimo 503)\" — o número vem do motivo", B.E6,
+  riskSection("E6", statePanel({ icon: "i-calendar-blank", title: T("risco.estado.serieCurta.titulo"), text: traduzirMotivo(B.E6.request.reason), notes: [T("risco.estado.serieCurta.nota")] })));
+add("E6", "E6b", "request nulo · ativo ativo · /prices com 287 pregões — o número vem da série", { risk: B.E6b, prices_count: 287 },
+  riskSection("E6b", statePanel({ icon: "i-calendar-blank", title: T("risco.estado.serieCurta.titulo"), text: T("motivos.serieCurta", fInt.format(287), fInt.format(503)), notes: [T("risco.estado.serieCurta.nota")] })));
+
+// E7 — cada motivo de failed/expired, com o botão
+for (const [status, reason, error] of E7_REASONS) {
+  const body = risk("AALR3", { request: request({ status, reason, error, finished_at: status === "expired" ? null : "2026-09-29T14:03:20.000000-03:00" }) });
+  const extra = reason === "a execucao falhou" ? " — na prática vem com o latest failed e cai no E3; a frase existe para a lista" : "";
+  add("E7", `E7 · ${status}`, `motivo "${reason}"${extra}`, body,
+    riskSection("E7", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E7.titulo"), text: traduzirMotivo(reason), notes: [T("risco.estado.E7.nota")], actions: btnCalc("risco.pedido.deNovo") })));
+}
+
+// E8 — o convite; e a reserva do RF-17
+const invite = (actions) => statePanel({ icon: "i-duo-info", title: T("risco.estado.E8.titulo"), text: T("risco.estado.E8"), actions });
+add("E8", "E8", "latest nulo · in_progress nulo · request nulo · ativo ativo · /prices com 0 pregões (ou 503 ou mais, ou /prices falhou)", { risk: B.E8, prices_count: 0 },
+  riskSection("E8", invite(btnCalc())));
+add("E8", "E8 · a reserva", "request done \"calculado\" com latest nulo — não acontece pelo contrato; se acontecer, é o convite", B.E8r,
+  riskSection("E8", invite(btnCalc())));
+
+// E9 — inativo, sem botão
+add("E9", "E9", "latest nulo · in_progress nulo · request nulo · ativo inactive (qualquer série); ou o POST respondeu 422 asset_inactive", B.E9,
+  riskSection("E9", statePanel({ icon: "i-duo-info", title: T("risco.estado.E9.titulo"), text: T("risco.estado.E9") })));
+
+// Carregando e erro
+add("carregando", "CARREGANDO", "o /risk chegou sem nada, e a identidade ou o /prices ainda carregam — skeleton, sem botão", { risk: B.E8, asset: "loading", prices: "loading" },
+  riskSection("CARREGANDO", skeleton()));
+add("carregando", "RISCO_CARREGANDO", "o próprio /risk na primeira carga", null,
+  riskSection("RISCO_CARREGANDO", skeleton()));
+add("carregando", "RISCO_ERRO", "o /risk falhou (500, rede ou resposta fora do formato) — o erro fica na seção, o resto da tela continua", { error: { code: "internal_error", message: "Erro interno. Tente de novo mais tarde.", details: {} } },
+  riskSection("RISCO_ERRO", sectionError()));
+
+// As respostas do POST (RF-19)
+add("pedido", "botão ocupado", "o POST saiu e não voltou: aria-busy e desabilitado", { risk: B.E8 },
+  riskSection("E8", invite(`${btnCalc("risco.pedido.calcular", true)}<p class="est-reply est-reply--muted" role="status">${esc(T("risco.pedido.enviando"))}</p>`)));
+add("pedido", "429", "on_demand_queue_full — o botão volta", { status: 429, error: { code: "on_demand_queue_full", message: "A fila de cálculo sob demanda está cheia (3 pedidos abertos).", details: { max: 3 } } },
+  riskSection("E8", invite(`${btnCalc()}<p class="est-reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>`)));
+add("pedido", "outro erro", "erro no formato da D-86 — a mensagem dela, e o botão de volta", { status: 500, error: { code: "internal_error", message: "Erro interno. Tente de novo mais tarde.", details: {} } },
+  riskSection("E8", invite(`${btnCalc()}<p class="est-reply est-reply--critical" role="alert">${esc(T("risco.pedido.erro", "Erro interno. Tente de novo mais tarde."))}</p>`)));
+add("pedido", "sem resposta", "network_error ou unexpected_response (sem mensagem da D-86) — texto fixo, e o botão de volta", { status: 0, code: "network_error" },
+  riskSection("E8", invite(`${btnCalc()}<p class="est-reply est-reply--critical" role="alert">${esc(T("risco.pedido.semResposta"))}</p>`)));
+add("pedido", "E7 · 429", "o calcular de novo também recebe a fila cheia", { status: 429, error: { code: "on_demand_queue_full" } },
+  riskSection("E7", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E7.titulo"), text: traduzirMotivo("falhou na coleta"), notes: [T("risco.estado.E7.nota")], actions: `${btnCalc("risco.pedido.deNovo")}<p class="est-reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>` })));
+
+// Os motivos: a tabela da tradução
+const MOTIVOS_TODOS = [
+  ["calculado", "done", "E8 (a reserva); com o latest ok/partial, E1"],
+  ["serie curta (312 pregoes, minimo 503)", "done", "E6"],
+  ["falhou na coleta", "failed", "E7"],
+  ["falhou nas metricas", "failed", "E7"],
+  ["falhou na abertura", "failed", "E7"],
+  ["a execucao falhou", "failed", "E3 (o latest é a execução failed)"],
+  ["o broker recusou o pedido", "failed", "E7"],
+  ["expirado (30 min)", "expired", "E7"],
+  ["qualquer outro texto", "—", "E7, pela frase genérica"],
+];
+add("motivos", "os motivos", "a lista fechada de backend/apps/api/ondemand.py (RF-18): o texto cru nunca vai à tela", null,
+  `<section class="ruvor-panel"><table class="ruvor-table mk-motivos">
+    <thead><tr><th scope="col">motivo da API (moldura)</th><th scope="col">status</th><th scope="col">a frase na tela</th></tr></thead>
+    <tbody>${MOTIVOS_TODOS.map(([r, s, onde]) => `<tr><td>${esc(r)}<br>${esc(onde)}</td><td>${esc(s)}</td><td>${esc(traduzirMotivo(r))}</td></tr>`).join("")}</tbody>
+  </table></section>`);
+
+// Fora do risco — o comportamento
+add("comportamento", "metric: null", "/metrics devolve { ticker, metric: null } — aponta para o convite do risco", { ticker: "AALR3", metric: null },
+  `<section class="atv-section">${behaviorHead(null)}
+    ${statePanel({ icon: "i-duo-info", title: T("comportamento.naoCalculado"), text: T("comportamento.naoCalculado.nota"), actions: `<a class="ruvor-btn est-link-btn" href="#">${glyph("i-chart-line")}<span>${esc(T("comportamento.irParaRisco"))}</span></a>` })}
+  </section>`);
+{
+  const m = METRIC_CURTA;
+  const x100 = (r) => fMoney.format(100 * (1 + r));
+  const months = { return_1m: 1, return_3m: 3, return_6m: 6, return_12m: 12, return_36m: 36, return_60m: 60, return_120m: 120, return_ytd: null };
+  const rets = Object.entries(months).map(([k, mo]) => (m[k] == null ? stat(k, "—", mo ? T("comportamento.nulo.janela", mo) : "") : stat(k, minus(fPctS.format(Number(m[k]))), T(`comportamento.${k}`, x100(Number(m[k])))))).join("");
+  const vols = stat("volatility_12m", fPct1.format(Number(m.volatility_12m)), T("comportamento.volatility_12m", fPct1.format(Number(m.volatility_12m)))) + stat("volatility_60m", "—", T("comportamento.nulo.janela", 60));
+  const hist = `<p class="atv-muted">${esc(T("comportamento.histogramaCurto"))}</p>
+    <div class="atv-stats" style="margin-top: var(--ruvor-space-5)">${stat("skewness", "—", T("comportamento.nulo.janela", 60))}${stat("excess_kurtosis", "—", T("comportamento.nulo.janela", 60))}</div>`;
+  add("comportamento", "série curta", "statistical_observations nulo e os 42 baldes zerados: a frase no lugar do gráfico; e os nulos de janela", { metric: { ...m, histogram: "42 baldes com count 0" } },
+    `<section class="atv-section">${behaviorHead(m.as_of_date)}<div class="atv-blocks">
+      ${block("comportamento.bloco.retornos", `<div class="atv-stats">${rets}</div>`, T("comportamento.nota.retornos"), true)}
+      ${block("comportamento.bloco.volatilidade", `<div class="atv-stats">${vols}</div>`)}
+      ${block("comportamento.bloco.distribuicao", hist, null)}
+    </div></section>`);
+}
+
+// Fora do risco — cabeçalho: sem preço; o índice
+add("cabecalho", "sem preço", "identidade com last_price nulo e has_prices false; /prices com results vazio", { asset: ASSET_SEM_PRECO, prices: { ticker: "AALR3", from: null, to: null, results: [] } },
+  `<div class="atv-stack">${head(ASSET_SEM_PRECO)}
+    ${pricePanel(`${why(T("ativo.precoAjustado"))}<div class="est-empty" style="margin-top: var(--ruvor-space-3)"><div><p>${esc(T("ativo.preco.vazio"))}</p><p class="atv-why">${esc(T("ativo.preco.vazio.nota"))}</p></div></div>`)}
+  </div>`);
+add("cabecalho", "o índice", "IBOV: beta_60m, correlation_60m e benchmark_observations nulos por identidade", { asset: ASSET_IBOV, metric: METRIC_IBOV_REL },
+  `<div class="atv-stack">${head(ASSET_IBOV)}
+    <div class="atv-blocks">${block("comportamento.bloco.ibov", `<div class="atv-stats">${stat("beta_60m", "—", T("comportamento.nulo.referencia"))}${stat("correlation_60m", "—", T("comportamento.nulo.referencia"))}</div>`, null)}</div>
+  </div>`);
+
+// Fora do risco — ativo não encontrado
+add("nao-encontrado", "ativo não encontrado", "a identidade respondeu 404 asset_not_found: a tela inteira vira isto, com a busca", { status: 404, error: { code: "asset_not_found", message: "Ativo XPTO3 não existe.", details: { ticker: "XPTO3" } } },
+  `<section class="bsc-notfound">
+    <p class="ruvor-eyebrow">${esc(T("ativo.naoEncontrado.sobrancelha"))}</p>
+    <h1 class="ruvor-display">${esc(T("ativo.naoEncontrado.titulo"))}</h1>
+    <p class="ruvor-sub">${esc(T("ativo.naoEncontrado", "XPTO3"))}</p>
+    <p class="ruvor-sub">${esc(T("ativo.naoEncontrado.dica"))}</p>
+    <div class="bsc-field bsc-field--lg" role="search">
+      <svg class="ruvor-glyph ruvor-glyph--lg" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="${esc(T("busca.campo.rotulo"))}" placeholder="${esc(T("busca.campo.placeholder"))}">
+    </div>
+  </section>`);
+
+// Fora do risco — o erro de uma seção
+add("erro-secao", "erro de uma seção", "/prices respondeu 500: o erro fica no painel do preço, com tentar de novo; os proventos, logo abaixo, carregaram", { prices: { status: 500 }, events: EVENTS_ITUB4 },
+  `<div class="atv-stack">
+    ${pricePanel(sectionError())}
+    <section class="ruvor-panel"><div class="ruvor-panel__head">${glyph("i-calendar-blank")}<h2 class="ruvor-h3">${esc(T("ativo.eventos.titulo"))}</h2><span class="ruvor-push atv-muted">${esc(T("ativo.eventos.periodo", "28/09/2026"))}</span></div>
+      <div class="ruvor-panel__body"><table class="ruvor-table atv-events"><thead><tr><th scope="col">${esc(T("ativo.eventos.col.data"))}</th><th scope="col">${esc(T("ativo.eventos.col.tipo"))}</th><th scope="col">${esc(T("ativo.eventos.col.valor"))}</th></tr></thead>
+      <tbody>${EVENTS_ITUB4.results.map((e) => `<tr><td class="ruvor-num">${fDate(e.date)}</td><td>${esc(T(`ativo.eventos.${e.kind}`))}</td><td class="ruvor-num">${esc(T("ativo.eventos.valor", fMoneyEv.format(Number(e.amount))))}</td></tr>`).join("")}</tbody></table></div>
+    </section>
+  </div>`);
+add("erro-secao", "erro do cabeçalho", "a identidade respondeu 500 (não 404): o erro fica no cabeçalho, e o resto da tela continua", { asset: { status: 500 } },
+  `<section class="atv-head"><div class="atv-head__id">${sectionError()}</div></section>`);
+
+// ---------------------------------------------------------------- montagem
+const host = $("#cases");
+host.innerHTML = cases.map((c, i) => `<section class="mk-case" data-view="${c.view}" aria-label="${esc(c.tag)}">
+  <div class="mk-case__head">
+    <p><b>${esc(c.tag)}</b> · ${esc(c.what)}</p>
+    ${c.body ? `<details><summary>o corpo montado à mão</summary><pre class="mk-json">${esc(JSON.stringify(c.body, null, 2))}</pre></details>` : ""}
+  </div>
+  ${c.screen}
+</section>`).join("");
+
+// A linha que abre, como no ativo.html (no E2 as linhas começam fechadas).
+for (const btn of host.querySelectorAll(".atv-toggle")) {
+  btn.addEventListener("click", () => btn.setAttribute("aria-expanded", String(btn.getAttribute("aria-expanded") !== "true")));
+}
+for (const a of host.querySelectorAll("a[href='#']")) a.addEventListener("click", (e) => e.preventDefault());
+
+// ---------------------------------------------------------------- tema e seletor
+const root = document.documentElement;
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(theme) {
+  if (theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme));
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+
+const mkBtns = document.querySelectorAll("[data-mk]");
+function setView(view) {
+  for (const b of mkBtns) b.setAttribute("aria-pressed", String(b.dataset.mk === view));
+  for (const c of host.querySelectorAll(".mk-case")) c.hidden = !(view === "todos" || c.dataset.view === view);
+}
+for (const b of mkBtns) b.addEventListener("click", () => setView(b.dataset.mk));
+
+// ?estado=…&tema=light|dark|system — para capturar cada vista direto.
+const params = new URLSearchParams(location.search);
+setTheme(params.get("tema") || "system");
+setView(params.get("estado") || "todos");
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>

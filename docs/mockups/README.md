@@ -30,6 +30,7 @@ Toda tarefa visual vira duas: primeiro o mockup, depois a implementação
 | M1.6b | [`M1.6b/graficos-comparativo.html`](M1.6b/graficos-comparativo.html) | Recharts, uPlot e lightweight-charts desenhando preço, distribuição de retornos e VaR por modelo, com dado real da API pelo proxy do Vite, nos dois temas, para a escolha da biblioteca de gráfico | ✅ usado na escolha; o uPlot foi escolhido ([D-94](../decisoes/D-94-os-graficos-sao-do-uplot.md)) |
 | M1.6b | [`M1.6b/busca.html`](M1.6b/busca.html) | o casco e a busca: barra, chave de tema, rodapé com a ressalva, a página inicial em todos os estados e a lista suspensa; dado real pelo proxy | ✅ aprovado pelo dono em 2026-09-28 |
 | M1.6b | [`M1.6b/ativo.html`](M1.6b/ativo.html) | a tela do ativo com dado real do ITUB4: cabeçalho, preço, proventos, comportamento, risco com discordância, não rejeitados e a tabela dos nove, trilha; com os textos de cada número | ✅ aprovado pelo dono em 2026-09-28, com cinco ajustes aplicados |
+| M1.6b | [`M1.6b/ativo-estados.html`](M1.6b/ativo-estados.html) | os estados da seção de risco (E2 a E9, E6b, carregando e erro), as respostas do pedido, cada motivo, e os estados fora do risco (comportamento não calculado, sem preço, índice, ativo não encontrado, erro de seção) | ✅ aprovado pelo dono em 2026-09-28 |
 
 A vitrine não é tela de produto: consome só `tokens.css` e `components.css`, e as classes de
 estado forçado (`.is-hover`, `.is-focus`) existem só nela. O serviço `frontend` monta este
