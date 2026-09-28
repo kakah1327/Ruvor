@@ -71,6 +71,10 @@
   display: flex;
   align-items: center;
   position: relative;
+  /* o respiro lateral e devolvido pela margem: o arranjo e o do mockup, e o anel de foco
+     cabe dentro do link, que estica na altura inteira da barra */
+  padding: 0 6px;
+  margin: 0 -6px;
   color: var(--ruvor-topbar-link);
   text-decoration: none;
   font-size: var(--ruvor-type-small-size);
@@ -82,7 +86,7 @@
 
 .ruvor-nav__link:focus-visible {
   outline: 2px solid var(--ruvor-focus-on-dark);
-  outline-offset: 2px;
+  outline-offset: -6px;
 }
 
 .ruvor-nav__link--on {
@@ -93,8 +97,8 @@
 .ruvor-nav__link--on::after {
   content: "";
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 6px;
+  right: 6px;
   bottom: 0;
   height: 2px;
   background: var(--ruvor-decision);
