@@ -44,6 +44,10 @@ class Command(BaseCommand):
             validate_email(email)
         except ValidationError as exc:
             raise CommandError("; ".join(exc.messages)) from exc
+        if not 1 <= len(slug) <= 60:
+            raise CommandError("o slug vai de 1 a 60 caracteres")
+        if len(name) > 120 or len(admin_name) > 120:
+            raise CommandError("nomes vao ate 120 caracteres")
         if not name or not admin_name:
             raise CommandError(
                 "nome da organizacao e da administradora sao obrigatorios"

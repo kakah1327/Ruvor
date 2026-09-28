@@ -22,20 +22,21 @@ from django.db import migrations, models
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
 from django.db.models import Count
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Trim
 
 
 def _colisoes(user_model: Any) -> list[str]:
-    """Os e-mails originais que colidem quando baixados para minusculas, ordenados."""
+    """Os e-mails originais que colidem quando normalizados, ordenados -- pela mesma regra
+    da reescrita: sem espaco nas pontas e em minusculas."""
     repetidos = (
-        user_model.objects.annotate(minusculo=Lower("email"))
+        user_model.objects.annotate(minusculo=Lower(Trim("email")))
         .values("minusculo")
         .annotate(n=Count("id"))
         .filter(n__gt=1)
         .values_list("minusculo", flat=True)
     )
     return sorted(
-        user_model.objects.annotate(minusculo=Lower("email"))
+        user_model.objects.annotate(minusculo=Lower(Trim("email")))
         .filter(minusculo__in=list(repetidos))
         .values_list("email", flat=True)
     )

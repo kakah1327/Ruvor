@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import re
+from typing import Any
 
 import pytest
 from django.core.management import call_command
@@ -87,4 +88,28 @@ def test_v13_email_repetido_nao_grava_nada() -> None:
     antes = _contagens()
     with pytest.raises(CommandError, match=re.escape("chefe@acme.test")):
         _cria()
+    assert _contagens() == antes
+
+
+def test_v13_evento_e_mudanca_na_mesma_transacao(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from apps.accounts.audit import record as record_real
+    from apps.accounts.management.commands import create_organization
+
+    def grava_e_falha(*args: Any, **kwargs: Any) -> None:
+        record_real(*args, **kwargs)
+        raise RuntimeError("falha depois do evento")
+
+    monkeypatch.setattr(create_organization, "record", grava_e_falha)
+    antes = _contagens()
+    with pytest.raises(RuntimeError):
+        _cria()
+    assert _contagens() == antes
+
+
+def test_v13_slug_longo_e_command_error() -> None:
+    antes = _contagens()
+    with pytest.raises(CommandError, match="60"):
+        _cria(slug="a" * 61)
     assert _contagens() == antes

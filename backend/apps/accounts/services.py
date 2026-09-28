@@ -15,6 +15,7 @@ transacoes -- nao e transacional.
 from __future__ import annotations
 
 import secrets
+from collections.abc import Mapping
 from typing import Any
 
 from django.contrib.auth import authenticate, update_session_auth_hash
@@ -376,7 +377,7 @@ def create_user(
     return user, senha
 
 
-def _validate_changes(changes: dict[str, object]) -> None:
+def _validate_changes(changes: Mapping[str, object]) -> None:
     fields: dict[str, list[str]] = {}
     for campo in sorted(set(changes) - _UPDATABLE):
         fields[campo] = ["campo desconhecido"]
@@ -389,16 +390,17 @@ def _validate_changes(changes: dict[str, object]) -> None:
 
 
 def update_user(
-    actor: User, email: str, *, changes: dict[str, object], ip: str | None
+    actor: User, email: str, *, changes: Mapping[str, object], ip: str | None
 ) -> User:
     """Muda papel e/ou ativo (RF-17). A organizacao nunca fica sem `admin` ativo: a linha
     dela e travada antes de contar, e duas administradoras rebaixando uma a outra ao mesmo
-    tempo terminam com uma."""
-    _validate_changes(changes)
+    tempo terminam com uma. Quem pede e conferido antes do corpo, como nos outros servicos
+    de gestao."""
     with transaction.atomic():
         Organization.objects.select_for_update().get(pk=actor.organization_id)
         _after_org_lock()
         actor = _check_manager(actor)
+        _validate_changes(changes)
         target = _get_target(actor, email)
         antes = {"role": target.role, "is_active": target.is_active}
         depois = {**antes, **{campo: changes[campo] for campo in changes}}

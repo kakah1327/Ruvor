@@ -1086,10 +1086,10 @@ um de correção na T5.
 |---|---|
 | Sessão, middleware, cookies, cache, validadores (V-01, V-02, V-17) | ✅ `public.django_session`; `MIDDLEWARE` na ordem do RF-01; `Secure` segue `RUVOR_SECURE_COOKIES`; cache `RedisCache` em `RUVOR_CACHE_URL` (banco 1) e `LocMemCache` na suíte |
 | Migration `0003` com dado real (V-22, dado) | ✅ dois usuários inseridos pelo `psql` em caixa mista, `migrate accounts 0003` sem `pending trigger events`: e-mails minúsculos, superusuário `admin`, o outro `member`; a unicidade de `Lower(email)` virou o índice `user_email_lower_uniq` |
-| Serviços da conta, gestão, comando, auditoria (V-05 a V-14, V-16, V-18) | ✅ 93 testes em `tests/accounts/` |
+| Serviços da conta, gestão, comando, auditoria (V-05 a V-14, V-16, V-18) | ✅ 99 testes em `tests/accounts/` |
 | Concorrência do `last_admin` (V-11) | ✅ duas threads, `transaction=True`: termina com uma `admin` |
 | **Execução real (V-24)** | ✅ `createsuperuser --noinput` na `ruvor`; `create_organization` com senha provisória; pelos serviços: troca obrigatória, criação, desativação (a sessão cai), `last_admin`, cadastro com organização pessoal, bloqueio na 6ª tentativa com a senha certa (`wait_seconds` 900; a chave no banco 1 do Redis, o 0 só com o Celery), saída; 14 linhas em `core.access_event`, coluna a coluna como o RF-24 |
-| Suíte, tipos, estilo | ✅ **715 testes** no `worker`; `mypy` estrito limpo; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança |
+| Suíte, tipos, estilo | ✅ **721 testes** no `worker`; `mypy` estrito limpo; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança |
 
 **As 18 mutações da T7 reprovaram**, cada uma no teste previsto, e o código voltou limpo depois
 de cada uma.

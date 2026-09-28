@@ -372,3 +372,45 @@ def test_v12_parametros_fora_da_faixa(limit: int, offset: int, parametro: str) -
     erro = _erro(lambda: services.list_users(_admin(), limit=limit, offset=offset))
     assert erro.code == "invalid_parameter"
     assert erro.details == {"parameter": parametro}
+
+
+def test_v18_criar_evento_e_mudanca_na_mesma_transacao(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ator = _admin()
+    monkeypatch.setattr(services, "record", _grava_e_falha)
+
+    with pytest.raises(Falhou):
+        services.create_user(
+            ator, email="novo@acme.test", name="Novo", role="member", ip=IP
+        )
+
+    assert not User.objects.filter(email="novo@acme.test").exists()
+    assert not AccessEvent.objects.exists()
+
+
+def test_v18_alterar_evento_e_mudanca_na_mesma_transacao(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ator = _admin()
+    alvo = usuario(ator.organization, "alvo@acme.test")
+    monkeypatch.setattr(services, "record", _grava_e_falha)
+
+    with pytest.raises(Falhou):
+        services.update_user(ator, "alvo@acme.test", changes={"role": "admin"}, ip=IP)
+
+    alvo.refresh_from_db()
+    assert alvo.role == "member"
+    assert not AccessEvent.objects.exists()
+
+
+def test_v09_member_com_corpo_invalido_recebe_permission_denied() -> None:
+    org = organizacao()
+    usuario(org, "alvo@acme.test")
+    ator = usuario(org, "membro@acme.test")
+    erro = _erro(
+        lambda: services.update_user(
+            ator, "alvo@acme.test", changes={"email": "x@y.test"}, ip=IP
+        )
+    )
+    assert erro.code == "permission_denied"

@@ -415,3 +415,20 @@ def test_v18_troca_de_senha_evento_e_mudanca_na_mesma_transacao(
     user.refresh_from_db()
     assert user.check_password(SENHA)
     assert AccessEvent.objects.count() == antes
+
+
+def test_v08_nova_senha_fraca_reprova_e_a_antiga_continua() -> None:
+    user = usuario(organizacao(), "ana@x.test")
+    request = requisicao(session_key=_entra("ana@x.test"))
+
+    erro = _erro(
+        lambda: services.change_password(
+            request, current_password=SENHA, new_password="12345678901"
+        )
+    )
+
+    assert erro.code == "invalid_parameter"
+    assert list(erro.details["fields"]) == ["new_password"]
+    assert erro.details["fields"]["new_password"]
+    user.refresh_from_db()
+    assert user.check_password(SENHA)
