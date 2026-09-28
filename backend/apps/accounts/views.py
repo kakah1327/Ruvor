@@ -31,7 +31,13 @@ from apps.accounts.authentication import SessionAuthentication
 from apps.accounts.errors import AccountError
 from apps.accounts.models import User
 from apps.accounts.permissions import AccountReady
-from apps.accounts.serializers import LoginIn, PasswordIn, SignupIn, UserCreateIn
+from apps.accounts.serializers import (
+    ApiKeyCreateIn,
+    LoginIn,
+    PasswordIn,
+    SignupIn,
+    UserCreateIn,
+)
 from apps.api.errors import ApiError
 
 # So digitos, com sinal opcional: o `int()` sozinho aceitaria espaco e sublinhado.
@@ -261,6 +267,45 @@ class PasswordView(APIView):
         data = _data(PasswordIn, request)
         try:
             services.change_password(request._request, **data)
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(status=204)
+
+
+class ApiKeysView(APIView):
+    """`GET api-keys` lista as proprias chaves e `POST` cria uma (M4.2, RF-03, RF-04)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # RF-07: a chave nao gere chave
+
+    def get(self, request: Request) -> Response:
+        keys = services.list_api_keys(_user(request))
+        return Response({"results": [services.api_key_body(k) for k in keys]})
+
+    def post(self, request: Request) -> Response:
+        data = _data(ApiKeyCreateIn, request)
+        try:
+            key, secret = services.create_api_key(
+                _user(request), ip=services._ip(request._request), **data
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(
+            {"api_key": services.api_key_body(key), "secret": secret}, status=201
+        )
+
+
+class ApiKeyView(APIView):
+    """`DELETE api-keys/{prefix}`: revoga a propria chave (M4.2, RF-05)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # RF-07: a chave nao gere chave
+
+    def delete(self, request: Request, prefix: str) -> Response:
+        try:
+            services.revoke_api_key(
+                _user(request), prefix, ip=services._ip(request._request)
+            )
         except AccountError as err:
             raise account_error_to_api(err) from err
         return Response(status=204)

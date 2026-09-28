@@ -9,6 +9,8 @@ from __future__ import annotations
 from django.urls import URLPattern, URLResolver, path
 
 from apps.accounts.views import (
+    ApiKeysView,
+    ApiKeyView,
     CsrfView,
     LoginView,
     LogoutView,
@@ -33,4 +35,6 @@ urlpatterns: list[URLPattern | URLResolver] = [
         "organization/users/<str:email>/temporary-password",
         TemporaryPasswordView.as_view(),
     ),
+    path("api-keys", ApiKeysView.as_view()),
+    path("api-keys/<str:prefix>", ApiKeyView.as_view()),
 ]

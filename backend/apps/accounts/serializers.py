@@ -35,3 +35,7 @@ class UserCreateIn(serializers.Serializer[None]):
 class PasswordIn(serializers.Serializer[None]):
     current_password = _text()
     new_password = _text()
+
+
+class ApiKeyCreateIn(serializers.Serializer[None]):
+    name = _text()  # M4.2, RF-03: aparado pelo servico
