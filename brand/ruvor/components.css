@@ -84,7 +84,8 @@
   color: var(--ruvor-topbar-text);
 }
 
-.ruvor-nav__link:focus-visible {
+/* (0,3,0): vence a regra geral do anel sobre fundo escuro, mais abaixo, que só troca a cor */
+.ruvor-topbar .ruvor-nav__link:focus-visible {
   outline: 2px solid var(--ruvor-focus-on-dark);
   outline-offset: -6px;
 }
@@ -602,10 +603,12 @@
   white-space: pre-wrap;
 }
 
-/* O anel sobre fundo escuro: dentro da barra e do bloco de código. O :where() zera a
-   especificidade do ancestral, para a regra de um componente — o recuo de -6px do link da
-   barra — não ser anulada por esta, que vem depois na cascata. */
-:where(.ruvor-topbar, .ruvor-code) :focus-visible {
+/* O anel sobre fundo escuro: dentro da barra e do bloco de código. Em (0,2,0) e depois dos
+   componentes, vence o anel claro de .ruvor-btn, .ruvor-input, .ruvor-select e .ruvor-choice
+   (também (0,2,0)) quando eles estão nesses fundos; o link da barra tem regra própria em
+   (0,3,0), com o recuo para dentro. */
+.ruvor-topbar :focus-visible,
+.ruvor-code :focus-visible {
   outline: 2px solid var(--ruvor-focus-on-dark);
   outline-offset: 2px;
 }

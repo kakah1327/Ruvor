@@ -420,7 +420,11 @@ const INTERACTIVE = [
 describe("V-05 — foco visível", () => {
   it.each(INTERACTIVE)("%s tem :focus-visible com outline", (base) => {
     const focus = COMPONENT_RULES.filter((rule) =>
-      selectorParts(rule.selector).includes(`${base}:focus-visible`),
+      // o próprio seletor, ou ele com um ancestral (o link da barra: .ruvor-topbar …)
+      selectorParts(rule.selector).some(
+        (part) =>
+          part === `${base}:focus-visible` || part.endsWith(` ${base}:focus-visible`),
+      ),
     );
     expect(focus.length, `${base}:focus-visible`).toBeGreaterThan(0);
     const outlines = focus.flatMap((rule) =>
@@ -432,35 +436,35 @@ describe("V-05 — foco visível", () => {
     for (const value of outlines) expect(value).not.toMatch(/^(none|0)\b/);
   });
 
-  // G1: a regra genérica do anel sobre fundo escuro vem depois do link da barra na folha;
-  // com o ancestral fora do :where(), ela empata em especificidade (0,2,0) e anula o
-  // outline-offset: -6px do link — o anel sairia da barra.
-  it("o anel genérico da barra e do código não anula o recuo do link", () => {
-    const outsideWhere = (part: string): string =>
-      part.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, "");
-    const generic = COMPONENT_RULES.filter(
-      (rule) =>
-        /(?<![\w-])outline-offset\s*:/.test(rule.body) &&
-        selectorParts(rule.selector).some(
-          (part) =>
-            part.includes(":focus-visible") &&
-            /\.ruvor-(topbar|code)(?![\w-])/.test(part) &&
-            !part.includes(".ruvor-nav__link"),
-        ),
-    );
-    expect(
-      generic.length,
-      "a regra genérica do anel sobre fundo escuro",
-    ).toBeGreaterThan(0);
-    for (const rule of generic) {
-      for (const part of selectorParts(rule.selector)) {
-        expect(outsideWhere(part), rule.selector).not.toMatch(
-          /\.ruvor-(topbar|code)(?![\w-])/,
-        );
-      }
+  // O anel sobre fundo escuro: a regra geral da barra e do código fica em (0,2,0) e DEPOIS
+  // das regras de foco dos componentes, para um .ruvor-btn/.ruvor-input/.ruvor-choice dentro
+  // da barra ou do código ganhar o anel escuro (o claro dá 1,98:1 sobre a barra); e o link da
+  // barra tem regra própria em (0,3,0), para o recuo de -6px não ser anulado por ela.
+  it("o anel sobre fundo escuro vence os componentes e não anula o recuo do link", () => {
+    const index = (selector: string): number =>
+      COMPONENT_RULES.findIndex((rule) =>
+        selectorParts(rule.selector).includes(selector),
+      );
+    const generic = index(".ruvor-topbar :focus-visible");
+    expect(generic, "regra geral da barra, sem :where()").toBeGreaterThan(-1);
+    expect(index(".ruvor-code :focus-visible"), "regra geral do código").toBe(generic);
+    expect(COMPONENT_RULES[generic].body).toMatch(/var\(--ruvor-focus-on-dark\)/);
+    for (const component of [
+      ".ruvor-btn:focus-visible",
+      ".ruvor-input:focus-visible",
+      ".ruvor-select:focus-visible",
+      ".ruvor-choice:focus-visible",
+    ]) {
+      const at = index(component);
+      expect(at, component).toBeGreaterThan(-1);
+      expect(at, `${component} vem antes da regra geral`).toBeLessThan(generic);
     }
     expect(
-      ruleValue(COMPONENTS_CSS, ".ruvor-nav__link:focus-visible", "outline-offset"),
+      ruleValue(
+        COMPONENTS_CSS,
+        ".ruvor-topbar .ruvor-nav__link:focus-visible",
+        "outline-offset",
+      ),
     ).toBe("-6px");
   });
 
