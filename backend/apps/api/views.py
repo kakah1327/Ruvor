@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
-from typing import Any, NoReturn
+from typing import Any, ClassVar, NoReturn
 
 from django.conf import settings
 from django.db import transaction
@@ -75,6 +75,9 @@ class ApiNotFound(APIView):
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
         raise NotFound
@@ -185,6 +188,9 @@ class AssetListView(APIView):
     """`GET /api/v1/assets?q=&limit=&offset=`: a busca no catalogo, paginada (RF-12)."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request) -> Response:
         limit = _int_param(request, "limit", DEFAULT_LIMIT, 1, MAX_LIMIT)
@@ -205,6 +211,9 @@ class AssetDetailView(APIView):
     """`GET /api/v1/assets/{ticker}`: a identidade e o ultimo pregao."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, ticker: str) -> Response:
         return Response(AssetDetailSerializer(_asset(ticker)).data)
@@ -216,6 +225,9 @@ class AssetPricesView(APIView):
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, ticker: str) -> Response:
         start = _date_param(request, "from")
@@ -242,6 +254,9 @@ class AssetEventsView(APIView):
     """`GET /api/v1/assets/{ticker}/events`: proventos e desdobramentos, inteiros."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, ticker: str) -> Response:
         asset = _asset(ticker)
@@ -260,6 +275,9 @@ class AssetMetricsView(APIView):
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, ticker: str) -> Response:
         asset = _asset(ticker)
@@ -359,6 +377,9 @@ class AssetRiskView(APIView):
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
 
     def get(self, request: Request, ticker: str) -> Response:
         return Response(risk_body(_asset(ticker), timezone.now()))

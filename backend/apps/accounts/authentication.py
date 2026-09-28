@@ -18,6 +18,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import authentication, exceptions
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.request import Request
 
 from apps.accounts.models import ApiKey, User
@@ -102,8 +103,27 @@ class ApiKeyAuthentication(authentication.BaseAuthentication):
         if key.last_used_at is None or agora - key.last_used_at > _LAST_USED_EVERY:
             key.last_used_at = agora
             key.save(update_fields=["last_used_at"])  # o gerente base: sem contexto
+        _check_reach(request, key)
         set_organization_id(user.organization_id)
         return user, key
+
+
+def _check_reach(request: Request, key: ApiKey) -> None:
+    """O que a chave alcanca (M4.2, RF-07): a view declara `api_key_scope = "read"`, a chave
+    tem `read`, e o metodo e seguro. **O padrao e recusar:** view sem o atributo e `None`."""
+    view = (request.parser_context or {}).get("view")
+    scope = getattr(view, "api_key_scope", None)
+    if (
+        scope != ApiKey.Scope.READ
+        or ApiKey.Scope.READ not in key.scopes
+        or request.method not in SAFE_METHODS
+    ):
+        # o import no metodo: ver `SessionAuthentication.enforce_csrf`
+        from apps.api.errors import ApiError
+
+        raise ApiError(
+            403, "api_key_not_allowed", "Esta chave não alcança esta rota.", {}
+        )
 
 
 def _hash(secret: str) -> str:

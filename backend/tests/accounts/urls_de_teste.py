@@ -30,7 +30,17 @@ class OrganizacaoDoContexto(APIView):
         return Response({"organization_id": current_organization_id()})
 
 
+class SemEscopo(APIView):
+    """Nao declara `api_key_scope`: e onde se prova que o padrao e recusar (RF-07)."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF
+
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        return Response({"ok": True})
+
+
 urlpatterns: list[URLPattern | URLResolver] = [
     path("test/organizacao", OrganizacaoDoContexto.as_view()),
+    path("test/sem-escopo", SemEscopo.as_view()),
     *config_urlpatterns,
 ]
