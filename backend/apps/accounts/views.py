@@ -14,10 +14,11 @@ quem esta logado. Roda no `initial()` do DRF, antes da view -- falha de CSRF tam
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from django.middleware.csrf import get_token
-from rest_framework.exceptions import APIException, Throttled
+from rest_framework.exceptions import APIException, Throttled, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -29,8 +30,12 @@ from apps.accounts import services
 from apps.accounts.authentication import SessionAuthentication
 from apps.accounts.errors import AccountError
 from apps.accounts.models import User
-from apps.accounts.serializers import LoginIn, PasswordIn, SignupIn
+from apps.accounts.permissions import AccountReady
+from apps.accounts.serializers import LoginIn, PasswordIn, SignupIn, UserCreateIn
 from apps.api.errors import ApiError
+
+# So digitos, com sinal opcional: o `int()` sozinho aceitaria espaco e sublinhado.
+_INTEGER = re.compile(r"[+-]?\d+")
 
 # O status de cada codigo de `AccountError` (RF-27). `too_many_requests` fica fora: vira
 # `Throttled`, que leva o `Retry-After` (RF-22b). Codigo fora dos dois e defeito de programa:
@@ -143,6 +148,96 @@ class MeView(APIView):
 
     def get(self, request: Request) -> Response:
         return Response(services.me_body(_user(request)))
+
+
+def _query_int(request: Request, name: str, default: int) -> int:
+    """Um inteiro da query string; ausente, o padrao. A faixa e conferida pelo servico."""
+    raw = request.query_params.get(name)
+    if raw is None:
+        return default
+    if not _INTEGER.fullmatch(raw):
+        raise ApiError(
+            400,
+            "invalid_parameter",
+            f"O parâmetro {name} precisa ser um número inteiro.",
+            {"parameter": name},
+        )
+    return int(raw)
+
+
+class OrganizationUsersView(APIView):
+    """`GET organization/users` lista e `POST` cria (RF-15, RF-16)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request) -> Response:
+        limit = _query_int(request, "limit", 50)
+        offset = _query_int(request, "offset", 0)
+        try:
+            count, users = services.list_users(
+                _user(request), limit=limit, offset=offset
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(
+            {
+                "count": count,
+                "limit": limit,
+                "offset": offset,
+                "results": [services.user_body(u) for u in users],
+            }
+        )
+
+    def post(self, request: Request) -> Response:
+        data = _data(UserCreateIn, request)
+        try:
+            user, password = services.create_user(
+                _user(request), ip=services._ip(request._request), **data
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(
+            {"user": services.user_body(user), "temporary_password": password},
+            status=201,
+        )
+
+
+class OrganizationUserView(APIView):
+    """`PATCH organization/users/{email}`: papel e/ou ativo (RF-17)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def patch(self, request: Request, email: str) -> Response:
+        changes = request.data
+        if not isinstance(changes, dict):
+            raise ValidationError("O corpo precisa ser um objeto JSON.")
+        try:
+            user = services.update_user(
+                _user(request),
+                email,
+                changes=changes,
+                ip=services._ip(request._request),
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(services.user_body(user))
+
+
+class TemporaryPasswordView(APIView):
+    """`POST organization/users/{email}/temporary-password` (RF-18)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def post(self, request: Request, email: str) -> Response:
+        try:
+            user, password = services.reset_temporary_password(
+                _user(request), email, ip=services._ip(request._request)
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(
+            {"user": services.user_body(user), "temporary_password": password}
+        )
 
 
 class PasswordView(APIView):

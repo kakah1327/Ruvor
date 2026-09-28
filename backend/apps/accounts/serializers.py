@@ -26,6 +26,12 @@ class LoginIn(serializers.Serializer[None]):
     password = _text()
 
 
+class UserCreateIn(serializers.Serializer[None]):
+    email = _text()
+    name = _text()
+    role = _text()
+
+
 class PasswordIn(serializers.Serializer[None]):
     current_password = _text()
     new_password = _text()

@@ -13,8 +13,11 @@ from apps.accounts.views import (
     LoginView,
     LogoutView,
     MeView,
+    OrganizationUsersView,
+    OrganizationUserView,
     PasswordView,
     SignupView,
+    TemporaryPasswordView,
 )
 
 urlpatterns: list[URLPattern | URLResolver] = [
@@ -24,4 +27,10 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("auth/logout", LogoutView.as_view()),
     path("auth/me", MeView.as_view()),
     path("auth/password", PasswordView.as_view()),
+    path("organization/users", OrganizationUsersView.as_view()),
+    path("organization/users/<str:email>", OrganizationUserView.as_view()),
+    path(
+        "organization/users/<str:email>/temporary-password",
+        TemporaryPasswordView.as_view(),
+    ),
 ]
