@@ -43,4 +43,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M3.1 — Fundamentos](M3.1-fundamentos.md) | Marco 3 · M3.1 · frente `fundamentos` | ✅ implementada e fechada |
 | [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | Marco 1 · M1.6a | ✅ aprovada pelo dono da frente; plano aprovado |
 | [M3.2 — Contexto](M3.2-contexto.md) | Marco 3 · M3.2 · frente `fundamentos` | ✅ implementada e fechada |
-| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | 📝 em escrita; revisão adversarial pendente |
+| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ aprovada pelo dono da frente; plano da fase 1 em elaboração |
