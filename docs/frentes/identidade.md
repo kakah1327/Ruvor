@@ -14,15 +14,15 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 ## Agora
 
 **Bloco:** M2.1a — Identidade e acesso
-**Etapa:** fase 1 na `main` (PR #11); **plano da fase 2 revisado** (T9 a T16; revisão 1 aprovou, tudo absorvido); **aprovado pelo dono** (2026-09-28), com a T14 adiada até a migration da `marco1`
+**Etapa:** fase 1 na `main` (PR #11); **plano da fase 2 revisado** (T9 a T16; revisão 1 aprovou, tudo absorvido); **aprovado pelo dono** (2026-09-28); **T9 a T13 implementadas**, e a T14 espera a migration da `marco1`
 **Ramo:** `identidade/M2.1-identidade-e-acesso`, atualizado com a `main` em 2026-09-28, depois das PRs #11 e #12
 
 ## Próximo passo
 
-1. Implementar as T9 a T13 da fase 2; a T14 espera a migration da `marco1`.
-2. Pedir à `marco1` a migration de `core.compute_request.requested_by` (RF-26), no contrato literal
-   do plano. A T14 espera por ela; as T9 a T13 andam antes.
-3. Implementar a fase 2 e abrir a PR que fecha o bloco. A PR **passa pela `marco1`**: muda
+1. A migration de `core.compute_request.requested_by` (RF-26), pedida à `marco1` no contrato
+   literal do plano.
+2. Com ela na `main`: a T14, as mutações 32 e 33 e a T16 (o FECHA).
+3. Abrir a PR que fecha o bloco. A PR **passa pela `marco1`**: muda
    `apps/api/errors.py`, o `REST_FRAMEWORK` e o `POST /risk`.
 
 ## O que esta frente espera de outras
@@ -42,3 +42,4 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 | 2026-09-27 | **correção de escopo** (decisão do darkside171): as telas não são desta frente — toda interface visual é da `marco1`. Blocos da frente: M2.1 → M4.2 → M4.1; cerca sem telas; o M2.1 não depende do M1.6b. Spec do M2.1a, `FRENTES.md` e `ROADMAP.md` corrigidos |
 | 2026-09-27 | spec do M2.1a: revisão 1 reprovou (1 grave, 11 médios, 12 leves), a 2 aprovou; aprovada pelo dono. Plano da fase 1: revisão 1 reprovou (1 grave: a restauração depois do `flush`), a 2 aprovou; aprovado. **Fase 1 implementada**: T1 a T6, 18 mutações reprovando, execução real (14 eventos no `access_event`, bloqueio no Redis banco 1). Suíte com 721 testes. Achado: o `flush` do `transaction=True` não vê as tabelas fora do `public` |
 | 2026-09-28 | PR #11 (spec, plano e fase 1) e PR #12 (M1.6a) na `main`; a fase 2 está desbloqueada. Ramo atualizado com a `main`. Plano da fase 2 escrito, em rascunho: T9 a T16, com três armadilhas do DRF 3.18.1 conferidas no código (import circular da classe de autenticação, `ScopedRateThrottle` conta por usuário, o tratador não põe cabeçalho) |
+| 2026-09-28 | Plano da fase 2 aprovado (revisão 1 aprovou, 5 médios e 11 leves absorvidos). **T9 a T13 implementadas**, um commit cada: o `banco_limpo`, o tratador com 401/400/429 e os cabeçalhos, a sessão com CSRF na API, `AccountReady`, o limite `auth` por IP, as rotas `auth/*` e `organization/users*`. Suíte com 1021 testes, verde; mypy e ruff limpos; 15 mutações reprovando; V-25 pelo proxy do Vite (9 eventos no `access_event`, IP do contêiner `frontend`). A T14 espera a migration da `marco1` |
