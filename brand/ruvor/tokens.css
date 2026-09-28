@@ -1,1 +1,214 @@
-:root{--ruvor-ink:#292A2E;--ruvor-paper:#F7F6F2;--ruvor-surface:#E9E7E2;--ruvor-border:#C8C4BC;--ruvor-decision:#8F3B4B;--ruvor-review:#B79754;--ruvor-evidence:#54727B;--ruvor-validated:#587060;--ruvor-critical:#B4524C;--ruvor-text:var(--ruvor-ink);--ruvor-text-muted:#66666A;--ruvor-bg:var(--ruvor-paper);--ruvor-panel:#FFF;--ruvor-font-sans:Inter,Arimo,Arial,sans-serif;--ruvor-font-mono:"JetBrains Mono",ui-monospace,monospace;--ruvor-space-1:4px;--ruvor-space-2:8px;--ruvor-space-3:12px;--ruvor-space-4:16px;--ruvor-space-5:24px;--ruvor-space-6:32px;--ruvor-space-7:48px;--ruvor-radius-sm:10px;--ruvor-radius-md:16px;--ruvor-radius-lg:22px;--ruvor-shadow:0 12px 30px rgba(41,42,46,.08)}
+/*
+ * Tokens da Ruvor — os valores oficiais do kit.
+ *
+ * O claro reflete mockups/foundation.css (RF-01 do M1.6a); o escuro nasce no plano e é
+ * aprovado na vitrine (RF-05). tokens.json tem exatamente os mesmos tokens, e um teste
+ * confere (V-06). O bloco da @media é cópia exata do [data-theme="dark"] (RF-05).
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --ruvor-ink: #292A2E;
+  --ruvor-text: var(--ruvor-ink);
+  --ruvor-paper: #F8F7F4;
+  --ruvor-bg: var(--ruvor-paper);
+  --ruvor-canvas: #EEECE8;
+  --ruvor-surface: #FFFEFA;
+  --ruvor-panel: var(--ruvor-surface);
+  --ruvor-surface-2: #E9E7E2;
+  --ruvor-border: #D5D2CC;
+  --ruvor-text-muted: #66666A;
+  --ruvor-decision: #8F3B4B;
+  --ruvor-decision-soft: #EEE2E5;
+  --ruvor-decision-text: #7A3341;
+  --ruvor-review: #B79754;
+  --ruvor-review-soft: #F1EAD9;
+  --ruvor-review-text: #7E652B;
+  --ruvor-evidence: #54727B;
+  --ruvor-evidence-soft: #E1EAEB;
+  --ruvor-evidence-text: #48656D;
+  --ruvor-validated: #587060;
+  --ruvor-validated-soft: #E4EBE5;
+  --ruvor-validated-text: #3F5A49;
+  --ruvor-critical: #B4524C;
+  --ruvor-critical-soft: #F2E7E5;
+  --ruvor-critical-text: #8D3F3B;
+  --ruvor-topbar: #292A2E;
+  --ruvor-topbar-text: #F8F7F4;
+  --ruvor-topbar-link: #BBBCC0;
+  --ruvor-topbar-account: #D2D2D0;
+  --ruvor-topbar-edge: #292A2E;
+  --ruvor-avatar: #45464B;
+  --ruvor-on-decision: #FFFFFF;
+  --ruvor-choice-selected: #FBF5F5;
+  --ruvor-table-head: #F1F0ED;
+  --ruvor-table-rule: #E7E4DF;
+  --ruvor-rank-rule: #E2E0DB;
+  --ruvor-bar-track: #DFE3DF;
+  --ruvor-callout: #F0EFEC;
+  --ruvor-code-bg: #292A2E;
+  --ruvor-code-text: #E8E6E1;
+  --ruvor-skeleton-base: #E8E6E1;
+  --ruvor-skeleton-shine: #F5F4F0;
+  --ruvor-icon-review: #9B762E;
+  --ruvor-control-hover: #F3F1EC;
+  --ruvor-decision-hover: #7F3442;
+  --ruvor-focus: #8F3B4B;
+  --ruvor-focus-on-dark: #E7AAB5;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --ruvor-ink: #ECEBE7;
+  --ruvor-text: var(--ruvor-ink);
+  --ruvor-paper: #212226;
+  --ruvor-bg: var(--ruvor-paper);
+  --ruvor-canvas: #1A1B1E;
+  --ruvor-surface: #292A2F;
+  --ruvor-panel: var(--ruvor-surface);
+  --ruvor-surface-2: #323338;
+  --ruvor-border: #45464B;
+  --ruvor-text-muted: #A4A4A9;
+  --ruvor-decision: #D07E8E;
+  --ruvor-decision-soft: #41282E;
+  --ruvor-decision-text: #E7AAB5;
+  --ruvor-review: #D1B06A;
+  --ruvor-review-soft: #3E3524;
+  --ruvor-review-text: #E0C688;
+  --ruvor-evidence: #86A8B2;
+  --ruvor-evidence-soft: #233434;
+  --ruvor-evidence-text: #A3C4CC;
+  --ruvor-validated: #86A891;
+  --ruvor-validated-soft: #27352D;
+  --ruvor-validated-text: #A8C6B1;
+  --ruvor-critical: #DC7F78;
+  --ruvor-critical-soft: #432927;
+  --ruvor-critical-text: #EEA9A3;
+  --ruvor-topbar: #0C0D0F;
+  --ruvor-topbar-text: #ECEBE7;
+  --ruvor-topbar-link: #A9AAAE;
+  --ruvor-topbar-account: #C4C4C2;
+  --ruvor-topbar-edge: #3A3B40;
+  --ruvor-avatar: #2E2F34;
+  --ruvor-on-decision: #1D1E21;
+  --ruvor-choice-selected: #3A2A2F;
+  --ruvor-table-head: #2E2F34;
+  --ruvor-table-rule: #34353A;
+  --ruvor-rank-rule: #34353A;
+  --ruvor-bar-track: #34393A;
+  --ruvor-callout: #2E2F34;
+  --ruvor-code-bg: #0C0D0F;
+  --ruvor-code-text: #E8E6E1;
+  --ruvor-skeleton-base: #2E2F34;
+  --ruvor-skeleton-shine: #3A3B40;
+  --ruvor-icon-review: #D1B06A;
+  --ruvor-control-hover: #323338;
+  --ruvor-decision-hover: #DB8E9C;
+  --ruvor-focus: #E7AAB5;
+  --ruvor-focus-on-dark: #E7AAB5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ruvor-ink: #ECEBE7;
+    --ruvor-text: var(--ruvor-ink);
+    --ruvor-paper: #212226;
+    --ruvor-bg: var(--ruvor-paper);
+    --ruvor-canvas: #1A1B1E;
+    --ruvor-surface: #292A2F;
+    --ruvor-panel: var(--ruvor-surface);
+    --ruvor-surface-2: #323338;
+    --ruvor-border: #45464B;
+    --ruvor-text-muted: #A4A4A9;
+    --ruvor-decision: #D07E8E;
+    --ruvor-decision-soft: #41282E;
+    --ruvor-decision-text: #E7AAB5;
+    --ruvor-review: #D1B06A;
+    --ruvor-review-soft: #3E3524;
+    --ruvor-review-text: #E0C688;
+    --ruvor-evidence: #86A8B2;
+    --ruvor-evidence-soft: #233434;
+    --ruvor-evidence-text: #A3C4CC;
+    --ruvor-validated: #86A891;
+    --ruvor-validated-soft: #27352D;
+    --ruvor-validated-text: #A8C6B1;
+    --ruvor-critical: #DC7F78;
+    --ruvor-critical-soft: #432927;
+    --ruvor-critical-text: #EEA9A3;
+    --ruvor-topbar: #0C0D0F;
+    --ruvor-topbar-text: #ECEBE7;
+    --ruvor-topbar-link: #A9AAAE;
+    --ruvor-topbar-account: #C4C4C2;
+    --ruvor-topbar-edge: #3A3B40;
+    --ruvor-avatar: #2E2F34;
+    --ruvor-on-decision: #1D1E21;
+    --ruvor-choice-selected: #3A2A2F;
+    --ruvor-table-head: #2E2F34;
+    --ruvor-table-rule: #34353A;
+    --ruvor-rank-rule: #34353A;
+    --ruvor-bar-track: #34393A;
+    --ruvor-callout: #2E2F34;
+    --ruvor-code-bg: #0C0D0F;
+    --ruvor-code-text: #E8E6E1;
+    --ruvor-skeleton-base: #2E2F34;
+    --ruvor-skeleton-shine: #3A3B40;
+    --ruvor-icon-review: #D1B06A;
+    --ruvor-control-hover: #323338;
+    --ruvor-decision-hover: #DB8E9C;
+    --ruvor-focus: #E7AAB5;
+    --ruvor-focus-on-dark: #E7AAB5;
+  }
+}
+
+:root {
+  --ruvor-font-sans: "Avenir Next", "Segoe UI", sans-serif;
+  --ruvor-font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --ruvor-radius-sm: 8px;
+  --ruvor-radius-md: 14px;
+  --ruvor-radius-lg: 20px;
+  --ruvor-shadow: 0 14px 34px rgb(41 42 46 / 8%);
+  --ruvor-shadow-panel: 0 6px 18px rgb(41 42 46 / 5%);
+  --ruvor-space-1: 4px;
+  --ruvor-space-2: 8px;
+  --ruvor-space-3: 12px;
+  --ruvor-space-4: 16px;
+  --ruvor-space-5: 24px;
+  --ruvor-space-6: 32px;
+  --ruvor-space-7: 48px;
+  --ruvor-type-display-size: 38px;
+  --ruvor-type-display-leading: .97;
+  --ruvor-type-display-tracking: -.065em;
+  --ruvor-type-display-weight: 700;
+  --ruvor-type-h2-size: 23px;
+  --ruvor-type-h2-leading: 1.05;
+  --ruvor-type-h2-tracking: -.045em;
+  --ruvor-type-h2-weight: 700;
+  --ruvor-type-h3-size: 16px;
+  --ruvor-type-h3-leading: 1.48;
+  --ruvor-type-h3-tracking: -.025em;
+  --ruvor-type-h3-weight: 700;
+  --ruvor-type-body-size: 13px;
+  --ruvor-type-body-leading: 1.48;
+  --ruvor-type-body-tracking: 0;
+  --ruvor-type-body-weight: 400;
+  --ruvor-type-small-size: 12px;
+  --ruvor-type-small-leading: 1.48;
+  --ruvor-type-small-tracking: 0;
+  --ruvor-type-small-weight: 700;
+  --ruvor-type-micro-size: 11px;
+  --ruvor-type-micro-leading: 1.48;
+  --ruvor-type-micro-tracking: 0;
+  --ruvor-type-micro-weight: 700;
+  --ruvor-type-label-size: 10px;
+  --ruvor-type-label-leading: 1;
+  --ruvor-type-label-tracking: .11em;
+  --ruvor-type-label-weight: 700;
+  --ruvor-type-brand-size: 19px;
+  --ruvor-type-brand-leading: 1.48;
+  --ruvor-type-brand-tracking: -.055em;
+  --ruvor-type-brand-weight: 700;
+  --ruvor-type-label-tracking-table: .07em;
+  --ruvor-type-code-leading: 1.65;
+}
