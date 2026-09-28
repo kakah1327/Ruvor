@@ -1,8 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-// Os tokens da marca entram antes do estilo da tela, que so os consome.
+// Os tokens da marca entram antes da folha de componentes e do estilo da tela, que so os
+// consomem. A folha so estiliza classe ruvor-: nao muda a tela que nao a usa.
 import "@brand/tokens.css";
+import "@brand/components.css";
 import "./app.css";
 
 import { App } from "./App";

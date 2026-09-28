@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Vitrine do kit (M1.6a)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Arranjo da vitrine — só var(--ruvor-*). Nenhuma cor e nenhum tamanho de fonte literal:
+   * o que aparece aqui é o kit, não desenho desta página. Valores estruturais (1px de
+   * borda, 1fr, porcentagem) são os únicos literais. Os ícones são os svg de
+   * brand/ruvor/icons/, copiados inline para a página abrir por file:// (D-93).
+   */
+  .kit-section {
+    padding-block: var(--ruvor-space-7) var(--ruvor-space-6);
+    border-top: 1px solid var(--ruvor-border);
+  }
+  .kit-section:first-of-type { margin-top: var(--ruvor-space-6); }
+  .kit-h { display: flex; align-items: center; gap: var(--ruvor-space-2); margin-bottom: var(--ruvor-space-5); }
+  .kit-block + .kit-block,
+  .kit-decide + .kit-block { margin-top: var(--ruvor-space-6); }
+  .kit-block > .ruvor-h3 { margin-bottom: var(--ruvor-space-3); }
+
+  .kit-note {
+    color: var(--ruvor-text-muted);
+    font-size: var(--ruvor-type-micro-size);
+    line-height: var(--ruvor-type-micro-leading);
+  }
+  .kit-token {
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-micro-size);
+    line-height: var(--ruvor-type-micro-leading);
+  }
+  /* O que o dono decide: uma linha, com o info. */
+  .kit-decide {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ruvor-space-2);
+    margin: var(--ruvor-space-4) 0 0;
+    max-width: 68ch;
+    color: var(--ruvor-text-muted);
+  }
+  .kit-decide .ruvor-glyph { color: var(--ruvor-evidence); margin-top: 1px; }
+
+  .kit-switch { display: flex; gap: var(--ruvor-space-2); }
+
+  /* Cores: os dois temas lado a lado, cada painel preso ao seu tema por data-theme. */
+  .kit-themes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ruvor-space-4);
+  }
+  .kit-theme {
+    background: var(--ruvor-paper);
+    color: var(--ruvor-ink);
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    padding: var(--ruvor-space-5);
+  }
+  .kit-group { margin-top: var(--ruvor-space-5); }
+  .kit-group > .ruvor-eyebrow { margin-bottom: var(--ruvor-space-3); }
+  .kit-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--ruvor-space-7) * 4), 1fr));
+    gap: var(--ruvor-space-3) var(--ruvor-space-4);
+  }
+  .kit-swatch { display: flex; align-items: center; gap: var(--ruvor-space-3); }
+  .kit-chip {
+    flex: none;
+    width: var(--ruvor-space-6);
+    height: var(--ruvor-space-6);
+    border-radius: var(--ruvor-radius-sm);
+    border: 1px solid var(--ruvor-border);
+  }
+  .kit-pairs { display: grid; gap: var(--ruvor-space-2); }
+  .kit-theme > .kit-pairs { margin-top: var(--ruvor-space-3); }
+  .kit-pair { display: flex; align-items: center; gap: var(--ruvor-space-3); }
+  .kit-verdict { display: inline-flex; align-items: center; gap: var(--ruvor-space-1); vertical-align: middle; }
+
+  /* Linhas e células de exemplo. */
+  .kit-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--ruvor-space-4);
+  }
+  .kit-row + .kit-row { margin-top: var(--ruvor-space-4); }
+  .kit-cell { display: grid; gap: var(--ruvor-space-2); justify-items: start; }
+  .kit-cell--field { width: calc(var(--ruvor-space-7) * 4); justify-items: stretch; }
+  /* O nome do estado, uma palavra, no degrau label da tabela. */
+  .kit-state {
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-label-size);
+    font-weight: var(--ruvor-type-label-weight);
+    letter-spacing: var(--ruvor-type-label-tracking-table);
+    text-transform: uppercase;
+    color: var(--ruvor-text-muted);
+  }
+  .kit-frame {
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    overflow: hidden;
+  }
+  .kit-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    background: var(--ruvor-surface);
+  }
+  .kit-states td { white-space: nowrap; }
+
+  /* Galeria de ícones: o desenho grande, o nome pequeno embaixo. */
+  .kit-icons {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--ruvor-space-7) * 2), 1fr));
+    gap: var(--ruvor-space-2);
+  }
+  .kit-icon {
+    display: grid;
+    justify-items: center;
+    align-content: start;
+    gap: var(--ruvor-space-2);
+    padding: var(--ruvor-space-3) var(--ruvor-space-1);
+    border-radius: var(--ruvor-radius-sm);
+    background: var(--ruvor-surface);
+    border: 1px solid var(--ruvor-border);
+    text-align: center;
+  }
+  .kit-icon > span:last-child {
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-label-size);
+    line-height: var(--ruvor-type-micro-leading);
+    color: var(--ruvor-text-muted);
+  }
+  .kit-icon b { color: var(--ruvor-ink); }
+
+  /* Tipografia: um exemplo por degrau, montado só com os quatro tokens dele. */
+  .kit-type-row {
+    display: grid;
+    grid-template-columns: calc(var(--ruvor-space-7) * 4) 1fr;
+    gap: var(--ruvor-space-5);
+    align-items: baseline;
+    padding-block: var(--ruvor-space-3);
+    border-bottom: 1px solid var(--ruvor-border);
+  }
+  .kit-type--display { font-size: var(--ruvor-type-display-size); line-height: var(--ruvor-type-display-leading); letter-spacing: var(--ruvor-type-display-tracking); font-weight: var(--ruvor-type-display-weight); }
+  .kit-type--h2 { font-size: var(--ruvor-type-h2-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); font-weight: var(--ruvor-type-h2-weight); }
+  .kit-type--h3 { font-size: var(--ruvor-type-h3-size); line-height: var(--ruvor-type-h3-leading); letter-spacing: var(--ruvor-type-h3-tracking); font-weight: var(--ruvor-type-h3-weight); }
+  .kit-type--body { font-size: var(--ruvor-type-body-size); line-height: var(--ruvor-type-body-leading); letter-spacing: var(--ruvor-type-body-tracking); font-weight: var(--ruvor-type-body-weight); }
+  .kit-type--small { font-size: var(--ruvor-type-small-size); line-height: var(--ruvor-type-small-leading); letter-spacing: var(--ruvor-type-small-tracking); font-weight: var(--ruvor-type-small-weight); }
+  .kit-type--micro { font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); letter-spacing: var(--ruvor-type-micro-tracking); font-weight: var(--ruvor-type-micro-weight); }
+  .kit-type--label { font-family: var(--ruvor-font-mono); text-transform: uppercase; font-size: var(--ruvor-type-label-size); line-height: var(--ruvor-type-label-leading); letter-spacing: var(--ruvor-type-label-tracking); font-weight: var(--ruvor-type-label-weight); }
+  .kit-type--label-table { font-family: var(--ruvor-font-mono); text-transform: uppercase; font-size: var(--ruvor-type-label-size); letter-spacing: var(--ruvor-type-label-tracking-table); font-weight: var(--ruvor-type-label-weight); }
+  .kit-type--brand { font-size: var(--ruvor-type-brand-size); line-height: var(--ruvor-type-brand-leading); letter-spacing: var(--ruvor-type-brand-tracking); font-weight: var(--ruvor-type-brand-weight); }
+  .kit-type--code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-small-size); line-height: var(--ruvor-type-code-leading); }
+  .kit-font-sans { font-family: var(--ruvor-font-sans); font-size: var(--ruvor-type-h3-size); }
+  .kit-font-mono { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-h3-size); }
+
+  /* Espaço, raio e sombra. */
+  .kit-space {
+    height: var(--ruvor-space-3);
+    background: var(--ruvor-decision);
+    border-radius: var(--ruvor-radius-sm);
+  }
+  .kit-box {
+    width: calc(var(--ruvor-space-7) * 2);
+    height: calc(var(--ruvor-space-7) * 2);
+    background: var(--ruvor-surface);
+    border: 1px solid var(--ruvor-border);
+  }
+
+  .kit-skeleton { height: var(--ruvor-space-5); border-radius: var(--ruvor-radius-sm); }
+  .kit-skeleton--tall { height: calc(var(--ruvor-space-7) * 2); border-radius: var(--ruvor-radius-md); }
+  .kit-code-link { color: inherit; }
+  /* A área de largura total, de exemplo: a folha lhe dá a altura da janela menos a barra;
+     aqui ela é reduzida, só na vitrine, para caber na seção. */
+  .kit-frame > .ruvor-workspace--full { min-height: calc(var(--ruvor-space-7) * 6); }
+
+  /* O trilho: o que o dono decide, cada item um atalho para a seção. */
+  .kit-rail-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ruvor-space-3);
+    padding-block: var(--ruvor-space-3);
+    border-bottom: 1px solid var(--ruvor-border);
+    color: inherit;
+    text-decoration: none;
+  }
+  .kit-rail-item:hover .ruvor-h3 { text-decoration: underline; }
+
+  /*
+   * Estados forçados — SÓ NA VITRINE. Cópia das regras de :hover, :focus-visible e :active
+   * de brand/ruvor/components.css, para o estado aparecer sem o ponteiro nem o teclado.
+   * Não entram na folha nem no frontend; se a folha mudar, estas cópias mudam junto.
+   */
+  .ruvor-nav__link.is-hover { color: var(--ruvor-topbar-text); }
+  .ruvor-topbar .ruvor-nav__link.is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: -6px; }
+  .ruvor-btn.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-btn.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-btn.is-active { transform: translateY(1px); }
+  .ruvor-btn--primary.is-hover { background: var(--ruvor-decision-hover); border-color: var(--ruvor-decision-hover); }
+  .ruvor-btn--ghost.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-input.is-hover:not([aria-invalid="true"]),
+  .ruvor-select.is-hover:not([aria-invalid="true"]) { border-color: var(--ruvor-text-muted); }
+  .ruvor-input.is-focus,
+  .ruvor-select.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-choice.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-choice.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
+
+  @media (max-width: 1000px) {
+    .kit-themes { grid-template-columns: 1fr; }
+  }
+</style>
+<!--
+  ÚNICA COR LITERAL DESTA PÁGINA. É o texto da tag review como está no mockup
+  (brand/ruvor/mockups/foundation.css, .tag.review), mostrado ao lado do token escurecido
+  --ruvor-review-text para o dono comparar no portão (RF-04). Não é valor do kit: não copiar.
+-->
+<style id="kit-cor-do-mockup">
+  .ruvor-tag.kit-review-mockup { color: #80672c; }
+</style>
+</head>
+<body class="ruvor-app">
+
+<header class="ruvor-topbar">
+  <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+  <nav class="ruvor-nav" aria-label="Seções da vitrine">
+    <a class="ruvor-nav__link ruvor-nav__link--on" href="#cores" aria-current="page"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg>Cores</a>
+    <a class="ruvor-nav__link" href="#tipografia"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Tipografia</a>
+    <a class="ruvor-nav__link" href="#medidas"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z"/></svg>Medidas</a>
+    <a class="ruvor-nav__link" href="#estados"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,128a8,8,0,0,1-8,8H204.94l-37.78,75.58A8,8,0,0,1,160,216h-.4a8,8,0,0,1-7.08-5.14L95.35,60.76,63.28,131.31A8,8,0,0,1,56,136H24a8,8,0,0,1,0-16H50.85L88.72,36.69a8,8,0,0,1,14.76.46l57.51,151,31.85-63.71A8,8,0,0,1,200,120h32A8,8,0,0,1,240,128Z"/></svg>Estados</a>
+    <a class="ruvor-nav__link" href="#icones"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg>Ícones e sinais</a>
+    <a class="ruvor-nav__link" href="#composicao"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg>Composição</a>
+  </nav>
+  <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
+</header>
+
+<div class="ruvor-workspace">
+<main class="ruvor-content">
+
+  <div class="ruvor-page-head">
+    <div>
+      <p class="ruvor-eyebrow">M1.6a · portão de mockup</p>
+      <h1 class="ruvor-display">Vitrine do kit.</h1>
+      <p class="kit-decide" id="kit-fonte"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Fonte em uso: verificando…</span></p>
+    </div>
+    <div class="kit-switch ruvor-push" role="group" aria-label="Tema da página">
+      <button class="ruvor-btn" type="button" data-set-theme="light" aria-pressed="false">Claro</button>
+      <button class="ruvor-btn" type="button" data-set-theme="dark" aria-pressed="false">Escuro</button>
+      <button class="ruvor-btn ruvor-btn--primary" type="button" data-set-theme="system" aria-pressed="true">Sistema</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ CORES -->
+  <section class="kit-section" id="cores">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg>Cores</h2>
+    <div class="kit-themes">
+      <div class="kit-theme" data-theme="light" data-swatches><h3 class="ruvor-h3">Claro</h3></div>
+      <div class="kit-theme" data-theme="dark" data-swatches><h3 class="ruvor-h3">Escuro</h3></div>
+    </div>
+    <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span><b>Sem fonte</b>: valor que não vem dos mockups e nasce aqui. O escuro inteiro é desenho novo.</span></p>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Contraste sobre o <code class="kit-token">-soft</code>: texto ≥ 4,5 · sinal ≥ 3</h3>
+      <div class="kit-themes">
+        <div class="kit-theme" data-theme="light" data-contrast><h3 class="ruvor-h3">Claro</h3></div>
+        <div class="kit-theme" data-theme="dark" data-contrast><h3 class="ruvor-h3">Escuro</h3></div>
+      </div>
+    </div>
+
+    <div class="kit-block" id="review">
+      <h3 class="ruvor-h3">Tag review: mockup × token</h3>
+      <div class="kit-theme kit-pairs" data-theme="light">
+        <div class="kit-pair">
+          <span class="ruvor-tag ruvor-tag--review kit-review-mockup" data-review-sample><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg>Monitorar</span>
+          <span><b>Mockup</b> · <code class="kit-token" data-hex-of="color"></code> · <b>4,497:1</b> · <span class="kit-verdict"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>reprova 4,5</span>
+            <span class="kit-note">(medido: <span data-ratio></span>)</span></span>
+        </div>
+        <div class="kit-pair">
+          <span class="ruvor-tag ruvor-tag--review" data-review-sample><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg>Monitorar</span>
+          <span><b>Token</b> · <code class="kit-token" data-hex-of="color"></code> · <b>4,63:1</b> · <span class="kit-verdict"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>passa</span>
+            <span class="kit-note">(medido: <span data-ratio></span>)</span></span>
+        </div>
+      </div>
+      <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Escurecido o mínimo para passar 4,5:1, sem mudar matiz nem saturação.</span></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ TIPOGRAFIA -->
+  <section class="kit-section" id="tipografia">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Tipografia</h2>
+    <div class="kit-type-row"><div><b>display</b><br><code class="kit-token" data-type="display"></code></div><div class="kit-type--display">A melhor evidência.</div></div>
+    <div class="kit-type-row"><div><b>h2</b><br><code class="kit-token" data-type="h2"></code></div><div class="kit-type--h2">GARCHNet apresenta a melhor evidência</div></div>
+    <div class="kit-type-row"><div><b>h3</b><br><code class="kit-token" data-type="h3"></code></div><div class="kit-type--h3">Desempenho fora da amostra</div></div>
+    <div class="kit-type-row"><div><b>body</b><br><code class="kit-token" data-type="body"></code></div><div class="kit-type--body">Resultado consolidado da execução mais recente.</div></div>
+    <div class="kit-type-row"><div><b>small</b><br><code class="kit-token" data-type="small"></code></div><div class="kit-type--small">Rótulo de campo · navegação</div></div>
+    <div class="kit-type-row"><div><b>micro</b><br><code class="kit-token" data-type="micro"></code></div><div class="kit-type--micro">Tag, dica e legenda</div></div>
+    <div class="kit-type-row"><div><b>label</b><br><code class="kit-token" data-type="label"></code></div><div class="kit-type--label">Ranking dos modelos</div></div>
+    <div class="kit-type-row"><div><b>label, tabela</b><br><code class="kit-token" data-token="--ruvor-type-label-tracking-table"></code></div><div class="kit-type--label-table">Estatística · p-valor</div></div>
+    <div class="kit-type-row"><div><b>brand</b><br><code class="kit-token" data-type="brand"></code></div><div class="kit-type--brand">RUVOR</div></div>
+    <div class="kit-type-row"><div><b>code</b><br><code class="kit-token" data-token="--ruvor-type-code-leading"></code></div><div class="kit-type--code">ruvor run --ticker PETR4.SA<br>--alpha 0.99</div></div>
+    <div class="kit-type-row"><div><b>font-sans</b><br><code class="kit-token" data-token="--ruvor-font-sans"></code></div><div class="kit-font-sans">Quanto posso perder? 0123456789</div></div>
+    <div class="kit-type-row"><div><b>font-mono</b><br><code class="kit-token" data-token="--ruvor-font-mono"></code></div><div class="kit-font-mono">VaR 99% = −3,42% 0123456789</div></div>
+  </section>
+
+  <!-- ============================================================ MEDIDAS -->
+  <section class="kit-section" id="medidas">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z"/></svg>Medidas</h2>
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Espaço</h3>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-1 · <span data-token="--ruvor-space-1"></span></code><div class="kit-space" style="width: var(--ruvor-space-1)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-2 · <span data-token="--ruvor-space-2"></span></code><div class="kit-space" style="width: var(--ruvor-space-2)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-3 · <span data-token="--ruvor-space-3"></span></code><div class="kit-space" style="width: var(--ruvor-space-3)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-4 · <span data-token="--ruvor-space-4"></span></code><div class="kit-space" style="width: var(--ruvor-space-4)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-5 · <span data-token="--ruvor-space-5"></span></code><div class="kit-space" style="width: var(--ruvor-space-5)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-6 · <span data-token="--ruvor-space-6"></span></code><div class="kit-space" style="width: var(--ruvor-space-6)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-7 · <span data-token="--ruvor-space-7"></span></code><div class="kit-space" style="width: var(--ruvor-space-7)"></div></div>
+    </div>
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Raio</h3>
+      <div class="kit-row">
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-sm)"></div><code class="kit-token">--ruvor-radius-sm · <span data-token="--ruvor-radius-sm"></span></code></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md)"></div><code class="kit-token">--ruvor-radius-md · <span data-token="--ruvor-radius-md"></span></code></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-lg)"></div><code class="kit-token">--ruvor-radius-lg · <span data-token="--ruvor-radius-lg"></span></code></div>
+      </div>
+    </div>
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Sombra</h3>
+      <div class="kit-row">
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow)"></div><code class="kit-token">--ruvor-shadow</code><span class="kit-note" data-token="--ruvor-shadow"></span></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow-panel)"></div><code class="kit-token">--ruvor-shadow-panel</code><span class="kit-note" data-token="--ruvor-shadow-panel"></span></div>
+      </div>
+      <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>No escuro a sombra quase some: quem separa é a borda.</span></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ ESTADOS -->
+  <section class="kit-section" id="estados">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,128a8,8,0,0,1-8,8H204.94l-37.78,75.58A8,8,0,0,1,160,216h-.4a8,8,0,0,1-7.08-5.14L95.35,60.76,63.28,131.31A8,8,0,0,1,56,136H24a8,8,0,0,1,0-16H50.85L88.72,36.69a8,8,0,0,1,14.76.46l57.51,151,31.85-63.71A8,8,0,0,1,200,120h32A8,8,0,0,1,240,128Z"/></svg>Estados</h2>
+    <p class="kit-note">* forçado só nesta página. Os demais são reais: passe o ponteiro, use Tab.</p>
+
+    <div class="kit-block">
+      <div class="kit-scroll"><table class="ruvor-table kit-states"><thead><tr><th>Botão</th><th>normal</th><th>hover*</th><th>foco*</th><th>ativo*</th><th>disabled</th><th>aria-disabled</th><th>carregando</th></tr></thead><tbody><tr><td><code class="kit-token">.ruvor-btn</code></td><td><button class="ruvor-btn" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn is-hover" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn is-focus" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn is-active" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn" type="button" disabled><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn" type="button" aria-disabled="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg>Exportar</button></td><td><button class="ruvor-btn" type="button" aria-busy="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></svg>Exportando…</button></td></tr><tr><td><code class="kit-token">.ruvor-btn--primary</code></td><td><button class="ruvor-btn ruvor-btn--primary" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary is-hover" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary is-focus" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary is-active" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary" type="button" disabled><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary" type="button" aria-disabled="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button></td><td><button class="ruvor-btn ruvor-btn--primary" type="button" aria-busy="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></svg>Calculando…</button></td></tr><tr><td><code class="kit-token">.ruvor-btn--ghost</code></td><td><button class="ruvor-btn ruvor-btn--ghost" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost is-hover" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost is-focus" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost is-active" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost" type="button" disabled><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost" type="button" aria-disabled="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>Cancelar</button></td><td><button class="ruvor-btn ruvor-btn--ghost" type="button" aria-busy="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></svg>Cancelando…</button></td></tr><tr><td><code class="kit-token">.ruvor-btn--icon</code></td><td><button class="ruvor-btn ruvor-btn--icon" type="button" aria-label="Buscar ativo"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon is-hover" type="button" aria-label="Buscar ativo"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon is-focus" type="button" aria-label="Buscar ativo"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon is-active" type="button" aria-label="Buscar ativo"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon" type="button" aria-label="Buscar ativo" disabled><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon" type="button" aria-label="Buscar ativo" aria-disabled="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg></button></td><td><button class="ruvor-btn ruvor-btn--icon" type="button" aria-label="Buscar ativo" aria-busy="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></svg></button></td></tr></tbody></table></div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Campo <code class="kit-token">.ruvor-input</code> <code class="kit-token">.ruvor-select</code></h3>
+      <div class="kit-row"><div class="kit-cell kit-cell--field"><span class="kit-state">normal</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-1">Ativo</label><input class="ruvor-input" id="k-in-1" value="PETR4.SA" aria-describedby="k-in-1-m"><span class="ruvor-hint" id="k-in-1-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg>Ticker da B3.</span></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">hover*</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-2">Ativo</label><input class="ruvor-input is-hover" id="k-in-2" value="PETR4.SA"></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">foco*</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-3">Ativo</label><input class="ruvor-input is-focus" id="k-in-3" value="PETR4.SA"></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">disabled</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-4">Ativo</label><input class="ruvor-input" id="k-in-4" value="PETR4.SA" disabled></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">carregando</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-5">Ativo</label><input class="ruvor-input" id="k-in-5" value="PETR4.SA" aria-busy="true"></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">inválido</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-6">Ativo</label><input class="ruvor-input" id="k-in-6" value="PETR9.SA" aria-invalid="true" aria-describedby="k-in-6-m"><span class="ruvor-field__error" id="k-in-6-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Ticker fora do catálogo.</span></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">inválido + hover*</span><div class="ruvor-field"><label class="ruvor-label" for="k-in-7">Ativo</label><input class="ruvor-input is-hover" id="k-in-7" value="PETR9.SA" aria-invalid="true" aria-describedby="k-in-7-m"><span class="ruvor-field__error" id="k-in-7-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Ticker fora do catálogo.</span></div></div></div>
+      <div class="kit-row"><div class="kit-cell kit-cell--field"><span class="kit-state">normal</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-1">Confiança</label><select class="ruvor-select" id="k-se-1" aria-describedby="k-se-1-m"><option>99%</option></select><span class="ruvor-hint" id="k-se-1-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg>Nível do VaR.</span></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">hover*</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-2">Confiança</label><select class="ruvor-select is-hover" id="k-se-2"><option>99%</option></select></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">foco*</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-3">Confiança</label><select class="ruvor-select is-focus" id="k-se-3"><option>99%</option></select></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">disabled</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-4">Confiança</label><select class="ruvor-select" id="k-se-4" disabled><option>99%</option></select></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">carregando</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-5">Confiança</label><select class="ruvor-select" id="k-se-5" aria-busy="true"><option>Carregando…</option></select></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">inválido</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-6">Horizonte</label><select class="ruvor-select" id="k-se-6" aria-invalid="true" aria-describedby="k-se-6-m"><option>Selecione</option></select><span class="ruvor-field__error" id="k-se-6-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Escolha um horizonte.</span></div></div><div class="kit-cell kit-cell--field"><span class="kit-state">inválido + hover*</span><div class="ruvor-field"><label class="ruvor-label" for="k-se-7">Horizonte</label><select class="ruvor-select is-hover" id="k-se-7" aria-invalid="true" aria-describedby="k-se-7-m"><option>Selecione</option></select><span class="ruvor-field__error" id="k-se-7-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Escolha um horizonte.</span></div></div></div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Escolha <code class="kit-token">.ruvor-choice</code></h3>
+      <div class="ruvor-choice-grid">
+        <button class="ruvor-choice" type="button" aria-pressed="false"><b>95%</b><small>normal</small></button>
+        <button class="ruvor-choice is-hover" type="button" aria-pressed="false"><b>95%</b><small>hover*</small></button>
+        <button class="ruvor-choice is-focus" type="button" aria-pressed="false"><b>95%</b><small>foco*</small></button>
+      </div>
+      <div class="ruvor-choice-grid" style="margin-top: var(--ruvor-space-3)">
+        <button class="ruvor-choice ruvor-choice--on" type="button" aria-pressed="true"><b>99%</b><small>selecionada</small></button>
+        <button class="ruvor-choice" type="button" aria-pressed="false" disabled><b>99,5%</b><small>disabled</small></button>
+        <button class="ruvor-choice" type="button" aria-pressed="false" aria-disabled="true"><b>99,5%</b><small>aria-disabled</small></button>
+      </div>
+    </div>
+
+    <div class="kit-block" id="barra">
+      <h3 class="ruvor-h3">Navegação <code class="kit-token">.ruvor-nav__link</code></h3>
+      <div class="kit-frame">
+        <header class="ruvor-topbar">
+          <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+          <nav class="ruvor-nav" aria-label="Exemplo de estados da navegação">
+            <a class="ruvor-nav__link" href="#estados"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg>Normal</a>
+            <a class="ruvor-nav__link is-hover" href="#estados"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg>Hover*</a>
+            <a class="ruvor-nav__link is-focus" href="#estados"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></svg>Foco*</a>
+            <a class="ruvor-nav__link ruvor-nav__link--on" href="#estados"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>Ativa</a>
+          </nav>
+          <div class="ruvor-account"><span>Risco Institucional</span><span class="ruvor-avatar">GN</span></div>
+        </header>
+      </div>
+      <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span><code class="kit-token">topbar-edge</code>: invisível no claro, separa a barra do fundo no escuro.</span></p>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Carregando em bloco <code class="kit-token">.ruvor-skeleton</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell kit-cell--field"><div class="ruvor-skeleton kit-skeleton" role="status" aria-busy="true" aria-label="Carregando"></div><div class="ruvor-skeleton kit-skeleton" role="status" aria-busy="true" aria-label="Carregando"></div></div>
+        <div class="kit-cell kit-cell--field"><div class="ruvor-skeleton kit-skeleton--tall" role="status" aria-busy="true" aria-label="Carregando"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ ÍCONES E SINAIS -->
+  <section class="kit-section" id="icones">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg>Ícones e sinais</h2>
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Interface · regular <code class="kit-token">.ruvor-glyph</code></h3>
+      <ul class="kit-icons">
+        <li class="kit-icon" data-gallery-icon="magnifying-glass"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><span>magnifying-glass</span></li>
+        <li class="kit-icon" data-gallery-icon="x"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg><span>x</span></li>
+        <li class="kit-icon" data-gallery-icon="caret-right"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg><span>caret-right</span></li>
+        <li class="kit-icon" data-gallery-icon="caret-down"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg><span>caret-down</span></li>
+        <li class="kit-icon" data-gallery-icon="arrow-left"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg><span>arrow-left</span></li>
+        <li class="kit-icon" data-gallery-icon="arrow-square-out"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"/></svg><span>arrow-square-out</span></li>
+        <li class="kit-icon" data-gallery-icon="download-simple"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></svg><span>download-simple</span></li>
+        <li class="kit-icon" data-gallery-icon="arrows-clockwise"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></svg><span>arrows-clockwise</span></li>
+        <li class="kit-icon" data-gallery-icon="spinner-gap"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></svg><span>spinner-gap</span></li>
+        <li class="kit-icon" data-gallery-icon="clock"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></svg><span>clock</span></li>
+        <li class="kit-icon" data-gallery-icon="calendar-blank"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg><span>calendar-blank</span></li>
+        <li class="kit-icon" data-gallery-icon="info"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>info</span></li>
+        <li class="kit-icon" data-gallery-icon="question"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>question</span></li>
+        <li class="kit-icon" data-gallery-icon="check-circle"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>check-circle</span></li>
+        <li class="kit-icon" data-gallery-icon="x-circle"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>x-circle</span></li>
+        <li class="kit-icon" data-gallery-icon="warning"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg><span>warning</span></li>
+        <li class="kit-icon" data-gallery-icon="shield-check"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg><span>shield-check</span></li>
+        <li class="kit-icon" data-gallery-icon="shield-warning"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,136V96a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,48a12,12,0,1,0-12-12A12,12,0,0,0,128,184ZM224,56v56c0,52.72-25.52,84.67-46.93,102.19-23.06,18.86-46,25.27-47,25.53a8,8,0,0,1-4.2,0c-1-.26-23.91-6.67-47-25.53C57.52,196.67,32,164.72,32,112V56A16,16,0,0,1,48,40H208A16,16,0,0,1,224,56Zm-16,0L48,56l0,56c0,37.3,13.82,67.51,41.07,89.81A128.25,128.25,0,0,0,128,223.62a129.3,129.3,0,0,0,39.41-22.2C194.34,179.16,208,149.07,208,112Z"/></svg><span>shield-warning</span></li>
+        <li class="kit-icon" data-gallery-icon="flag"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg><span>flag</span></li>
+        <li class="kit-icon" data-gallery-icon="scales"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M239.43,133l-32-80h0a8,8,0,0,0-9.16-4.84L136,62V40a8,8,0,0,0-16,0V65.58L54.26,80.19A8,8,0,0,0,48.57,85h0v.06L16.57,165a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32a7.92,7.92,0,0,0-.57-3L66.92,93.77,120,82V208H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16H136V78.42L187,67.1,160.57,133a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32A7.92,7.92,0,0,0,239.43,133ZM56,184c-7.53,0-22.76-3.61-23.93-14.64L56,109.54l23.93,59.82C78.76,180.39,63.53,184,56,184Zm144-32c-7.53,0-22.76-3.61-23.93-14.64L200,77.54l23.93,59.82C222.76,148.39,207.53,152,200,152Z"/></svg><span>scales</span></li>
+        <li class="kit-icon" data-gallery-icon="pulse"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,128a8,8,0,0,1-8,8H204.94l-37.78,75.58A8,8,0,0,1,160,216h-.4a8,8,0,0,1-7.08-5.14L95.35,60.76,63.28,131.31A8,8,0,0,1,56,136H24a8,8,0,0,1,0-16H50.85L88.72,36.69a8,8,0,0,1,14.76.46l57.51,151,31.85-63.71A8,8,0,0,1,200,120h32A8,8,0,0,1,240,128Z"/></svg><span>pulse</span></li>
+        <li class="kit-icon" data-gallery-icon="chart-line"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg><span>chart-line</span></li>
+        <li class="kit-icon" data-gallery-icon="chart-bar"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg><span>chart-bar</span></li>
+        <li class="kit-icon" data-gallery-icon="trend-up"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z"/></svg><span>trend-up</span></li>
+        <li class="kit-icon" data-gallery-icon="trend-down"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,128v64a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h44.69L136,107.31l-34.34,34.35a8,8,0,0,1-11.32,0l-72-72A8,8,0,0,1,29.66,58.34L96,124.69l34.34-34.35a8,8,0,0,1,11.32,0L224,172.69V128a8,8,0,0,1,16,0Z"/></svg><span>trend-down</span></li>
+        <li class="kit-icon" data-gallery-icon="percent"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,61.64l-144,144a8,8,0,0,1-11.32-11.32l144-144a8,8,0,0,1,11.32,11.31ZM50.54,101.44a36,36,0,0,1,50.92-50.91h0a36,36,0,0,1-50.92,50.91ZM56,76A20,20,0,1,0,90.14,61.84h0A20,20,0,0,0,56,76ZM216,180a36,36,0,1,1-10.54-25.46h0A35.76,35.76,0,0,1,216,180Zm-16,0a20,20,0,1,0-5.86,14.14A19.87,19.87,0,0,0,200,180Z"/></svg><span>percent</span></li>
+        <li class="kit-icon" data-gallery-icon="sigma"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M184,72V56H80.65l53.6,67a8,8,0,0,1,0,10l-53.6,67H184V184a8,8,0,0,1,16,0v24a8,8,0,0,1-8,8H64a8,8,0,0,1-6.25-13l60-75-60-75A8,8,0,0,1,64,40H192a8,8,0,0,1,8,8V72a8,8,0,0,1-16,0Z"/></svg><span>sigma</span></li>
+        <li class="kit-icon" data-gallery-icon="gauge"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M207.06,72.67A111.24,111.24,0,0,0,128,40h-.4C66.07,40.21,16,91,16,153.13V176a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V152A111.25,111.25,0,0,0,207.06,72.67ZM224,176H119.71l54.76-75.3a8,8,0,0,0-12.94-9.42L99.92,176H32V153.13c0-3.08.15-6.12.43-9.13H56a8,8,0,0,0,0-16H35.27c10.32-38.86,44-68.24,84.73-71.66V80a8,8,0,0,0,16,0V56.33A96.14,96.14,0,0,1,221,128H200a8,8,0,0,0,0,16h23.67c.21,2.65.33,5.31.33,8Z"/></svg><span>gauge</span></li>
+        <li class="kit-icon" data-gallery-icon="stack"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z"/></svg><span>stack</span></li>
+        <li class="kit-icon" data-gallery-icon="database"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></svg><span>database</span></li>
+        <li class="kit-icon" data-gallery-icon="buildings"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg><span>buildings</span></li>
+        <li class="kit-icon" data-gallery-icon="briefcase"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg><span>briefcase</span></li>
+        <li class="kit-icon" data-gallery-icon="file-text"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg><span>file-text</span></li>
+        <li class="kit-icon" data-gallery-icon="gear"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"/></svg><span>gear</span></li>
+        <li class="kit-icon" data-gallery-icon="user"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg><span>user</span></li>
+        <li class="kit-icon" data-gallery-icon="sign-out"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg><span>sign-out</span></li>
+      </ul>
+    </div>
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Sinais · duotone <code class="kit-token">.ruvor-icon</code></h3>
+      <ul class="kit-icons">
+        <li class="kit-icon" data-gallery-duotone="info"><span class="ruvor-icon ruvor-icon--evidence"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></svg></span><span>info<br><b>evidence</b></span></li>
+        <li class="kit-icon" data-gallery-duotone="check-circle"><span class="ruvor-icon ruvor-icon--validated"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><span>check-circle<br><b>validated</b></span></li>
+        <li class="kit-icon" data-gallery-duotone="x-circle"><span class="ruvor-icon ruvor-icon--critical"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><span>x-circle<br><b>critical</b></span></li>
+        <li class="kit-icon" data-gallery-duotone="warning"><span class="ruvor-icon ruvor-icon--review"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg></span><span>warning<br><b>review</b></span></li>
+        <li class="kit-icon" data-gallery-duotone="flag"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span>flag<br><b>decision</b></span></li>
+      </ul>
+      <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Phosphor 2.1.1, forma cheia na cor do texto: regular na interface, duotone só nos sinais.</span></p>
+    </div>
+
+    <div class="kit-block" id="sinais">
+      <h3 class="ruvor-h3">Tag <code class="kit-token">.ruvor-tag</code></h3>
+      <div class="kit-row"><span class="ruvor-tag ruvor-tag--decision"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg>Decisão</span><span class="ruvor-tag ruvor-tag--review"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg>Monitorar</span><span class="ruvor-tag ruvor-tag--evidence"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>250 pregões</span><span class="ruvor-tag ruvor-tag--validated"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Validado</span><span class="ruvor-tag ruvor-tag--critical"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Revisão necessária</span></div>
+      <div class="kit-row"><span class="ruvor-tag ruvor-tag--decision"><i class="ruvor-dot"></i>Decisão</span><span class="ruvor-tag ruvor-tag--review"><i class="ruvor-dot"></i>Monitorar</span><span class="ruvor-tag ruvor-tag--evidence"><i class="ruvor-dot"></i>250 pregões</span><span class="ruvor-tag ruvor-tag--validated"><i class="ruvor-dot"></i>Validado</span><span class="ruvor-tag ruvor-tag--critical"><i class="ruvor-dot"></i>Revisão necessária</span></div>
+      <div class="kit-row"><span class="ruvor-tag ruvor-tag--decision">Decisão</span><span class="ruvor-tag ruvor-tag--review">Monitorar</span><span class="ruvor-tag ruvor-tag--evidence">250 pregões</span><span class="ruvor-tag ruvor-tag--validated">Validado</span><span class="ruvor-tag ruvor-tag--critical">Revisão necessária</span></div>
+      <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span><code class="kit-token">decision</code>, na tag e no sinal, é desenho novo: não existe nos mockups.</span></p>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Sinal <code class="kit-token">.ruvor-signal</code></h3>
+      <div class="ruvor-panel"><div class="ruvor-panel__body">
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><div><h3 class="ruvor-h3">Modelo de referência escolhido</h3><p>GARCHNet, pelo veredito.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--review"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg></span><div><h3 class="ruvor-h3">Revisão programada</h3><p>Novo recálculo em 18 dias.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--evidence"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></svg></span><div><h3 class="ruvor-h3">Dados atualizados</h3><p>Fechamento disponível.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--validated"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><div><h3 class="ruvor-h3">Cobertura preservada</h3><p>IBOV passou nos testes.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--critical"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span><div><h3 class="ruvor-h3">Exceções dependentes</h3><p>DQ reprovou em VALE3.SA.</p></div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ COMPOSIÇÃO -->
+  <section class="kit-section" id="composicao">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg>Composição</h2>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Grade de duas <code class="kit-token">.ruvor-grid--2</code></h3>
+      <div class="ruvor-grid ruvor-grid--2">
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__head"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M239.43,133l-32-80h0a8,8,0,0,0-9.16-4.84L136,62V40a8,8,0,0,0-16,0V65.58L54.26,80.19A8,8,0,0,0,48.57,85h0v.06L16.57,165a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32a7.92,7.92,0,0,0-.57-3L66.92,93.77,120,82V208H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16H136V78.42L187,67.1,160.57,133a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32A7.92,7.92,0,0,0,239.43,133ZM56,184c-7.53,0-22.76-3.61-23.93-14.64L56,109.54l23.93,59.82C78.76,180.39,63.53,184,56,184Zm144-32c-7.53,0-22.76-3.61-23.93-14.64L200,77.54l23.93,59.82C222.76,148.39,207.53,152,200,152Z"/></svg><h3 class="ruvor-h3">Backtests</h3><span class="ruvor-tag ruvor-tag--evidence ruvor-push"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>250 pregões</span></div>
+          <table class="ruvor-table">
+            <thead><tr><th>Teste</th><th>Estatística</th><th>p-valor</th><th>Leitura</th></tr></thead>
+            <tbody>
+              <tr><td>Kupiec</td><td class="ruvor-num">0,68</td><td class="ruvor-num">0,409</td><td><span class="ruvor-tag ruvor-tag--validated"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Validado</span></td></tr>
+              <tr><td>Christoffersen</td><td class="ruvor-num">1,17</td><td class="ruvor-num">0,279</td><td><span class="ruvor-tag ruvor-tag--validated"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg>Validado</span></td></tr>
+              <tr><td>DQ</td><td class="ruvor-num">7,42</td><td class="ruvor-num">0,059</td><td><span class="ruvor-tag ruvor-tag--review"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg>Monitorar</span></td></tr>
+              <tr><td>Basileia</td><td class="ruvor-num">2 exceções</td><td class="ruvor-num">—</td><td><span class="ruvor-tag ruvor-tag--validated"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg>Zona verde</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <aside class="ruvor-callout ruvor-callout--critical">
+          <span class="ruvor-icon ruvor-icon--critical"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg></span>
+          <div>
+            <p class="ruvor-eyebrow">Ressalva metodológica</p>
+            <h3 class="ruvor-h3">DQ próximo ao limite.</h3>
+            <p class="ruvor-sub">A dependência recente nas exceções pede nova observação.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Grade de três <code class="kit-token">.ruvor-grid--3</code></h3>
+      <div class="ruvor-grid ruvor-grid--3">
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__body"><p class="ruvor-eyebrow">PETR4.SA</p><h2 class="ruvor-h2">VaR 99% · 1 dia</h2><p class="ruvor-sub">9 modelos calculados</p></div>
+          <div class="ruvor-panel__body ruvor-divider">
+            <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--evidence"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></svg></span><div><b>2.480 observações</b><p>dez anos de pregão</p></div></div>
+          </div>
+        </div>
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__head"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z"/></svg><h3 class="ruvor-h3">Ranking dos modelos</h3></div>
+          <div class="ruvor-panel__body">
+            <div class="ruvor-rank"><b>01</b><span>GARCHNet</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 94%"></i></span><b class="ruvor-num">94</b></div>
+            <div class="ruvor-rank"><b>02</b><span>GARCH</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 81%"></i></span><b class="ruvor-num">81</b></div>
+            <div class="ruvor-rank"><b>03</b><span>Histórico</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 74%"></i></span><b class="ruvor-num">74</b></div>
+            <div class="ruvor-rank"><b>04</b><span>EGARCH</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 68%"></i></span><b class="ruvor-num">68</b></div>
+          </div>
+        </div>
+        <aside class="ruvor-callout">
+          <svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg>
+          <div>
+            <h3 class="ruvor-h3">Leitura estável.</h3>
+            <p class="ruvor-sub">Ranking comparativo, não recomendação.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Código <code class="kit-token">.ruvor-code</code></h3>
+      <div class="ruvor-code">$ ruvor run --ticker PETR4.SA --alpha 0.99
+modelo     VaR       veredito
+garchnet   -3,42%    <a class="kit-code-link is-focus" href="#composicao">adequado</a>
+garch      -3,61%    adequado</div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Largura total <code class="kit-token">.ruvor-workspace--full</code></h3>
+      <div class="kit-frame">
+        <div class="ruvor-workspace ruvor-workspace--full">
+          <div class="ruvor-content">
+            <div class="ruvor-page-head">
+              <div><p class="ruvor-eyebrow">Nova análise</p><h2 class="ruvor-display">Defina o problema.</h2><p class="ruvor-sub">Os parâmetros ficam registrados junto ao resultado.</p></div>
+              <button class="ruvor-btn ruvor-btn--primary ruvor-push" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></svg>Calcular</button>
+            </div>
+            <div class="ruvor-form-grid" style="margin-top: var(--ruvor-space-5)">
+              <div class="ruvor-field"><label class="ruvor-label" for="k-fg-1">Ativo</label><input class="ruvor-input" id="k-fg-1" value="PETR4.SA" aria-describedby="k-fg-1-m"><span class="ruvor-hint" id="k-fg-1-m"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg>Ticker da B3.</span></div>
+              <div class="ruvor-field"><label class="ruvor-label" for="k-fg-2">Confiança</label><select class="ruvor-select" id="k-fg-2"><option>99%</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<aside class="ruvor-rail">
+  <p class="ruvor-eyebrow">A decidir no portão</p>
+  <a class="kit-rail-item" href="#icones"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Ícones do Phosphor</span></a>
+  <a class="kit-rail-item" href="#review"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Tag review escurecida</span></a>
+  <a class="kit-rail-item" href="#sinais"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Decision, desenho novo</span></a>
+  <a class="kit-rail-item" href="#cores"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Tema escuro inteiro</span></a>
+  <a class="kit-rail-item" href="#estados"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Estados e anel de foco</span></a>
+  <a class="kit-rail-item" href="#barra"><span class="ruvor-icon ruvor-icon--decision"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,56V176c-64,55.43-112-55.43-176,0V56C112,.57,160,111.43,224,56Z" opacity="0.2"/><path d="M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z"/></svg></span><span class="ruvor-h3">Borda da barra no escuro</span></a>
+</aside>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+
+  // Chave de tema: põe data-theme no <html>, ou o tira ("Sistema").
+  var switches = document.querySelectorAll("[data-set-theme]");
+  function setTheme(theme) {
+    if (theme === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    switches.forEach(function (b) {
+      var on = b.getAttribute("data-set-theme") === theme;
+      b.setAttribute("aria-pressed", String(on));
+      b.classList.toggle("ruvor-btn--primary", on);
+    });
+  }
+  switches.forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.getAttribute("data-set-theme")); });
+  });
+  setTheme("system");
+
+  // Os 47 tokens de cor, na ordem de tokens.css.
+  var GROUPS = [
+    ["Base", ["ink", "text", "paper", "bg", "canvas", "surface", "panel", "surface-2", "border", "text-muted"]],
+    ["Semânticas", ["decision", "decision-soft", "decision-text", "review", "review-soft", "review-text",
+      "evidence", "evidence-soft", "evidence-text", "validated", "validated-soft", "validated-text",
+      "critical", "critical-soft", "critical-text"]],
+    ["Barra superior", ["topbar", "topbar-text", "topbar-link", "topbar-account", "topbar-edge", "avatar"]],
+    ["Componentes", ["on-decision", "choice-selected", "table-head", "table-rule", "rank-rule", "bar-track",
+      "callout", "code-bg", "code-text", "skeleton-base", "skeleton-shine", "icon-review"]],
+    ["Estados", ["control-hover", "decision-hover", "focus", "focus-on-dark"]]
+  ];
+  var ALIAS = { text: "ink", bg: "paper", panel: "surface" };
+  var NO_SOURCE = ["decision-text", "topbar-edge", "control-hover", "decision-hover", "focus", "focus-on-dark"];
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll("[data-swatches]").forEach(function (panel) {
+    var cs = getComputedStyle(panel);
+    var light = panel.getAttribute("data-theme") === "light";
+    GROUPS.forEach(function (group) {
+      var box = el("div", "kit-group");
+      box.appendChild(el("p", "ruvor-eyebrow", group[0]));
+      var list = el("div", "kit-swatches");
+      group[1].forEach(function (name) {
+        var item = el("div", "kit-swatch");
+        var chip = el("span", "kit-chip");
+        chip.style.background = "var(--ruvor-" + name + ")";
+        var info = el("div");
+        info.appendChild(el("code", "kit-token", "--ruvor-" + name));
+        var value = cs.getPropertyValue("--ruvor-" + name).trim().toUpperCase();
+        var note = value;
+        if (ALIAS[name]) note += " · = " + ALIAS[name];
+        if (light && NO_SOURCE.indexOf(name) >= 0) note += " · sem fonte";
+        if (light && name === "review-text") note += " · escurecido";
+        info.appendChild(el("div", "kit-note", note));
+        item.appendChild(chip);
+        item.appendChild(info);
+        list.appendChild(item);
+      });
+      box.appendChild(list);
+      panel.appendChild(box);
+    });
+  });
+
+  // Contraste WCAG entre duas cores computadas pelo navegador (três canais, 0 a 255).
+  function channels(rgb) { return rgb.match(/[\d.]+/g).slice(0, 3).map(Number); }
+  function luminance(rgb) {
+    var c = channels(rgb).map(function (v) {
+      v = v / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function ratio(a, b) {
+    var la = luminance(a), lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  // Três casas: com duas, o 4,497 do mockup viraria "4,50" e pareceria passar. O veredito
+  // (abaixo de 4,5 ou de 3) é tirado do valor sem arredondar.
+  function fmt(x) { return x.toFixed(3).replace(".", ",") + ":1"; }
+  function hex(rgb) {
+    return "#" + channels(rgb).map(function (v) {
+      return ("0" + v.toString(16)).slice(-2);
+    }).join("").toUpperCase();
+  }
+
+  // O desenho de cada sinal é o duotone da galeria, clonado: um só svg por ícone na página.
+  var SEMANTICS = [["decision", "flag", "Decisão"], ["review", "warning", "Monitorar"],
+    ["evidence", "info", "250 pregões"], ["validated", "check-circle", "Validado"],
+    ["critical", "x-circle", "Revisão necessária"]];
+  document.querySelectorAll("[data-contrast]").forEach(function (panel) {
+    var box = el("div", "kit-pairs");
+    panel.appendChild(box);
+    SEMANTICS.forEach(function (s) {
+      var row = el("div", "kit-pair");
+      var tag = el("span", "ruvor-tag ruvor-tag--" + s[0], s[2]);
+      var icon = el("span", "ruvor-icon ruvor-icon--" + s[0]);
+      icon.appendChild(document.querySelector('[data-gallery-duotone="' + s[1] + '"] svg').cloneNode(true));
+      var txt = el("span", "kit-note");
+      row.appendChild(tag);
+      row.appendChild(icon);
+      row.appendChild(txt);
+      box.appendChild(row);
+      var t = getComputedStyle(tag), i = getComputedStyle(icon);
+      var rt = ratio(t.color, t.backgroundColor), ri = ratio(i.color, i.backgroundColor);
+      txt.textContent = s[0] + " · " + fmt(rt) + (rt >= 4.5 ? "" : " (abaixo de 4,5)") +
+        " · " + fmt(ri) + (ri >= 3 ? "" : " (abaixo de 3)");
+    });
+  });
+
+  document.querySelectorAll("[data-review-sample]").forEach(function (tag) {
+    var t = getComputedStyle(tag);
+    var line = tag.parentNode;
+    line.querySelector("[data-hex-of]").textContent = hex(t.color);
+    line.querySelector("[data-ratio]").textContent = fmt(ratio(t.color, t.backgroundColor));
+  });
+
+  // Tipografia, espaço, raio, sombra e fontes: o valor vem de tokens.css.
+  var rootStyle = getComputedStyle(root);
+  document.querySelectorAll("[data-token]").forEach(function (e) {
+    e.textContent = rootStyle.getPropertyValue(e.getAttribute("data-token")).trim();
+  });
+  document.querySelectorAll("[data-type]").forEach(function (e) {
+    var p = "--ruvor-type-" + e.getAttribute("data-type") + "-";
+    e.textContent = ["size", "leading", "tracking", "weight"].map(function (k) {
+      return rootStyle.getPropertyValue(p + k).trim();
+    }).join(" · ");
+  });
+
+  // Qual fonte o navegador está desenhando. document.fonts.check sozinho devolve true para
+  // fonte local ausente em alguns navegadores, por isso a medida de largura confirma.
+  function hasFont(name) {
+    var checked = !document.fonts || document.fonts.check('16px "' + name + '"');
+    var ctx = document.createElement("canvas").getContext("2d");
+    var sample = "mmmmmmmmmmlli1WQ";
+    return checked && ["monospace", "serif"].some(function (base) {
+      ctx.font = "72px " + base;
+      var w0 = ctx.measureText(sample).width;
+      ctx.font = '72px "' + name + '", ' + base;
+      return ctx.measureText(sample).width !== w0;
+    });
+  }
+  function reportFont() {
+    var out = document.querySelector("#kit-fonte span");
+    if (hasFont("Avenir Next")) out.textContent = "Fonte em uso: Avenir Next, a primeira da pilha.";
+    else if (hasFont("Segoe UI")) out.textContent = "Fonte em uso: Segoe UI. A Avenir Next não está instalada.";
+    else out.textContent = "Fonte em uso: a de reserva do sistema. Nem Avenir Next nem Segoe UI estão instaladas.";
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reportFont);
+  else reportFont();
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 /* Tela de verificacao do casco. Cor e fonte vem so dos tokens (@brand/tokens.css).
-   Sem font-size: casco tecnico usa o tamanho padrao do navegador. */
+   Sem font-size: a tela de verificacao nao usa a escala tipografica dos tokens
+   (--ruvor-type-*) nem a regra de base .ruvor-app da folha de componentes, e fica no
+   tamanho padrao do navegador. */
 
 body {
   margin: 0;

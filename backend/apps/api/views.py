@@ -1,0 +1,432 @@
+"""As views da API: a view final de `/api/`, as rotas de leitura de `/api/v1/` (RF-11), o
+`/risk` (RF-13) e o pedido de calculo sob demanda, o `POST` do `/risk` (RF-14 a RF-19).
+
+Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao do
+`REST_FRAMEWORK` e `IsAuthenticated`, e uma view que esquecesse a sua nasceria fechada.
+
+Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `engine`,
+`pandas`, `apps.risk.tasks`, `apps.risk.compute`, `apps.risk.snapshots` ou
+`apps.assets.tasks`. O V-10 (`tests/api/test_sem_motor.py`) confere.
+"""
+
+from __future__ import annotations
+
+import re
+from datetime import date, datetime
+from typing import Any, NoReturn
+
+from django.conf import settings
+from django.db import transaction
+from django.db.models import (
+    Case,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
+from django.utils import timezone
+from rest_framework.exceptions import NotFound
+from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.api.errors import ApiError
+from apps.api.models import ComputeRequest
+from apps.api.ondemand import (
+    OPEN_STATUSES,
+    enqueue_chain,
+    expire_stale,
+    lock_on_demand,
+    timeout,
+)
+from apps.api.serializers import (
+    AssetDetailSerializer,
+    AssetItemSerializer,
+    BehaviorMetricSerializer,
+    ComputeRequestSerializer,
+    CorporateEventSerializer,
+    InProgressRunSerializer,
+    LatestRunSerializer,
+    PriceSerializer,
+)
+from apps.assets.models import Asset, CorporateEvent, Price
+from apps.risk.models import RiskResult, RiskRun
+
+# A paginacao da busca (RF-12).
+DEFAULT_LIMIT = 20
+MAX_LIMIT = 100
+
+_INTEGER = re.compile(r"-?[0-9]+")
+
+
+class ApiNotFound(APIView):
+    """A view final de `/api/` (D-86): rota inexistente responde `not_found` no formato
+    da API, com `DEBUG` ligado ou nao — nao depende do `handler404` do Django, que o
+    `DEBUG` ligado ignora.
+
+    Levanta `NotFound` em todo metodo de `http_method_names`, para que um metodo sem
+    tratador nao vire 405 numa rota que nao existe.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    def put(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    def patch(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    def delete(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    def head(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+    # O mesmo `ignore` dos stubs do DRF no `APIView.options`: o `View` do Django tipa o
+    # pedido como `HttpRequest`, e o DRF entrega o `Request` dele.
+    def options(  # type: ignore[override]
+        self, request: Request, *args: Any, **kwargs: Any
+    ) -> NoReturn:
+        raise NotFound
+
+    def trace(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
+        raise NotFound
+
+
+def _invalid(parameter: str, message: str) -> ApiError:
+    return ApiError(400, "invalid_parameter", message, {"parameter": parameter})
+
+
+def _int_param(request: Request, name: str, default: int, low: int, high: int) -> int:
+    """Um inteiro da query string entre `low` e `high`; ausente, o padrao. So digitos, com
+    sinal opcional — o `int()` sozinho aceitaria espaco e sublinhado.
+    """
+    raw = request.query_params.get(name)
+    if raw is None:
+        return default
+    if not _INTEGER.fullmatch(raw):
+        raise _invalid(name, f"O parâmetro {name} precisa ser um número inteiro.")
+    value = int(raw)
+    if not low <= value <= high:
+        raise _invalid(name, f"O parâmetro {name} precisa estar entre {low} e {high}.")
+    return value
+
+
+def _date_param(request: Request, name: str) -> date | None:
+    raw = request.query_params.get(name)
+    if raw is None:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        raise _invalid(
+            name, f"O parâmetro {name} precisa ser uma data no formato AAAA-MM-DD."
+        ) from None
+
+
+def _with_has_prices(assets: QuerySet[Asset]) -> QuerySet[Asset]:
+    return assets.annotate(
+        has_prices=Exists(Price.objects.filter(asset=OuterRef("pk")))
+    )
+
+
+def _asset(ticker: str) -> Asset:
+    """O ativo do catalogo pelo ticker, sem distincao de caixa; ausente, 404."""
+    wanted = ticker.upper()
+    asset = _with_has_prices(Asset.objects.filter(ticker=wanted)).first()
+    if asset is None:
+        raise ApiError(
+            404, "asset_not_found", f"Ativo {wanted} não existe.", {"ticker": wanted}
+        )
+    return asset
+
+
+def search_assets(q: str) -> QuerySet[Asset]:
+    """A busca do RF-12: `q` aparado; ticker igual (grupo 0), prefixo de ticker (grupo 1),
+    nome ou nome de pregao contendo `q` (grupo 2); ordem `(grupo, ticker)`. `q` vazio lista
+    o catalogo inteiro, por ticker.
+    """
+    q = q.strip()
+    assets = Asset.objects.all()
+    if not q:
+        return assets.order_by("ticker")
+    upper = q.upper()
+    return (
+        assets.filter(
+            Q(ticker__startswith=upper)
+            | Q(name__icontains=q)
+            | Q(trading_name__icontains=q)
+        )
+        .annotate(
+            search_group=Case(
+                When(ticker=upper, then=Value(0)),
+                When(ticker__startswith=upper, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("search_group", "ticker")
+    )
+
+
+class AssetListView(APIView):
+    """`GET /api/v1/assets?q=&limit=&offset=`: a busca no catalogo, paginada (RF-12)."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request) -> Response:
+        limit = _int_param(request, "limit", DEFAULT_LIMIT, 1, MAX_LIMIT)
+        offset = _int_param(request, "offset", 0, 0, 2**63 - 1)
+        found = search_assets(request.query_params.get("q", ""))
+        page = _with_has_prices(found)[offset : offset + limit]
+        return Response(
+            {
+                "count": found.count(),
+                "limit": limit,
+                "offset": offset,
+                "results": AssetItemSerializer(page, many=True).data,
+            }
+        )
+
+
+class AssetDetailView(APIView):
+    """`GET /api/v1/assets/{ticker}`: a identidade e o ultimo pregao."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(AssetDetailSerializer(_asset(ticker)).data)
+
+
+class AssetPricesView(APIView):
+    """`GET /api/v1/assets/{ticker}/prices?from=&to=`: a serie diaria no intervalo, inteira
+    — sem paginacao, excecao declarada a D-86 (RF-11).
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        start = _date_param(request, "from")
+        end = _date_param(request, "to")
+        if start is not None and end is not None and start > end:
+            raise _invalid("from", "O parâmetro from não pode ser posterior a to.")
+        asset = _asset(ticker)
+        prices = Price.objects.filter(asset=asset)
+        if start is not None:
+            prices = prices.filter(date__gte=start)
+        if end is not None:
+            prices = prices.filter(date__lte=end)
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "from": None if start is None else start.isoformat(),
+                "to": None if end is None else end.isoformat(),
+                "results": PriceSerializer(prices.order_by("date"), many=True).data,
+            }
+        )
+
+
+class AssetEventsView(APIView):
+    """`GET /api/v1/assets/{ticker}/events`: proventos e desdobramentos, inteiros."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        events = CorporateEvent.objects.filter(asset=asset).order_by("date", "kind")
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "results": CorporateEventSerializer(events, many=True).data,
+            }
+        )
+
+
+class AssetMetricsView(APIView):
+    """`GET /api/v1/assets/{ticker}/metrics`: a ultima linha de `gold.behavior_metric` e os
+    baldes do histograma; `metric` nulo se o ativo nunca foi calculado.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        metric = (
+            BehaviorMetric.objects.filter(asset=asset)
+            .prefetch_related(
+                Prefetch(
+                    "bins",
+                    queryset=ReturnHistogramBin.objects.order_by("bin_index"),
+                )
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "metric": None
+                if metric is None
+                else BehaviorMetricSerializer(metric).data,
+            }
+        )
+
+
+# As execucoes fechadas: as que o `latest` considera (RF-13).
+CLOSED_RUN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL, RiskRun.Status.FAILED)
+
+
+def risk_body(asset: Asset, now: datetime) -> dict[str, Any]:
+    """O corpo do `/risk` (RF-13): o do `GET` e o de todo 202 do `POST`.
+
+    - `latest`: a execucao fechada (`ok`, `partial`, `failed`) de maior `calculated_at`,
+      com o manifesto e os resultados -- `model_name`, depois `alpha` decrescente
+    - `in_progress`: a `running` de maior `calculated_at`, **se** for mais nova que o
+      `latest` (ou nao ha `latest`) **e** tiver comecado dentro do prazo do RF-18; senao
+      nula -- a `running` fora disso e execucao presa
+    - `request`: o ultimo pedido sob demanda, com o `status` calculado (o aberto vencido sai
+      `expired`, sem gravar: o `GET` nao escreve no banco)
+    - `covered`: o ativo tem preco (D-51)
+    """
+    latest = (
+        RiskRun.objects.filter(asset=asset, status__in=CLOSED_RUN_STATUSES)
+        .select_related("price_run")
+        .prefetch_related(
+            Prefetch(
+                "results",
+                queryset=RiskResult.objects.order_by("model_name", "-alpha"),
+            )
+        )
+        .order_by("-calculated_at")
+        .first()
+    )
+
+    running = (
+        RiskRun.objects.filter(asset=asset, status=RiskRun.Status.RUNNING)
+        .order_by("-calculated_at")
+        .first()
+    )
+    in_progress = None
+    if (
+        running is not None
+        and (latest is None or running.calculated_at > latest.calculated_at)
+        and running.calculated_at >= now - timeout()
+    ):
+        in_progress = running
+
+    request = (
+        ComputeRequest.objects.filter(asset=asset).order_by("-requested_at").first()
+    )
+
+    return {
+        "ticker": asset.ticker,
+        "covered": Price.objects.filter(asset=asset).exists(),
+        "latest": None if latest is None else LatestRunSerializer(latest).data,
+        "in_progress": None
+        if in_progress is None
+        else InProgressRunSerializer(in_progress).data,
+        "request": None
+        if request is None
+        else ComputeRequestSerializer(request, context={"now": now}).data,
+    }
+
+
+def _before_insert() -> None:
+    """Ponto de desvio dos testes concorrentes (V-14, V-15): entre as decisoes do `POST` e o
+    `insert`, sob a trava. Nao faz nada; o `POST` o chama pelo nome global."""
+
+
+class AssetRiskView(APIView):
+    """`/api/v1/assets/{ticker}/risk`.
+
+    - `GET`: o que existe e o que esta a caminho (RF-13). Le e nao escreve: o pedido vencido
+      sai `expired` no corpo e continua aberto no banco (RF-18).
+    - `POST`: o pedido de calculo sob demanda, so para ativo nunca calculado (RF-14), na
+      ordem literal do RF-17 -- a trava global, a expiracao dos vencidos, as decisoes e o
+      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19).
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(risk_body(_asset(ticker), timezone.now()))
+
+    def post(self, request: Request, ticker: str) -> Response:
+        """Decide **dentro** do `atomic` e levanta o erro **depois** de sair dele: um
+        `ApiError` de dentro desfaria o `expire_stale`, e os vencidos tem de ficar gravados
+        (RF-18). O corpo do 202 e lido depois do `atomic` -- e do `on_commit` --, e por isso
+        mostra o pedido `failed` quando o broker recusa (RF-19).
+        """
+        asset = _asset(ticker)
+        if asset.status == Asset.Status.INACTIVE:
+            raise ApiError(
+                422,
+                "asset_inactive",
+                f"Ativo {asset.ticker} está inativo.",
+                {"ticker": asset.ticker},
+            )
+        now = timezone.now()
+        with transaction.atomic():
+            lock_on_demand()
+            expire_stale(now)
+            error = _decide(asset, now)
+        if error is not None:
+            raise error
+        return Response(risk_body(asset, now), status=202)
+
+
+def _decide(asset: Asset, now: datetime) -> ApiError | None:
+    """Os passos 4 a 6 do RF-17, sob a trava e depois do `expire_stale`: devolve o 409 ou o
+    429 -- para o `POST` levantar fora do `atomic` --, ou `None` para o 202, inserindo o
+    pedido novo quando e o caso."""
+    if ComputeRequest.objects.filter(asset=asset, status__in=OPEN_STATUSES).exists():
+        return None  # 202: o pedido aberto do ativo
+    last_closed = (
+        RiskRun.objects.filter(asset=asset, status__in=CLOSED_RUN_STATUSES)
+        .order_by("-calculated_at")
+        .values_list("calculated_at", flat=True)
+        .first()
+    )
+    running = RiskRun.objects.filter(
+        asset=asset, status=RiskRun.Status.RUNNING, calculated_at__gte=now - timeout()
+    )
+    if last_closed is not None:
+        running = running.filter(calculated_at__gt=last_closed)
+    if running.exists():
+        return None  # 202, sem pedido novo: a `running` valida do ativo (RF-14)
+    if last_closed is not None:
+        return ApiError(
+            409,
+            "asset_already_covered",
+            f"Ativo {asset.ticker} já tem risco calculado; quem o recalcula é a rotina "
+            "diária.",
+            risk_body(asset, now),
+        )
+    maximum: int = settings.RUVOR_ON_DEMAND_MAX
+    if ComputeRequest.objects.filter(status__in=OPEN_STATUSES).count() >= maximum:
+        return ApiError(
+            429,
+            "on_demand_queue_full",
+            f"A fila de cálculo sob demanda está cheia ({maximum} pedidos abertos).",
+            {"max": maximum},
+        )
+    _before_insert()
+    req = ComputeRequest.objects.create(
+        asset=asset, status=ComputeRequest.Status.QUEUED, requested_at=now
+    )
+    request_id = req.pk
+    # o nome global, que os testes substituem em `apps.api.views.enqueue_chain`
+    transaction.on_commit(lambda: enqueue_chain(request_id))
+    return None

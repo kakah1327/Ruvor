@@ -14,8 +14,7 @@ Estas telas são referências visuais de implementação para o produto B2B da R
 ## Fonte de verdade
 
 - `foundation.css` reúne os padrões compartilhados usados pelos quatro mockups.
-- `../tokens.css` é a fonte oficial dos tokens da identidade.
-- `../implementation.css` é a referência de componentes para o produto final.
+- Estes mockups são a referência visual. `../tokens.css` e `../components.css` derivam deles e são o que o produto consome: os tokens e a folha de componentes, com os estados de interação e o tema escuro que os mockups não têm.
 - Os SVGs em `../` são os ativos oficiais da marca e não devem ser redesenhados.
 - A pasta `../examples/` contém estudos anteriores; quando houver divergência visual, estes mockups prevalecem.
 

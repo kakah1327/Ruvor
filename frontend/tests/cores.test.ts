@@ -2,17 +2,23 @@
  * @vitest-environment node
  *
  * F2b-09: nenhum valor de cor literal em frontend/src/. Cor só entra por token.
+ * V-03 do M1.6a: a varredura cobre também brand/ruvor/components.css, a folha de
+ * componentes que o frontend importa.
  *
  * Vive fora de src/ de propósito: os próprios padrões abaixo reprovariam se o
  * arquivo estivesse dentro do alvo da varredura.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
 const SRC = fileURLToPath(new URL("../src", import.meta.url));
+// No contêiner, a montagem só de leitura em /repo/brand/ruvor.
+const COMPONENTS = fileURLToPath(
+  new URL("../../brand/ruvor/components.css", import.meta.url),
+);
 
 // Hexadecimal de 3, 4, 6 ou 8 dígitos, terminado por não-alfanumérico.
 const HEX = /#(?:[0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{4}|[0-9a-f]{3})(?![0-9a-z_-])/i;
@@ -31,11 +37,10 @@ const PATTERNS: ReadonlyArray<readonly [string, RegExp]> = [
   ["nome de cor", NAMED],
 ];
 
-function listFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((name) => {
-    const full = join(dir, name);
-    return statSync(full).isDirectory() ? listFiles(full) : [full];
-  });
+// Um diretório, varrido por inteiro, ou um arquivo só.
+function listFiles(path: string): string[] {
+  if (!statSync(path).isDirectory()) return [path];
+  return readdirSync(path).flatMap((name) => listFiles(join(path, name)));
 }
 
 export function findLiteralColors(root: string): string[] {
@@ -46,7 +51,8 @@ export function findLiteralColors(root: string): string[] {
       for (const [label, pattern] of PATTERNS) {
         const match = pattern.exec(line);
         if (match) {
-          findings.push(`${relative(root, file)}:${index + 1} ${label}: ${match[0]}`);
+          const name = relative(root, file) || basename(file);
+          findings.push(`${name}:${index + 1} ${label}: ${match[0]}`);
         }
       }
     });
@@ -61,6 +67,11 @@ describe("F2b-09 — sem cor literal em src/", () => {
 
   it("nenhum arquivo de src/ contém cor literal", () => {
     expect(findLiteralColors(SRC)).toEqual([]);
+  });
+
+  it("brand/ruvor/components.css não contém cor literal", () => {
+    expect(listFiles(COMPONENTS)).toEqual([COMPONENTS]);
+    expect(findLiteralColors(COMPONENTS)).toEqual([]);
   });
 
   it("os padrões detectam o que prometem e ignoram falso positivo", () => {

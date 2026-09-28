@@ -339,6 +339,11 @@ Com os tipos, `@app.task` passa limpo no `mypy` estrito, e o único erro novo na
 um `object` sem `startswith` num teste. A forma `app.task(name=...)(_funcao)` **ficou**, mas
 agora pelo ponto de teste, não pelo `mypy`.
 
+**E a volta do override passa calada (M1.6a):** com o `celery-types` instalado, um
+`[[tool.mypy.overrides]]` que devolvesse `celery`/`celery.*` ao `ignore_missing_imports` não
+faz o `mypy` reprovar nem avisar — a seção conta como usada. Quem pega é
+`backend/tests/test_tipos.py`, que lê o `pyproject.toml` com `tomllib`.
+
 
 ## Volume anônimo de `node_modules` sobrevive à recriação do contêiner
 
@@ -1037,3 +1042,79 @@ exatamente 80.842.
 
 **Faça:** conte a medição pela mesma chave que o requisito usa, e registre a consulta junto do
 número. Quando a execução divergir, recalcule pelas duas chaves antes de supor que a fonte mudou.
+
+
+## O `flush` do Django não enxerga tabela com esquema no `db_table`, e sem `available_apps` nem roda
+
+**Quando:** ao escrever o primeiro teste `transaction=True` (ou `TransactionTestCase`) num
+projeto cujas tabelas declaram o esquema no `db_table` (`'gold"."risk_run'`), como todas as
+deste.
+
+**Problema:** o pytest-django roda o `flush` do Django na saída de cada teste `transaction=True`,
+e a premissa natural — "o banco sai vazio, basta recriar os dados de migration" — é falsa aqui.
+A introspecção do `flush` só enxerga as tabelas do `public` (`auth`, `contenttypes`); as de
+`core`, `bronze`, `silver` e `gold` ficam de fora. E o `TRUNCATE` que ele emite **sem
+`CASCADE`** falha por FK de `core.user_groups`: todo teste `transaction=True` dá ERROR na
+desmontagem, e nada é apagado. O M1.6a aprovou o plano com essa premissa e só a mediu na T6.
+
+**Faça:** use a marca e a fixture de `backend/tests/api/migracao.py` — `TRANSACIONAL`
+(`django_db(transaction=True, available_apps=list(settings.INSTALLED_APPS))`: com
+`available_apps`, o Django trunca com `CASCADE` e o `flush` passa) e `banco_limpo` (trunca toda
+tabela dos quatro esquemas, pela lista de `pg_tables`, com `RESTART IDENTITY CASCADE`, e recria a
+organização e o `IBOV`). **Todo** teste `transaction=True` usa as duas, pedindo a fixture por
+`usefixtures`. A guarda é o `tests/test_organizacao.py` na suíte inteira.
+
+
+## Num teste `db` comum, o `on_commit` só roda quando a captura termina
+
+**Quando:** ao testar código que faz algo no `transaction.on_commit` — enfileirar depois do
+commit, ler o estado confirmado — e a ordem entre o commit e o efeito é o que se quer provar.
+
+**Problema:** o teste `django_db` comum roda inteiro dentro de um `atomic`; o `atomic` do
+código sob teste vira ponto de salvamento, e não há commit. Com
+`django_capture_on_commit_callbacks(execute=True)`, os callbacks rodam **ao sair do bloco da
+captura** — depois de a função devolver. Duas coisas ficam invisíveis: uma escrita feita
+**depois** do `atomic` do código ainda está lá quando o callback roda (a mutação "grava a ligação
+fora da transação" passa), e uma resposta montada depois do `atomic` não vê o que o callback
+gravaria (a resposta 202 com o pedido `failed` do broker).
+
+**Faça:** para provar ordem entre commit e efeito, use `transaction=True` — o commit é de
+verdade, e o `on_commit` roda na saída do `atomic` do próprio código. No `db` comum, a captura
+serve para "o callback foi registrado, com estes argumentos" e para "sem `execute=True`, nada
+saiu". E no projeto, `transaction=True` exige `TRANSACIONAL` e `banco_limpo` (ver acima).
+
+
+## Especificidade na folha de componentes: `:where` baixa a regra, e `flex` na regra base quebra conteúdo
+
+**Quando:** ao mexer em `brand/ruvor/components.css` — uma regra que vale "dentro de" um contexto
+(a barra, o bloco de código) ou um arranjo que só alguns usos precisam (ícone ao lado do rótulo).
+
+**Problema:** duas armadilhas, as duas do M1.6a. **`:where(...)` zera a especificidade do que está
+dentro dele**: pôr a regra do anel sobre fundo escuro sob `:where(.ruvor-topbar, .ruvor-code)
+:focus-visible`, para não anular o recuo do link da barra, baixou-a a (0,1,0), e um botão ou
+campo dentro da barra passou a ganhar o anel claro do componente — 1,98:1 sobre a barra.
+**`display: flex` com `gap` na regra base** de botão, dica, erro de campo e `callout`, para
+alinhar o ícone, fez de cada pedaço de texto e de cada `<b>` um item separado pelo `gap`, e o
+`text-align` deixou de valer — no uso sem ícone, que é o dos mockups.
+
+**Faça:** resolva conflito de cascata pela **especificidade explícita e pela ordem** — a regra
+geral depois dos componentes, na mesma especificidade deles, e a exceção com um seletor a mais
+—, e deixe um teste conferindo a ordem e as especificidades. O arranjo que só existe com ícone
+vai sob `:has(> .ruvor-glyph)`, e o conteúdo ao lado do ícone num só filho. Confira na vitrine o
+caso **sem** o elemento opcional, não só o com.
+
+
+## Duas suítes no mesmo `worker` usam o mesmo banco de teste
+
+**Quando:** ao rodar a suíte do backend enquanto outra roda — uma mutação e a suíte, dois agentes
+em trilhas paralelas, duas rodadas "para ganhar tempo".
+
+**Problema:** toda execução do `pytest` no `worker` usa o mesmo banco de teste, `test_ruvor`,
+no mesmo Postgres. A segunda cria ou apaga o banco da primeira, e os testes `transaction=True`
+truncam as tabelas de todo mundo. O resultado são falhas que parecem defeito do código — e uma
+mutação pode "reprovar" pelo motivo errado, ou uma suíte verde passar por acaso.
+
+**Faça:** uma suíte do backend por vez, no `worker` ou em contêiner avulso (que usa o mesmo banco
+— ver [O worktree não é o que o contêiner monta](#o-worktree-não-é-o-que-o-contêiner-monta)).
+Trilhas paralelas dividem o frontend e o backend, não duas rodadas do backend. Na T13, as
+mutações rodam em série, e a suíte inteira duas vezes seguidas, depois delas.

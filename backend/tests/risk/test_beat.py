@@ -89,10 +89,10 @@ def test_nenhuma_entrada_do_beat_aponta_para_o_risco() -> None:
     assert not [t for t in tasks if t.startswith("apps.risk.tasks.")], tasks
 
 
-# --- V-09: risco depois de preco, encadeado ------------------------------------------------
+# --- V-09 (e V-20 do M1.6a): preco, metricas e risco, encadeados -------------------------
 
 
-def test_rotina_diaria_enfileira_uma_corrente_precos_e_depois_risco(
+def test_rotina_diaria_enfileira_uma_corrente_precos_metricas_e_risco(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     recebidos: list[Any] = []
@@ -106,10 +106,13 @@ def test_rotina_diaria_enfileira_uma_corrente_precos_e_depois_risco(
     elos = corrente.tasks
     assert [elo.task for elo in elos] == [
         "apps.assets.tasks.importar_precos",
+        "apps.analytics.tasks.calcular_metricas",
         "apps.risk.tasks.recalcular_cobertos",
     ]
-    # Imutavel: com `.s()`, o texto de `importar_precos` chegaria como calculated_at_iso.
+    # Imutaveis: com `.s()`, o texto do elo anterior chegaria como argumento posicional --
+    # o `calcular_metricas` nao recebe nenhum, e no recalculo viraria calculated_at_iso.
     assert elos[1].immutable is True
+    assert elos[2].immutable is True
 
 
 # --- V-10: horario e configuracao ----------------------------------------------------------

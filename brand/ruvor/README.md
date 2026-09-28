@@ -10,11 +10,15 @@ Em caso de divergência, vale de cima para baixo:
 
 | Ordem | Onde | O que é |
 |---|---|---|
-| 1 | `tokens.css` / `tokens.json` | os valores oficiais. Nada acima disso |
-| 2 | [`mockups/`](mockups/) | **as quatro telas de referência do produto.** Estabelecem shell, componentes, hierarquia, densidade e estados |
-| 3 | `implementation.css` | referência de componentes para o produto |
-| 4 | `examples/` | estudos anteriores. **Perdem para os mockups** |
-| 5 | [`estudos/`](estudos/) | histórico de como se chegou à marca. Não é especificação |
+| 1 | [`mockups/`](mockups/) | **as quatro telas de referência do produto.** Estabelecem shell, componentes, hierarquia, densidade e estados. Nada acima disso |
+| 2 | `tokens.css` / `tokens.json` e `components.css` | os tokens e a folha de componentes do produto, **derivados dos mockups**. Onde divergem deles, é de propósito, e está dito abaixo |
+| 3 | [`examples/`](examples/) | estudos anteriores. **Perdem para os mockups** |
+| 4 | [`estudos/`](estudos/) | histórico de como se chegou à marca. Não é especificação |
+
+**Onde os tokens não copiam os mockups, de propósito** (M1.6a): o texto da tag `review`, que
+nos mockups fica abaixo de 4,5:1, é escurecido o mínimo (`--ruvor-review-text`); e o que os
+mockups não têm — o tema escuro, os estados de interação, a tag e o sinal de `decision` —
+nasce no plano do M1.6a e é aprovado na vitrine do kit.
 
 Os SVGs são ativos oficiais e não se redesenham.
 
@@ -71,9 +75,10 @@ ou semáforo aplicado aos pontos. A cor vive no produto; o símbolo permanece t�
 | Token | Cor | Significado |
 |---|---|---|
 | `--ruvor-ink` | `#292A2E` | marca, tipografia e estrutura |
-| `--ruvor-paper` | `#F7F6F2` | fundo principal e marca reversa |
-| `--ruvor-surface` | `#E9E7E2` | cards e superfícies secundárias |
-| `--ruvor-border` | `#C8C4BC` | divisórias e campos |
+| `--ruvor-paper` | `#F8F7F4` | fundo principal e marca reversa |
+| `--ruvor-surface` | `#FFFEFA` | cards e painéis |
+| `--ruvor-surface-2` | `#E9E7E2` | superfícies secundárias |
+| `--ruvor-border` | `#D5D2CC` | divisórias e campos |
 | `--ruvor-decision` | `#8F3B4B` | decisão, limite, foco de ação |
 | `--ruvor-review` | `#B79754` | revisão e atenção |
 | `--ruvor-evidence` | `#54727B` | evidência, séries, comparação |
@@ -103,11 +108,50 @@ não foi aprovado — o caminho é acrescentar o token aqui, não improvisar na 
 
 ---
 
+## Ícones
+
+Do [Phosphor](https://phosphoricons.com) (MIT), num conjunto fechado copiado para
+[`icons/`](icons/) ([D-93](../../docs/decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)):
+um `.svg` por ícone e peso, a licença em `icons/LICENSE` e o `icons.json`, que lista nome, peso,
+arquivo e a versão de origem do pacote `@phosphor-icons/core`. O frontend **não** instala o
+pacote.
+
+| Peso | Onde |
+|---|---|
+| `regular` | a interface: botão, tag, link da barra, cabeçalho de painel, `callout`, dica e erro de campo — `svg` inline com `.ruvor-glyph` (16 px; `--sm` 14, `--lg` 20) |
+| `duotone` | só os sinais (`.ruvor-icon`): `decision` → `flag`, `review` → `warning`, `evidence` → `info`, `validated` → `check-circle`, `critical` → `x-circle` |
+
+**A cor do ícone é a do texto** (`currentColor`); o arquivo não carrega cor. **Ícone nunca é o
+único sinal**: vem com rótulo, ou com `aria-label` no botão só de ícone (`.ruvor-btn--icon`), e
+o `svg` decorativo leva `aria-hidden="true"`. No botão só de ícone, "carregando" é trocar o
+glyph pelo `spinner-gap`, além do `aria-busy="true"`.
+
+**Com ícone, o conteúdo vai num só filho.** Botão, dica (`.ruvor-hint`), erro de campo
+(`.ruvor-field__error`) e `callout` só viram flex quando o ícone é filho direto — `.ruvor-glyph`,
+ou `.ruvor-icon` no `callout` —; sem ícone, o texto corre normal, como nos mockups. Com ícone, o
+que vai ao lado dele fica num só elemento (`<span>` ou `<div>`): solto no contêiner flex, cada
+pedaço de texto e cada `<b>` viraria um item, separado pelo `gap`.
+
+Os desenhos não se alteram. Ícone novo entra por
+acréscimo ao conjunto, do mesmo Phosphor, com entrada no `icons.json` — o teste
+`frontend/tests/icones.test.ts` reprova arquivo sem entrada, cor fixa e ícone fora da
+[vitrine](../../docs/mockups/M1.6a/kit.html).
+
+---
+
 ## Como consumir no produto
 
 ```css
 @import url('brand/ruvor/tokens.css');
+@import url('brand/ruvor/components.css');
 ```
+
+A paleta acima é a do tema claro. O escuro vem pelos mesmos tokens, com `data-theme="dark"`
+no `html` ou, sem o atributo, pela preferência escura do sistema.
+
+`components.css` só estiliza classes com o prefixo `ruvor-`: não mexe em `html`, `body` nem
+títulos soltos. O estilo de base da página — fundo, cor e fonte do corpo — vem da classe
+`ruvor-app`, que a página aplica.
 
 `tokens.json` espelha cores e escalas para ferramentas e implementações não-CSS.
 
@@ -115,14 +159,21 @@ não foi aprovado — o caminho é acrescentar o token aqui, não improvisar na 
 
 ## Lacunas conhecidas
 
-Os mockups resolveram a maior lacuna anterior — **campos de formulário e densidade agora têm
-referência** (`03-nova-analise.html`, e `.field` em `foundation.css`). O que ainda falta:
+Os mockups resolveram a lacuna dos **campos de formulário e da densidade**
+(`03-nova-analise.html`, e `.field` em `foundation.css`). O M1.6a fechou outras três:
+
+| Fechada | Onde |
+|---|---|
+| **Estados de interação** — sobrevoo, foco, pressionado, desabilitado, carregando, erro | `components.css`, com token próprio quando o estado muda cor |
+| **Modo escuro** | `tokens.css`, pelos mesmos tokens de cor |
+| **Escala tipográfica** | `tokens.css`, os tokens `--ruvor-type-*` |
+
+O que continua fora:
 
 | Falta | Situação |
 |---|---|
-| **Estados de interação** — foco, sobrevoo, desabilitado, erro | `foundation.css` define apenas `:active` |
-| **Modo escuro** | o kit é só claro; o protótipo antigo era escuro-primeiro. Decisão de produto pendente |
-| **Guia de componentes escrito** | os mockups servem de referência visual, mas não há especificação textual por componente |
+| **Fonte embutida** | a pilha dos mockups começa pela Avenir Next, do macOS; no Windows cai na Segoe UI. Embutir uma fonte é decisão de licença e de peso, e fica para quando houver hospedagem |
+| **Guia de componentes escrito** | os mockups e a folha de componentes servem de referência, mas não há especificação textual por componente |
 
 Registrado em [`docs/ESTADO.md`](../../docs/ESTADO.md) e
 [`docs/PRODUTO.md`](../../docs/PRODUTO.md#8-pendências-de-produto).

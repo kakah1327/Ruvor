@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     host: true,
     fs: { allow: [repoRoot] },
-    proxy: { "/health": proxyTarget },
+    proxy: { "/health": proxyTarget, "/api": proxyTarget },
     // Sondagem: o aviso de alteracao de arquivo nao atravessa a montagem
     // Windows -> conteiner. Medido na T6 do F3 -- o conteiner enxerga o arquivo novo,
     // mas o Vite nao emite evento algum, e a tela so muda com recarga manual.

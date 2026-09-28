@@ -40,7 +40,7 @@ Nem tudo no repositório é referência. Esta tabela resolve dúvida.
 | [`docs/ESTADO.md`](docs/ESTADO.md) | posição atual, atualizada no fecho de cada bloco |
 | [`docs/FRENTES.md`](docs/FRENTES.md) e [`docs/frentes/`](docs/frentes/) | quem faz o quê, a cerca de pastas de cada frente, os contratos entre elas e o andamento de cada uma |
 | [`docs/specs/`](docs/specs/) e [`docs/planos/`](docs/planos/) | o trabalho corrente |
-| [`brand/ruvor/`](brand/ruvor/) | tokens, logo, regras e as quatro telas de referência (`mockups/`) |
+| [`brand/ruvor/`](brand/ruvor/) | tokens nos dois temas, a folha de componentes, os ícones, logo, regras e as quatro telas de referência (`mockups/`), de que os tokens derivam ([D-87](docs/decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md)) |
 
 ### NÃO é referência
 
@@ -121,8 +121,9 @@ Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêine
 ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
 comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
 de adequação por ativo —, calculado **pela fila**, **agendado** pelo Celery Beat e, desde o
-M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Ainda não existe API de
-negócio nem tela de produto.
+M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Desde o M1.6a existem a
+**API de leitura** em `/api/v1/`, o **cálculo sob demanda** de um ativo nunca calculado e o **kit
+de marca completo**, nos dois temas. Ainda não existe tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -134,28 +135,40 @@ negócio nem tela de produto.
   modelos caros expõem e aceitam **retratos** do estado treinado, no formato de
   `engine/src/engine/snapshots.py` ([D-76](docs/decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md));
   e o `py.typed` deixa o `mypy` do backend enxergar os tipos dele.
-- `backend/` — projeto Django com cinco apps, `apps/accounts`, `apps/assets`,
-  `apps/analytics`, `apps/risk` e `apps/fundamentals`. Uma rota, `GET /health`. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as onze tarefas de
-  app, por descoberta automática — `apps/risk/tasks.py` (a abertura, uma por (ativo, modelo),
-  o fecho e o leque `recalcular_cobertos`), `apps/assets/tasks.py` (catálogo, preços e a
-  `rotina_diaria`, que encadeia preços → risco) e `apps/fundamentals/tasks.py` (a coleta da
+- `backend/` — projeto Django com seis apps, `apps/accounts`, `apps/assets`,
+  `apps/analytics`, `apps/risk`, `apps/fundamentals` e `apps/api`. `GET /health` e a API em
+  `/api/v1/`, no formato da [D-86](docs/decisoes/D-86-convencoes-da-api-http.md): seis rotas de
+  leitura — a busca no catálogo e, por ativo, identidade, preços, eventos, métricas e risco — e o
+  `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
+  pedido aberto por ativo em `core.compute_request`, teto global e expiração
+  ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
+  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); a
+  `apps/api` não importa o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as treze tarefas de
+  app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
+  cálculo, uma por (ativo, modelo), o fecho e o leque `recalcular_cobertos`),
+  `apps/assets/tasks.py` (catálogo, preços, a `rotina_diaria`, que encadeia preços → métricas →
+  risco, e a cadeia sob demanda `calcular_sob_demanda`), `apps/analytics/tasks.py` (as métricas
+  da rotina) e `apps/fundamentals/tasks.py` (a coleta da
   CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois, e a `importar_comunicados`). O
   `CELERY_BEAT_SCHEDULE` tem quatro entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`,
   `RUVOR_BEAT_PRICES_CRON`, `RUVOR_BEAT_FUNDAMENTALS_CRON` e `RUVOR_BEAT_DISCLOSURES_CRON`
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
-  [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
+  [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md),
+  [D-91](docs/decisoes/D-91-a-rotina-diaria-e-precos-metricas-risco-estende-a-d-69.md),
+  [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
-  `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)); 622 testes com pytest-django, que
+  `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
+  DRF pelos `djangorestframework-stubs`; 844 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
-  as tabelas `core.organization` e `core.user`, a organização fixa do Marco 1 (`slug`
+  as tabelas `core.organization`, `core.user` e `core.compute_request`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
   `silver.disclosure`, e as sete tabelas da `gold`, `gold.behavior_metric`,
   `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
-  `gold.fundamental_indicator` e `gold.peer_comparison` — vinte e sete ao todo. O `AUTH_USER_MODEL`
+  `gold.fundamental_indicator` e `gold.peer_comparison` — vinte e oito ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
@@ -197,8 +210,10 @@ negócio nem tela de produto.
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
 - `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
-  consome `brand/ruvor/tokens.css` pelo apelido `@brand`; uma varredura automatizada reprova
-  cor literal em `frontend/src/`. Lint e formatação são do **Biome**, por `npm run lint`
+  consome `brand/ruvor/tokens.css` e `components.css` pelo apelido `@brand`; o proxy do Vite leva
+  `/health` e `/api` à `web`. Uma varredura automatizada reprova cor literal em `frontend/src/` e
+  em `components.css`, e os testes do kit conferem os tokens contra os mockups, o contraste nos
+  dois temas e o conjunto de ícones — 345 testes. Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
   os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por
   `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do

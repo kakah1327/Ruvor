@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14", "ruff==0.16.6", "celery-types==0.26.0"]
+dev = ["mypy>=2.3", "django-stubs>=6.1", "pytest>=9.1", "pytest-django>=4.14", "ruff==0.16.6", "celery-types==0.26.0", "djangorestframework-stubs[compatible-mypy]==3.18.1"]
 
 [build-system]
 requires = ["setuptools>=68"]

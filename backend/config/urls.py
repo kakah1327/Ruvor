@@ -1,5 +1,12 @@
-from django.urls import path
+from django.urls import URLPattern, URLResolver, include, path, re_path
 
+from apps.api.views import ApiNotFound
 from config.views import health
 
-urlpatterns = [path("health", health)]
+urlpatterns: list[URLPattern | URLResolver] = [
+    path("health", health),
+    path("api/v1/", include("apps.api.urls")),
+    # A view final da API (D-86): depois de `/api/v1/`, pega o resto de `/api/` e
+    # responde `not_found` no formato da API. Fora de `/api/`, o Django nao muda.
+    re_path(r"^api/", ApiNotFound.as_view()),
+]

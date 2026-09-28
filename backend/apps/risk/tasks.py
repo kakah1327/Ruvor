@@ -7,13 +7,16 @@ explicitos, e sao contrato.
 
 Quem chama quem:
 
-- `abrir_execucao` cria a `risk_run` **no worker** (RF-03), `running`, e entrega ao
-  `_enqueue` um `chord` de uma `compute_asset_model` por modelo com `fechar_execucao` de
-  corpo. E a unica que pode levantar: sem linha, nao ha onde gravar `error`;
+- `abrir_execucao` cria a `risk_run` **no worker** (RF-03), `running`, sob a trava por
+  ativo (RF-24 do M1.6a) -- e pula o ativo que ja tem `running` recente --, e entrega ao
+  `_enqueue`, **depois do commit**, um `chord` de uma `compute_asset_model` por modelo com
+  `fechar_execucao` de corpo. E a unica que pode levantar: sem linha, nao ha onde gravar
+  `error`;
 - `compute_asset_model` grava os dois `risk_result` do modelo em transacao propria (RF-02)
   e **nunca levanta** (RF-06): se uma tarefa do grupo levantasse, o corpo do `chord` nao
   rodaria e a execucao ficaria `running` para sempre;
-- `fechar_execucao` ignora o que o grupo devolveu e le o banco (RF-05);
+- `fechar_execucao` ignora o que o grupo devolveu e le o banco (RF-05), sob a mesma trava,
+  e fecha os pedidos sob demanda ligados a execucao;
 - `recalcular_cobertos` e o leque: uma `abrir_execucao` por ativo ativo com preco, pelo
   mesmo `enqueue_compute` que o `compute_risk --async` usa.
 
@@ -44,7 +47,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, TypedDict, overload
 
 from celery import chord
 from django.db import transaction
@@ -53,6 +56,14 @@ from engine.backtesting import load_all_backtest_modules
 from engine.models import get_model, list_models, load_all_model_modules
 from engine.models.base import ModelCategory
 
+from apps.api.models import ComputeRequest
+from apps.api.ondemand import (
+    OPEN_STATUSES,
+    close_linked,
+    close_request,
+    lock_asset,
+    timeout,
+)
 from apps.assets.models import Asset
 from apps.risk import config
 from apps.risk.compute import (
@@ -117,6 +128,17 @@ class AsyncReport:
         return "\n".join(lines)
 
 
+def _missing_models(requested: list[str]) -> list[str]:
+    """Os modelos pedidos que o registry nao oferece, com o registry carregado antes.
+
+    O que o `enqueue_compute` e a cadeia sob demanda conferem antes de abrir qualquer coisa:
+    registry incompleto e erro (D-66), nunca silencio.
+    """
+    load_all_model_modules()
+    load_all_backtest_modules()
+    return [m for m in requested if m not in list_models()]
+
+
 def enqueue_compute(
     tickers: list[str],
     *,
@@ -133,10 +155,8 @@ def enqueue_compute(
     `calculated_at` e o recebido ou o `now()` de **uma** chamada, o mesmo para todas as
     aberturas. `full` vai a cada abertura, que o grava na `risk_run` (RF-08).
     """
-    load_all_model_modules()
-    load_all_backtest_modules()
     requested = list(MODELS) if models is None else list(models)
-    missing = [m for m in requested if m not in list_models()]
+    missing = _missing_models(requested)
     if missing:
         raise ModelsMissing(missing)  # antes de enfileirar (RF-17)
 
@@ -160,53 +180,167 @@ _COST_RANK = {
 }
 
 
+class OpeningResult(TypedDict):
+    """O que a abertura devolve quando recebe `request_id` (RF-20): serializavel em JSON,
+    porque a abertura tambem e tarefa enfileirada, com resultado gravado no Redis.
+
+    `sessions` e quantos pregoes a serie tinha depois do criterio do `clean_prices` -- o
+    `N` do motivo da serie curta --, e so vem preenchido em `short_series`.
+    """
+
+    outcome: Literal["opened", "short_series", "already_running", "request_closed"]
+    run_id: int | None
+    sessions: int | None
+
+
+def _after_read_running() -> None:
+    """Ponto de desvio dos testes concorrentes, entre a leitura da `running` e a criacao da
+    execucao. Nao faz nada; e chamado pelo nome global deste modulo."""
+
+
+def _after_close_lock() -> None:
+    """Ponto de desvio dos testes concorrentes, entre a trava do fecho e o `close_run`. Nao
+    faz nada; e chamado pelo nome global deste modulo."""
+
+
+def _short_series_reason(sessions: int) -> str:
+    """O motivo do pedido que fechou por serie curta, da lista fechada de `ondemand`."""
+    return f"serie curta ({sessions} pregoes, minimo {config.MIN_SESSIONS})"
+
+
+@overload
+def _abrir_execucao(
+    ticker: str,
+    calculated_at_iso: str,
+    seed: int,
+    models: list[str],
+    full: bool = ...,
+    request_id: None = ...,
+) -> int | None: ...
+@overload
+def _abrir_execucao(
+    ticker: str,
+    calculated_at_iso: str,
+    seed: int,
+    models: list[str],
+    full: bool = ...,
+    *,
+    request_id: int,
+) -> OpeningResult: ...
 def _abrir_execucao(
     ticker: str,
     calculated_at_iso: str,
     seed: int,
     models: list[str],
     full: bool = False,
-) -> int | None:
-    """Abre a execucao do ativo e enfileira o grupo; devolve o `run_id`.
+    request_id: int | None = None,
+) -> int | OpeningResult | None:
+    """Abre a execucao do ativo e enfileira o grupo depois do commit; devolve o `run_id`.
 
     Serie abaixo de `MIN_SESSIONS` e pulo silencioso, como no sincrono: devolve `None` e
     nao cria linha. `full` e gravado em `full_recompute`, de onde as tarefas o leem.
+
+    **A transacao e literal na ordem** (RF-20, RF-24): a trava por ativo; com `request_id`,
+    o pedido relido sob `select_for_update` -- ja fechado, sai `request_closed`; a `running`
+    recente do ativo -- ha, pula, e com `request_id` liga o pedido a ela; a serie -- curta,
+    sai, e com `request_id` fecha o pedido `done` com o motivo (ou `expired`, se venceu);
+    senao cria a execucao e liga o pedido. O `chord` so e enfileirado **depois do commit**:
+    antes, uma tarefa por modelo poderia rodar sem a `risk_run` visivel para a conexao dela,
+    e um fecho rapido nao veria o pedido ligado.
+
+    O prazo da `running` e contado de `timezone.now()`, nao do `calculated_at` recebido: a
+    rotina passa um instante que pode ter minutos. A `running` e procurada pelo **estado
+    gravado**: um pedido vencido e ainda gravado aberto passa, e quem o grava `expired` e o
+    fecho.
+
+    Sem `request_id` o retorno e o de sempre, `int | None`; com ele, um `OpeningResult`.
     """
     load_all_model_modules()
     load_all_backtest_modules()
     asset = Asset.objects.get(ticker=ticker)
-    bars = _bars(asset)
-    if len(bars) < config.MIN_SESSIONS:
-        logger.info(
-            "%s pulado: serie curta (%d pregoes, minimo %d)",
-            ticker,
-            len(bars),
-            config.MIN_SESSIONS,
+    with transaction.atomic():
+        lock_asset(asset.id)
+        req: ComputeRequest | None = None
+        if request_id is not None:
+            req = ComputeRequest.objects.select_for_update().get(pk=request_id)
+            if req.status not in OPEN_STATUSES:
+                logger.info(
+                    "%s pedido %d ja fechado (%s): nada aberto",
+                    ticker,
+                    request_id,
+                    req.status,
+                )
+                return OpeningResult(
+                    outcome="request_closed", run_id=None, sessions=None
+                )
+        running = (
+            RiskRun.objects.filter(
+                asset=asset,
+                status=RiskRun.Status.RUNNING,
+                calculated_at__gte=timezone.now() - timeout(),
+            )
+            .order_by("-calculated_at")
+            .first()
         )
-        return None
-    run = open_run(
-        asset,
-        datetime.fromisoformat(calculated_at_iso),
-        seed,
-        bars,
-        models,
-        full=full,
-    )
-    # O cabecalho sai por custo, nao na ordem pedida (D-73): com a fila por ordem de
-    # chegada e duas vagas no worker, as redes na frente seguravam os modelos baratos por
-    # minutos. `sorted` e estavel, entao dentro da categoria vale a ordem pedida -- e o
-    # `requested_models`, gravado acima, continua na ordem pedida.
-    by_cost = sorted(models, key=lambda name: _COST_RANK[get_model(name).category])
-    # Montado sem aplicar: `chord(...)(corpo)` ja enfileiraria, e nenhum duplo capturaria
-    # nada. O cabecalho e imutavel (`.si`), porque nao ha o que receber; o corpo (`.s`)
-    # recebe a lista de resultados do cabecalho como primeiro argumento.
-    _enqueue(
-        chord(
+        _after_read_running()
+        if running is not None:
+            logger.info("%s pulado: em calculo (run=%d)", ticker, running.id)
+            if req is None:
+                return None
+            req.risk_run = running
+            req.save(update_fields=["risk_run"])
+            return OpeningResult(
+                outcome="already_running", run_id=running.id, sessions=None
+            )
+        bars = _bars(asset)
+        if len(bars) < config.MIN_SESSIONS:
+            logger.info(
+                "%s pulado: serie curta (%d pregoes, minimo %d)",
+                ticker,
+                len(bars),
+                config.MIN_SESSIONS,
+            )
+            if req is None:
+                return None
+            close_request(
+                req,
+                ComputeRequest.Status.DONE,
+                _short_series_reason(len(bars)),
+                "",
+                timezone.now(),
+            )
+            return OpeningResult(
+                outcome="short_series", run_id=None, sessions=len(bars)
+            )
+        run = open_run(
+            asset,
+            datetime.fromisoformat(calculated_at_iso),
+            seed,
+            bars,
+            models,
+            full=full,
+        )
+        if req is not None:
+            req.risk_run = run
+            req.save(update_fields=["risk_run"])
+        # O cabecalho sai por custo, nao na ordem pedida (D-73): com a fila por ordem de
+        # chegada e duas vagas no worker, as redes na frente seguravam os modelos baratos
+        # por minutos. `sorted` e estavel, entao dentro da categoria vale a ordem pedida --
+        # e o `requested_models`, gravado acima, continua na ordem pedida.
+        by_cost = sorted(models, key=lambda name: _COST_RANK[get_model(name).category])
+        # Montado sem aplicar: `chord(...)(corpo)` ja enfileiraria, e nenhum duplo
+        # capturaria nada. O cabecalho e imutavel (`.si`), porque nao ha o que receber; o
+        # corpo (`.s`) recebe a lista de resultados do cabecalho como primeiro argumento.
+        group = chord(
             [compute_asset_model.si(run.id, model_name) for model_name in by_cost],
             fechar_execucao.s(run.id),
         )
-    )
-    return run.id
+        # `_enqueue` e resolvido na hora do commit, pelo nome global: e onde os testes
+        # poem o duplo.
+        transaction.on_commit(lambda: _enqueue(group))
+    if request_id is None:
+        return run.id
+    return OpeningResult(outcome="opened", run_id=run.id, sessions=None)
 
 
 def _compute_asset_model(run_id: int, model_name: str) -> None:
@@ -293,8 +427,22 @@ def _pair(counts: SnapshotCounts, model_name: str, alpha: float) -> tuple[str, s
 
 
 def _fechar_execucao(_resultados: object, run_id: int) -> None:
-    """O corpo do `chord`: le o banco e escreve estado e fim. `_resultados` e ignorado."""
-    close_run(RiskRun.objects.get(pk=run_id), timezone.now())
+    """O corpo do `chord`: le o banco e escreve estado e fim. `_resultados` e ignorado.
+
+    **Em transacao, literal na ordem** (RF-20): a execucao relida dentro do `atomic`, a
+    trava por ativo, a execucao relida de novo -- o estado depois da trava --, o
+    `close_run` e o `close_linked`, que fecha todo pedido aberto ligado a ela. Fora de
+    transacao a trava `xact` se soltaria no fim da propria consulta, e uma abertura poderia
+    ligar um pedido a esta execucao depois de o fecho passar sem ve-lo.
+    """
+    with transaction.atomic():
+        run = RiskRun.objects.select_related("asset").get(pk=run_id)
+        lock_asset(run.asset_id)
+        _after_close_lock()
+        run.refresh_from_db()
+        now = timezone.now()
+        close_run(run, now)
+        close_linked(run, now)
 
 
 def _recalcular_cobertos(calculated_at_iso: str | None = None) -> None:

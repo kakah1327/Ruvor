@@ -117,6 +117,14 @@ conversas e entre agentes.
 | [D-83](D-83-a-ci-barra-na-pr.md) | A CI barra na PR; substitui a D-42 |
 | [D-84](D-84-frentes-com-cerca-de-pastas.md) | Frentes simultâneas, cada uma com a sua cerca de pastas; restringe a D-23 |
 | [D-85](D-85-o-dono-da-frente-aprova-a-propria-pr.md) | O dono da frente aprova e faz o merge da própria PR; restringe a D-82 |
+| [D-86](D-86-convencoes-da-api-http.md) | As convenções da API HTTP: prefixo, formato de erro, permissão declarada, dados |
+| [D-87](D-87-os-mockups-sao-a-referencia-visual-do-kit.md) | Os mockups são a referência visual; tokens e componentes derivam deles, e o texto das tags é escurecido o mínimo para 4,5:1 |
+| [D-88](D-88-o-kit-tem-dois-temas-pelos-mesmos-tokens.md) | O kit tem dois temas, claro e escuro, pelos mesmos tokens de cor |
+| [D-89](D-89-a-web-enfileira-pelo-nome-da-tarefa.md) | A `web` enfileira pelo nome da tarefa, e os nomes são contrato interno |
+| [D-90](D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md) | Cálculo sob demanda só para ativo nunca calculado: um pedido aberto por ativo, teto global estrito e expiração; o pedido fecha com a `risk_run` |
+| [D-91](D-91-a-rotina-diaria-e-precos-metricas-risco-estende-a-d-69.md) | A rotina diária é `preços → métricas → risco`; estende a D-69 |
+| [D-92](D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md) | Nunca duas execuções do mesmo ativo ao mesmo tempo: a abertura pula o ativo em cálculo |
+| [D-93](D-93-os-icones-do-produto-vem-do-phosphor.md) | Os ícones do produto vêm do Phosphor, num conjunto fechado dentro do kit |
 | [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes

@@ -4,17 +4,17 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-27
+**Última atualização:** 2026-09-28
 
 ---
 
 ## Onde estamos
 
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** na frente `marco1`, o **M1.5b fechou em 2026-09-27**, e **o M1.6 é o próximo**; na
-frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não
-está definido
-**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6) e `fundamentos` (M3.1 ✅ e
+**Bloco:** na frente `marco1`, o **M1.6a fechou em 2026-09-28**, depois do M1.5b, e **o M1.6b é
+o próximo** — as telas; na frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1,
+e o próximo bloco dela não está definido
+**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b) e `fundamentos` (M3.1 ✅ e
 M3.2 ✅, com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
@@ -48,17 +48,23 @@ há contexto:** `manage.py import_disclosures` guarda na `bronze` os zips do IPE
 em `silver.disclosure` os fatos relevantes, comunicados ao mercado e avisos aos acionistas das
 companhias do catálogo, só na versão corrente — 80.900 —, e o `compute_fundamentals`, depois dos
 indicadores, grava em `gold.peer_comparison` a posição de cada ação entre os pares do segmento da
-B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, onze tarefas de app, em
-`apps/risk/tasks.py`, `apps/assets/tasks.py` e `apps/fundamentals/tasks.py`, tipadas pelo
-`celery-types`, e o Beat dispara quatro rotinas — o catálogo, às segundas, e os preços, de segunda
-a sexta, com o recálculo do risco **encadeado** a eles; os fundamentos, às segundas, com o cálculo
-dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 20h.
+B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, treze tarefas de app, em
+`apps/risk/tasks.py`, `apps/assets/tasks.py`, `apps/analytics/tasks.py` e
+`apps/fundamentals/tasks.py`, tipadas pelo `celery-types`, e o Beat dispara quatro rotinas — o
+catálogo, às segundas, e os preços, de segunda a sexta, com as métricas e o recálculo do risco
+**encadeados** a eles (`preços → métricas → risco`, desde o M1.6a); os fundamentos, às segundas,
+com o cálculo dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 20h.
 **Desde o M1.5b o recálculo do risco não refaz o treino:** os quatro modelos caros guardam um
 retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
 treina só o que falta e reconstitui a série inteira do backtest por previsão — em segundos por
 ativo, igual campo a campo ao cálculo do zero, que `compute_risk --full` ainda faz. O motor está
-no `0.3.0`. Vinte e sete tabelas, em cinco apps. Ainda não há API de negócio nem tela de
-produto.
+no `0.3.0`. **Desde o M1.6a há API e kit:** `GET /api/v1/…` entrega catálogo, identidade,
+preços, eventos, métricas e risco de um ativo, no formato da
+[D-86](decisoes/D-86-convencoes-da-api-http.md), e `POST /api/v1/assets/{ticker}/risk` pede o
+cálculo de um ativo nunca calculado — coleta, métricas e risco, pela fila, com um pedido aberto por
+ativo, teto global e expiração em `core.compute_request`. O kit de marca tem tokens completos nos
+dois temas, a folha de componentes e os ícones, mostrados numa vitrine aprovada no portão de
+mockup. Vinte e oito tabelas, em seis apps. Ainda não há tela de produto.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1066,27 +1072,140 @@ tipadas por `celery-types`).
 
 **A dívida de tipos do Celery está quitada** (ver "Dívida registrada").
 
+### M1.6a — Fundação da aplicação
+
+Spec em [`specs/M1.6a-fundacao-da-aplicacao.md`](specs/M1.6a-fundacao-da-aplicacao.md) e plano em
+[`planos/M1.6a-fundacao-da-aplicacao.md`](planos/M1.6a-fundacao-da-aplicacao.md). Frente `marco1`,
+no ramo `marco1/M1.6-aplicacao-web`: quinze tarefas — T1 a T14 e a T4b, acrescentada no portão da
+vitrine —, com commit por tarefa que produz, de `072a944` a `3f907ce`, mais o de fecho; a T13
+mediu as mutações e não produz. Duas trilhas andaram em paralelo, o kit (T2 a T4b) e o backend
+(T1, T5 a T12). A implementação entra na `main` por PR, mesclada pelo dono da frente
+([D-85](decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md)); a PR fica para ele abrir.
+
+| Verificação | Resultado |
+|---|---|
+| O kit: tokens do claro iguais aos mockups, escala tipográfica, nenhuma cor nem tamanho de fonte literal, contraste nos dois temas e nas duas cópias do escuro, foco visível, `tokens.json` igual ao `tokens.css` (V-01 a V-06) | ✅ na suíte do frontend; o `review-text` escurecido para `#7E652B` (4,63:1) é a única exceção por valor do V-01 |
+| **A vitrine aprovada** (V-07) | ✅ pelo dono da frente em 2026-09-28, no estado de `9e2c7fb` — ver "o que a execução contrariou" |
+| O formato de erro da D-86, com `DEBUG` ligado e desligado; a permissão declarada em cada view; a `apps/api` sem o motor (V-08 a V-10) | ✅ |
+| As rotas de leitura, a busca e a paginação, o `/risk` nos treze estados (V-11 a V-13) | ✅ |
+| Um pedido por ativo, o teto estrito, as respostas do `POST`, a expiração e o enfileiramento pelo nome (V-14 a V-18) | ✅ as corridas com threads e barreiras, em `transaction=True` |
+| A cadeia por ticker, a abertura com pedido e nunca duas execuções do mesmo ativo (V-19, V-19b, V-19c) | ✅ as quatro corridas abertura × abertura e abertura × fecho |
+| Os tipos do Celery (V-19d) | ✅ a dívida veio quitada pelo M3.2; este bloco acrescentou `tests/test_tipos.py`, que reprova o override de volta |
+| As métricas na rotina (V-20); nenhum teste sai para a rede (V-22) | ✅ |
+| **O proxy (V-21)** | ✅ `/api/v1/assets` respondeu pela porta do `frontend`, pelo proxy do Vite |
+| **Execução real (V-23)** | ✅ ver abaixo |
+
+**844 testes no backend**, verdes em duas rodadas seguidas no `worker`, e **345 no frontend**;
+`mypy` estrito, `ruff check`, `ruff format --check`, `npm run lint`, `npm run typecheck` e
+`npm run build` limpos. **Vinte e oito tabelas** — as vinte e sete do M3.2 mais
+`core.compute_request` —; **seis apps**, com a `apps/api`; **treze tarefas de app** mais o `ping`,
+com `apps.analytics.tasks.calcular_metricas` e `apps.assets.tasks.calcular_sob_demanda`; **quatro
+entradas no Beat**.
+
+**As 46 mutações remedidas na T13 reprovaram** — 23 do backend e 23 do frontend —, e a árvore
+ficou limpa ao fim. Uma acusa por um caminho que vale registrar: a
+mutação "sem a trava global do `POST`" reprova em três dos quatro casos concorrentes, não nos
+quatro — no do pedido vencido, o `UPDATE` do `expire_stale` sobre a mesma linha já serializa as
+duas transações, e o teste diz isso.
+
+#### Os números da execução real
+
+Com o Beat parado desde a T1, e `web` e `worker` recriados depois do último commit de código.
+
+**V-21**: o proxy do Vite respondeu `/api/v1/assets` pela porta do `frontend`.
+
+**V-23, as leituras**: os quatro ativos cobertos (ITUB4, PETR4, VALE3, IBOV), **as seis rotas
+com 200**. O `/prices` do ITUB4, a série inteira: **349.113 bytes**, 2.494 pregões, em **0,045
+s**.
+
+**V-23, o pedido**: `POST` no ITUB4 → **409 `asset_already_covered`**. `POST` no **`BBDC4`**, ativo
+do catálogo sem preço até então → **202**, pedido id 1; um segundo `POST` 0,2 s depois devolveu
+**o mesmo pedido**. O pedido fechou `done`, motivo `calculado`, em **99,6 s**:
+
+| Etapa | Tempo |
+|---|---|
+| coleta de preço — 2.490 pregões, de 2016-09-28 a 2026-09-25, e 152 eventos | 2,18 s |
+| métricas e abertura do risco | 3,84 s |
+| risco — `lstm` 47,5 s, `gru` 44,7 s, `garchnet` 44,0 s, `caviar` 15,2 s; os cinco baratos até 1,9 s cada; os quatro caros treinaram 9 retratos cada | 93,5 s |
+
+A `risk_run` 61 fechou `ok`, com os 18 resultados sem erro. **O `BBDC4` passou a ser coberto para
+sempre** ([D-51](decisoes/D-51-cobertura-e-o-que-tem-preco.md)): a rotina diária o recalcula a
+partir de agora, como os outros quatro.
+
+**O Beat voltou** depois da execução, com as quatro entradas.
+
+**O que a execução contrariou.**
+
+- **O `flush` do Django não serve aos testes `transaction=True`.** O plano foi aprovado supondo que
+  ele esvaziava o banco ao fim de cada teste; a T6 mediu que ele não enxerga as tabelas com
+  esquema no `db_table` e, sem `available_apps`, nem roda. O plano foi corrigido antes do código:
+  a marca `TRANSACIONAL` e a fixture `banco_limpo`, em `tests/api/migracao.py`, que **todo** teste
+  `transaction=True` usa — cinco módulos, não os quatro que o plano nomeava. Virou aprendizado.
+- **A zona de Basileia do `BBDC4` saiu `verde` nos 18 resultados**, inclusive o `historical` a 5%
+  com 159 violações para 111,85 esperadas. É possível defeito na zona de Basileia do M1.4 para o
+  nível de 5%, e **não foi investigado** — está em *Aberto*.
+- **O portão da vitrine aprovou com uma ressalva**: "textual demais, faltam ícones". O dono
+  comparou três bibliotecas (`docs/mockups/M1.6a/icones-comparativo.html`) e escolheu o Phosphor
+  ([D-93](decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)); a T4b pôs o conjunto fechado
+  em `brand/ruvor/icons/` e enxugou a vitrine, que voltou ao portão e foi aprovada.
+- **A folha pagou duas vezes por especificidade**: o `:where` que baixou o anel de foco sobre
+  fundo escuro para um botão dentro da barra, e o `flex` na regra base que quebrou o texto misto
+  sem ícone. E o `decision` do tema escuro subiu de `#D07E8E` para `#D38595` (e o hover para
+  `#E0A0AC`), porque como texto ficava abaixo de 4,5:1 em três fundos. Virou aprendizado.
+- **Correções do plano, sem mudar contrato**, registradas no fim dele: o banco dos testes
+  `transaction=True`; o quinto módulo; "dois pedidos ligados fecham juntos" com ativos distintos,
+  por causa do índice parcial; o vencido do V-15; a anotação do `CELERY_BEAT_SCHEDULE`, que o M3.2
+  tornou desnecessária; os motivos de falha da cadeia, que a T11 definiu e a T12 moveu; o
+  `/prices` com intervalo sem conferir as chaves (`d5c8224`); o `flex` só com ícone; a montagem de
+  `docs/mockups` no `frontend`; as três classes de arranjo acrescentadas; o `decision` escuro; o
+  anel da barra; e a T4b.
+
+Sete decisões nasceram do bloco — as seis da spec, na ordem dela, e a do portão:
+[D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md) (os mockups são a referência
+visual, e o texto das tags é escurecido o mínimo para 4,5:1),
+[D-88](decisoes/D-88-o-kit-tem-dois-temas-pelos-mesmos-tokens.md) (dois temas, pelos mesmos
+tokens de cor),
+[D-89](decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md) (a `web` enfileira pelo nome da
+tarefa, e os nomes são contrato interno),
+[D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md) (cálculo sob demanda
+só para ativo nunca calculado, um pedido aberto por ativo, teto e expiração),
+[D-91](decisoes/D-91-a-rotina-diaria-e-precos-metricas-risco-estende-a-d-69.md) (a rotina diária
+é `preços → métricas → risco`; estende a D-69),
+[D-92](decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md) (nunca duas
+execuções do mesmo ativo ao mesmo tempo) e
+[D-93](decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md) (os ícones vêm do Phosphor, num
+conjunto fechado dentro do kit).
+
 ## Próximo passo
 
-O M1.5b entrou na `main` pela PR #4, em 2026-09-27. **Na frente `marco1`, a spec do M1.6 — Aplicação web**: a API de leitura, o kit completo, os mockups e as
-primeiras telas, e o cálculo sob demanda para ativo não coberto. O que ela encontra pronto: o
-risco dos ativos cobertos recalculado todo dia útil às 19h30, em **segundos por ativo** — 4,5 a
-10,3 s medidos no fecho do M1.5b, contra 141 a 175 s do cálculo completo —, e o `gold` com o
-manifesto de onde veio cada número (`reused_snapshots`, `trained_snapshots`, `full_recompute`).
-**O cálculo sob demanda de um ativo novo continua custando o completo** — ~2,5 min, a busca de
-configuração e todos os retreinos —, e a tela precisa saber disso antes de prometer resposta.
+**Na frente `marco1`, o M1.6b — As telas**: casco, busca e tela do ativo, **cada uma com mockup
+aprovado antes do código**, sobre o kit e a API do M1.6a. Antes dele, a PR de implementação do
+M1.6a, que o dono da frente abre e mescla com a CI verde. O que o M1.6b encontra pronto:
 
-**A primeira coisa a olhar, sem esforço:** o tique do Beat na segunda-feira, 19h30. É o dia
-comum com um pregão novo de verdade, que o fecho do M1.5b não teve, e a primeira medida da taxa
-de invalidação — as linhas `risco …` do log do `worker` trazem o tempo e o `r/t` de cada tarefa.
-Se os pagadores de provento aparecerem com `trained_snapshots` 9, a estimativa do V-13 se
-confirmou (ver o M1.5b, acima).
+- **o kit**: `brand/ruvor/tokens.css` nos dois temas, `components.css` e `icons/`, com a vitrine
+  aprovada em `docs/mockups/M1.6a/kit.html` — tela nova parte dos mockups de referência e da
+  folha ([D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md));
+- **a API**: as seis rotas de leitura em `/api/v1/`, e o `/risk` com `latest`, `in_progress` e
+  `request` — a tela sabe o que existe, o que está a caminho e por que um pedido não virou risco;
+- **o cálculo sob demanda**: um ativo novo custou **99,6 s** na execução real, quase todo nas três
+  redes. A tela precisa dizer isso antes de prometer resposta, e o teto de 3 pedidos abertos pode
+  responder 429.
 
-**`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta quatro
-`risk_run` a cada dia útil, e `migrate risk zero` apagaria essa história junto — e, desde o
-M1.5b, os retratos. Ela ainda se reconstrói — o preço está em `silver`, e um `--full` dos quatro
-ativos leva ~5,5 min —, mas só para a série de
-hoje, não para a de cada dia passado.
+**Antes de expor a API fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
+qualquer pedido bem-sucedido torna o ativo coberto para sempre
+([D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)).
+
+**A primeira coisa a olhar, sem esforço, continua sendo o tique do Beat num dia útil** (segunda a
+sexta, 19h30). É o dia comum com um pregão novo de verdade, que o fecho do M1.5b não teve, e a
+primeira medida da taxa de invalidação — as linhas `risco …` do log do `worker` trazem o tempo e o
+`r/t` de cada tarefa. Se os pagadores de provento aparecerem com `trained_snapshots` 9, a
+estimativa do V-13 do M1.5b se confirmou. O Beat ficou parado durante todo o M1.6a e voltou depois
+da execução real; a rotina agora também calcula as métricas e inclui o `BBDC4`.
+
+**`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta uma
+`risk_run` por ativo coberto a cada dia útil — cinco, desde o `BBDC4` —, e `migrate risk zero`
+apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
+está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
 **Na frente `fundamentos`, o próximo bloco não está definido.** O M3.2 fecha o Marco 3 do
 ROADMAP para esta frente, e a escolha é do dono dela ([frentes/fundamentos.md](frentes/fundamentos.md)).
@@ -1108,7 +1227,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
 | **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
-| ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) |
+| ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)). O M1.6a acrescentou duas tarefas, limpas no `mypy`, e a guarda que o `mypy` não dá: `tests/test_tipos.py` reprova o override de `celery` de volta (V-19d) |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
@@ -1127,14 +1246,12 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
-| Tema claro vs escuro | kit é claro; decisão de produto pendente |
-| **Escala tipográfica nos tokens** | `tokens.css` não define tamanho de fonte. O casco não declara `font-size` nenhum; a primeira tela de produto (Marco 1) precisa que o kit decida |
+| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
 
 ## Pendências que bloqueiam trabalho futuro
 
 | Pendência | Bloqueia |
 |---|---|
-| **Kit de marca incompleto** — faltam estados de interação (só `:active`) e modo escuro | O portão de mockup do Marco 1 |
 | **Parecer sobre fronteira CVM** | Marco 2 (carteira) |
 | **Verificação de marca e domínio "Ruvor"** | Nada agora; risco se descoberto tarde |
 | **Medir o gargalo do treino** | Decisão sobre GPU vs paralelização — ver [D-20](decisoes/D-20-experimentos-em-cpu.md) |

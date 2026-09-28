@@ -40,6 +40,10 @@ services:
       RUVOR_DB_USER: ${RUVOR_DB_USER:?defina no .env}
       RUVOR_DB_PASSWORD: ${RUVOR_DB_PASSWORD:?defina no .env}
       RUVOR_REDIS_URL: ${RUVOR_REDIS_URL:-redis://redis:6379/0}
+      # o pedido sob demanda: o prazo e lido nos dois lados (o POST na `web`; a cadeia e o
+      # fecho no `worker`). Vazio vale o padrao do settings.py
+      RUVOR_ON_DEMAND_MAX: ${RUVOR_ON_DEMAND_MAX:-}
+      RUVOR_ON_DEMAND_TIMEOUT_MIN: ${RUVOR_ON_DEMAND_TIMEOUT_MIN:-}
     volumes:
       - ./backend:/repo/backend
     ports:
@@ -144,6 +148,7 @@ services:
     volumes:
       - ./frontend:/repo/frontend
       - ./brand/ruvor:/repo/brand/ruvor:ro
+      - ./docs/mockups:/repo/docs/mockups:ro
       - /repo/frontend/node_modules
     ports:
       - "${RUVOR_PORT_FRONTEND:?defina no .env}:5173"
