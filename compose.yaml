@@ -48,6 +48,10 @@ services:
       # fecho no `worker`). Vazio vale o padrao do settings.py
       RUVOR_ON_DEMAND_MAX: ${RUVOR_ON_DEMAND_MAX:-}
       RUVOR_ON_DEMAND_TIMEOUT_MIN: ${RUVOR_ON_DEMAND_TIMEOUT_MIN:-}
+      # a taxa da API, por chave, por usuario e por IP (M4.2, RF-08). Vazio vale o padrao
+      RUVOR_THROTTLE_API_KEY: ${RUVOR_THROTTLE_API_KEY:-}
+      RUVOR_THROTTLE_USER: ${RUVOR_THROTTLE_USER:-}
+      RUVOR_THROTTLE_ANON: ${RUVOR_THROTTLE_ANON:-}
     volumes:
       - ./backend:/repo/backend
     ports:

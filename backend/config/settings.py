@@ -109,6 +109,16 @@ ASGI_APPLICATION = "config.asgi.application"
 # nasce fechada, com 401 `not_authenticated` e `WWW-Authenticate: Session`. O limite `auth`
 # (RF-21) conta por IP, e so as views que declaram `AuthRateThrottle` o usam;
 # `NUM_PROXIES = 0` faz o IP ser o `REMOTE_ADDR` -- sem hospedagem, nao ha proxy confiavel.
+
+
+def _rate(name: str, default: str) -> str:
+    return (
+        os.environ.get(name) or default
+    )  # vazia vale o padrao: o compose a passa vazia
+
+
+# A taxa de toda rota (M4.2, RF-08): por chave, por usuario ou por IP. `auth` e a do limite de
+# `signup`, `login` e `password` (M2.1a, RF-21), que declaram a propria classe.
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.errors.handle_exception",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
@@ -118,7 +128,13 @@ REST_FRAMEWORK = {
         "apps.accounts.authentication.ApiKeyAuthentication",
     ],
     "NUM_PROXIES": 0,
-    "DEFAULT_THROTTLE_RATES": {"auth": "10/min"},
+    "DEFAULT_THROTTLE_CLASSES": ["apps.accounts.throttling.ApiRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": "10/min",
+        "api_key": _rate("RUVOR_THROTTLE_API_KEY", "600/min"),
+        "user": _rate("RUVOR_THROTTLE_USER", "600/min"),
+        "anon": _rate("RUVOR_THROTTLE_ANON", "60/min"),
+    },
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     # O gerador do drf-spectacular exige o proprio AutoSchema em toda view (M4.2, RF-12).

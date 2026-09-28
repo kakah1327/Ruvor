@@ -33,6 +33,7 @@ _MODULOS_DA_FASE_2 = {
     "views.py",
     "serializers.py",
     "urls.py",
+    "throttling.py",  # M4.2
 }
 
 _SCRIPT = """
