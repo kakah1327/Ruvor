@@ -40,6 +40,10 @@ services:
       RUVOR_DB_USER: ${RUVOR_DB_USER:?defina no .env}
       RUVOR_DB_PASSWORD: ${RUVOR_DB_PASSWORD:?defina no .env}
       RUVOR_REDIS_URL: ${RUVOR_REDIS_URL:-redis://redis:6379/0}
+      # banco 1: o 0 e o broker do Celery, e o clear() do cache e flushdb (M2.1a, RF-22)
+      RUVOR_CACHE_URL: ${RUVOR_CACHE_URL:-redis://redis:6379/1}
+      RUVOR_SECURE_COOKIES: ${RUVOR_SECURE_COOKIES:-false}
+      RUVOR_CSRF_TRUSTED_ORIGINS: ${RUVOR_CSRF_TRUSTED_ORIGINS:-}
     volumes:
       - ./backend:/repo/backend
     ports:
