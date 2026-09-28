@@ -4,11 +4,23 @@
 nao estiver nela vira 500 `internal_error`, com mensagem generica. O tratador **nunca**
 devolve `None`: com `None`, o DRF relanca a excecao, e com `DEBUG` ligado o Django
 mostraria a pagina de depuracao, com o traceback.
+
+Desde a fase 2 do M2.1a, a lista ganha tres linhas (RF-27 da spec do M2.1a):
+
+- `NotAuthenticated` -> 401 `not_authenticated`, com o `WWW-Authenticate` que a `APIView` pos
+  em `exc.auth_header`. O status sai de `exc.status_code`, e nao fixo: sem autenticador que de
+  cabecalho, a `APIView` rebaixa a excecao a 403, e ai ela e `permission_denied`;
+- `ValidationError` -> 400 `invalid_parameter`, com os erros por campo em `details.fields`;
+- `Throttled` -> 429 `too_many_requests`, com `Retry-After` e `details.wait_seconds`.
+
+Os cabecalhos sao postos aqui porque quem os copiaria da excecao e o `exception_handler`
+padrao do DRF, que este tratador substitui.
 """
 
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any
 
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
@@ -17,10 +29,13 @@ from rest_framework.exceptions import (
     APIException,
     MethodNotAllowed,
     NotAcceptable,
+    NotAuthenticated,
     NotFound,
     ParseError,
     PermissionDenied,
+    Throttled,
     UnsupportedMediaType,
+    ValidationError,
 )
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
@@ -63,16 +78,51 @@ def _method(context: dict[str, Any]) -> str:
     return method if isinstance(method, str) else "?"
 
 
+def _fields(detail: Any) -> dict[str, list[str]]:
+    """Os erros de um `ValidationError` como `{campo: [mensagens]}`, em texto puro."""
+    if isinstance(detail, dict):
+        return {
+            str(field): [str(item) for item in messages]
+            if isinstance(messages, list)
+            else [str(messages)]
+            for field, messages in detail.items()
+        }
+    items = detail if isinstance(detail, list) else [detail]
+    return {"non_field_errors": [str(item) for item in items]}
+
+
 def handle_exception(exc: Exception, context: dict[str, Any]) -> Response:
     """Traduz a excecao para o formato da D-86. Lista fechada; o resto e 500."""
     status: int
     code: str
     message: str
     details: dict[str, Any] = {}
+    headers: dict[str, str] = {}
 
     if isinstance(exc, ApiError):
         status, code, message = exc.status_code, exc.error_code, exc.error_message
         details = exc.error_details
+    elif isinstance(exc, NotAuthenticated) and exc.status_code == 401:
+        status, code, message = 401, "not_authenticated", "Entre para continuar."
+        auth_header = getattr(exc, "auth_header", None)
+        if auth_header:
+            headers["WWW-Authenticate"] = str(auth_header)
+    elif isinstance(exc, NotAuthenticated):
+        # rebaixado a 403 pela `APIView`: nenhum autenticador deu `WWW-Authenticate`
+        status, code = 403, "permission_denied"
+        message = "Sem permissão para acessar este recurso."
+    elif isinstance(exc, ValidationError):
+        status, code, message = 400, "invalid_parameter", "Dados inválidos."
+        details = {"fields": _fields(exc.detail)}
+    elif isinstance(exc, Throttled):
+        status, code = 429, "too_many_requests"
+        message = "Muitas tentativas. Aguarde e tente de novo."
+        # os stubs do DRF nao declaram `wait`, que o `Throttled.__init__` sempre poe
+        raw_wait = getattr(exc, "wait", None)
+        wait = None if raw_wait is None else math.ceil(raw_wait)
+        details = {"wait_seconds": wait}
+        if wait is not None:
+            headers["Retry-After"] = str(wait)
     elif isinstance(exc, Http404 | NotFound):
         status, code, message = 404, "not_found", "Recurso não encontrado."
     elif isinstance(exc, MethodNotAllowed):
@@ -96,4 +146,4 @@ def handle_exception(exc: Exception, context: dict[str, Any]) -> Response:
         message = "Erro interno. Tente de novo mais tarde."
 
     set_rollback()
-    return Response(_body(code, message, details), status=status)
+    return Response(_body(code, message, details), status=status, headers=headers)
