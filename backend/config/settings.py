@@ -55,6 +55,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Por ultimo: zera a organizacao do contexto no comeco e no fim de cada pedido (M4.2, RF-13).
+    "apps.accounts.tenancy.OrganizationScopeMiddleware",
 ]
 
 # Cookies (RF-02). `Secure` so com HTTPS, que o ambiente local nao tem; a hospedagem liga.
