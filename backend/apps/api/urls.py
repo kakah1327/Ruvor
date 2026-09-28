@@ -13,6 +13,7 @@ from apps.api.views import (
     AssetListView,
     AssetMetricsView,
     AssetPricesView,
+    AssetRiskView,
 )
 
 urlpatterns: list[URLPattern | URLResolver] = [
@@ -21,4 +22,5 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("assets/<str:ticker>/prices", AssetPricesView.as_view()),
     path("assets/<str:ticker>/events", AssetEventsView.as_view()),
     path("assets/<str:ticker>/metrics", AssetMetricsView.as_view()),
+    path("assets/<str:ticker>/risk", AssetRiskView.as_view()),
 ]

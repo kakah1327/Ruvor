@@ -1,4 +1,5 @@
-"""As views da API: a view final de `/api/` e as rotas de leitura de `/api/v1/` (RF-11).
+"""As views da API: a view final de `/api/`, as rotas de leitura de `/api/v1/` (RF-11) e o
+`/risk` (RF-13).
 
 Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao do
 `REST_FRAMEWORK` e `IsAuthenticated`, e uma view que esquecesse a sua nasceria fechada.
@@ -11,7 +12,7 @@ Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, datetime
 from typing import Any, NoReturn
 
 from django.db.models import (
@@ -25,6 +26,7 @@ from django.db.models import (
     Value,
     When,
 )
+from django.utils import timezone
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -33,14 +35,20 @@ from rest_framework.views import APIView
 
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.errors import ApiError
+from apps.api.models import ComputeRequest
+from apps.api.ondemand import timeout
 from apps.api.serializers import (
     AssetDetailSerializer,
     AssetItemSerializer,
     BehaviorMetricSerializer,
+    ComputeRequestSerializer,
     CorporateEventSerializer,
+    InProgressRunSerializer,
+    LatestRunSerializer,
     PriceSerializer,
 )
 from apps.assets.models import Asset, CorporateEvent, Price
+from apps.risk.models import RiskResult, RiskRun
 
 # A paginacao da busca (RF-12).
 DEFAULT_LIMIT = 20
@@ -266,3 +274,75 @@ class AssetMetricsView(APIView):
                 else BehaviorMetricSerializer(metric).data,
             }
         )
+
+
+# As execucoes fechadas: as que o `latest` considera (RF-13).
+CLOSED_RUN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL, RiskRun.Status.FAILED)
+
+
+def risk_body(asset: Asset, now: datetime) -> dict[str, Any]:
+    """O corpo do `/risk` (RF-13): o do `GET` e o de todo 202 do `POST`.
+
+    - `latest`: a execucao fechada (`ok`, `partial`, `failed`) de maior `calculated_at`,
+      com o manifesto e os resultados -- `model_name`, depois `alpha` decrescente
+    - `in_progress`: a `running` de maior `calculated_at`, **se** for mais nova que o
+      `latest` (ou nao ha `latest`) **e** tiver comecado dentro do prazo do RF-18; senao
+      nula -- a `running` fora disso e execucao presa
+    - `request`: o ultimo pedido sob demanda, com o `status` calculado (o aberto vencido sai
+      `expired`, sem gravar: o `GET` nao escreve no banco)
+    - `covered`: o ativo tem preco (D-51)
+    """
+    latest = (
+        RiskRun.objects.filter(asset=asset, status__in=CLOSED_RUN_STATUSES)
+        .select_related("price_run")
+        .prefetch_related(
+            Prefetch(
+                "results",
+                queryset=RiskResult.objects.order_by("model_name", "-alpha"),
+            )
+        )
+        .order_by("-calculated_at")
+        .first()
+    )
+
+    running = (
+        RiskRun.objects.filter(asset=asset, status=RiskRun.Status.RUNNING)
+        .order_by("-calculated_at")
+        .first()
+    )
+    in_progress = None
+    if (
+        running is not None
+        and (latest is None or running.calculated_at > latest.calculated_at)
+        and running.calculated_at >= now - timeout()
+    ):
+        in_progress = running
+
+    request = (
+        ComputeRequest.objects.filter(asset=asset).order_by("-requested_at").first()
+    )
+
+    return {
+        "ticker": asset.ticker,
+        "covered": Price.objects.filter(asset=asset).exists(),
+        "latest": None if latest is None else LatestRunSerializer(latest).data,
+        "in_progress": None
+        if in_progress is None
+        else InProgressRunSerializer(in_progress).data,
+        "request": None
+        if request is None
+        else ComputeRequestSerializer(request, context={"now": now}).data,
+    }
+
+
+class AssetRiskView(APIView):
+    """`GET /api/v1/assets/{ticker}/risk`: o que existe e o que esta a caminho (RF-13).
+
+    Le e nao escreve: o pedido vencido sai `expired` no corpo e continua aberto no banco
+    (RF-18).
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(risk_body(_asset(ticker), timezone.now()))
