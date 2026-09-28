@@ -12,7 +12,7 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 ## Agora
 
 **Bloco:** M2.1a — Identidade e acesso
-**Etapa:** spec em escrita ([`specs/M2.1a-identidade-e-acesso.md`](../specs/M2.1a-identidade-e-acesso.md)); auto-revisão e revisão adversarial pendentes
+**Etapa:** spec em revisão ([`specs/M2.1a-identidade-e-acesso.md`](../specs/M2.1a-identidade-e-acesso.md)); auto-revisão e revisão adversarial pendentes
 **Ramo:** `identidade/M2.1-identidade-e-acesso`, criado em 2026-09-27 a partir da `main` com o plano do M1.6a (PR #10)
 
 ## Próximo passo
@@ -21,7 +21,9 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
    muda `apps/api/errors.py`, o `REST_FRAMEWORK` e o `POST /risk` (ver *Contratos com outras
    frentes* na spec).
 2. Combinar com a `marco1` a migration de `core.compute_request.requested_by` (RF-26).
-3. O plano. A implementação espera o M1.6a na `main` (a base da API e o `POST /risk`).
+3. O plano e a implementação em duas fases (D-107): a **fase 1** (modelo, sessão, serviços,
+   auditoria, comandos) não depende de ninguém e anda já; a **fase 2** (rotas, CSRF da API,
+   limite por IP, códigos de erro, `requested_by`) espera o M1.6a na `main`.
 
 ## O que esta frente espera de outras
 
