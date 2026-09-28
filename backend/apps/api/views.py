@@ -1,5 +1,5 @@
-"""As views da API: a view final de `/api/`, as rotas de leitura de `/api/v1/` (RF-11) e o
-`/risk` (RF-13).
+"""As views da API: a view final de `/api/`, as rotas de leitura de `/api/v1/` (RF-11), o
+`/risk` (RF-13) e o pedido de calculo sob demanda, o `POST` do `/risk` (RF-14 a RF-19).
 
 Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao do
 `REST_FRAMEWORK` e `IsAuthenticated`, e uma view que esquecesse a sua nasceria fechada.
@@ -15,6 +15,8 @@ import re
 from datetime import date, datetime
 from typing import Any, NoReturn
 
+from django.conf import settings
+from django.db import transaction
 from django.db.models import (
     Case,
     Exists,
@@ -36,7 +38,13 @@ from rest_framework.views import APIView
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.errors import ApiError
 from apps.api.models import ComputeRequest
-from apps.api.ondemand import timeout
+from apps.api.ondemand import (
+    OPEN_STATUSES,
+    enqueue_chain,
+    expire_stale,
+    lock_on_demand,
+    timeout,
+)
 from apps.api.serializers import (
     AssetDetailSerializer,
     AssetItemSerializer,
@@ -335,14 +343,90 @@ def risk_body(asset: Asset, now: datetime) -> dict[str, Any]:
     }
 
 
-class AssetRiskView(APIView):
-    """`GET /api/v1/assets/{ticker}/risk`: o que existe e o que esta a caminho (RF-13).
+def _before_insert() -> None:
+    """Ponto de desvio dos testes concorrentes (V-14, V-15): entre as decisoes do `POST` e o
+    `insert`, sob a trava. Nao faz nada; o `POST` o chama pelo nome global."""
 
-    Le e nao escreve: o pedido vencido sai `expired` no corpo e continua aberto no banco
-    (RF-18).
+
+class AssetRiskView(APIView):
+    """`/api/v1/assets/{ticker}/risk`.
+
+    - `GET`: o que existe e o que esta a caminho (RF-13). Le e nao escreve: o pedido vencido
+      sai `expired` no corpo e continua aberto no banco (RF-18).
+    - `POST`: o pedido de calculo sob demanda, so para ativo nunca calculado (RF-14), na
+      ordem literal do RF-17 -- a trava global, a expiracao dos vencidos, as decisoes e o
+      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19).
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
 
     def get(self, request: Request, ticker: str) -> Response:
         return Response(risk_body(_asset(ticker), timezone.now()))
+
+    def post(self, request: Request, ticker: str) -> Response:
+        """Decide **dentro** do `atomic` e levanta o erro **depois** de sair dele: um
+        `ApiError` de dentro desfaria o `expire_stale`, e os vencidos tem de ficar gravados
+        (RF-18). O corpo do 202 e lido depois do `atomic` -- e do `on_commit` --, e por isso
+        mostra o pedido `failed` quando o broker recusa (RF-19).
+        """
+        asset = _asset(ticker)
+        if asset.status == Asset.Status.INACTIVE:
+            raise ApiError(
+                422,
+                "asset_inactive",
+                f"Ativo {asset.ticker} está inativo.",
+                {"ticker": asset.ticker},
+            )
+        now = timezone.now()
+        with transaction.atomic():
+            lock_on_demand()
+            expire_stale(now)
+            error = _decide(asset, now)
+        if error is not None:
+            raise error
+        return Response(risk_body(asset, now), status=202)
+
+
+def _decide(asset: Asset, now: datetime) -> ApiError | None:
+    """Os passos 4 a 6 do RF-17, sob a trava e depois do `expire_stale`: devolve o 409 ou o
+    429 -- para o `POST` levantar fora do `atomic` --, ou `None` para o 202, inserindo o
+    pedido novo quando e o caso."""
+    if ComputeRequest.objects.filter(asset=asset, status__in=OPEN_STATUSES).exists():
+        return None  # 202: o pedido aberto do ativo
+    last_closed = (
+        RiskRun.objects.filter(asset=asset, status__in=CLOSED_RUN_STATUSES)
+        .order_by("-calculated_at")
+        .values_list("calculated_at", flat=True)
+        .first()
+    )
+    running = RiskRun.objects.filter(
+        asset=asset, status=RiskRun.Status.RUNNING, calculated_at__gte=now - timeout()
+    )
+    if last_closed is not None:
+        running = running.filter(calculated_at__gt=last_closed)
+    if running.exists():
+        return None  # 202, sem pedido novo: a `running` valida do ativo (RF-14)
+    if last_closed is not None:
+        return ApiError(
+            409,
+            "asset_already_covered",
+            f"Ativo {asset.ticker} já tem risco calculado; quem o recalcula é a rotina "
+            "diária.",
+            risk_body(asset, now),
+        )
+    maximum: int = settings.RUVOR_ON_DEMAND_MAX
+    if ComputeRequest.objects.filter(status__in=OPEN_STATUSES).count() >= maximum:
+        return ApiError(
+            429,
+            "on_demand_queue_full",
+            f"A fila de cálculo sob demanda está cheia ({maximum} pedidos abertos).",
+            {"max": maximum},
+        )
+    _before_insert()
+    req = ComputeRequest.objects.create(
+        asset=asset, status=ComputeRequest.Status.QUEUED, requested_at=now
+    )
+    request_id = req.pk
+    # o nome global, que os testes substituem em `apps.api.views.enqueue_chain`
+    transaction.on_commit(lambda: enqueue_chain(request_id))
+    return None

@@ -31,10 +31,12 @@ aberto -- um pedido ja fechado nao muda.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.db import connection
+from django.utils import timezone
 
 from apps.api.models import ComputeRequest
 from apps.risk.models import RiskRun
@@ -43,10 +45,16 @@ from config.celery import app
 LOCK_CLASS_ON_DEMAND = 7101  # pg_advisory_xact_lock(7101, 0): a trava global do POST
 LOCK_CLASS_ASSET = 7102  # pg_advisory_xact_lock(7102, asset_id): a trava por ativo
 
+logger = logging.getLogger(__name__)
+
 OPEN_STATUSES = (ComputeRequest.Status.QUEUED, ComputeRequest.Status.RUNNING)
 
 REASON_CALCULATED = "calculado"
+REASON_COLLECT_FAILED = "falhou na coleta"
+REASON_METRICS_FAILED = "falhou nas metricas"
+REASON_OPENING_FAILED = "falhou na abertura"
 REASON_RUN_FAILED = "a execucao falhou"
+REASON_BROKER_REFUSED = "o broker recusou o pedido"
 
 
 def _xact_lock(lock_class: int, lock_id: int) -> None:
@@ -147,5 +155,23 @@ def close_linked(run: RiskRun, now: datetime) -> int:
 
 def enqueue_chain(request_id: int) -> None:
     """Enfileira a cadeia do pedido pelo nome registrado (RF-19): a `web` nunca importa um
-    `tasks.py` que importe o motor. E o ponto que os testes substituem por duplo."""
-    app.send_task("apps.assets.tasks.calcular_sob_demanda", args=[request_id])
+    `tasks.py` que importe o motor. E o ponto que os testes substituem por duplo.
+
+    Se o broker recusar, o pedido fecha `failed` "o broker recusou o pedido", com o erro --
+    ou `expired`, se ja venceu (RF-15). Roda no `on_commit` do `POST`, fora da transacao
+    dele: a escrita do fecho e em autocommit.
+    """
+    try:
+        # o nome literal: o V-18 o le do codigo por `ast` e o confere no registro do `worker`
+        app.send_task("apps.assets.tasks.calcular_sob_demanda", args=[request_id])
+    except Exception as exc:
+        logger.exception("o broker recusou o pedido %d", request_id)
+        req = ComputeRequest.objects.filter(pk=request_id).first()
+        if req is not None:
+            close_request(
+                req,
+                ComputeRequest.Status.FAILED,
+                REASON_BROKER_REFUSED,
+                str(exc),
+                timezone.now(),
+            )

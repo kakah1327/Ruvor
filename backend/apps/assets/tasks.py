@@ -42,7 +42,18 @@ from django.utils import timezone
 from apps.analytics.compute import run_compute_metrics
 from apps.analytics.tasks import calcular_metricas
 from apps.api.models import ComputeRequest
-from apps.api.ondemand import OPEN_STATUSES, close_request, expired_reason, is_expired
+from apps.api.ondemand import (
+    OPEN_STATUSES,
+    close_request,
+    expired_reason,
+    is_expired,
+)
+
+# Os motivos das tres etapas da cadeia, da lista fechada de `apps.api.ondemand` (RF-15). O
+# `as` reexporta: os testes da cadeia os importam deste modulo.
+from apps.api.ondemand import REASON_COLLECT_FAILED as REASON_COLLECT_FAILED
+from apps.api.ondemand import REASON_METRICS_FAILED as REASON_METRICS_FAILED
+from apps.api.ondemand import REASON_OPENING_FAILED as REASON_OPENING_FAILED
 from apps.assets.prices import run_import_prices
 from apps.assets.yahoo import YahooClient
 from apps.risk.compute import MODELS, ModelsMissing
@@ -51,11 +62,6 @@ from apps.risk.tasks import _abrir_execucao, _missing_models, recalcular_coberto
 from config.celery import app
 
 logger = logging.getLogger(__name__)
-
-# Os motivos das tres etapas da cadeia, da lista fechada de `apps.api.ondemand` (RF-15).
-REASON_COLLECT_FAILED = "falhou na coleta"
-REASON_METRICS_FAILED = "falhou nas metricas"
-REASON_OPENING_FAILED = "falhou na abertura"
 
 
 def _enqueue(signature: Any) -> None:
