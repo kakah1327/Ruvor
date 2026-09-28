@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from celery.schedules import crontab
@@ -119,6 +120,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": _cron("RUVOR_BEAT_DISCLOSURES_CRON", "0 20 * * 1-5"),
     },
 }
+
+# O pedido de calculo sob demanda (RF-17 e RF-18 do M1.6a): o teto global de pedidos
+# abertos e o prazo depois do qual um pedido aberto e tratado como fechado. `or`, como no
+# `_cron`: o compose passa a variavel vazia quando o .env nao a define.
+RUVOR_ON_DEMAND_MAX: int = int(os.environ.get("RUVOR_ON_DEMAND_MAX") or 3)
+RUVOR_ON_DEMAND_TIMEOUT: timedelta = timedelta(
+    minutes=int(os.environ.get("RUVOR_ON_DEMAND_TIMEOUT_MIN") or 30)
+)
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
