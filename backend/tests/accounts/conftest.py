@@ -26,6 +26,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import cache
 from django.http import HttpRequest, HttpResponse
 from django.test import RequestFactory
+from pytest_django import Settings
 
 from apps.accounts.models import Organization, User
 
@@ -35,6 +36,14 @@ SENHA = "cavalo-bateria-grampo-42"
 @pytest.fixture(autouse=True)
 def cache_limpo() -> None:
     cache.clear()
+
+
+@pytest.fixture(params=[True, False], ids=["debug_ligado", "debug_desligado"])
+def debug(request: pytest.FixtureRequest, settings: Settings) -> bool:
+    """Copia da de `tests/api/conftest.py` (V-03, V-20): `conftest` nao se importa."""
+    ligado: bool = request.param
+    settings.DEBUG = ligado
+    return ligado
 
 
 def _sem_resposta(request: HttpRequest) -> HttpResponse:

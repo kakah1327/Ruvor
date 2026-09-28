@@ -108,11 +108,14 @@ def test_corpo_json_malformado_e_invalid_parameter(client: Client, debug: bool) 
 
 
 @URLS_DE_TESTE
-def test_view_sem_permissao_declarada_nasce_fechada(
+def test_view_sem_permissao_declarada_nasce_fechada_com_401(
     client: Client, debug: bool
 ) -> None:
-    erro = _erro(client.get("/test/sem-permissao"), 403, "permission_denied")
+    # Desde o M2.1a (RF-03) ha autenticacao: quem nao entrou recebe 401, nao 403.
+    resposta = client.get("/test/sem-permissao")
+    erro = _erro(resposta, 401, "not_authenticated")
     assert erro["details"] == {}
+    assert resposta["WWW-Authenticate"] == "Session"
 
 
 @URLS_DE_TESTE

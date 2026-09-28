@@ -101,13 +101,19 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# A API HTTP (D-86, RF-09 do M1.6a). Sem classe de autenticacao, o DRF entrega um
-# AnonymousUser, o IsAuthenticated nega e a excecao e PermissionDenied: uma view que
-# esqueca de declarar a sua permissao nasce fechada, com 403 `permission_denied`.
+# A API HTTP (D-86, RF-09 do M1.6a). A autenticacao e a sessao do Django, com CSRF (M2.1a,
+# RF-03; D-100): uma view que esqueca de declarar a sua permissao herda `IsAuthenticated` e
+# nasce fechada, com 401 `not_authenticated` e `WWW-Authenticate: Session`. O limite `auth`
+# (RF-21) conta por IP, e so as views que declaram `AuthRateThrottle` o usam;
+# `NUM_PROXIES = 0` faz o IP ser o `REMOTE_ADDR` -- sem hospedagem, nao ha proxy confiavel.
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.errors.handle_exception",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.accounts.authentication.SessionAuthentication"
+    ],
+    "NUM_PROXIES": 0,
+    "DEFAULT_THROTTLE_RATES": {"auth": "10/min"},
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 }
