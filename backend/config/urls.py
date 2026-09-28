@@ -5,6 +5,8 @@ from config.views import health
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("health", health),
+    # As rotas de conta (M2.1a) antes das da API de leitura: prefixos distintos, mesma raiz.
+    path("api/v1/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.api.urls")),
     # A view final da API (D-86): depois de `/api/v1/`, pega o resto de `/api/` e
     # responde `not_found` no formato da API. Fora de `/api/`, o Django nao muda.
