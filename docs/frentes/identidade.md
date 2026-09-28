@@ -1,7 +1,7 @@
 # Frente `identidade`
 
-**Dono:** ⏸ **sem dono.** A frente está pronta para quem entrar no time; até lá, não começa
-**Bloco:** M2.1 — Identidade e acesso: autenticação, papéis, permissões e telas de login
+**Dono:** kakah1327 (Kauã), desde 2026-09-27 — também dono da `fundamentos`, que está parada
+**Blocos:** M2.1a — Identidade e acesso (backend) → M2.1b — As telas de acesso
 ([ROADMAP](../ROADMAP.md#marco-2--vira-plataforma)).
 **Cerca:** `backend/apps/accounts/` e os testes dela; telas de login só depois do casco do M1.6.
 Detalhe em [FRENTES.md](../FRENTES.md#cercas).
@@ -11,45 +11,30 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 ## Agora
 
-**Etapa:** não começou — espera um dono
-**Ramo:** `identidade/M2.1-identidade-e-acesso`, ainda não criado
+**Bloco:** M2.1a — Identidade e acesso
+**Etapa:** spec em escrita ([`specs/M2.1a-identidade-e-acesso.md`](../specs/M2.1a-identidade-e-acesso.md)); auto-revisão e revisão adversarial pendentes
+**Ramo:** `identidade/M2.1-identidade-e-acesso`, criado em 2026-09-27 a partir da `main` com o plano do M1.6a (PR #10)
 
 ## Próximo passo
 
-1. Ler, nesta ordem: [`CLAUDE.md`](../../CLAUDE.md), [`PROCESSO.md`](../PROCESSO.md),
-   [`aprendizados.md`](../aprendizados.md) e [`FRENTES.md`](../FRENTES.md).
-2. Subir o ambiente (`docker compose up`) e rodar a suíte no `worker`, como diz o `CLAUDE.md`.
-   Isso prova a máquina antes de qualquer código.
-3. Criar o ramo a partir da `main`.
-4. **Escrever a spec do M2.1**, conversando com o dono da frente. O modelo de spec mais próximo é
-   o do [F4](../specs/F4-fundacao-de-dados.md), que criou o usuário e a organização.
-
-## O que a spec do M2.1 encontra pronta, e precisa ler
-
-- **O usuário e a organização já existem**, desde o F4: `core.user` autentica por e-mail e herda
-  `AbstractBaseUser` ([D-39](../decisoes/D-39-usuario-proprio-autentica-por-email.md)); todo
-  usuário tem organização obrigatória ([D-24](../decisoes/D-24-organizacao-desde-a-primeira-migration.md));
-  a organização fixa do Marco 1 tem `slug` `ruvor`.
-- **O usuário é exceção permanente ao filtro por organização**, e o M2.1 precisa isolar a
-  listagem de usuários por outro meio ([D-41](../decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)).
-- **Duas dívidas registradas vencem neste bloco** ([ESTADO](../ESTADO.md#dívida-registrada)):
-  - `createsuperuser` não funciona: o gerente exige organização e o comando não tem como
-    fornecê-la. O M2.1 decide como o primeiro usuário nasce.
-  - `gold.risk_run.requested_by` é sempre nulo. O arquivo (`apps/risk/models.py`) é da frente
-    `marco1`: combinar com ela na spec quem escreve a linha.
-- **O parecer da CVM não bloqueia este bloco**: autenticação não informa nem recomenda
-  investimento ([D-84](../decisoes/D-84-frentes-com-cerca-de-pastas.md)). Bloqueia a
-  carteira, o M2.2.
+1. Auto-revisão e revisão adversarial da spec; depois o PR dela, que **passa pela `marco1`**:
+   muda `apps/api/errors.py`, o `REST_FRAMEWORK` e o `POST /risk` (ver *Contratos com outras
+   frentes* na spec).
+2. Combinar com a `marco1` a migration de `core.compute_request.requested_by` (RF-26).
+3. O plano. A implementação espera o M1.6a na `main` (a base da API e o `POST /risk`).
 
 ## O que esta frente espera de outras
 
 | De | O quê | Estado |
 |---|---|---|
-| `marco1` | **convenções da API HTTP**: prefixo, versão, formato de erro. A autenticação da API é deste bloco, e precisa casar com elas | 🔴 aberto. Decidir numa decisão própria antes da primeira spec que publicar rota, com as duas frentes na revisão |
-| `marco1` | **casco do frontend e kit completo**, para as telas de login | ⬜ vem no M1.6. Até lá, só o backend |
+| `marco1` | **convenções da API HTTP** | ✅ [D-86](../decisoes/D-86-convencoes-da-api-http.md) |
+| `marco1` | **a base da API** (`apps/api`, o tratador de erro, `REST_FRAMEWORK`) e o `POST /risk` | ⬜ M1.6a, plano aprovado, implementação não começou |
+| `marco1` | a migration de `core.compute_request.requested_by` | 🔴 a combinar |
+| `marco1` | **casco do frontend e kit completo**, para as telas do M2.1b | ⬜ M1.6a/M1.6b |
 
 ## Registro
 
 | Data | O que aconteceu |
 |---|---|
 | 2026-09-26 | frente criada pela D-84 |
+| 2026-09-27 | o Kauã assume a frente. Decidido com o dono: M2.1 dividido em M2.1a (backend) e M2.1b (telas); sessão do Django com CSRF; cadastro aberto com organização pessoal; papéis `admin` e `member` por organização; organização real por comando, usuário criado pela administradora com senha provisória; auditoria de eventos de acesso; recuperação de senha por e-mail fora (dívida); `requested_by` preenchido por este bloco, com revisão da `marco1`. Máquina preparada (`docker compose up`). Spec escrita, com as premissas conferidas no DRF 3.18.1 e no Django 6.1.1 |

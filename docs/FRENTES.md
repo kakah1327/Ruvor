@@ -29,12 +29,11 @@ a frente e crie o ramo pelo formato abaixo.
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
 | `marco1` | darkside171 | M1.5b ✅ → M1.6 | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5b-treino-separado` — bloco fechado, PR de implementação a abrir; o M1.6 abre ramo próprio depois do merge |
-| `identidade` | ⏸ **sem dono** — espera o próximo dev | M2.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
+| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1a → M2.1b | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
 
-**Hoje são duas frentes ativas**, `marco1` e `fundamentos`. A `identidade` está definida — cerca,
-contratos e próximo passo prontos — para quem entrar no time; até lá, ninguém escreve na cerca
-dela.
+**Hoje são duas frentes ativas**, `marco1` e `identidade`. A `fundamentos` fechou o M3.2 e está
+parada, sem próximo bloco definido; o Kauã, dono dela, assumiu a `identidade` em 2026-09-27.
 
 **Ramo:** `<frente>/<bloco>-<assunto>`. Um ramo por bloco, com três PRs: spec, plano e
 implementação. **O merge da PR pelo dono da frente, com a CI verde, é o portão
@@ -104,7 +103,7 @@ outras frentes.
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | D-85 |
-| D-100 a D-119 | `identidade` | — |
+| D-100 a D-119 | `identidade` | — (reservadas pela spec do M2.1a: D-100 a D-106) |
 | D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da

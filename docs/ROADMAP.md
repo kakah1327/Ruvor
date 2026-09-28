@@ -67,7 +67,8 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M2.1 — Identidade e acesso** | autenticação, papéis, permissões, telas de login |
+| 🟡 | **M2.1a — Identidade e acesso** | o backend: sessão, cadastro, entrada, papéis `admin`/`member` por organização, gestão de usuários pela administradora, auditoria de acesso e `requested_by` — frente `identidade`. O M2.1 foi dividido em dois em 2026-09-27 |
+| ⬜ | **M2.1b — As telas de acesso** | login, cadastro, troca de senha e gestão de usuários, cada uma com mockup aprovado, sobre o casco e o kit do M1.6b |
 | ⬜ | **M2.2 — Carteira** | composição pelo usuário e risco de carteira |
 | ⬜ | **M2.3 — Camada explicativa** | leitura iniciante/avançado como sistema |
 | ⬜ | **M2.4 — Regime de laboratório** | a camada 3 validada ao longo de uma década, na plataforma ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); veio do Marco 1 pela [D-74](decisoes/D-74-o-marco-1-e-so-producao.md) |
