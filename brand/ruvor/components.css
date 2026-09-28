@@ -32,7 +32,13 @@
 /* --- Ícone ao lado do texto (D-93) ---------------------------------------------- */
 
 /* O svg de brand/ruvor/icons/regular/, inline. Quem o põe ao lado do rótulo dá o espaço
-   (gap) na própria regra; fora de flex, o vertical-align o assenta na linha do texto. */
+   (gap) na própria regra; fora de flex, o vertical-align o assenta na linha do texto.
+
+   Botão, dica, erro de campo e callout só viram flex quando têm o ícone como filho direto
+   (:has(> .ruvor-glyph), e no callout também > .ruvor-icon): sem ícone, o conteúdo segue o
+   fluxo normal do texto, como nos mockups — negrito no meio da frase e text-align valem.
+   Com ícone, o conteúdo ao lado dele vai num só filho (um <span> ou <div>): num contêiner
+   flex, cada pedaço de texto e cada <b> viraria um item separado pelo gap. */
 .ruvor-glyph {
   display: inline-block;
   flex: none;
@@ -241,10 +247,6 @@
 
 .ruvor-btn {
   box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   font: inherit;
   font-weight: var(--ruvor-type-small-weight);
   border: 1px solid var(--ruvor-border);
@@ -253,6 +255,13 @@
   color: var(--ruvor-ink);
   padding: 9px 13px;
   cursor: pointer;
+}
+
+.ruvor-btn:has(> .ruvor-glyph) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .ruvor-btn:hover:not(:disabled, [aria-disabled="true"]) {
@@ -358,20 +367,21 @@
 }
 
 .ruvor-hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   font-size: var(--ruvor-type-micro-size);
   color: var(--ruvor-text-muted);
 }
 
 .ruvor-field__error {
-  display: flex;
-  align-items: center;
-  gap: 4px;
   font-size: var(--ruvor-type-micro-size);
   font-weight: var(--ruvor-type-micro-weight);
   color: var(--ruvor-critical-text);
+}
+
+.ruvor-hint:has(> .ruvor-glyph),
+.ruvor-field__error:has(> .ruvor-glyph) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* --- Escolha --------------------------------------------------------------------- */
@@ -626,18 +636,28 @@
 
 /* --- Destaque, código e esqueleto ------------------------------------------------ */
 
-/* O ícone vai ao lado do conteúdo, que fica num só filho. */
 .ruvor-callout {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
   border-radius: var(--ruvor-radius-md);
   padding: 17px;
   background: var(--ruvor-callout);
 }
 
+/* Com ícone, ele vai ao lado do conteúdo, que fica num só filho. */
+.ruvor-callout:has(> .ruvor-icon, > .ruvor-glyph) {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .ruvor-callout--critical {
   background: var(--ruvor-critical-soft);
+}
+
+/* O sinal dentro do callout crítico: o fundo -soft dele sumiria no do callout (o crítico,
+   critical-soft sobre critical-soft); sobre surface, a cor do sinal fica com o contraste
+   que V-04 mede. */
+.ruvor-callout--critical .ruvor-icon {
+  background: var(--ruvor-surface);
 }
 
 .ruvor-code {

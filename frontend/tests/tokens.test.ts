@@ -263,7 +263,8 @@ const PAIRS: readonly Pair[] = [
   ["focus-on-dark", "topbar", 3],
   ["focus-on-dark", "code-bg", 3],
   ...SIGNALS.map(([signal, soft]): Pair => [signal, soft, 3]),
-  ["critical", "surface", 3],
+  // O sinal dentro do callout crítico fica sobre surface (components.css).
+  ...SIGNALS.map(([signal]): Pair => [signal, "surface", 3]),
 ];
 
 describe("V-04 — contraste", () => {
@@ -485,6 +486,49 @@ describe("RF-03 — o campo inválido mantém a borda no hover", () => {
       for (const part of hovers) expect(part).toContain('[aria-invalid="true"]');
     },
   );
+});
+
+// D-93: o ícone não muda o conteúdo de quem não o tem. Botão, dica, erro de campo e callout
+// só viram flex (com gap) sob :has(> ícone); a regra base fica no fluxo do texto, como no
+// mockup — senão o <b> no meio da frase e o text-align se perdem.
+const ICON_FLEX: ReadonlyArray<readonly [string, readonly string[]]> = [
+  [".ruvor-btn", ["> .ruvor-glyph"]],
+  [".ruvor-hint", ["> .ruvor-glyph"]],
+  [".ruvor-field__error", ["> .ruvor-glyph"]],
+  [".ruvor-callout", ["> .ruvor-icon", "> .ruvor-glyph"]],
+];
+const FLEX_DECLARATION = /(?<![\w-])(display\s*:\s*(inline-)?flex|gap\s*:)/;
+
+describe("D-93 — o flex do ícone só existe com o ícone", () => {
+  it.each(ICON_FLEX)("%s: a regra base não tem display:flex nem gap", (base) => {
+    const own = COMPONENT_RULES.filter((rule) =>
+      selectorParts(rule.selector).includes(base),
+    );
+    expect(own.length, base).toBeGreaterThan(0);
+    for (const rule of own) expect(rule.body).not.toMatch(FLEX_DECLARATION);
+  });
+
+  it.each(ICON_FLEX)("%s: o flex vem só de :has(> ícone)", (base, children) => {
+    // Toda parte de seletor do próprio componente (ele, com estado ou :has) que liga o flex.
+    const flexParts = COMPONENT_RULES.filter((rule) =>
+      FLEX_DECLARATION.test(rule.body),
+    ).flatMap((rule) =>
+      selectorParts(rule.selector).filter(
+        (part) => part === base || part.startsWith(`${base}:`),
+      ),
+    );
+    expect(flexParts.length, `${base} sem flex com ícone`).toBeGreaterThan(0);
+    for (const part of flexParts) {
+      expect(part.startsWith(`${base}:has(`), part).toBe(true);
+      for (const child of children) expect(part).toContain(child);
+    }
+  });
+
+  it("o sinal no callout crítico fica sobre surface", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-callout--critical .ruvor-icon", "background"),
+    ).toBe("var(--ruvor-surface)");
+  });
 });
 
 describe("RF-06 — a folha só estiliza classe", () => {

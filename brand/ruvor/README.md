@@ -123,7 +123,16 @@ pacote.
 
 **A cor do ícone é a do texto** (`currentColor`); o arquivo não carrega cor. **Ícone nunca é o
 único sinal**: vem com rótulo, ou com `aria-label` no botão só de ícone (`.ruvor-btn--icon`), e
-o `svg` decorativo leva `aria-hidden="true"`. Os desenhos não se alteram. Ícone novo entra por
+o `svg` decorativo leva `aria-hidden="true"`. No botão só de ícone, "carregando" é trocar o
+glyph pelo `spinner-gap`, além do `aria-busy="true"`.
+
+**Com ícone, o conteúdo vai num só filho.** Botão, dica (`.ruvor-hint`), erro de campo
+(`.ruvor-field__error`) e `callout` só viram flex quando o ícone é filho direto — `.ruvor-glyph`,
+ou `.ruvor-icon` no `callout` —; sem ícone, o texto corre normal, como nos mockups. Com ícone, o
+que vai ao lado dele fica num só elemento (`<span>` ou `<div>`): solto no contêiner flex, cada
+pedaço de texto e cada `<b>` viraria um item, separado pelo `gap`.
+
+Os desenhos não se alteram. Ícone novo entra por
 acréscimo ao conjunto, do mesmo Phosphor, com entrada no `icons.json` — o teste
 `frontend/tests/icones.test.ts` reprova arquivo sem entrada, cor fixa e ícone fora da
 [vitrine](../../docs/mockups/M1.6a/kit.html).

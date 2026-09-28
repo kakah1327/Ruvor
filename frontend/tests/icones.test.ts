@@ -4,7 +4,8 @@
  * M1.6a T4b (D-93) — os ícones do kit: o conjunto fechado copiado do Phosphor para
  * brand/ruvor/icons/. Todo .svg está no icons.json e vice-versa; cada um tem a caixa do
  * Phosphor e nenhuma cor literal; a licença vem junto; a versão é exata; e a vitrine
- * (docs/mockups/M1.6a/kit.html) mostra cada ícone, com o desenho copiado do arquivo.
+ * (docs/mockups/M1.6a/kit.html) mostra cada ícone, com o desenho copiado do arquivo — todo
+ * svg dela, não só o da galeria, e cada sinal com o duotone da sua semântica.
  *
  * No contêiner, brand/ruvor e docs/mockups são montagens só de leitura em /repo. Arquivo
  * ausente reprova: nada aqui pula.
@@ -137,5 +138,69 @@ describe("D-93 — a vitrine mostra cada ícone, copiado do arquivo", () => {
         expect(drawing(svg), `${name} ${weight}`).toBe(drawing(original));
       }
     }
+  });
+});
+
+// Todo desenho da vitrine, não só o da galeria: a barra, os botões, as tags, os sinais.
+describe("D-93 — todo svg da vitrine é um desenho do conjunto", () => {
+  const kit = existsSync(KIT) ? readFileSync(KIT, "utf8") : "";
+  const viewBox = (svg: string): string | undefined =>
+    /^<svg\b[^>]*\bviewBox="([^"]*)"/.exec(svg.trim())?.[1];
+
+  // Desenho → [arquivo, viewBox]: um por arquivo do conjunto, regular e duotone.
+  const BY_DRAWING = new Map<string, readonly [string, string | undefined]>();
+  for (const file of FILES) {
+    const svg = readFileSync(join(ICONS, file), "utf8");
+    BY_DRAWING.set(drawing(svg), [file, viewBox(svg)]);
+  }
+
+  it("cada <svg> inline tem o conteúdo e o viewBox de um arquivo de icons/", () => {
+    const inline = [...kit.matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/g)].map((m) => m[0]);
+    // Nenhum <svg> escapa da contagem (um sem fecho, por exemplo).
+    expect(inline.length).toBe([...kit.matchAll(/<svg\b/g)].length);
+    expect(inline.length).toBeGreaterThan(NAMES.length);
+    const wrong = inline.flatMap((svg, index) => {
+      const found = BY_DRAWING.get(drawing(svg));
+      if (!found) return [`#${index}: desenho fora do conjunto`];
+      if (viewBox(svg) !== found[1]) {
+        return [
+          `#${index} (${found[0]}): viewBox ${viewBox(svg)}, o arquivo tem ${found[1]}`,
+        ];
+      }
+      return [];
+    });
+    expect(wrong).toEqual([]);
+  });
+
+  // O mapa da D-93: a semântica do sinal decide o duotone.
+  const DUOTONE_OF: Readonly<Record<string, string>> = {
+    decision: "flag",
+    review: "warning",
+    evidence: "info",
+    validated: "check-circle",
+    critical: "x-circle",
+  };
+
+  it("todo .ruvor-icon--<semântica> contém o duotone da sua semântica", () => {
+    const classed = [...kit.matchAll(/class="[^"]*\bruvor-icon--[a-z]+/g)].length;
+    const signals = [
+      ...kit.matchAll(
+        /<\w+\b[^>]*\bclass="[^"]*\bruvor-icon--([a-z]+)\b[^"]*"[^>]*>\s*(<svg\b[\s\S]*?<\/svg>)/g,
+      ),
+    ];
+    expect(signals.length).toBeGreaterThan(0);
+    // Todo sinal da página tem o svg como primeiro filho: nenhum fica fora da conferência.
+    expect(signals.length).toBe(classed);
+    const wrong = signals.flatMap(([, semantic, svg], index) => {
+      const expected = DUOTONE_OF[semantic];
+      if (!expected) return [`#${index}: semântica desconhecida ${semantic}`];
+      const file = BY_DRAWING.get(drawing(svg))?.[0];
+      return file === `duotone/${expected}.svg`
+        ? []
+        : [
+            `#${index} ${semantic}: ${file ?? "fora do conjunto"}, esperava duotone/${expected}.svg`,
+          ];
+    });
+    expect(wrong).toEqual([]);
   });
 });
