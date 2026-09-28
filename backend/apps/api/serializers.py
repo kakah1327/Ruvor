@@ -1,0 +1,272 @@
+"""Os serializadores das rotas de leitura (RF-11) e do `/risk` (RF-13). Cada corpo e uma lista fechada: o que
+esta aqui e o que a rota devolve, nem mais nem menos — o V-11 confere campo a campo.
+
+Decimal sai como string (o padrao do DRF, D-86) e instante no fuso de `TIME_ZONE`, com o
+deslocamento. Os nomes de campo sao os das colunas.
+
+Este modulo nao importa o motor, nem direta nem indiretamente (RF-10).
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any
+
+from rest_framework import serializers
+
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.api.models import ComputeRequest
+from apps.api.ondemand import effective_status, expired_reason, is_expired
+from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
+from apps.risk.config import ALPHAS
+from apps.risk.models import RiskResult, RiskRun
+
+# As 26 colunas de metrica de `gold.behavior_metric`, com o nome da coluna, na ordem de
+# `apps/analytics/models.py`. O V-11 confere contra `BehaviorMetric._meta`.
+METRIC_COLUMNS = (
+    "return_1m",
+    "return_3m",
+    "return_6m",
+    "return_12m",
+    "return_36m",
+    "return_60m",
+    "return_120m",
+    "return_ytd",
+    "volatility_12m",
+    "volatility_60m",
+    "max_drawdown",
+    "max_drawdown_peak_date",
+    "max_drawdown_trough_date",
+    "max_drawdown_recovery_date",
+    "max_drawdown_recovery_sessions",
+    "beta_60m",
+    "correlation_60m",
+    "benchmark_observations",
+    "skewness",
+    "excess_kurtosis",
+    "statistical_observations",
+    "dividends_12m",
+    "dividend_payments_12m",
+    "dividend_yield_12m",
+    "avg_volume_21d",
+    "avg_volume_252d",
+)
+
+
+class AssetItemSerializer(serializers.ModelSerializer[Asset]):
+    """O item da busca. `has_prices` vem da anotacao que a view poe no `queryset`."""
+
+    has_prices = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Asset
+        fields = (
+            "ticker",
+            "name",
+            "trading_name",
+            "kind",
+            "sector",
+            "status",
+            "has_prices",
+        )
+
+
+class LastPriceSerializer(serializers.ModelSerializer[Price]):
+    """O ultimo pregao, dentro da identidade do ativo."""
+
+    class Meta:
+        model = Price
+        fields = ("date", "close", "adj_close")
+
+
+class AssetDetailSerializer(serializers.ModelSerializer[Asset]):
+    """A identidade do ativo (camada 1). `has_prices` vem da anotacao da view; `last_price`
+    e nulo quando o ativo nao tem preco.
+    """
+
+    has_prices = serializers.BooleanField(read_only=True)
+    last_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Asset
+        fields = (
+            "ticker",
+            "name",
+            "trading_name",
+            "kind",
+            "sector",
+            "subsector",
+            "segment",
+            "listing_segment",
+            "status",
+            "has_prices",
+            "last_price",
+        )
+
+    def get_last_price(self, asset: Asset) -> dict[str, Any] | None:
+        last = Price.objects.filter(asset=asset).order_by("-date").first()
+        return None if last is None else dict(LastPriceSerializer(last).data)
+
+
+class PriceSerializer(serializers.ModelSerializer[Price]):
+    class Meta:
+        model = Price
+        fields = ("date", "open", "high", "low", "close", "adj_close", "volume")
+
+
+class CorporateEventSerializer(serializers.ModelSerializer[CorporateEvent]):
+    class Meta:
+        model = CorporateEvent
+        fields = ("date", "kind", "amount", "numerator", "denominator")
+
+
+class HistogramBinSerializer(serializers.ModelSerializer[ReturnHistogramBin]):
+    class Meta:
+        model = ReturnHistogramBin
+        fields = ("bin_index", "lower_bound", "upper_bound", "count")
+
+
+class BehaviorMetricSerializer(serializers.ModelSerializer[BehaviorMetric]):
+    """A linha de metrica: o cabecalho, as 26 colunas e os baldes. A view entrega os baldes
+    ja ordenados por `bin_index` (prefetch ordenado).
+    """
+
+    histogram = HistogramBinSerializer(source="bins", many=True, read_only=True)
+
+    class Meta:
+        model = BehaviorMetric
+        fields = (
+            "calculated_at",
+            "as_of_date",
+            "first_price_date",
+            "price_count",
+            *METRIC_COLUMNS,
+            "histogram",
+        )
+
+
+# --- /risk (RF-13) -------------------------------------------------------------------------
+
+
+class PriceRunSerializer(serializers.ModelSerializer[CollectionRun]):
+    """A coleta de preco que a execucao usou, com a data dela (D-15)."""
+
+    class Meta:
+        model = CollectionRun
+        fields = ("id", "source", "started_at", "finished_at")
+
+
+class RiskResultSerializer(serializers.ModelSerializer[RiskResult]):
+    """Um resultado por (modelo, nivel) -- inclusive o que falhou, com o `error`."""
+
+    class Meta:
+        model = RiskResult
+        fields = (
+            "model_name",
+            "model_category",
+            "alpha",
+            "hyperparameters",
+            "var_latest",
+            "var_mean",
+            "violations",
+            "expected_violations",
+            "kupiec_passed",
+            "kupiec_p_value",
+            "christoffersen_passed",
+            "christoffersen_p_value",
+            "dq_passed",
+            "dq_p_value",
+            "basel_zone",
+            "adequate",
+            "error",
+            "reused_snapshots",
+            "trained_snapshots",
+        )
+
+
+class LatestRunSerializer(serializers.ModelSerializer[RiskRun]):
+    """A ultima execucao fechada: o manifesto inteiro e os resultados. A view entrega os
+    resultados ja ordenados -- `model_name`, depois `alpha` decrescente (prefetch ordenado).
+    """
+
+    price_run = PriceRunSerializer(read_only=True)
+    results = RiskResultSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = RiskRun
+        fields = (
+            "id",
+            "calculated_at",
+            "finished_at",
+            "status",
+            "engine_version",
+            "seed",
+            "train_window_days",
+            "as_of_date",
+            "first_price_date",
+            "price_count",
+            "train_count",
+            "test_count",
+            "price_run",
+            "requested_models",
+            "full_recompute",
+            "results",
+        )
+
+
+class InProgressRunSerializer(serializers.ModelSerializer[RiskRun]):
+    """A execucao em andamento: quantos resultados ja gravou e quantos espera
+    (`len(requested_models) * len(ALPHAS)`).
+    """
+
+    results_written = serializers.SerializerMethodField()
+    results_expected = serializers.SerializerMethodField()
+
+    class Meta:
+        model = RiskRun
+        fields = (
+            "id",
+            "calculated_at",
+            "requested_models",
+            "results_written",
+            "results_expected",
+        )
+
+    def get_results_written(self, run: RiskRun) -> int:
+        return run.results.count()
+
+    def get_results_expected(self, run: RiskRun) -> int:
+        return len(run.requested_models) * len(ALPHAS)
+
+
+class ComputeRequestSerializer(serializers.ModelSerializer[ComputeRequest]):
+    """O ultimo pedido sob demanda. O `status` e o **calculado** (RF-18): o pedido gravado
+    aberto e vencido pelo relogio sai `expired`, sem gravar, e com o motivo de expirado
+    (`expirado (N min)`, o da lista fechada do RF-15) -- o corpo e coerente com o que o
+    pedido vai ser quando alguem o fechar. `finished_at` continua nulo: ninguem o fechou.
+    O instante vem do contexto, `now`.
+    """
+
+    status = serializers.SerializerMethodField()
+    reason = serializers.SerializerMethodField()
+    risk_run_id = serializers.IntegerField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = ComputeRequest
+        fields = (
+            "id",
+            "status",
+            "requested_at",
+            "finished_at",
+            "reason",
+            "error",
+            "risk_run_id",
+        )
+
+    def get_status(self, req: ComputeRequest) -> str:
+        now: datetime = self.context["now"]
+        return effective_status(req, now)
+
+    def get_reason(self, req: ComputeRequest) -> str:
+        now: datetime = self.context["now"]
+        return expired_reason() if is_expired(req, now) else req.reason

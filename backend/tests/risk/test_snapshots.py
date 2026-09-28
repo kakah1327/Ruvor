@@ -45,6 +45,7 @@ from engine.experiments.runner import ExperimentResult, run_experiment
 from engine.models import load_all_model_modules
 from engine.models.ml import caviar as caviar_module
 from engine.snapshots import Snapshot, pack_beta, unpack_beta
+from pytest_django import DjangoCaptureOnCommitCallbacks
 
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk.compute import MODELS, run_compute_risk
@@ -395,6 +396,7 @@ def calcula(
 
 def calcula_assincrono(
     fila: list[Any],
+    captura: DjangoCaptureOnCommitCallbacks,
     modelos: list[str],
     relogio: Relogio,
     *,
@@ -403,13 +405,15 @@ def calcula_assincrono(
 ) -> RiskRun:
     """Uma execucao assincrona sobre `AAA3`, seguindo o que foi **enfileirado**: a abertura
     sai da fila do `enqueue_compute`, com os argumentos nomeados, e as tarefas e o fecho,
-    do `chord` que a abertura entregou. Sem `seed`, a semente padrao do backend."""
+    do `chord` que a abertura entregou -- depois do commit, que `captura` executa. Sem
+    `seed`, a semente padrao do backend."""
     enqueue_compute(
         ["AAA3"], seed=seed, models=modelos, full=full, calculated_at=relogio()
     )
     (abertura,) = fila
     fila.clear()
-    run_id = _abrir_execucao(*abertura.args, **abertura.kwargs)
+    with captura(execute=True):
+        run_id = _abrir_execucao(*abertura.args, **abertura.kwargs)
     assert run_id is not None
     (grupo,) = fila
     fila.clear()
@@ -636,7 +640,9 @@ def test_v07_integrado_a_contagem_decide_e_o_numero_e_o_do_full(
 
 
 def test_v10_full_nao_le_retratos_nem_duplica_nos_dois_caminhos(
-    motor: list[ExperimentResult], fila: list[Any]
+    motor: list[ExperimentResult],
+    fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
 ) -> None:
     com_serie("AAA3", PREGOES_LIGACAO)
     relogio = Relogio()
@@ -651,7 +657,9 @@ def test_v10_full_nao_le_retratos_nem_duplica_nos_dois_caminhos(
     assert ModelSnapshot.objects.count() == 8
 
     # a tarefa por (ativo, modelo) le o `--full` da `risk_run`
-    assincrona = calcula_assincrono(fila, LIGACAO, relogio, full=True)
+    assincrona = calcula_assincrono(
+        fila, django_capture_on_commit_callbacks, LIGACAO, relogio, full=True
+    )
 
     assert assincrona.full_recompute is True
     assert contagens(assincrona) == esperado(LIGACAO, (0, 2))
@@ -661,14 +669,19 @@ def test_v10_full_nao_le_retratos_nem_duplica_nos_dois_caminhos(
 # --- a semente da tarefa vem da `risk_run` ---------------------------------------------
 
 
-def test_tarefa_monta_a_identidade_com_a_semente_da_execucao(fila: list[Any]) -> None:
+def test_tarefa_monta_a_identidade_com_a_semente_da_execucao(
+    fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
+) -> None:
     """A `SnapshotKey` da tarefa por (ativo, modelo) sai da `risk_run`: com os retratos da
     semente 42 no banco, uma execucao assincrona com a semente 7 nao os reaproveita e grava
     os seus. Uma tarefa que montasse a chave com a semente padrao reaproveitaria os dois."""
     com_serie("AAA3", PREGOES_LIGACAO)
     relogio = Relogio()
     modelos = [MODELO]
-    primeira = calcula_assincrono(fila, modelos, relogio, full=False, seed=42)
+    primeira = calcula_assincrono(
+        fila, django_capture_on_commit_callbacks, modelos, relogio, full=False, seed=42
+    )
     assert primeira.seed == 42
     assert contagens(primeira) == esperado(modelos, (0, 2))
     assert sorted(
@@ -677,7 +690,9 @@ def test_tarefa_monta_a_identidade_com_a_semente_da_execucao(fila: list[Any]) ->
         (42, Decimal(nivel), posicao) for nivel in NIVEIS for posicao in (0, 252)
     )
 
-    segunda = calcula_assincrono(fila, modelos, relogio, full=False, seed=7)
+    segunda = calcula_assincrono(
+        fila, django_capture_on_commit_callbacks, modelos, relogio, full=False, seed=7
+    )
 
     assert segunda.seed == 7
     assert contagens(segunda) == esperado(modelos, (0, 2))
@@ -693,6 +708,7 @@ def test_tarefa_monta_a_identidade_com_a_semente_da_execucao(fila: list[Any]) ->
 def test_v11_o_manifesto_por_nivel_nos_quatro_casos_e_o_log_da_tarefa(
     motor: list[ExperimentResult],
     fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -729,7 +745,9 @@ def test_v11_o_manifesto_por_nivel_nos_quatro_casos_e_o_log_da_tarefa(
     )
 
     caplog.set_level(logging.INFO, logger="apps.risk.tasks")
-    segunda = calcula_assincrono(fila, modelos, relogio, full=False)
+    segunda = calcula_assincrono(
+        fila, django_capture_on_commit_callbacks, modelos, relogio, full=False
+    )
 
     assert segunda.full_recompute is False
     assert contagens(segunda) == {
@@ -761,6 +779,7 @@ def _uma_linha(linhas: list[str], inicio: str) -> bool:
 def test_retreino_tardio_que_levanta_grava_os_retratos_anteriores_e_o_par_de_erro(
     motor: list[ExperimentResult],
     fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -786,7 +805,9 @@ def test_retreino_tardio_que_levanta_grava_os_retratos_anteriores_e_o_par_de_err
     with monkeypatch.context() as m:
         m.setattr("engine.seeding.apply", apply_quebra)
         m.setattr("engine.models.ml.caviar._fit_beta", beta_quebra)
-        run = calcula_assincrono(fila, LIGACAO, relogio, full=False)
+        run = calcula_assincrono(
+            fila, django_capture_on_commit_callbacks, LIGACAO, relogio, full=False
+        )
 
     erros = {
         "lstm": "retreino da rede quebrado de proposito",

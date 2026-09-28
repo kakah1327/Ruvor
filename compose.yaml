@@ -44,6 +44,10 @@ services:
       RUVOR_CACHE_URL: ${RUVOR_CACHE_URL:-redis://redis:6379/1}
       RUVOR_SECURE_COOKIES: ${RUVOR_SECURE_COOKIES:-false}
       RUVOR_CSRF_TRUSTED_ORIGINS: ${RUVOR_CSRF_TRUSTED_ORIGINS:-}
+      # o pedido sob demanda: o prazo e lido nos dois lados (o POST na `web`; a cadeia e o
+      # fecho no `worker`). Vazio vale o padrao do settings.py
+      RUVOR_ON_DEMAND_MAX: ${RUVOR_ON_DEMAND_MAX:-}
+      RUVOR_ON_DEMAND_TIMEOUT_MIN: ${RUVOR_ON_DEMAND_TIMEOUT_MIN:-}
     volumes:
       - ./backend:/repo/backend
     ports:
@@ -148,6 +152,7 @@ services:
     volumes:
       - ./frontend:/repo/frontend
       - ./brand/ruvor:/repo/brand/ruvor:ro
+      - ./docs/mockups:/repo/docs/mockups:ro
       - /repo/frontend/node_modules
     ports:
       - "${RUVOR_PORT_FRONTEND:?defina no .env}:5173"

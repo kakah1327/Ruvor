@@ -5,9 +5,11 @@
 > Estes arquivos registram **como se chegou** à identidade Ruvor: as direções exploradas, as
 > rodadas de naming e os estudos de assinatura e cor.
 >
-> **A especificação da marca é o [kit](../README.md)** — `tokens.css`, `tokens.json`,
-> `implementation.css` e os SVGs. Em caso de divergência entre um estudo e o kit, **o kit
-> vence**.
+> **A especificação da marca é o [kit](../README.md)** — os mockups, `tokens.css`,
+> `tokens.json`, `components.css` e os SVGs. Em caso de divergência entre um estudo e o kit,
+> **o kit vence**. O `implementation.css`, que o kit citava aqui, foi removido no M1.6a: era
+> uma terceira referência de componentes, já divergente das outras, e a folha de componentes
+> do produto passou a ser `components.css`.
 >
 > Nomes e paletas que aparecem aqui podem ter sido descartados no caminho.
 

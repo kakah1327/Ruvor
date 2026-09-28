@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from celery.schedules import crontab
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     "apps.analytics",
     "apps.risk",
     "apps.fundamentals",
+    "apps.api",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -99,6 +101,17 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+# A API HTTP (D-86, RF-09 do M1.6a). Sem classe de autenticacao, o DRF entrega um
+# AnonymousUser, o IsAuthenticated nega e a excecao e PermissionDenied: uma view que
+# esqueca de declarar a sua permissao nasce fechada, com 403 `permission_denied`.
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apps.api.errors.handle_exception",
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+}
+
 DATABASES: dict[str, dict[str, str]] = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -152,6 +165,14 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": _cron("RUVOR_BEAT_DISCLOSURES_CRON", "0 20 * * 1-5"),
     },
 }
+
+# O pedido de calculo sob demanda (RF-17 e RF-18 do M1.6a): o teto global de pedidos
+# abertos e o prazo depois do qual um pedido aberto e tratado como fechado. `or`, como no
+# `_cron`: o compose passa a variavel vazia quando o .env nao a define.
+RUVOR_ON_DEMAND_MAX: int = int(os.environ.get("RUVOR_ON_DEMAND_MAX") or 3)
+RUVOR_ON_DEMAND_TIMEOUT: timedelta = timedelta(
+    minutes=int(os.environ.get("RUVOR_ON_DEMAND_TIMEOUT_MIN") or 30)
+)
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"

@@ -1,6 +1,6 @@
 """F4-01 e F4-02: os quatro esquemas existem, e as tabelas sao a lista fechada.
 
-Sao vinte e nove tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
+Sao trinta tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
 e as cinco do Django no `public` —, o M1.1 acrescentou as quatro do catalogo de ativos —
 tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e uma na
 `silver` (`asset`) — e o M1.2 acrescentou as tres dos precos: uma na `bronze`
@@ -11,7 +11,8 @@ acrescentou as quatro dos fundamentos: uma na `bronze` (`cvm_file`), duas na `si
 (`company`, `financial_statement`) e uma na `gold` (`fundamental_indicator`). O M1.5b
 acrescentou a dos retratos dos modelos caros, na `gold` (`model_snapshot`). O M3.2
 acrescentou as duas do contexto: uma na `silver` (`disclosure`) e uma na `gold`
-(`peer_comparison`). O M2.1a acrescentou duas: a da auditoria de acesso, no `core`
+(`peer_comparison`). O M1.6a acrescentou a do pedido de calculo sob demanda, no `core`
+(`compute_request`). O M2.1a acrescentou duas: a da auditoria de acesso, no `core`
 (`access_event`), e a da sessao do Django, no `public` (`django_session`).
 
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
@@ -40,6 +41,7 @@ TABELAS = {
     "bronze.cvm_file",
     "bronze.yahoo_chart",
     "core.access_event",
+    "core.compute_request",
     "core.organization",
     "core.user",
     "core.user_groups",
