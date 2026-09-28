@@ -117,6 +117,8 @@ conversas e entre agentes.
 | [D-83](D-83-a-ci-barra-na-pr.md) | A CI barra na PR; substitui a D-42 |
 | [D-84](D-84-frentes-com-cerca-de-pastas.md) | Frentes simultâneas, cada uma com a sua cerca de pastas; restringe a D-23 |
 | [D-85](D-85-o-dono-da-frente-aprova-a-propria-pr.md) | O dono da frente aprova e faz o merge da própria PR; restringe a D-82 |
+| [D-86](D-86-convencoes-da-api-http.md) | As convenções da API HTTP: prefixo, formato de erro, permissão declarada, dados |
+| [D-93](D-93-os-icones-do-produto-vem-do-phosphor.md) | Os ícones do produto vêm do Phosphor, num conjunto fechado dentro do kit |
 | [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes
