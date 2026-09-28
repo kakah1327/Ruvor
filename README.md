@@ -8,8 +8,8 @@ merece confiança para aquele ativo.
 
 > ## ⚠️ Este repositório está em reconstrução
 >
-> A plataforma Ruvor **ainda não foi construída**: não existe API de negócio nem tela de
-> produto.
+> A plataforma Ruvor **ainda não foi construída**: não existe tela de produto. A API de leitura
+> existe, em `/api/v1/`.
 >
 > O que já existe:
 >
@@ -191,7 +191,22 @@ O Django lê toda a configuração de variáveis `RUVOR_*` (`backend/config/sett
 inclusive as do PostgreSQL e a URL do Redis. Quem as preenche é o `compose`, a partir do
 `.env`. Se faltar alguma obrigatória, a subida falha dizendo qual.
 
-`curl http://localhost:8000/health` responde `{"status": "ok"}`. É a única rota.
+`curl http://localhost:8000/health` responde `{"status": "ok"}`. É a rota de infraestrutura;
+o resto mora em `/api/v1/`, no formato da
+[D-86](docs/decisoes/D-86-convencoes-da-api-http.md):
+
+| Rota | O que devolve |
+|---|---|
+| `GET /api/v1/assets?q=&limit=&offset=` | a busca no catálogo, paginada |
+| `GET /api/v1/assets/{ticker}` | a identidade do ativo e o último pregão |
+| `GET /api/v1/assets/{ticker}/prices?from=&to=` | a série diária |
+| `GET /api/v1/assets/{ticker}/events` | proventos e desdobramentos |
+| `GET /api/v1/assets/{ticker}/metrics` | as métricas de comportamento e o histograma de retornos |
+| `GET /api/v1/assets/{ticker}/risk` | o risco: a última execução fechada, a em andamento e o último pedido |
+| `POST /api/v1/assets/{ticker}/risk` | pede o cálculo de um ativo **nunca calculado** — 409 se já tem risco; o `/risk` acompanha ([D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)) |
+
+Erro sempre no formato `{"error": {"code", "message", "details"}}`. **O `POST` torna o ativo
+coberto para sempre**: a rotina diária passa a recalculá-lo.
 
 Um shell dentro do serviço: `docker compose exec web bash`.
 
@@ -200,8 +215,8 @@ Um shell dentro do serviço: `docker compose exec web bash`.
 O serviço sobe junto com o conjunto. Abra `http://localhost:5273` — `localhost`, não
 `127.0.0.1`: no Windows, `localhost` resolve para IPv6 e é lá que o Vite escuta.
 
-A tela mostra a marca e `Backend: ok`; o servidor de desenvolvimento leva `/health` até o
-serviço `web` pelo destino em `VITE_PROXY_TARGET`, que o `compose` fixa em
+A tela mostra a marca e `Backend: ok`; o servidor de desenvolvimento leva `/health` e `/api`
+até o serviço `web` pelo destino em `VITE_PROXY_TARGET`, que o `compose` fixa em
 `http://web:8000`. Com o backend fora do ar, `Backend: indisponível`.
 
 `frontend/.env.example` documenta `VITE_API_BASE_URL`; vazia, que é o padrão, a tela usa o

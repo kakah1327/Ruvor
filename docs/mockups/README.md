@@ -21,4 +21,14 @@ Toda tarefa visual vira duas: primeiro o mockup, depois a implementação
 - Um arquivo por tela; nomes semânticos
 - Iteração ganha sufixo de versão (`busca-v2.html`), nunca sobrescreve
 
-*Nenhum mockup criado ainda.*
+## Mockups
+
+| Bloco | Arquivo | O que é | Situação |
+|---|---|---|---|
+| M1.6a | [`M1.6a/kit.html`](M1.6a/kit.html) | a vitrine do kit: cada token e cada componente, em todos os estados, nos dois temas, com a chave de tema e os ícones do conjunto | ✅ aprovada pelo dono da frente em 2026-09-28 |
+| M1.6a | [`M1.6a/icones-comparativo.html`](M1.6a/icones-comparativo.html) | Lucide, Phosphor e Radix aplicados ao kit, lado a lado, para a escolha da biblioteca de ícones | ✅ usado no portão; o Phosphor foi escolhido ([D-93](../decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)) |
+
+A vitrine não é tela de produto: consome só `tokens.css` e `components.css`, e as classes de
+estado forçado (`.is-hover`, `.is-focus`) existem só nela. O serviço `frontend` monta este
+diretório só para leitura, e `frontend/tests/icones.test.ts` confere que todo ícone do conjunto
+aparece na vitrine.

@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6 | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5b-treino-separado` — bloco fechado, PR de implementação a abrir; o M1.6 abre ramo próprio depois do merge |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6-aplicacao-web` — M1.6a fechado, PR de implementação a abrir pelo dono da frente |
 | `identidade` | ⏸ **sem dono** — espera o próximo dev | M2.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
 
@@ -51,7 +51,7 @@ revisa a PR.
 
 | Frente | Pastas |
 |---|---|
-| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, a app da API de leitura que o M1.6 criar, e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6/`; os serviços `worker` e `beat` no `compose.yaml` |
+| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6*/`; os serviços `worker` e `beat` no `compose.yaml` |
 | `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1; as telas de login **numa pasta própria** de `frontend/src/`, **só depois** de o M1.6 entregar o casco (ver contratos) |
 | `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
@@ -83,8 +83,8 @@ mudança passa pela revisão da frente que o consome.
 
 | Contrato | Produz | Consome | Estado |
 |---|---|---|---|
-| **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | 🔴 **aberto.** O DRF já está decidido ([D-11](decisoes/D-11-pilha-tecnologica.md)); o resto não. Decidir numa decisão própria **antes da primeira das duas specs que publicar rota**, revisada pelas duas frentes |
-| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `identidade` (telas de login) | ⬜ não existe. O kit está incompleto ([ESTADO](ESTADO.md#pendências-que-bloqueiam-trabalho-futuro)). A `identidade` faz o backend primeiro |
+| **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | ✅ existe. Decidido pela [D-86](decisoes/D-86-convencoes-da-api-http.md) e aplicado pelo M1.6a: `/api/v1/`, `REST_FRAMEWORK` com o tratador do formato de erro, permissão padrão `IsAuthenticated` e cada view declarando a sua. **O mecanismo de autenticação é do M2.1**; mudar o formato de erro ou a regra de permissão exige a revisão das duas frentes |
+| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `identidade` (telas de login) | 🟡 **o kit está entregue** (M1.6a): `brand/ruvor/tokens.css` e `tokens.json` nos dois temas, com a escala tipográfica e os estados; `components.css`; e `icons/`, o conjunto fechado do Phosphor ([D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md), [D-88](decisoes/D-88-o-kit-tem-dois-temas-pelos-mesmos-tokens.md), [D-93](decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)), mostrado em `docs/mockups/M1.6a/kit.html`. **O casco — layout e navegação em tela — é do M1.6b**, e ainda não existe. A `identidade` faz o backend primeiro |
 | **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | ⬜ a spec do M2.1 combina com a `marco1` quem escreve a linha |
 | **`silver.asset`**: o catálogo, por ticker | `marco1` | `fundamentos` liga fundamento a ativo | ✅ existe. **Só cresce**: coluna nova pode, mudar ou tirar coluna exige a revisão da `fundamentos` |
 | **`silver.price`**: o preço diário, por ativo | `marco1` | `fundamentos` lê `asset`, `date` e `close` para os múltiplos | ✅ existe. **Só cresce**, como o catálogo: mudar o sentido dessas colunas exige a revisão da `fundamentos` |
@@ -103,7 +103,7 @@ outras frentes.
 |---|---|---|
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
-| D-85 a D-99 | `marco1` | D-85 |
+| D-85 a D-99 | `marco1` | D-85 a D-93 |
 | D-100 a D-119 | `identidade` | — |
 | D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 

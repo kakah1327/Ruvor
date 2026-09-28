@@ -267,6 +267,9 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Quais requisitos candidatos entram no Marco 1 | Sugestão: 5.1, 5.2 e 5.3 |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
 | Parecer sobre fronteira CVM | Pendente, antes do Marco 2 |
-| Tema claro (kit de marca) vs escuro | Não resolvido |
-| Kit de marca incompleto | Faltam **estados de interação** (só `:active` existe) e **modo escuro**. Campos de formulário deixaram de ser lacuna: `brand/ruvor/mockups/03-nova-analise.html` estabelece o padrão |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
+
+**Resolvidos no M1.6a** (2026-09-28): o tema — o kit tem claro e escuro, pelos mesmos tokens
+([D-88](decisoes/D-88-o-kit-tem-dois-temas-pelos-mesmos-tokens.md)) —, e o kit incompleto — os
+estados de interação, a escala tipográfica e a folha de componentes, derivados dos mockups
+([D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md)).
