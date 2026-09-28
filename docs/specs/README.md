@@ -44,4 +44,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | Marco 1 · M1.6a | ✅ implementada e fechada |
 | [M3.2 — Contexto](M3.2-contexto.md) | Marco 3 · M3.2 · frente `fundamentos` | ✅ implementada e fechada |
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ aprovada; fase 1 implementada, fase 2 espera o M1.6a |
-| [M4.2 — API pública](M4.2-api-publica.md) | Marco 4 · M4.2 · frente `identidade` | ✅ revisada (3 rodadas); aguarda aprovação do dono |
+| [M4.2 — API pública](M4.2-api-publica.md) | Marco 4 · M4.2 · frente `identidade` | ✅ aprovada; plano em revisão |
