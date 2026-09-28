@@ -13,12 +13,20 @@ nome global: e a costura do RF-25, que o teste substitui com `monkeypatch.setatt
 
 `gold.fundamental_indicator` e so-acrescimo (RF-20): nenhum caminho daqui faz `update` ou
 `delete`. Recalcular insere linha nova.
+
+Depois dos indicadores vem a segunda fase (M3.2, RF-10 e RF-15), **sempre**, mesmo com falha
+na primeira: le de volta as linhas de `gold.fundamental_indicator` gravadas com este
+`calculated_at` -- as gravadas, nao os valores calculados, para que a acao que falhou nao
+entre no grupo de ninguem --, compara cada uma com os pares (`peers.compare_all`, puro) e
+grava uma `gold.peer_comparison` por linha, uma transacao por acao, por
+`write_peer_comparison` chamada pelo nome global (a costura do RF-15). Tambem so-acrescimo.
+`FundamentalsFailed` so levanta depois das duas fases.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
@@ -35,7 +43,19 @@ from apps.fundamentals.indicators import (
     compute_indicators,
     ticker_suffix,
 )
-from apps.fundamentals.models import Company, FinancialStatement, FundamentalIndicator
+from apps.fundamentals.models import (
+    Company,
+    FinancialStatement,
+    FundamentalIndicator,
+    PeerComparison,
+)
+from apps.fundamentals.peers import (
+    INDICATORS,
+    Comparison,
+    Level,
+    PeerInput,
+    compare_all,
+)
 
 PRICE_WINDOW_DAYS = 10  # RF-23: no maximo 10 dias corridos antes da data local
 
@@ -98,6 +118,15 @@ class AssetResult:
 
 
 @dataclass(frozen=True)
+class PeerResult:
+    """O que aconteceu com a comparacao de uma acao, na segunda fase."""
+
+    ticker: str
+    level: Level
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class ComputeReport:
     """O relatorio de uma execucao: uma linha por acao calculada e o resumo.
 
@@ -105,17 +134,41 @@ class ComputeReport:
     `sem balanco` conta, a parte, as acoes do catalogo cuja companhia nao tem
     `financial_statement` -- essas nao tem linha. `fora de escala` conta as acoes gravadas
     com algum valor anulado por nao caber na coluna (RF-22).
+
+    `peer_results` e a segunda fase: uma por linha de indicador desta execucao. No texto,
+    depois das linhas da primeira fase, vem uma linha por comparacao que falhou e o resumo
+    `comparacao: ...`; a `calculo: ...` segue por ultimo, contando so a primeira fase.
     """
 
     results: list[AssetResult]
     without_statements: int
+    peer_results: list[PeerResult] = field(default_factory=list)
 
     @property
     def failed(self) -> bool:
-        return any(r.error for r in self.results)
+        return bool(self.failures())
+
+    def failures(self) -> list[str]:
+        """Os tickers que falharam: os da primeira fase, depois os da segunda, marcados."""
+        return [r.ticker for r in self.results if r.error] + [
+            f"{r.ticker} (comparacao)" for r in self.peer_results if r.error
+        ]
 
     def render(self) -> str:
         lines = [r.render() for r in self.results]
+        lines.extend(
+            f"{r.ticker}: comparacao FALHOU ({r.error})"
+            for r in self.peer_results
+            if r.error
+        )
+        without_group = sum(
+            1 for r in self.peer_results if r.error is None and r.level == "none"
+        )
+        peer_failed = sum(1 for r in self.peer_results if r.error)
+        lines.append(
+            f"comparacao: {len(self.peer_results)} acoes, {without_group} sem grupo, "
+            f"{peer_failed} falhas"
+        )
         out_of_scale = sum(
             1 for r in self.results if r.error is None and r.out_of_scale
         )
@@ -131,7 +184,7 @@ class FundamentalsFailed(Exception):
     """Alguma acao falhou. `report` e o relatorio inteiro, para a casca imprimir."""
 
     def __init__(self, report: ComputeReport) -> None:
-        super().__init__(", ".join(r.ticker for r in report.results if r.error))
+        super().__init__(", ".join(report.failures()))
         self.report = report
 
 
@@ -166,7 +219,8 @@ def run_compute_fundamentals(
         )
         results.append(_compute_asset(asset, calculated_at, inputs))
 
-    report = ComputeReport(results, without_statements)
+    peer_results = _compare(calculated_at)  # sempre, mesmo com falha acima (RF-10)
+    report = ComputeReport(results, without_statements, peer_results)
     if report.failed:
         raise FundamentalsFailed(report)
     return report
@@ -290,4 +344,67 @@ def write_indicator(
         calculated_at=calculated_at,
         statement_id=statement.pk,
         **{field: getattr(values, field) for field in VALUE_FIELDS},
+    )
+
+
+def _compare(calculated_at: datetime) -> list[PeerResult]:
+    """A segunda fase (RF-10, RF-15): compara as linhas gravadas nesta execucao."""
+    indicators = list(
+        FundamentalIndicator.objects.filter(calculated_at=calculated_at)
+        .select_related("asset")
+        .order_by("asset__ticker")
+    )
+    comparisons = compare_all(
+        [
+            PeerInput(
+                ticker=row.asset.ticker,
+                code_cvm=row.asset.code_cvm or "",
+                sector=row.asset.sector,
+                subsector=row.asset.subsector,
+                segment=row.asset.segment,
+                values={name: getattr(row, name) for name in INDICATORS},
+            )
+            for row in indicators
+        ]
+    )
+    results: list[PeerResult] = []
+    for row in indicators:
+        comparison = comparisons[row.asset.ticker]
+        try:
+            with transaction.atomic():  # RF-15: uma transacao por acao
+                write_peer_comparison(row, comparison)
+        except Exception as exc:
+            results.append(
+                PeerResult(
+                    row.asset.ticker,
+                    comparison.level,
+                    error=f"{type(exc).__name__}: {exc}",
+                )
+            )
+            continue
+        results.append(PeerResult(row.asset.ticker, comparison.level))
+    return results
+
+
+def write_peer_comparison(
+    indicator: FundamentalIndicator, comparison: Comparison
+) -> None:
+    """A comparacao da linha `indicator` com os pares. Sempre `create` (RF-10); `asset` e
+    `calculated_at` sao copiados da linha."""
+    sector, subsector, segment = comparison.group
+    columns: dict[str, object] = {}
+    for name in INDICATORS:
+        values = comparison.indicators[name]
+        columns[f"{name}_peer_median"] = values.median
+        columns[f"{name}_percentile"] = values.percentile
+        columns[f"{name}_peer_count"] = values.count
+    PeerComparison.objects.create(
+        indicator=indicator,
+        asset_id=indicator.asset_id,
+        calculated_at=indicator.calculated_at,
+        peer_level=comparison.level,
+        group_sector=sector,
+        group_subsector=subsector,
+        group_segment=segment,
+        **columns,
     )

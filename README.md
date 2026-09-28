@@ -144,10 +144,11 @@ Para derrubar tudo, `docker compose down`; com `-v`, leva junto o volume do banc
 
 ### Agendamento (Celery Beat)
 
-O serviço `beat` dispara três rotinas, no fuso de São Paulo: o **catálogo de ações**, uma vez
+O serviço `beat` dispara quatro rotinas, no fuso de São Paulo: o **catálogo de ações**, uma vez
 por semana; os **preços**, de segunda a sexta — com o **recálculo do risco** encadeado a
 eles, e não agendado à parte —; e os **fundamentos**, uma vez por semana — a coleta da CVM
-com o **cálculo dos indicadores** encadeado a ela. Ele só agenda: quem executa é o `worker`. O `beat` não tem
+com o **cálculo dos indicadores** encadeado a ela —; e os **comunicados** da CVM, de segunda
+a sexta, sem nada encadeado. Ele só agenda: quem executa é o `worker`. O `beat` não tem
 `build` próprio e usa a imagem `ruvor-worker`, que o `docker compose up --build` constrói.
 
 | Variável | O que controla | Padrão |
@@ -155,8 +156,9 @@ com o **cálculo dos indicadores** encadeado a ela. Ele só agenda: quem executa
 | `RUVOR_BEAT_ASSETS_CRON` | a agenda semanal do catálogo | `0 7 * * 1` — segunda, 7h |
 | `RUVOR_BEAT_PRICES_CRON` | a agenda de preços e, por tabela, a do risco | `30 19 * * 1-5` — segunda a sexta, 19h30 |
 | `RUVOR_BEAT_FUNDAMENTALS_CRON` | a agenda semanal da coleta da CVM e, por tabela, a do cálculo dos indicadores | `0 8 * * 1` — segunda, 8h |
+| `RUVOR_BEAT_DISCLOSURES_CRON` | a agenda da coleta dos comunicados (IPE) da CVM | `0 20 * * 1-5` — segunda a sexta, 20h |
 
-As três são cron de cinco campos (minuto, hora, dia do mês, mês, dia da semana) e saem do
+As quatro são cron de cinco campos (minuto, hora, dia do mês, mês, dia da semana) e saem do
 `.env`; ausentes ou vazias, vale o padrão. Mudou, repita o `docker compose up -d --wait`.
 
 Para ver o que o Beat disparou: `docker compose logs beat` (com `-f` para acompanhar). O
@@ -219,7 +221,8 @@ Backend e frontend rodam **dentro do contêiner**; o motor, no `.venv/` nativo
 | Calcular as métricas de comportamento | `docker compose exec -T web python manage.py compute_metrics` — lê `silver`, escreve em `gold`; aceita tickers como argumento. Não sai para a rede |
 | Calcular o risco (VaR e backtesting) | `docker compose exec -T worker python manage.py compute_risk` — lê `silver`, escreve em `gold`; aceita tickers, `--seed N` e `--model NOME` (repetível). Roda no `worker`, que é quem tem o motor. Não sai para a rede. Com `--async`, enfileira uma execução por ativo no `worker` e devolve na hora — o resultado aparece em `gold` quando as tarefas terminam |
 | Importar os fundamentos | `docker compose exec -T worker python manage.py import_fundamentals` — consulta a CVM, guarda em `bronze` os zips de ITR e DFP de cada ano desde 2016 e conforma companhias e balanços trimestrais em `silver`. A primeira vez baixa tudo (~404 MiB, ~5 minutos); depois, só o arquivo que a CVM mudou. `--full` baixa todos de novo; `--reconform [ANO ...]` refaz a `silver` dos anos dados (todos, sem ano) a partir da `bronze`, sem sair para a rede. Os dois não vão juntos |
-| Calcular os indicadores fundamentalistas | `docker compose exec -T worker python manage.py compute_fundamentals` — lê `silver`, grava uma linha por ação em `gold`. Não sai para a rede. Os múltiplos por preço só saem para ação com preço de até 10 dias em `silver.price`: rode `import_prices` antes |
+| Calcular os indicadores fundamentalistas | `docker compose exec -T worker python manage.py compute_fundamentals` — lê `silver`, grava uma linha por ação em `gold` e, depois, a comparação dela com os pares (segmento, com recuo para o subsetor). Não sai para a rede. Os múltiplos por preço só saem para ação com preço de até 10 dias em `silver.price`: rode `import_prices` antes |
+| Importar os comunicados | `docker compose exec -T worker python manage.py import_disclosures` — consulta a CVM, guarda em `bronze` os zips do IPE de cada ano desde 2016 e conforma em `silver` os fatos relevantes, comunicados ao mercado e avisos aos acionistas das companhias do catálogo, só na versão corrente. A primeira vez baixa tudo (~20 MiB, ~2 minutos); depois, só o arquivo que a CVM mudou. `--full` e `--reconform [ANO ...]` como no `import_fundamentals` |
 | Testes do backend | `docker compose exec -T worker pytest tests` |
 | Tipos do backend | `docker compose exec -T worker mypy` |
 | Estilo do backend | `docker compose exec -T web sh -c "ruff check . && ruff format --check ."` |

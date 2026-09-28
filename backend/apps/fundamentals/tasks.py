@@ -1,9 +1,10 @@
-"""As tarefas de fundamentos que o Beat agenda: a coleta da CVM e o calculo dos indicadores.
+"""As tarefas de fundamentos que o Beat agenda: a coleta da CVM, o calculo dos indicadores e
+a coleta dos comunicados.
 
 Molde literal de `apps/assets/tasks.py`: funcao com sublinhado, registrada com
-`app.task(name=...)(funcao)` -- sob mypy estrito, `@app.task` reprova com
-untyped-decorator. Os nomes de registro sao contrato: e o de `rotina_fundamentos` que vai
-no `CELERY_BEAT_SCHEDULE` (RF-30).
+`app.task(name=...)(funcao)` -- a funcao com sublinhado e o ponto que os testes
+chamam e substituem; os tipos vem do `celery-types` (D-134). Os nomes de registro sao
+contrato: e o de `rotina_fundamentos` que vai no `CELERY_BEAT_SCHEDULE` (RF-30).
 
 - `importar_fundamentos` e `calcular_fundamentos` sao cascas sobre os comandos de
   `manage.py` (RF-28);
@@ -11,6 +12,9 @@ no `CELERY_BEAT_SCHEDULE` (RF-30).
   `import_fundamentals` levanta quando uma companhia ou um arquivo falha, e o calculo tem
   de rodar sobre o que entrou (D-69). Qualquer outra excecao propaga -- a corrente so nao
   segue se a coleta nao chegou a rodar;
+- `importar_comunicados` (M3.2, RF-16) e casca sobre o `import_disclosures`, no molde de
+  `importar_fundamentos`: captura so o `CommandError` e devolve `"FALHOU: ..."`. Nao
+  encadeia nada: o Beat a chama direto, pela quarta entrada (RF-17);
 - `rotina_fundamentos` e o elo: o `beat_schedule` nao aceita `chain`, so nome de tarefa,
   entao a corrente coleta -> calculo e montada aqui (D-127). O segundo elo e **imutavel**
   (`.si()`): com `.s()`, o texto devolvido por `importar_fundamentos` chegaria como
@@ -54,6 +58,16 @@ def _calcular_fundamentos() -> str:
     return buf.getvalue()
 
 
+def _importar_comunicados() -> str:
+    """Roda o `import_disclosures` e devolve o que ele escreveu; nunca levanta `CommandError`."""
+    buf = StringIO()
+    try:
+        call_command("import_disclosures", stdout=buf)
+    except CommandError as exc:
+        return "FALHOU: " + str(exc)
+    return buf.getvalue()
+
+
 def _rotina_fundamentos() -> None:
     """Enfileira a corrente: primeiro a coleta da CVM, depois o calculo dos indicadores."""
     _enqueue(chain(importar_fundamentos.s(), calcular_fundamentos.si()))
@@ -68,4 +82,7 @@ calcular_fundamentos = app.task(name="apps.fundamentals.tasks.calcular_fundament
 )
 rotina_fundamentos = app.task(name="apps.fundamentals.tasks.rotina_fundamentos")(
     _rotina_fundamentos
+)
+importar_comunicados = app.task(name="apps.fundamentals.tasks.importar_comunicados")(
+    _importar_comunicados
 )

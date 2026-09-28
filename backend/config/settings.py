@@ -102,6 +102,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.fundamentals.tasks.rotina_fundamentos",
         "schedule": _cron("RUVOR_BEAT_FUNDAMENTALS_CRON", "0 8 * * 1"),
     },
+    "comunicados": {
+        "task": "apps.fundamentals.tasks.importar_comunicados",
+        "schedule": _cron("RUVOR_BEAT_DISCLOSURES_CRON", "0 20 * * 1-5"),
+    },
 }
 
 LANGUAGE_CODE = "pt-br"

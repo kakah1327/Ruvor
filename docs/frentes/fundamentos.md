@@ -1,7 +1,7 @@
 # Frente `fundamentos`
 
 **Dono:** kakah1327 (Kauã)
-**Blocos:** M3.1 — Fundamentos ✅ (camada 4) → **M3.2 — Contexto** (camada 5)
+**Blocos:** M3.1 — Fundamentos ✅ (camada 4) → M3.2 — Contexto ✅ (camada 5)
 ([ROADMAP](../ROADMAP.md#marco-3--tudo-sobre-a-ação-completo)).
 **Cerca:** a app `apps/fundamentals`, os testes dela e as tabelas novas em `bronze`, `silver` e
 `gold`, da própria app. Detalhe em [FRENTES.md](../FRENTES.md#cercas).
@@ -12,13 +12,16 @@
 ## Agora
 
 **Bloco:** M3.2 — Contexto (camada 5: comunicados da companhia à CVM e comparação com os pares)
-**Etapa:** spec aprovada (PR #6 mesclada); plano pronto — [`planos/M3.2-contexto.md`](../planos/M3.2-contexto.md), revisão adversarial aprovada na rodada 2; falta a PR — [`specs/M3.2-contexto.md`](../specs/M3.2-contexto.md)
+**Etapa:** **fechado** em 2026-09-27 — implementação, revisão final (aprovou) e FECHA; falta a PR de implementação
 **Ramo:** `fundamentos/M3.2-contexto`, criado em 2026-09-27 a partir da `main` com o M3.1 mesclado (PR #5)
 
 ## Próximo passo
 
-1. PR do plano; o portão é o merge pelo dono da frente (D-85).
-2. Depois do merge, a implementação, a partir da T1. A PR de implementação passa pela `marco1`.
+1. A PR de implementação do M3.2, que passa pela `marco1` (o serviço `beat`,
+   `tests/risk/test_beat.py`, os comentários das tarefas e o override do `pyproject.toml`); o
+   merge é do dono da frente, com a CI verde (D-85).
+2. Depois do merge, o próximo bloco da frente, que não está definido: o Marco 3 não tem outro. A
+   escolha é do dono.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -65,3 +68,5 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 `). |
 | 2026-09-27 | revisão do plano: a 1 **reprovou** (1 grave: a remoção do RF-04a dependia da ordem das companhias → `year_links`, o conjunto conformado do ano inteiro; 7 médios, quase todos mutações que o critério não pegava); a 2 **aprovou** (0 graves, 0 médios, 3 leves, absorvidos). Plano pronto para a PR |
 | 2026-09-27 | PR #6 (spec) mesclada pelo dono da frente, sem revisão da `marco1` registrada na PR. PR do plano aberta |
+| 2026-09-27 | M3.2: spec e plano mesclados (PRs #6 e #7). Implementação T1 a T12, um commit por tarefa. As 26 mutações da T11 reprovam, todas com código 1. V-05 a V-10 conferem. A carga real do IPE levou 118 s, com pico de ~152 MiB, e gravou 80.900 comunicados de 339 companhias. Os 80.842 da spec contavam pares (protocolo, versão) distintos; a conta por link soma os 58 pares repetidos. Na comparação, 471 ações: 390 por segmento, 64 por subsetor e 17 sem grupo (12 companhias, como medido). Suíte com 622 testes |
+| 2026-09-27 | M3.2: revisão final **aprovou** numa rodada (0 graves, 0 médios, 3 leves, registrados no ESTADO). FECHA: ESTADO, ROADMAP, índices, `CLAUDE.md`, `aprendizados.md` e D-130 a D-134. **Bloco fechado** |

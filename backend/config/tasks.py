@@ -16,7 +16,6 @@ def _ping() -> str:
     return socket.gethostname()
 
 
-# Registro sem a sintaxe de decorador: o Celery nao publica tipos, e sob mypy estrito
-# `@app.task` reprova com untyped-decorator. Aplicar o decorador como chamada registra a
-# mesma tarefa sem suprimir erro nenhum no restante do arquivo.
+# Registro sem a sintaxe de decorador: a funcao com sublinhado e o ponto que os testes
+# chamam e substituem. Os tipos da tarefa vem do `celery-types` (D-134).
 ping = app.task(name="config.tasks.ping")(_ping)

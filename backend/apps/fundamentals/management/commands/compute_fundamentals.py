@@ -26,6 +26,7 @@ class Command(BaseCommand):
         except FundamentalsFailed as exc:
             # O relatorio inteiro vai para stdout; a CommandError vai para stderr e sai 1.
             self.stdout.write(exc.report.render() + "\n")
-            failed = [r.ticker for r in exc.report.results if r.error]
+            # As duas fases: as da comparacao marcadas `(comparacao)` (RF-15 do M3.2).
+            failed = exc.report.failures()
             raise CommandError("calculo com falhas: " + ", ".join(failed)) from exc
         self.stdout.write(report.render() + "\n")

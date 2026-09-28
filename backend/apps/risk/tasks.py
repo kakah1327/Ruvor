@@ -1,8 +1,9 @@
 """As tarefas de risco do caminho assincrono: abertura, uma por (ativo, modelo), e o fecho.
 
 Molde de `config/tasks.py`: cada tarefa e uma funcao com sublinhado, registrada com
-`app.task(name=...)(funcao)` -- sob mypy estrito, `@app.task` reprova com
-untyped-decorator. Os nomes de registro sao explicitos, e sao contrato.
+`app.task(name=...)(funcao)` -- a funcao com sublinhado e o ponto que os testes
+chamam e substituem; os tipos vem do `celery-types` (D-134). Os nomes de registro sao
+explicitos, e sao contrato.
 
 Quem chama quem:
 
