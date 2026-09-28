@@ -18,6 +18,7 @@ from apps.accounts.views import (
     OrganizationUsersView,
     OrganizationUserView,
     PasswordView,
+    SchemaView,
     SignupView,
     TemporaryPasswordView,
 )
@@ -37,4 +38,5 @@ urlpatterns: list[URLPattern | URLResolver] = [
     ),
     path("api-keys", ApiKeysView.as_view()),
     path("api-keys/<str:prefix>", ApiKeyView.as_view()),
+    path("schema", SchemaView.as_view()),
 ]

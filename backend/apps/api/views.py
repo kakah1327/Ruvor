@@ -29,6 +29,8 @@ from django.db.models import (
     When,
 )
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -47,7 +49,12 @@ from apps.api.ondemand import (
 )
 from apps.api.serializers import (
     AssetDetailSerializer,
+    AssetEventsOut,
     AssetItemSerializer,
+    AssetListOut,
+    AssetMetricsOut,
+    AssetPricesOut,
+    AssetRiskOut,
     BehaviorMetricSerializer,
     ComputeRequestSerializer,
     CorporateEventSerializer,
@@ -65,6 +72,8 @@ MAX_LIMIT = 100
 _INTEGER = re.compile(r"-?[0-9]+")
 
 
+# Nao e rota: e a resposta de rota inexistente (M4.2, RF-12).
+@extend_schema(exclude=True)
 class ApiNotFound(APIView):
     """A view final de `/api/` (D-86): rota inexistente responde `not_found` no formato
     da API, com `DEBUG` ligado ou nao — nao depende do `handler404` do Django, que o
@@ -192,6 +201,15 @@ class AssetListView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(
+        operation_id="v1_assets_search",  # M4.2: sem ele, colide com `/assets/{ticker}`
+        parameters=[
+            OpenApiParameter("q", OpenApiTypes.STR),
+            OpenApiParameter("limit", OpenApiTypes.INT, default=DEFAULT_LIMIT),
+            OpenApiParameter("offset", OpenApiTypes.INT, default=0),
+        ],
+        responses={200: AssetListOut},
+    )
     def get(self, request: Request) -> Response:
         limit = _int_param(request, "limit", DEFAULT_LIMIT, 1, MAX_LIMIT)
         offset = _int_param(request, "offset", 0, 0, 2**63 - 1)
@@ -215,6 +233,7 @@ class AssetDetailView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(responses={200: AssetDetailSerializer})  # M4.2, RF-12
     def get(self, request: Request, ticker: str) -> Response:
         return Response(AssetDetailSerializer(_asset(ticker)).data)
 
@@ -229,6 +248,13 @@ class AssetPricesView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(  # M4.2, RF-12
+        parameters=[
+            OpenApiParameter("from", OpenApiTypes.DATE),
+            OpenApiParameter("to", OpenApiTypes.DATE),
+        ],
+        responses={200: AssetPricesOut},
+    )
     def get(self, request: Request, ticker: str) -> Response:
         start = _date_param(request, "from")
         end = _date_param(request, "to")
@@ -258,6 +284,7 @@ class AssetEventsView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(responses={200: AssetEventsOut})  # M4.2, RF-12
     def get(self, request: Request, ticker: str) -> Response:
         asset = _asset(ticker)
         events = CorporateEvent.objects.filter(asset=asset).order_by("date", "kind")
@@ -279,6 +306,7 @@ class AssetMetricsView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(responses={200: AssetMetricsOut})  # M4.2, RF-12
     def get(self, request: Request, ticker: str) -> Response:
         asset = _asset(ticker)
         metric = (
@@ -381,9 +409,11 @@ class AssetRiskView(APIView):
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
 
+    @extend_schema(responses={200: AssetRiskOut})  # M4.2, RF-12
     def get(self, request: Request, ticker: str) -> Response:
         return Response(risk_body(_asset(ticker), timezone.now()))
 
+    @extend_schema(request=None, responses={202: AssetRiskOut})  # M4.2, RF-12
     def post(self, request: Request, ticker: str) -> Response:
         """Decide **dentro** do `atomic` e levanta o erro **depois** de sair dele: um
         `ApiError` de dentro desfaria o `expire_stale`, e os vencidos tem de ficar gravados

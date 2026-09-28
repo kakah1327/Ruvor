@@ -3,7 +3,7 @@
 A chave le as rotas que declaram `api_key_scope = "read"`, e so por metodo seguro. Toda view sob
 `api/` declara o atributo no proprio corpo; o padrao, para view sem ele, e recusar -- provado
 numa rota de teste fora de `/api/`. A parte de `api-keys` esta em `test_api_key_rotas.py` (T6);
-a de `/schema` entra com a rota (T8).
+a de `/schema`, em `test_esquema_openapi.py` (T8).
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ LEITURA = {
     leitura.AssetMetricsView,
     leitura.AssetRiskView,
     leitura.ApiNotFound,
+    conta.SchemaView,
 }
 ESCRITA_PERMITIDA_COM_READ = {leitura.AssetRiskView, leitura.ApiNotFound}
 # as que a chave nao alcanca: conta, gestao e as proprias chaves

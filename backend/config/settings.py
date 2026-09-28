@@ -137,8 +137,9 @@ REST_FRAMEWORK = {
     },
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
-    # O gerador do drf-spectacular exige o proprio AutoSchema em toda view (M4.2, RF-12).
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # O gerador do drf-spectacular exige o AutoSchema dele em toda view; este e uma subclasse,
+    # que poe o erro `default` e tira o `Bearer` de quem a chave nao alcanca (M4.2, RF-12).
+    "DEFAULT_SCHEMA_CLASS": "apps.accounts.schema.AutoSchema",
 }
 
 # O esquema OpenAPI da API (M4.2, RF-12; D-110). `SERVE_INCLUDE_SCHEMA` verdadeiro: a propria
@@ -147,6 +148,14 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Ruvor API",
     "VERSION": "1",
     "SERVE_INCLUDE_SCHEMA": True,
+    # Dois campos `kind` e dois `status` com escolhas diferentes: sem nome proprio, o gerador
+    # inventa um com sufixo de hash e avisa -- e o `--fail-on-warn` reprova.
+    "ENUM_NAME_OVERRIDES": {
+        "AssetKindEnum": "apps.assets.models.Asset.Kind",
+        "AssetStatusEnum": "apps.assets.models.Asset.Status",
+        "CorporateEventKindEnum": "apps.assets.models.CorporateEvent.Kind",
+        "RiskRunStatusEnum": "apps.risk.models.RiskRun.Status",
+    },
 }
 
 DATABASES: dict[str, dict[str, str]] = {

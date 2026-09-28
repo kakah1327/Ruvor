@@ -18,6 +18,9 @@ import re
 from typing import Any, ClassVar
 
 from django.middleware.csrf import get_token
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.views import SpectacularJSONAPIView
 from rest_framework.exceptions import APIException, Throttled, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
@@ -33,10 +36,17 @@ from apps.accounts.models import User
 from apps.accounts.permissions import AccountReady
 from apps.accounts.serializers import (
     ApiKeyCreateIn,
+    ApiKeyListOut,
+    ApiKeyWithSecretOut,
     LoginIn,
+    MeOut,
     PasswordIn,
     SignupIn,
     UserCreateIn,
+    UserListOut,
+    UserOut,
+    UserUpdateIn,
+    UserWithPasswordOut,
 )
 from apps.api.errors import ApiError
 
@@ -100,6 +110,7 @@ class CsrfView(APIView):
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(responses={204: None})
     def get(self, request: Request) -> Response:
         get_token(request._request)
         return Response(status=204)
@@ -112,6 +123,7 @@ class SignupView(APIView):
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
+    @extend_schema(request=SignupIn, responses={201: MeOut})
     def post(self, request: Request) -> Response:
         SessionAuthentication().enforce_csrf(request)
         data = _data(SignupIn, request)
@@ -129,6 +141,7 @@ class LoginView(APIView):
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
+    @extend_schema(request=LoginIn, responses={200: MeOut})
     def post(self, request: Request) -> Response:
         SessionAuthentication().enforce_csrf(request)
         data = _data(LoginIn, request)
@@ -145,6 +158,7 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(request=None, responses={204: None})
     def post(self, request: Request) -> Response:
         try:
             services.logout(request._request)
@@ -159,6 +173,7 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(responses={200: MeOut})
     def get(self, request: Request) -> Response:
         return Response(services.me_body(_user(request)))
 
@@ -184,6 +199,13 @@ class OrganizationUsersView(APIView):
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("limit", OpenApiTypes.INT, default=50),
+            OpenApiParameter("offset", OpenApiTypes.INT, default=0),
+        ],
+        responses={200: UserListOut},
+    )
     def get(self, request: Request) -> Response:
         limit = _query_int(request, "limit", 50)
         offset = _query_int(request, "offset", 0)
@@ -202,6 +224,7 @@ class OrganizationUsersView(APIView):
             }
         )
 
+    @extend_schema(request=UserCreateIn, responses={201: UserWithPasswordOut})
     def post(self, request: Request) -> Response:
         data = _data(UserCreateIn, request)
         try:
@@ -222,6 +245,7 @@ class OrganizationUserView(APIView):
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(request=UserUpdateIn, responses={200: UserOut})
     def patch(self, request: Request, email: str) -> Response:
         changes = request.data
         if not isinstance(changes, dict):
@@ -244,6 +268,7 @@ class TemporaryPasswordView(APIView):
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
+    @extend_schema(request=None, responses={200: UserWithPasswordOut})
     def post(self, request: Request, email: str) -> Response:
         try:
             user, password = services.reset_temporary_password(
@@ -263,6 +288,7 @@ class PasswordView(APIView):
     api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
+    @extend_schema(request=PasswordIn, responses={204: None})
     def post(self, request: Request) -> Response:
         data = _data(PasswordIn, request)
         try:
@@ -278,10 +304,12 @@ class ApiKeysView(APIView):
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # RF-07: a chave nao gere chave
 
+    @extend_schema(responses={200: ApiKeyListOut})
     def get(self, request: Request) -> Response:
         keys = services.list_api_keys(_user(request))
         return Response({"results": [services.api_key_body(k) for k in keys]})
 
+    @extend_schema(request=ApiKeyCreateIn, responses={201: ApiKeyWithSecretOut})
     def post(self, request: Request) -> Response:
         data = _data(ApiKeyCreateIn, request)
         try:
@@ -301,6 +329,7 @@ class ApiKeyView(APIView):
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = None  # RF-07: a chave nao gere chave
 
+    @extend_schema(responses={204: None})
     def delete(self, request: Request, prefix: str) -> Response:
         try:
             services.revoke_api_key(
@@ -309,3 +338,10 @@ class ApiKeyView(APIView):
         except AccountError as err:
             raise account_error_to_api(err) from err
         return Response(status=204)
+
+
+class SchemaView(SpectacularJSONAPIView):
+    """`GET schema`: o esquema OpenAPI 3 da API, em JSON (M4.2, RF-12). A chave le."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-07: a chave le (so metodo seguro)
