@@ -17,6 +17,10 @@ conversas e entre agentes.
 | [D-07](D-07-resposta-progressiva-modo-a.md) | Resposta progressiva: rápidos na hora, ML depois |
 | [D-09](D-09-uma-camada-por-vez.md) | Construção de uma camada por vez |
 | [D-19](D-19-cobertura-de-ativos-em-camadas.md) | Cobertura de ativos em camadas |
+| [D-95](D-95-o-m1-6-em-tres-blocos.md) | O M1.6 em três blocos: as camadas 4 e 5 vão para o M1.6c, com as rotas escritas pela `marco1` |
+| [D-96](D-96-discordancia-e-aprovados-entram-no-marco-1.md) | A discordância entre modelos e os não rejeitados por ativo entram no Marco 1 |
+| [D-97](D-97-no-marco-1-cada-numero-tem-uma-frase-fixa.md) | No Marco 1, cada número tem uma frase fixa; as duas leituras continuam no M2.3 |
+| [D-98](D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md) | O horizonte do Marco 1 é 1 dia; restringe a D-05 |
 
 ## Arquitetura
 
@@ -133,6 +137,7 @@ conversas e entre agentes.
 | [D-91](D-91-a-rotina-diaria-e-precos-metricas-risco-estende-a-d-69.md) | A rotina diária é `preços → métricas → risco`; estende a D-69 |
 | [D-92](D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md) | Nunca duas execuções do mesmo ativo ao mesmo tempo: a abertura pula o ativo em cálculo |
 | [D-93](D-93-os-icones-do-produto-vem-do-phosphor.md) | Os ícones do produto vêm do Phosphor, num conjunto fechado dentro do kit |
+| [D-94](D-94-os-graficos-sao-do-uplot.md) | Os gráficos são do uPlot, com a cor dos tokens; a comparação dos modelos é tabela |
 | [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes

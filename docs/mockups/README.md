@@ -27,6 +27,7 @@ Toda tarefa visual vira duas: primeiro o mockup, depois a implementação
 |---|---|---|---|
 | M1.6a | [`M1.6a/kit.html`](M1.6a/kit.html) | a vitrine do kit: cada token e cada componente, em todos os estados, nos dois temas, com a chave de tema e os ícones do conjunto | ✅ aprovada pelo dono da frente em 2026-09-28 |
 | M1.6a | [`M1.6a/icones-comparativo.html`](M1.6a/icones-comparativo.html) | Lucide, Phosphor e Radix aplicados ao kit, lado a lado, para a escolha da biblioteca de ícones | ✅ usado no portão; o Phosphor foi escolhido ([D-93](../decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)) |
+| M1.6b | [`M1.6b/graficos-comparativo.html`](M1.6b/graficos-comparativo.html) | Recharts, uPlot e lightweight-charts desenhando preço, distribuição de retornos e VaR por modelo, com dado real da API pelo proxy do Vite, nos dois temas, para a escolha da biblioteca de gráfico | ✅ usado na escolha; o uPlot foi escolhido ([D-94](../decisoes/D-94-os-graficos-sao-do-uplot.md)) |
 
 A vitrine não é tela de produto: consome só `tokens.css` e `components.css`, e as classes de
 estado forçado (`.is-hover`, `.is-focus`) existem só nela. O serviço `frontend` monta este

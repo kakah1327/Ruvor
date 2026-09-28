@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6-aplicacao-web` — M1.6a fechado e mesclado (PR #12); o M1.6b abre ramo próprio |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b → M1.6c | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6b-as-telas` |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
 
@@ -103,7 +103,7 @@ outras frentes.
 |---|---|---|
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
-| D-85 a D-99 | `marco1` | D-85 a D-93 |
+| D-85 a D-99 | `marco1` | D-85 a D-98 |
 | D-100 a D-119 | `identidade` | D-100 a D-107 |
 | D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 

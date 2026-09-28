@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Bibliotecas de gráfico (M1.6b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css">
+<style>
+  /*
+   * Comparativo de bibliotecas de gráfico para o M1.6b. Não é tela de produto: é o insumo da
+   * escolha, como o icones-comparativo.html foi no M1.6a. Só var(--ruvor-*) e valores
+   * estruturais; as bibliotecas em canvas recebem a cor lida dos tokens por getComputedStyle.
+   * Os dados são reais: a página pede /api/v1/ pelo proxy do Vite.
+   */
+  .cmp-page { max-width: 1480px; margin: auto; padding: var(--ruvor-space-6) var(--ruvor-space-5) var(--ruvor-space-7); }
+  .cmp-top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--ruvor-space-5); }
+  .cmp-top__title { flex: 1 1 360px; }
+  .cmp-controls { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-3); align-items: flex-end; }
+  .cmp-switch { display: flex; gap: var(--ruvor-space-1); }
+  .cmp-summary { margin-top: var(--ruvor-space-5); }
+  .cmp-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--ruvor-space-4); margin-top: var(--ruvor-space-5); }
+  .cmp-col { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
+  .cmp-col__head { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .cmp-meta { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); }
+  .cmp-chart { position: relative; height: 240px; min-width: 0; }
+  .cmp-chart--short { height: 200px; }
+  .cmp-notes code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  .cmp-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  .cmp-notes li { font-size: var(--ruvor-type-small-size); }
+  .cmp-error { color: var(--ruvor-critical-text); }
+  /* O uPlot traz legenda própria; aqui só herda a cor e a fonte do tema. */
+  .uplot, .u-legend { font-family: var(--ruvor-font-sans); color: var(--ruvor-ink); font-size: var(--ruvor-type-micro-size); }
+  @media (max-width: 1100px) { .cmp-cols { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body class="ruvor-app">
+<main class="cmp-page">
+  <header class="cmp-top">
+    <div class="cmp-top__title">
+      <p class="ruvor-eyebrow">M1.6b · insumo do portão</p>
+      <h1 class="ruvor-display">Bibliotecas de gráfico</h1>
+      <p class="ruvor-sub">Os três gráficos que a tela do ativo precisa — preço, distribuição de retornos e VaR por modelo —, desenhados por Recharts, uPlot e lightweight-charts sobre o mesmo dado real da API. Troque o tema para ver quem acompanha sem redesenho.</p>
+    </div>
+    <div class="cmp-controls">
+      <label class="ruvor-field">
+        <span class="ruvor-label">Ativo</span>
+        <select class="ruvor-select" id="ticker">
+          <option>ITUB4</option><option>PETR4</option><option>VALE3</option><option>BBDC4</option><option>IBOV</option>
+        </select>
+      </label>
+      <div class="ruvor-field">
+        <span class="ruvor-label">Tema</span>
+        <div class="cmp-switch" role="group" aria-label="Tema">
+          <button class="ruvor-btn ruvor-btn--ghost" data-theme-set="light">Claro</button>
+          <button class="ruvor-btn ruvor-btn--ghost" data-theme-set="dark">Escuro</button>
+          <button class="ruvor-btn ruvor-btn--ghost" data-theme-set="">Sistema</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="ruvor-callout cmp-summary" id="summary" aria-live="polite">Carregando dados de /api/v1/…</section>
+
+  <div class="cmp-cols">
+    <section class="cmp-col" data-lib="recharts">
+      <div class="cmp-col__head">
+        <h2 class="ruvor-h2">Recharts 3.10</h2>
+        <div class="cmp-meta">
+          <span class="ruvor-tag ruvor-tag--evidence">SVG · componentes React</span>
+          <span class="ruvor-tag ruvor-tag--review">~159 KB gz, sem o React</span>
+        </div>
+      </div>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Preço ajustado</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="price"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Retornos diários</h3></div><div class="ruvor-panel__body"><div class="cmp-chart cmp-chart--short" data-chart="hist"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">VaR de 1 dia por modelo</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="var"></div></div></article>
+      <ul class="cmp-notes">
+        <li><strong>Tema de graça:</strong> a cor vai como <code>var(--ruvor-*)</code> no SVG; trocar o tema não redesenha nada.</li>
+        <li>Declarativo, no mesmo idioma das telas (JSX); eixo por categoria, barras agrupadas e dica prontos.</li>
+        <li>O mais pesado dos três; SVG com ~2.500 pontos é o limite confortável — dez anos de pregão cabem, tick a tick não caberia.</li>
+      </ul>
+    </section>
+
+    <section class="cmp-col" data-lib="uplot">
+      <div class="cmp-col__head">
+        <h2 class="ruvor-h2">uPlot 1.6</h2>
+        <div class="cmp-meta">
+          <span class="ruvor-tag ruvor-tag--evidence">canvas · imperativo</span>
+          <span class="ruvor-tag ruvor-tag--validated">~22 KB gz</span>
+        </div>
+      </div>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Preço ajustado</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="price"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Retornos diários</h3></div><div class="ruvor-panel__body"><div class="cmp-chart cmp-chart--short" data-chart="hist"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">VaR de 1 dia por modelo</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="var"></div></div></article>
+      <ul class="cmp-notes">
+        <li>O mais leve e o mais rápido; aguenta séries muito maiores que a nossa.</li>
+        <li><strong>Canvas não lê <code>var()</code>:</strong> a cor sai dos tokens por <code>getComputedStyle</code> e o gráfico é recriado a cada troca de tema.</li>
+        <li>Sem eixo por categoria: os modelos viram índices 0–8 com rótulo formatado à mão. A cor por barra (adequado ou não) exige desenho próprio — aqui todas saíram vazadas. Exige invólucro React próprio.</li>
+      </ul>
+    </section>
+
+    <section class="cmp-col" data-lib="lwc">
+      <div class="cmp-col__head">
+        <h2 class="ruvor-h2">lightweight-charts 5.2</h2>
+        <div class="cmp-meta">
+          <span class="ruvor-tag ruvor-tag--evidence">canvas · financeiro</span>
+          <span class="ruvor-tag ruvor-tag--review">~61 KB gz</span>
+        </div>
+      </div>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Preço ajustado</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="price"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Retornos diários</h3></div><div class="ruvor-panel__body"><div class="cmp-chart cmp-chart--short" data-chart="hist"></div></div></article>
+      <article class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">VaR de 1 dia por modelo</h3></div><div class="ruvor-panel__body"><div class="cmp-chart" data-chart="var"></div></div></article>
+      <ul class="cmp-notes">
+        <li>O melhor gráfico de preço: arrastar, dar zoom e cruz de leitura já vêm prontos, com eixo de pregão.</li>
+        <li>Fraco fora de série temporal: histograma e VaR por modelo usam o gráfico de eixo numérico, sem barra agrupada, e o eixo ficou com os índices — o formatador de rótulo não pegou nesse tipo de gráfico.</li>
+        <li>O preço abre nos últimos ~2 anos; o resto da série vem por arrasto ou zoom.</li>
+        <li>Mesmo problema de cor do uPlot: tokens lidos e aplicados de novo a cada troca de tema.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+import React from "https://esm.sh/react@19.3.0";
+import { createRoot } from "https://esm.sh/react-dom@19.3.0/client";
+import { flushSync } from "https://esm.sh/react-dom@19.3.0";
+import * as R from "https://esm.sh/recharts@3.10.1?deps=react@19.3.0,react-dom@19.3.0";
+import uPlot from "https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.esm.js";
+import * as LWC from "https://cdn.jsdelivr.net/npm/lightweight-charts@5.2.1/dist/lightweight-charts.standalone.production.mjs";
+
+const h = React.createElement;
+const MODEL_LABEL = {
+  historical: "Histórico", parametric: "Paramétrico", monte_carlo: "Monte Carlo",
+  garch_1_1: "GARCH(1,1)", egarch: "EGARCH", lstm: "LSTM", gru: "GRU", garchnet: "GARCHNet", caviar: "CAViaR",
+};
+const MODEL_ORDER = Object.keys(MODEL_LABEL);
+const pct = (v, d = 1) => v == null ? "—" : (v * 100).toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d }) + "%";
+const tok = (name) => getComputedStyle(document.body).getPropertyValue(`--ruvor-${name}`).trim();
+
+// ---------- dados ----------
+async function load(ticker) {
+  const get = async (p) => {
+    const r = await fetch(`/api/v1/assets/${ticker}${p}`);
+    if (!r.ok) throw new Error(`${p || "/"}: HTTP ${r.status}`);
+    return r.json();
+  };
+  const [prices, metrics, risk] = await Promise.all([get("/prices"), get("/metrics"), get("/risk")]);
+  const price = prices.results.map((p) => ({ date: p.date, t: Date.parse(p.date + "T00:00:00Z") / 1000, v: Number(p.adj_close) }));
+  const hist = (metrics.metric?.histogram ?? []).map((b) => {
+    const lo = b.lower_bound == null ? null : Number(b.lower_bound);
+    const hi = b.upper_bound == null ? null : Number(b.upper_bound);
+    const label = lo == null ? `< ${pct(hi, 0)}` : hi == null ? `≥ ${pct(lo, 0)}` : pct((lo + hi) / 2, 2);
+    return { i: b.bin_index, label, count: b.count, negative: (hi ?? 1) <= 0 };
+  });
+  const results = risk.latest?.results ?? [];
+  const byModel = MODEL_ORDER.map((m, i) => {
+    const at = (a) => results.find((r) => r.model_name === m && r.alpha === a);
+    const r95 = at("0.0500"), r99 = at("0.0100");
+    return {
+      i, model: m, label: MODEL_LABEL[m],
+      var95: r95?.var_latest == null ? null : Number(r95.var_latest),
+      var99: r99?.var_latest == null ? null : Number(r99.var_latest),
+      ok95: r95?.adequate ?? null, ok99: r99?.adequate ?? null,
+    };
+  });
+  return { price, hist, byModel, risk, metrics };
+}
+
+function summarize(ticker, d) {
+  const v99 = d.byModel.filter((m) => m.var99 != null);
+  const lo = Math.min(...v99.map((m) => m.var99)), hi = Math.max(...v99.map((m) => m.var99));
+  const ok = d.byModel.filter((m) => m.ok99).map((m) => m.label);
+  const asOf = d.risk.latest?.as_of_date ?? "—";
+  return `<strong>${ticker}</strong> · ${d.price.length.toLocaleString("pt-BR")} pregões · risco de ${asOf}. `
+    + `A 99%, os nove modelos dizem que a perda de um dia fica entre <strong>${pct(lo)}</strong> e <strong>${pct(hi)}</strong> (discordância, candidato 5.1). `
+    + `Passam no veredito de adequação a 99%: <strong>${ok.length ? ok.join(", ") : "nenhum"}</strong> (candidato 5.2). `
+    + `Nos gráficos de VaR, a barra cheia é adequada e a vazada não — a cor nunca é o único sinal: a dica diz "adequado" ou "não adequado".`;
+}
+
+// O tempo de desenho não aparece: medido nos três, fica abaixo de 10 ms e não decide nada.
+const timed = (col, key, fn) => fn();
+
+// ---------- Recharts: cor por var(), sem redesenho no tema ----------
+const rechartsRoots = new Map();
+function renderRecharts(col, d) {
+  const axis = { stroke: "var(--ruvor-border)", tick: { fill: "var(--ruvor-text-muted)", fontSize: 11 } };
+  const grid = h(R.CartesianGrid, { stroke: "var(--ruvor-table-rule)", vertical: false });
+  const tip = { contentStyle: { background: "var(--ruvor-surface)", border: "1px solid var(--ruvor-border)", borderRadius: 8, color: "var(--ruvor-ink)", fontSize: 12 }, labelStyle: { color: "var(--ruvor-text-muted)" } };
+  const years = (s) => s.slice(0, 4);
+
+  const charts = {
+    price: h(R.ResponsiveContainer, { width: "100%", height: "100%" },
+      h(R.LineChart, { data: d.price, margin: { top: 8, right: 8, bottom: 0, left: 0 } }, grid,
+        h(R.XAxis, { dataKey: "date", tickFormatter: years, minTickGap: 40, ...axis }),
+        h(R.YAxis, { width: 44, domain: ["auto", "auto"], tickFormatter: (v) => v.toFixed(0), ...axis }),
+        h(R.Tooltip, { ...tip, formatter: (v) => [`R$ ${v.toFixed(2)}`, "ajustado"] }),
+        h(R.Line, { dataKey: "v", stroke: "var(--ruvor-evidence)", strokeWidth: 1.5, dot: false, isAnimationActive: false }))),
+    hist: h(R.ResponsiveContainer, { width: "100%", height: "100%" },
+      h(R.BarChart, { data: d.hist, margin: { top: 8, right: 8, bottom: 0, left: 0 }, barCategoryGap: 1 }, grid,
+        h(R.XAxis, { dataKey: "label", interval: 6, ...axis }),
+        h(R.YAxis, { width: 44, ...axis }),
+        h(R.Tooltip, { ...tip, cursor: { fill: "var(--ruvor-control-hover)" }, formatter: (v) => [v, "pregões"] }),
+        h(R.Bar, { dataKey: "count", isAnimationActive: false },
+          d.hist.map((b) => h(R.Cell, { key: b.i, fill: b.negative ? "var(--ruvor-critical)" : "var(--ruvor-evidence)" }))))),
+    var: h(R.ResponsiveContainer, { width: "100%", height: "100%" },
+      h(R.BarChart, { data: d.byModel, layout: "vertical", margin: { top: 8, right: 8, bottom: 0, left: 8 }, barGap: 2 },
+        h(R.CartesianGrid, { stroke: "var(--ruvor-table-rule)", horizontal: false }),
+        h(R.XAxis, { type: "number", tickFormatter: (v) => pct(v, 0), ...axis }),
+        h(R.YAxis, { type: "category", dataKey: "label", width: 84, interval: 0, ...axis }),
+        h(R.Tooltip, { ...tip, cursor: { fill: "var(--ruvor-control-hover)" },
+          formatter: (v, name, item) => {
+            const ok = name === "95%" ? item.payload.ok95 : item.payload.ok99;
+            return [`${pct(v, 2)} · ${ok ? "adequado" : "não adequado"}`, name];
+          } }),
+        h(R.Legend, { wrapperStyle: { fontSize: 11, color: "var(--ruvor-text-muted)" } }),
+        h(R.Bar, { dataKey: "var95", name: "95%", fill: "var(--ruvor-evidence)", isAnimationActive: false },
+          d.byModel.map((m) => h(R.Cell, { key: m.i, fill: m.ok95 ? "var(--ruvor-evidence)" : "var(--ruvor-evidence-soft)", stroke: "var(--ruvor-evidence)" }))),
+        h(R.Bar, { dataKey: "var99", name: "99%", fill: "var(--ruvor-decision)", isAnimationActive: false },
+          d.byModel.map((m) => h(R.Cell, { key: m.i, fill: m.ok99 ? "var(--ruvor-decision)" : "var(--ruvor-decision-soft)", stroke: "var(--ruvor-decision)" }))))),
+  };
+  for (const [key, el] of Object.entries(charts)) {
+    const host = col.querySelector(`[data-chart="${key}"]`);
+    let root = rechartsRoots.get(host);
+    if (!root) { root = createRoot(host); rechartsRoots.set(host, root); }
+    timed(col, key, () => flushSync(() => root.render(el)));
+  }
+}
+
+// ---------- uPlot: cor lida dos tokens, recriado no tema ----------
+const uplots = [];
+function renderUplot(col, d) {
+  uplots.splice(0).forEach((u) => u.destroy());
+  const c = { ink: tok("ink"), muted: tok("text-muted"), rule: tok("table-rule"), ev: tok("evidence"), crit: tok("critical"), dec: tok("decision"), evSoft: tok("evidence-soft"), decSoft: tok("decision-soft") };
+  const axis = (extra = {}) => ({ stroke: c.muted, grid: { stroke: c.rule, width: 1 }, ticks: { stroke: c.rule }, font: `11px ${tok("font-sans")}`, ...extra });
+  const bars = uPlot.paths.bars({ size: [0.8, 40] });
+  const make = (key, opts, data) => {
+    const host = col.querySelector(`[data-chart="${key}"]`);
+    host.replaceChildren();
+    timed(col, key, () => {
+      const u = new uPlot({ width: host.clientWidth, height: host.clientHeight - 30, ...opts }, data, host);
+      uplots.push(u);
+    });
+  };
+  make("price", {
+    axes: [axis(), axis({ size: 44 })],
+    series: [{}, { label: "ajustado", stroke: c.ev, width: 1.5, value: (u, v) => v == null ? "—" : `R$ ${v.toFixed(2)}` }],
+  }, [d.price.map((p) => p.t), d.price.map((p) => p.v)]);
+  make("hist", {
+    scales: { x: { time: false } },
+    axes: [axis({ values: (u, vals) => vals.map((v) => d.hist[v]?.label ?? "") }), axis({ size: 44 })],
+    series: [{ value: (u, v) => d.hist[v]?.label ?? "" },
+      { label: "pregões", paths: bars, points: { show: false }, fill: c.ev, stroke: c.ev }],
+  }, [d.hist.map((b) => b.i), d.hist.map((b) => b.count)]);
+  const ok = (m, a) => (a === 95 ? m.ok95 : m.ok99) ? "adequado" : "não adequado";
+  make("var", {
+    scales: { x: { time: false, range: [-0.6, 8.6] } },
+    axes: [axis({ values: (u, vals) => vals.map((v) => Number.isInteger(v) ? (d.byModel[v]?.label ?? "") : ""), rotate: -35, size: 60 }),
+      axis({ size: 44, values: (u, vals) => vals.map((v) => pct(v, 0)) })],
+    series: [{ value: (u, v) => d.byModel[v]?.label ?? "" },
+      { label: "95%", paths: uPlot.paths.bars({ size: [0.35], align: -1 }), points: { show: false }, fill: c.evSoft, stroke: c.ev,
+        value: (u, v, s, i) => v == null ? "—" : `${pct(v, 2)} · ${ok(d.byModel[i], 95)}` },
+      { label: "99%", paths: uPlot.paths.bars({ size: [0.35], align: 1 }), points: { show: false }, fill: c.decSoft, stroke: c.dec,
+        value: (u, v, s, i) => v == null ? "—" : `${pct(v, 2)} · ${ok(d.byModel[i], 99)}` }],
+  }, [d.byModel.map((m) => m.i), d.byModel.map((m) => m.var95), d.byModel.map((m) => m.var99)]);
+}
+
+// ---------- lightweight-charts: cor lida dos tokens, reaplicada no tema ----------
+const lwcCharts = [];
+function renderLwc(col, d) {
+  lwcCharts.splice(0).forEach((ch) => ch.remove());
+  const base = () => ({
+    autoSize: true,
+    layout: { background: { type: "solid", color: tok("surface") }, textColor: tok("text-muted"), fontFamily: tok("font-sans"), fontSize: 11, attributionLogo: false },
+    grid: { vertLines: { color: tok("table-rule") }, horzLines: { color: tok("table-rule") } },
+    rightPriceScale: { borderColor: tok("border") },
+    timeScale: { borderColor: tok("border") },
+    crosshair: { vertLine: { color: tok("border"), labelBackgroundColor: tok("ink") }, horzLine: { color: tok("border"), labelBackgroundColor: tok("ink") } },
+  });
+  const make = (key, build) => {
+    const host = col.querySelector(`[data-chart="${key}"]`);
+    host.replaceChildren();
+    timed(col, key, () => lwcCharts.push(build(host)));
+  };
+  make("price", (host) => {
+    const ch = LWC.createChart(host, base());
+    ch.addSeries(LWC.LineSeries, { color: tok("evidence"), lineWidth: 2, priceLineVisible: false })
+      .setData(d.price.map((p) => ({ time: p.date, value: p.v })));
+    ch.timeScale().fitContent();
+    return ch;
+  });
+  make("hist", (host) => {
+    const ch = LWC.createOptionsChart(host, { ...base(), localization: { timeFormatter: (x) => d.hist[Math.round(x)]?.label ?? "" },
+      timeScale: { ...base().timeScale, tickMarkFormatter: (x) => d.hist[Math.round(x)]?.label ?? "" } });
+    ch.addSeries(LWC.HistogramSeries, { priceLineVisible: false, lastValueVisible: false })
+      .setData(d.hist.map((b) => ({ time: b.i, value: b.count, color: b.negative ? tok("critical") : tok("evidence") })));
+    ch.timeScale().fitContent();
+    return ch;
+  });
+  make("var", (host) => {
+    // Sem barra agrupada: 95% e 99% entram intercalados no mesmo eixo numérico (3 posições por modelo).
+    const ch = LWC.createOptionsChart(host, { ...base(),
+      localization: { timeFormatter: (x) => { const m = d.byModel[Math.floor(x / 3)]; return m ? `${m.label} · ${x % 3 === 0 ? "95%" : "99%"}` : ""; },
+        priceFormatter: (v) => pct(v, 2) },
+      timeScale: { ...base().timeScale, tickMarkFormatter: (x) => x % 3 === 0 ? (d.byModel[x / 3]?.label ?? "") : "" } });
+    const s = ch.addSeries(LWC.HistogramSeries, { priceLineVisible: false, lastValueVisible: false });
+    const pts = [];
+    d.byModel.forEach((m, i) => {
+      if (m.var95 != null) pts.push({ time: i * 3, value: m.var95, color: m.ok95 ? tok("evidence") : tok("evidence-soft") });
+      if (m.var99 != null) pts.push({ time: i * 3 + 1, value: m.var99, color: m.ok99 ? tok("decision") : tok("decision-soft") });
+    });
+    s.setData(pts);
+    ch.timeScale().fitContent();
+    return ch;
+  });
+}
+
+// ---------- orquestração ----------
+const cols = Object.fromEntries([...document.querySelectorAll("[data-lib]")].map((el) => [el.dataset.lib, el]));
+let data = null;
+function drawCanvas() {
+  for (const [name, fn] of [["uplot", renderUplot], ["lwc", renderLwc]]) {
+    try { fn(cols[name], data); } catch (e) { cols[name].insertAdjacentHTML("beforeend", `<p class="cmp-error">Falhou: ${e.message}</p>`); console.error(e); }
+  }
+}
+async function run(ticker) {
+  const summary = document.getElementById("summary");
+  summary.textContent = `Carregando ${ticker}…`;
+  try {
+    data = await load(ticker);
+  } catch (e) {
+    summary.innerHTML = `<span class="cmp-error">Não carregou: ${e.message}. A página precisa ser aberta pelo Vite (porta do frontend), com a web de pé.</span>`;
+    return;
+  }
+  summary.innerHTML = summarize(ticker, data);
+  try { renderRecharts(cols.recharts, data); } catch (e) { cols.recharts.insertAdjacentHTML("beforeend", `<p class="cmp-error">Falhou: ${e.message}</p>`); console.error(e); }
+  drawCanvas();
+}
+
+document.getElementById("ticker").addEventListener("change", (e) => run(e.target.value));
+for (const btn of document.querySelectorAll("[data-theme-set]")) {
+  btn.addEventListener("click", () => {
+    const t = btn.dataset.themeSet;
+    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    // O Recharts não é tocado: o SVG resolve var() sozinho. Os dois em canvas precisam redesenhar.
+    if (data) drawCanvas();
+  });
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => data && drawCanvas());
+let resizeTimer;
+addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => data && renderUplot(cols.uplot, data), 150); });
+run("ITUB4");
+</script>
+</body>
+</html>
