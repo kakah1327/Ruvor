@@ -10,15 +10,17 @@
 ## Agora
 
 **Bloco:** M1.6a — Fundação da aplicação (o M1.5b fechou em 2026-09-27, pela PR #4)
-**Etapa:** spec aprovada pelo dono da frente (2026-09-27); PR da spec passa pela `fundamentos`; plano em elaboração
+**Etapa:** spec aprovada (2026-09-27), na PR #8, que passa pela `fundamentos`; **plano aprovado** (2026-09-27); implementação a seguir
 **Ramo:** `marco1/M1.6-aplicacao-web`, com a spec
-([`specs/M1.6a-fundacao-da-aplicacao.md`](../specs/M1.6a-fundacao-da-aplicacao.md)) e a
-[D-86](../decisoes/D-86-convencoes-da-api-http.md)
+([`specs/M1.6a-fundacao-da-aplicacao.md`](../specs/M1.6a-fundacao-da-aplicacao.md)), a
+[D-86](../decisoes/D-86-convencoes-da-api-http.md) e o plano
+([`planos/M1.6a-fundacao-da-aplicacao.md`](../planos/M1.6a-fundacao-da-aplicacao.md))
 
 ## Próximo passo
 
-1. Fechar a revisão da spec do M1.6a e abrir a PR dela — **passa também pela frente
-   `fundamentos`**, porque traz a D-86, contrato entre frentes.
+1. A implementação do M1.6a — duas trilhas, o kit
+   (que termina na vitrine, com portão de mockup) e o backend. A PR da spec (#8) passa pela
+   `fundamentos`, porque traz a D-86.
 2. Conferir no log do `worker` o primeiro tique do Beat num dia útil (segunda, 19h30): é o dia
    comum com um pregão novo de verdade, que a execução real do fecho não teve — a coleta de
    domingo não trouxe pregão (ver o [ESTADO](../ESTADO.md)).
