@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Vitrine do kit (M1.6a)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Arranjo da vitrine — só var(--ruvor-*). Nenhuma cor e nenhum tamanho de fonte literal:
+   * o que aparece aqui é o kit, não desenho desta página. Valores estruturais (1px de
+   * borda, 1fr, porcentagem) são os únicos literais.
+   */
+  .kit-section {
+    padding-block: var(--ruvor-space-6);
+    border-top: 1px solid var(--ruvor-border);
+  }
+  .kit-section:first-of-type { margin-top: var(--ruvor-space-5); }
+  .kit-section > .ruvor-sub { margin-bottom: var(--ruvor-space-5); }
+  .kit-block + .kit-block { margin-top: var(--ruvor-space-5); }
+  .kit-block > .ruvor-h3 { margin-bottom: var(--ruvor-space-3); }
+
+  .kit-note {
+    color: var(--ruvor-text-muted);
+    font-size: var(--ruvor-type-micro-size);
+    line-height: var(--ruvor-type-micro-leading);
+  }
+  .kit-token {
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-micro-size);
+    line-height: var(--ruvor-type-micro-leading);
+  }
+
+  .kit-switch { display: flex; gap: var(--ruvor-space-2); }
+
+  /* Cores: os dois temas lado a lado, cada painel preso ao seu tema por data-theme. */
+  .kit-themes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ruvor-space-4);
+  }
+  .kit-theme {
+    background: var(--ruvor-paper);
+    color: var(--ruvor-ink);
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    padding: var(--ruvor-space-5);
+  }
+  .kit-theme > .ruvor-h3 { margin-bottom: var(--ruvor-space-1); }
+  .kit-group { margin-top: var(--ruvor-space-5); }
+  .kit-group > .ruvor-eyebrow { margin-bottom: var(--ruvor-space-3); }
+  .kit-swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--ruvor-space-7) * 4), 1fr));
+    gap: var(--ruvor-space-3) var(--ruvor-space-4);
+  }
+  .kit-swatch { display: flex; align-items: center; gap: var(--ruvor-space-3); }
+  .kit-chip {
+    flex: none;
+    width: var(--ruvor-space-6);
+    height: var(--ruvor-space-6);
+    border-radius: var(--ruvor-radius-sm);
+    border: 1px solid var(--ruvor-border);
+  }
+  .kit-pairs { display: grid; gap: var(--ruvor-space-2); }
+  .kit-pair { display: flex; align-items: center; gap: var(--ruvor-space-3); }
+
+  /* Linhas e células de exemplo. */
+  .kit-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--ruvor-space-5);
+  }
+  .kit-cell { display: grid; gap: var(--ruvor-space-2); justify-items: start; }
+  .kit-cell--wide { width: calc(var(--ruvor-space-7) * 5); justify-items: stretch; }
+  .kit-frame {
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    overflow: hidden;
+  }
+
+  /* Tipografia: um exemplo por degrau, montado só com os quatro tokens dele. */
+  .kit-type-row {
+    display: grid;
+    grid-template-columns: calc(var(--ruvor-space-7) * 4) 1fr;
+    gap: var(--ruvor-space-5);
+    align-items: baseline;
+    padding-block: var(--ruvor-space-3);
+    border-bottom: 1px solid var(--ruvor-border);
+  }
+  .kit-type--display { font-size: var(--ruvor-type-display-size); line-height: var(--ruvor-type-display-leading); letter-spacing: var(--ruvor-type-display-tracking); font-weight: var(--ruvor-type-display-weight); }
+  .kit-type--h2 { font-size: var(--ruvor-type-h2-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); font-weight: var(--ruvor-type-h2-weight); }
+  .kit-type--h3 { font-size: var(--ruvor-type-h3-size); line-height: var(--ruvor-type-h3-leading); letter-spacing: var(--ruvor-type-h3-tracking); font-weight: var(--ruvor-type-h3-weight); }
+  .kit-type--body { font-size: var(--ruvor-type-body-size); line-height: var(--ruvor-type-body-leading); letter-spacing: var(--ruvor-type-body-tracking); font-weight: var(--ruvor-type-body-weight); }
+  .kit-type--small { font-size: var(--ruvor-type-small-size); line-height: var(--ruvor-type-small-leading); letter-spacing: var(--ruvor-type-small-tracking); font-weight: var(--ruvor-type-small-weight); }
+  .kit-type--micro { font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); letter-spacing: var(--ruvor-type-micro-tracking); font-weight: var(--ruvor-type-micro-weight); }
+  .kit-type--label { font-family: var(--ruvor-font-mono); text-transform: uppercase; font-size: var(--ruvor-type-label-size); line-height: var(--ruvor-type-label-leading); letter-spacing: var(--ruvor-type-label-tracking); font-weight: var(--ruvor-type-label-weight); }
+  .kit-type--label-table { font-family: var(--ruvor-font-mono); text-transform: uppercase; font-size: var(--ruvor-type-label-size); letter-spacing: var(--ruvor-type-label-tracking-table); font-weight: var(--ruvor-type-label-weight); }
+  .kit-type--brand { font-size: var(--ruvor-type-brand-size); line-height: var(--ruvor-type-brand-leading); letter-spacing: var(--ruvor-type-brand-tracking); font-weight: var(--ruvor-type-brand-weight); }
+  .kit-type--code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-small-size); line-height: var(--ruvor-type-code-leading); }
+  .kit-font-sans { font-family: var(--ruvor-font-sans); font-size: var(--ruvor-type-h3-size); }
+  .kit-font-mono { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-h3-size); }
+
+  /* Espaço, raio e sombra. */
+  .kit-space {
+    height: var(--ruvor-space-3);
+    background: var(--ruvor-decision);
+    border-radius: var(--ruvor-radius-sm);
+  }
+  .kit-box {
+    width: calc(var(--ruvor-space-7) * 2);
+    height: calc(var(--ruvor-space-7) * 2);
+    background: var(--ruvor-surface);
+    border: 1px solid var(--ruvor-border);
+  }
+
+  .kit-skeleton { height: var(--ruvor-space-5); border-radius: var(--ruvor-radius-sm); }
+  .kit-skeleton--tall { height: calc(var(--ruvor-space-7) * 2); border-radius: var(--ruvor-radius-md); }
+  .kit-code-link { color: inherit; }
+
+  /*
+   * Estados forçados — SÓ NA VITRINE. Cópia das regras de :hover, :focus-visible e :active
+   * de brand/ruvor/components.css, para o estado aparecer sem o ponteiro nem o teclado.
+   * Não entram na folha nem no frontend; se a folha mudar, estas cópias mudam junto.
+   */
+  .ruvor-nav__link.is-hover { color: var(--ruvor-topbar-text); }
+  .ruvor-nav__link.is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
+  .ruvor-btn.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-btn.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-btn.is-active { transform: translateY(1px); }
+  .ruvor-btn--primary.is-hover { background: var(--ruvor-decision-hover); border-color: var(--ruvor-decision-hover); }
+  .ruvor-btn--ghost.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-input.is-hover,
+  .ruvor-select.is-hover { border-color: var(--ruvor-text-muted); }
+  .ruvor-input.is-focus,
+  .ruvor-select.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-choice.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-choice.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-topbar .is-focus,
+  .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
+
+  @media (max-width: 1000px) {
+    .kit-themes { grid-template-columns: 1fr; }
+  }
+</style>
+<!--
+  ÚNICA COR LITERAL DESTA PÁGINA. É o texto da tag review como está no mockup
+  (brand/ruvor/mockups/foundation.css, .tag.review), mostrado ao lado do token escurecido
+  --ruvor-review-text para o dono comparar no portão (RF-04). Não é valor do kit: não copiar.
+-->
+<style id="kit-cor-do-mockup">
+  .ruvor-tag.kit-review-mockup { color: #80672c; }
+</style>
+</head>
+<body class="ruvor-app">
+
+<header class="ruvor-topbar">
+  <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+  <nav class="ruvor-nav" aria-label="Seções da vitrine">
+    <a class="ruvor-nav__link ruvor-nav__link--on" href="#cores" aria-current="page">Cores</a>
+    <a class="ruvor-nav__link" href="#tipografia">Tipografia</a>
+    <a class="ruvor-nav__link" href="#medidas">Espaço, raio e sombra</a>
+    <a class="ruvor-nav__link" href="#estados">Estados</a>
+    <a class="ruvor-nav__link" href="#sinais">Tags e sinais</a>
+    <a class="ruvor-nav__link" href="#composicao">Composição</a>
+  </nav>
+  <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
+</header>
+
+<div class="ruvor-workspace">
+<main class="ruvor-content">
+
+  <div class="ruvor-page-head">
+    <div>
+      <p class="ruvor-eyebrow">M1.6a · portão de mockup</p>
+      <h1 class="ruvor-display">Vitrine do kit.</h1>
+      <p class="ruvor-sub">Cada token de <code class="kit-token">tokens.css</code> e cada classe de
+        <code class="kit-token">components.css</code>, nos dois temas e em todos os estados do RF-03.
+        A página consome só as duas folhas; os valores escritos abaixo são lidos delas pelo navegador,
+        não copiados à mão.</p>
+      <p class="ruvor-sub" id="kit-fonte">Fonte em uso: verificando…</p>
+    </div>
+    <div class="kit-switch ruvor-push" role="group" aria-label="Tema da página">
+      <button class="ruvor-btn" type="button" data-set-theme="light">Claro</button>
+      <button class="ruvor-btn" type="button" data-set-theme="dark">Escuro</button>
+      <button class="ruvor-btn" type="button" data-set-theme="system">Sistema</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ CORES -->
+  <section class="kit-section" id="cores">
+    <h2 class="ruvor-h2">Cores</h2>
+    <p class="ruvor-sub">Os 47 tokens de cor, cada painel preso ao seu tema por
+      <code class="kit-token">data-theme</code> — a chave de tema não os muda. A marca
+      <b>sem fonte</b> indica valor que não vem dos mockups: nasce no plano e é aprovado aqui.
+      Os três apelidos (<code class="kit-token">text</code>, <code class="kit-token">bg</code>,
+      <code class="kit-token">panel</code>) apontam para outro token.</p>
+    <div class="kit-themes">
+      <div class="kit-theme" data-theme="light" data-swatches>
+        <h3 class="ruvor-h3">Claro</h3>
+        <p class="kit-note">Reflete <code class="kit-token">mockups/foundation.css</code> (RF-01).</p>
+      </div>
+      <div class="kit-theme" data-theme="dark" data-swatches>
+        <h3 class="ruvor-h3">Escuro</h3>
+        <p class="kit-note">Desenho novo: nenhum valor deste painel tem fonte nos mockups (RF-05).</p>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Texto de tag e sinal sobre o <code class="kit-token">-soft</code>, nos dois temas</h3>
+      <p class="ruvor-sub">Contraste medido pelo navegador sobre as cores computadas, em três casas.
+        Texto de tag exige 4,5:1; o sinal é gráfico e exige 3:1 (RF-04).</p>
+      <div class="kit-themes">
+        <div class="kit-theme" data-theme="light" data-contrast>
+          <h3 class="ruvor-h3">Claro</h3>
+        </div>
+        <div class="kit-theme" data-theme="dark" data-contrast>
+          <h3 class="ruvor-h3">Escuro</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">O texto da tag review: mockup e token</h3>
+      <p class="ruvor-sub">O mockup usa um tom que fica abaixo de 4,5:1 sobre o
+        <code class="kit-token">review-soft</code>. O token <code class="kit-token">--ruvor-review-text</code>
+        o escurece meio ponto de luminosidade em HSL, sem mudar matiz nem saturação; o
+        <code class="kit-token">-soft</code> e a cor da marca não mudam. Mostrado no tema claro, que é o
+        do mockup.</p>
+      <div class="kit-theme kit-pairs" data-theme="light">
+        <div class="kit-pair">
+          <span class="ruvor-tag ruvor-tag--review kit-review-mockup" data-review-sample><i class="ruvor-dot"></i>Monitorar</span>
+          <span><b>Mockup</b> · <code class="kit-token" data-hex-of="color"></code> · <b>4,497:1</b> — reprova 4,5
+            <span class="kit-note">(medido nesta página: <span data-ratio></span>)</span></span>
+        </div>
+        <div class="kit-pair">
+          <span class="ruvor-tag ruvor-tag--review" data-review-sample><i class="ruvor-dot"></i>Monitorar</span>
+          <span><b>Token escurecido</b> · <code class="kit-token" data-hex-of="color"></code> · <b>4,63:1</b>
+            <span class="kit-note">(medido nesta página: <span data-ratio></span>)</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ TIPOGRAFIA -->
+  <section class="kit-section" id="tipografia">
+    <h2 class="ruvor-h2">Tipografia</h2>
+    <p class="ruvor-sub">Os oito degraus do RF-02, cada um com tamanho, entrelinha, espaçamento e peso.
+      O <code class="kit-token">small</code> e o <code class="kit-token">micro</code> têm peso 700 no token;
+      a dica e o texto do sinal usam o tamanho <code class="kit-token">micro</code> com peso 400 — o
+      componente escolhe o peso.</p>
+
+    <div class="kit-type-row">
+      <div><b>display</b><br><code class="kit-token" data-type="display"></code></div>
+      <div class="kit-type--display">A melhor evidência.</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>h2</b><br><code class="kit-token" data-type="h2"></code></div>
+      <div class="kit-type--h2">GARCHNet apresenta a melhor evidência</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>h3</b><br><code class="kit-token" data-type="h3"></code></div>
+      <div class="kit-type--h3">Desempenho fora da amostra</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>body</b><br><code class="kit-token" data-type="body"></code></div>
+      <div class="kit-type--body">Resultado consolidado da execução mais recente, com ressalvas metodológicas preservadas.</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>small</b><br><code class="kit-token" data-type="small"></code></div>
+      <div class="kit-type--small">Rótulo de campo · navegação · código</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>micro</b><br><code class="kit-token" data-type="micro"></code></div>
+      <div class="kit-type--micro">Tag, dica e legenda</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>label</b><br><code class="kit-token" data-type="label"></code></div>
+      <div class="kit-type--label">Ranking dos modelos</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>label, na tabela</b><br><code class="kit-token" data-token="--ruvor-type-label-tracking-table"></code></div>
+      <div class="kit-type--label-table">Estatística · p-valor</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>brand</b><br><code class="kit-token" data-type="brand"></code></div>
+      <div class="kit-type--brand">RUVOR</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>code</b> (tamanho <code class="kit-token">small</code>)<br>entrelinha <code class="kit-token" data-token="--ruvor-type-code-leading"></code></div>
+      <div class="kit-type--code">ruvor run --ticker PETR4.SA<br>--alpha 0.99</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>font-sans</b><br><code class="kit-token" data-token="--ruvor-font-sans"></code></div>
+      <div class="kit-font-sans">Quanto posso perder? 0123456789</div>
+    </div>
+    <div class="kit-type-row">
+      <div><b>font-mono</b><br><code class="kit-token" data-token="--ruvor-font-mono"></code></div>
+      <div class="kit-font-mono">VaR 99% = −3,42% 0123456789</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ MEDIDAS -->
+  <section class="kit-section" id="medidas">
+    <h2 class="ruvor-h2">Espaço, raio e sombra</h2>
+    <p class="ruvor-sub">Iguais nos dois temas. Os espaçamentos dos componentes fora desta escala ficam
+      na folha, como no mockup (RF-01).</p>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Espaço</h3>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-1 · <span data-token="--ruvor-space-1"></span></code><div class="kit-space" style="width: var(--ruvor-space-1)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-2 · <span data-token="--ruvor-space-2"></span></code><div class="kit-space" style="width: var(--ruvor-space-2)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-3 · <span data-token="--ruvor-space-3"></span></code><div class="kit-space" style="width: var(--ruvor-space-3)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-4 · <span data-token="--ruvor-space-4"></span></code><div class="kit-space" style="width: var(--ruvor-space-4)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-5 · <span data-token="--ruvor-space-5"></span></code><div class="kit-space" style="width: var(--ruvor-space-5)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-6 · <span data-token="--ruvor-space-6"></span></code><div class="kit-space" style="width: var(--ruvor-space-6)"></div></div>
+      <div class="kit-type-row"><code class="kit-token">--ruvor-space-7 · <span data-token="--ruvor-space-7"></span></code><div class="kit-space" style="width: var(--ruvor-space-7)"></div></div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Raio</h3>
+      <div class="kit-row">
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-sm)"></div><code class="kit-token">--ruvor-radius-sm · <span data-token="--ruvor-radius-sm"></span></code></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md)"></div><code class="kit-token">--ruvor-radius-md · <span data-token="--ruvor-radius-md"></span></code></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-lg)"></div><code class="kit-token">--ruvor-radius-lg · <span data-token="--ruvor-radius-lg"></span></code></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Sombra</h3>
+      <div class="kit-row">
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow)"></div><code class="kit-token">--ruvor-shadow</code><span class="kit-note" data-token="--ruvor-shadow"></span></div>
+        <div class="kit-cell"><div class="kit-box" style="border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow-panel)"></div><code class="kit-token">--ruvor-shadow-panel</code><span class="kit-note" data-token="--ruvor-shadow-panel"></span></div>
+      </div>
+      <p class="kit-note">As duas sombras são as mesmas no escuro, onde quase não aparecem — no escuro, a
+        separação é pela borda.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ ESTADOS -->
+  <section class="kit-section" id="estados">
+    <h2 class="ruvor-h2">Estados de interação</h2>
+    <p class="ruvor-sub">Cada componente interativo em cada estado do RF-03. Os marcados
+      <b>(forçado)</b> usam uma cópia da regra de <code class="kit-token">:hover</code>,
+      <code class="kit-token">:focus-visible</code> ou <code class="kit-token">:active</code>, só desta
+      página; os demais são os reais — passe o ponteiro e use Tab para conferir. Carregando
+      (<code class="kit-token">aria-busy</code>) muda só o cursor no controle; em bloco, é o esqueleto.</p>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Botão — <code class="kit-token">.ruvor-btn</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell"><button class="ruvor-btn" type="button">Exportar</button><span class="kit-note">normal</span></div>
+        <div class="kit-cell"><button class="ruvor-btn is-hover" type="button">Exportar</button><span class="kit-note">hover (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn is-focus" type="button">Exportar</button><span class="kit-note">focus-visible (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn is-active" type="button">Exportar</button><span class="kit-note">active (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn" type="button" disabled>Exportar</button><span class="kit-note">:disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn" type="button" aria-disabled="true">Exportar</button><span class="kit-note">aria-disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn" type="button" aria-busy="true">Exportando…</button><span class="kit-note">aria-busy</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Botão primário — <code class="kit-token">.ruvor-btn--primary</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary" type="button">Calcular</button><span class="kit-note">normal</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary is-hover" type="button">Calcular</button><span class="kit-note">hover (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary is-focus" type="button">Calcular</button><span class="kit-note">focus-visible (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary is-active" type="button">Calcular</button><span class="kit-note">active (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary" type="button" disabled>Calcular</button><span class="kit-note">:disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary" type="button" aria-disabled="true">Calcular</button><span class="kit-note">aria-disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--primary" type="button" aria-busy="true">Calculando…</button><span class="kit-note">aria-busy</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Botão fantasma — <code class="kit-token">.ruvor-btn--ghost</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost" type="button">Cancelar</button><span class="kit-note">normal</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost is-hover" type="button">Cancelar</button><span class="kit-note">hover (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost is-focus" type="button">Cancelar</button><span class="kit-note">focus-visible (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost is-active" type="button">Cancelar</button><span class="kit-note">active (forçado)</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost" type="button" disabled>Cancelar</button><span class="kit-note">:disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost" type="button" aria-disabled="true">Cancelar</button><span class="kit-note">aria-disabled</span></div>
+        <div class="kit-cell"><button class="ruvor-btn ruvor-btn--ghost" type="button" aria-busy="true">Cancelando…</button><span class="kit-note">aria-busy</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Campo — <code class="kit-token">.ruvor-field</code>, <code class="kit-token">.ruvor-label</code>, <code class="kit-token">.ruvor-input</code>, <code class="kit-token">.ruvor-hint</code>, <code class="kit-token">.ruvor-field__error</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-1">Ativo</label><input class="ruvor-input" id="k-in-1" value="PETR4.SA" aria-describedby="k-in-1-hint"><span class="ruvor-hint" id="k-in-1-hint">Ticker negociado na B3.</span></div><span class="kit-note">normal, com dica</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-2">Ativo</label><input class="ruvor-input is-hover" id="k-in-2" value="PETR4.SA"></div><span class="kit-note">hover (forçado)</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-3">Ativo</label><input class="ruvor-input is-focus" id="k-in-3" value="PETR4.SA"></div><span class="kit-note">focus-visible (forçado)</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-4">Ativo</label><input class="ruvor-input" id="k-in-4" value="PETR4.SA" disabled></div><span class="kit-note">:disabled</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-5">Ativo</label><input class="ruvor-input" id="k-in-5" value="PETR4.SA" aria-busy="true"></div><span class="kit-note">aria-busy</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-in-6">Ativo</label><input class="ruvor-input" id="k-in-6" value="PETR9.SA" aria-invalid="true" aria-describedby="k-in-6-erro"><span class="ruvor-field__error" id="k-in-6-erro">Ticker não encontrado no catálogo da B3.</span></div><span class="kit-note">aria-invalid, mensagem por aria-describedby</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Seleção — <code class="kit-token">.ruvor-select</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-1">Confiança</label><select class="ruvor-select" id="k-se-1"><option>99%</option><option>95%</option></select></div><span class="kit-note">normal</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-2">Confiança</label><select class="ruvor-select is-hover" id="k-se-2"><option>99%</option></select></div><span class="kit-note">hover (forçado)</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-3">Confiança</label><select class="ruvor-select is-focus" id="k-se-3"><option>99%</option></select></div><span class="kit-note">focus-visible (forçado)</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-4">Confiança</label><select class="ruvor-select" id="k-se-4" disabled><option>99%</option></select></div><span class="kit-note">:disabled</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-5">Confiança</label><select class="ruvor-select" id="k-se-5" aria-busy="true"><option>Carregando…</option></select></div><span class="kit-note">aria-busy</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-field"><label class="ruvor-label" for="k-se-6">Horizonte</label><select class="ruvor-select" id="k-se-6" aria-invalid="true" aria-describedby="k-se-6-erro"><option>Selecione</option></select><span class="ruvor-field__error" id="k-se-6-erro">Escolha um horizonte.</span></div><span class="kit-note">aria-invalid, mensagem por aria-describedby</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Escolha — <code class="kit-token">.ruvor-choice</code>, <code class="kit-token">.ruvor-choice-grid</code></h3>
+      <div class="ruvor-choice-grid">
+        <button class="ruvor-choice" type="button" aria-pressed="false"><b>95%</b><small>normal</small></button>
+        <button class="ruvor-choice is-hover" type="button" aria-pressed="false"><b>95%</b><small>hover (forçado)</small></button>
+        <button class="ruvor-choice is-focus" type="button" aria-pressed="false"><b>95%</b><small>focus-visible (forçado)</small></button>
+      </div>
+      <div class="ruvor-choice-grid" style="margin-top: var(--ruvor-space-3)">
+        <button class="ruvor-choice ruvor-choice--on" type="button" aria-pressed="true"><b>99%</b><small>selecionada (--on)</small></button>
+        <button class="ruvor-choice" type="button" aria-pressed="false" disabled><b>99,5%</b><small>:disabled</small></button>
+        <button class="ruvor-choice" type="button" aria-pressed="false" aria-disabled="true"><b>99,5%</b><small>aria-disabled</small></button>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Navegação — <code class="kit-token">.ruvor-nav__link</code></h3>
+      <div class="kit-frame">
+        <header class="ruvor-topbar">
+          <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+          <nav class="ruvor-nav" aria-label="Exemplo de estados da navegação">
+            <a class="ruvor-nav__link" href="#estados">Normal</a>
+            <a class="ruvor-nav__link is-hover" href="#estados">Hover (forçado)</a>
+            <a class="ruvor-nav__link is-focus" href="#estados">Foco (forçado)</a>
+            <a class="ruvor-nav__link ruvor-nav__link--on" href="#estados">Ativa (--on)</a>
+          </nav>
+          <div class="ruvor-account"><span>Risco Institucional</span><span class="ruvor-avatar">GN</span></div>
+        </header>
+      </div>
+      <p class="kit-note">Sobre a barra, o anel é <code class="kit-token">--ruvor-focus-on-dark</code>. A borda
+        inferior da barra é <code class="kit-token">--ruvor-topbar-edge</code>: no claro tem a cor da própria
+        barra e some; no escuro separa a barra do fundo.</p>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Carregando em bloco — <code class="kit-token">.ruvor-skeleton</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton" aria-busy="true" aria-label="Carregando"></div><div class="ruvor-skeleton kit-skeleton" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">linhas</span></div>
+        <div class="kit-cell kit-cell--wide"><div class="ruvor-skeleton kit-skeleton--tall" aria-busy="true" aria-label="Carregando"></div><span class="kit-note">bloco; para com prefers-reduced-motion</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ TAGS E SINAIS -->
+  <section class="kit-section" id="sinais">
+    <h2 class="ruvor-h2">Tags e sinais</h2>
+    <p class="ruvor-sub">As cinco semânticas, com os nomes do produto: <code class="kit-token">decision</code>,
+      <code class="kit-token">review</code>, <code class="kit-token">evidence</code>,
+      <code class="kit-token">validated</code> e <code class="kit-token">critical</code>. A tag e o sinal de
+      <code class="kit-token">decision</code> não existem nos mockups — são desenho novo (RF-04). A cor
+      nunca é o único sinal: o texto da tag e a forma do ícone dizem o mesmo.</p>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Tag — <code class="kit-token">.ruvor-tag</code>, com e sem <code class="kit-token">.ruvor-dot</code></h3>
+      <div class="kit-row">
+        <span class="ruvor-tag ruvor-tag--decision"><i class="ruvor-dot"></i>Decisão</span>
+        <span class="ruvor-tag ruvor-tag--review"><i class="ruvor-dot"></i>Monitorar</span>
+        <span class="ruvor-tag ruvor-tag--evidence"><i class="ruvor-dot"></i>250 pregões</span>
+        <span class="ruvor-tag ruvor-tag--validated"><i class="ruvor-dot"></i>Validado</span>
+        <span class="ruvor-tag ruvor-tag--critical"><i class="ruvor-dot"></i>Revisão necessária</span>
+      </div>
+      <div class="kit-row" style="margin-top: var(--ruvor-space-3)">
+        <span class="ruvor-tag ruvor-tag--decision">Decisão</span>
+        <span class="ruvor-tag ruvor-tag--review">Monitorar</span>
+        <span class="ruvor-tag ruvor-tag--evidence">250 pregões</span>
+        <span class="ruvor-tag ruvor-tag--validated">Validado</span>
+        <span class="ruvor-tag ruvor-tag--critical">Revisão necessária</span>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Ícone de sinal — <code class="kit-token">.ruvor-icon</code></h3>
+      <div class="kit-row">
+        <div class="kit-cell"><span class="ruvor-icon ruvor-icon--decision"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-3 4 3 4H5"/></svg></span><span class="kit-note">decision</span></div>
+        <div class="kit-cell"><span class="ruvor-icon ruvor-icon--review"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a8 8 0 1 0 1 8"/><path d="m17 4 2 4-4 1"/></svg></span><span class="kit-note">review</span></div>
+        <div class="kit-cell"><span class="ruvor-icon ruvor-icon--evidence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 5-5 4 4 8-9"/></svg></span><span class="kit-note">evidence</span></div>
+        <div class="kit-cell"><span class="ruvor-icon ruvor-icon--validated"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span><span class="kit-note">validated</span></div>
+        <div class="kit-cell"><span class="ruvor-icon ruvor-icon--critical"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><circle cx="12" cy="18" r="2"/><path d="M5 22h14"/></svg></span><span class="kit-note">critical</span></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Sinal — <code class="kit-token">.ruvor-signal</code></h3>
+      <div class="ruvor-panel"><div class="ruvor-panel__body">
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--decision"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-3 4 3 4H5"/></svg></span><div><h3 class="ruvor-h3">Modelo de referência escolhido</h3><p>GARCHNet, pelo veredito de adequação.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--review"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a8 8 0 1 0 1 8"/><path d="m17 4 2 4-4 1"/></svg></span><div><h3 class="ruvor-h3">Revisão programada</h3><p>Novo recálculo em 18 dias.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--evidence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 5-5 4 4 8-9"/></svg></span><div><h3 class="ruvor-h3">Dados atualizados</h3><p>Fechamento de mercado disponível.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--validated"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span><div><h3 class="ruvor-h3">Cobertura preservada</h3><p>IBOV passou nos testes selecionados.</p></div></div>
+        <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--critical"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><circle cx="12" cy="18" r="2"/><path d="M5 22h14"/></svg></span><div><h3 class="ruvor-h3">Exceções dependentes</h3><p>O teste DQ reprovou em VALE3.SA.</p></div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ COMPOSIÇÃO -->
+  <section class="kit-section" id="composicao">
+    <h2 class="ruvor-h2">Composição</h2>
+    <p class="ruvor-sub">Painel, grade, tabela com número tabular, ranking com barra, destaque, código e a
+      área de trabalho — a própria página usa a barra superior, a área de trabalho, o conteúdo e o trilho.</p>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Grade de duas — <code class="kit-token">.ruvor-grid--2</code>: painel com tabela e destaque crítico</h3>
+      <div class="ruvor-grid ruvor-grid--2">
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__head"><h3 class="ruvor-h3">Backtests</h3><span class="ruvor-tag ruvor-tag--evidence ruvor-push"><i class="ruvor-dot"></i>250 pregões</span></div>
+          <table class="ruvor-table">
+            <thead><tr><th>Teste</th><th>Estatística</th><th>p-valor</th><th>Leitura</th></tr></thead>
+            <tbody>
+              <tr><td>Kupiec</td><td class="ruvor-num">0,68</td><td class="ruvor-num">0,409</td><td><span class="ruvor-tag ruvor-tag--validated">Validado</span></td></tr>
+              <tr><td>Christoffersen</td><td class="ruvor-num">1,17</td><td class="ruvor-num">0,279</td><td><span class="ruvor-tag ruvor-tag--validated">Validado</span></td></tr>
+              <tr><td>DQ</td><td class="ruvor-num">7,42</td><td class="ruvor-num">0,059</td><td><span class="ruvor-tag ruvor-tag--review">Monitorar</span></td></tr>
+              <tr><td>Basileia</td><td class="ruvor-num">2 exceções</td><td class="ruvor-num">—</td><td><span class="ruvor-tag ruvor-tag--validated">Zona verde</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <aside class="ruvor-callout ruvor-callout--critical">
+          <span class="ruvor-icon ruvor-icon--critical"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><circle cx="12" cy="18" r="2"/><path d="M5 22h14"/></svg></span>
+          <p class="ruvor-eyebrow" style="margin-top: var(--ruvor-space-3)">Ressalva metodológica</p>
+          <h3 class="ruvor-h3">DQ próximo ao limite.</h3>
+          <p class="ruvor-sub">O resultado não é invalidado, mas a dependência recente nas exceções pede nova observação.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Grade de três — <code class="kit-token">.ruvor-grid--3</code>: painel com divisória, ranking e destaque</h3>
+      <div class="ruvor-grid ruvor-grid--3">
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__body"><p class="ruvor-eyebrow">PETR4.SA</p><h2 class="ruvor-h2">VaR 99% · 1 dia</h2><p class="ruvor-sub">9 modelos calculados</p></div>
+          <div class="ruvor-panel__body ruvor-divider">
+            <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--evidence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 5-5 4 4 8-9"/></svg></span><div><b>2.480 observações</b><p>dez anos de pregão</p></div></div>
+          </div>
+        </div>
+        <div class="ruvor-panel">
+          <div class="ruvor-panel__head"><h3 class="ruvor-h3">Ranking dos modelos</h3></div>
+          <div class="ruvor-panel__body">
+            <div class="ruvor-rank"><b>01</b><span>GARCHNet</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 94%"></i></span><b class="ruvor-num">94</b></div>
+            <div class="ruvor-rank"><b>02</b><span>GARCH</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 81%"></i></span><b class="ruvor-num">81</b></div>
+            <div class="ruvor-rank"><b>03</b><span>Histórico</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 74%"></i></span><b class="ruvor-num">74</b></div>
+            <div class="ruvor-rank"><b>04</b><span>EGARCH</span><span class="ruvor-bar"><i class="ruvor-bar__fill" style="width: 68%"></i></span><b class="ruvor-num">68</b></div>
+          </div>
+        </div>
+        <aside class="ruvor-callout">
+          <span class="ruvor-icon ruvor-icon--evidence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 5-5 4 4 8-9"/></svg></span>
+          <p class="ruvor-eyebrow" style="margin-top: var(--ruvor-space-3)">Destaque — .ruvor-callout</p>
+          <h3 class="ruvor-h3">Leitura estável.</h3>
+          <p class="ruvor-sub">O ranking é comparativo, não recomendação de investimento.</p>
+        </aside>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Código — <code class="kit-token">.ruvor-code</code>, com anel sobre fundo escuro</h3>
+      <div class="ruvor-code">$ ruvor run --ticker PETR4.SA --alpha 0.99
+modelo     VaR       veredito
+garchnet   -3,42%    <a class="kit-code-link is-focus" href="#composicao">adequado</a>
+garch      -3,61%    adequado</div>
+      <p class="kit-note">O link dentro do código está com o foco forçado: sobre o
+        <code class="kit-token">code-bg</code>, o anel é <code class="kit-token">--ruvor-focus-on-dark</code>.</p>
+    </div>
+
+    <div class="kit-block">
+      <h3 class="ruvor-h3">Área de trabalho de largura total — <code class="kit-token">.ruvor-workspace--full</code>, <code class="kit-token">.ruvor-page-head</code>, <code class="kit-token">.ruvor-push</code>, <code class="kit-token">.ruvor-form-grid</code></h3>
+      <p class="kit-note">Sem trilho. A área ocupa a altura da janela menos a barra, como na folha.</p>
+      <div class="kit-frame">
+        <div class="ruvor-workspace ruvor-workspace--full">
+          <div class="ruvor-content">
+            <div class="ruvor-page-head">
+              <div><p class="ruvor-eyebrow">Nova análise</p><h2 class="ruvor-display">Defina o problema.</h2><p class="ruvor-sub">Os parâmetros ficam registrados junto ao resultado.</p></div>
+              <button class="ruvor-btn ruvor-btn--primary ruvor-push" type="button">Calcular</button>
+            </div>
+            <div class="ruvor-form-grid" style="margin-top: var(--ruvor-space-5)">
+              <div class="ruvor-field"><label class="ruvor-label" for="k-fg-1">Ativo</label><input class="ruvor-input" id="k-fg-1" value="PETR4.SA"><span class="ruvor-hint">Ticker negociado na B3.</span></div>
+              <div class="ruvor-field"><label class="ruvor-label" for="k-fg-2">Confiança</label><select class="ruvor-select" id="k-fg-2"><option>99%</option></select></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<aside class="ruvor-rail">
+  <p class="ruvor-eyebrow">O que olhar no portão</p>
+  <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--review"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a8 8 0 1 0 1 8"/><path d="m17 4 2 4-4 1"/></svg></span><div><h3 class="ruvor-h3">Tag review escurecida</h3><p>Mockup ao lado do token, em Cores.</p></div></div>
+  <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--decision"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-3 4 3 4H5"/></svg></span><div><h3 class="ruvor-h3">Decision, desenho novo</h3><p>Tag, sinal e texto sem fonte no mockup.</p></div></div>
+  <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--evidence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 5-5 4 4 8-9"/></svg></span><div><h3 class="ruvor-h3">Tema escuro inteiro</h3><p>Todos os valores nascem no plano.</p></div></div>
+  <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--validated"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span><div><h3 class="ruvor-h3">Estados e anel de foco</h3><p>Hover, foco, ativo e desabilitado.</p></div></div>
+  <div class="ruvor-signal"><span class="ruvor-icon ruvor-icon--critical"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11"/><circle cx="12" cy="18" r="2"/><path d="M5 22h14"/></svg></span><div><h3 class="ruvor-h3">Borda da barra</h3><p>topbar-edge: some no claro, separa no escuro.</p></div></div>
+</aside>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+
+  // Chave de tema: põe data-theme no <html>, ou o tira ("Sistema").
+  var switches = document.querySelectorAll("[data-set-theme]");
+  function setTheme(theme) {
+    if (theme === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    switches.forEach(function (b) {
+      var on = b.getAttribute("data-set-theme") === theme;
+      b.setAttribute("aria-pressed", String(on));
+      b.classList.toggle("ruvor-btn--primary", on);
+    });
+  }
+  switches.forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.getAttribute("data-set-theme")); });
+  });
+  setTheme("system");
+
+  // Os 47 tokens de cor, na ordem de tokens.css.
+  var GROUPS = [
+    ["Base", ["ink", "text", "paper", "bg", "canvas", "surface", "panel", "surface-2", "border", "text-muted"]],
+    ["Semânticas", ["decision", "decision-soft", "decision-text", "review", "review-soft", "review-text",
+      "evidence", "evidence-soft", "evidence-text", "validated", "validated-soft", "validated-text",
+      "critical", "critical-soft", "critical-text"]],
+    ["Barra superior", ["topbar", "topbar-text", "topbar-link", "topbar-account", "topbar-edge", "avatar"]],
+    ["Componentes", ["on-decision", "choice-selected", "table-head", "table-rule", "rank-rule", "bar-track",
+      "callout", "code-bg", "code-text", "skeleton-base", "skeleton-shine", "icon-review"]],
+    ["Estados", ["control-hover", "decision-hover", "focus", "focus-on-dark"]]
+  ];
+  var ALIAS = { text: "ink", bg: "paper", panel: "surface" };
+  var NO_SOURCE = ["decision-text", "topbar-edge", "control-hover", "decision-hover", "focus", "focus-on-dark"];
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  document.querySelectorAll("[data-swatches]").forEach(function (panel) {
+    var cs = getComputedStyle(panel);
+    var light = panel.getAttribute("data-theme") === "light";
+    GROUPS.forEach(function (group) {
+      var box = el("div", "kit-group");
+      box.appendChild(el("p", "ruvor-eyebrow", group[0]));
+      var list = el("div", "kit-swatches");
+      group[1].forEach(function (name) {
+        var item = el("div", "kit-swatch");
+        var chip = el("span", "kit-chip");
+        chip.style.background = "var(--ruvor-" + name + ")";
+        var info = el("div");
+        info.appendChild(el("code", "kit-token", "--ruvor-" + name));
+        var value = cs.getPropertyValue("--ruvor-" + name).trim().toUpperCase();
+        var note = value;
+        if (ALIAS[name]) note += " · = " + ALIAS[name];
+        if (light && NO_SOURCE.indexOf(name) >= 0) note += " · sem fonte";
+        if (light && name === "review-text") note += " · escurecido (RF-04)";
+        info.appendChild(el("div", "kit-note", note));
+        item.appendChild(chip);
+        item.appendChild(info);
+        list.appendChild(item);
+      });
+      box.appendChild(list);
+      panel.appendChild(box);
+    });
+  });
+
+  // Contraste WCAG entre duas cores computadas pelo navegador (três canais, 0 a 255).
+  function channels(rgb) { return rgb.match(/[\d.]+/g).slice(0, 3).map(Number); }
+  function luminance(rgb) {
+    var c = channels(rgb).map(function (v) {
+      v = v / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function ratio(a, b) {
+    var la = luminance(a), lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+  // Três casas: com duas, o 4,497 do mockup viraria "4,50" e pareceria passar. O veredito
+  // (abaixo de 4,5 ou de 3) é tirado do valor sem arredondar.
+  function fmt(x) { return x.toFixed(3).replace(".", ",") + ":1"; }
+  function hex(rgb) {
+    return "#" + channels(rgb).map(function (v) {
+      return ("0" + v.toString(16)).slice(-2);
+    }).join("").toUpperCase();
+  }
+
+  var SEMANTICS = [["decision", "Decisão"], ["review", "Monitorar"], ["evidence", "250 pregões"],
+    ["validated", "Validado"], ["critical", "Revisão necessária"]];
+  document.querySelectorAll("[data-contrast]").forEach(function (panel) {
+    var box = el("div", "kit-pairs");
+    panel.appendChild(box);
+    SEMANTICS.forEach(function (s) {
+      var row = el("div", "kit-pair");
+      var tag = el("span", "ruvor-tag ruvor-tag--" + s[0], s[1]);
+      var icon = el("span", "ruvor-icon ruvor-icon--" + s[0]);
+      var txt = el("span", "kit-note");
+      row.appendChild(tag);
+      row.appendChild(icon);
+      row.appendChild(txt);
+      box.appendChild(row);
+      var t = getComputedStyle(tag), i = getComputedStyle(icon);
+      var rt = ratio(t.color, t.backgroundColor), ri = ratio(i.color, i.backgroundColor);
+      txt.textContent = s[0] + " · texto " + fmt(rt) + (rt >= 4.5 ? "" : " (abaixo de 4,5)") +
+        " · sinal " + fmt(ri) + (ri >= 3 ? "" : " (abaixo de 3)");
+    });
+  });
+
+  document.querySelectorAll("[data-review-sample]").forEach(function (tag) {
+    var t = getComputedStyle(tag);
+    var line = tag.parentNode;
+    line.querySelector("[data-hex-of]").textContent = hex(t.color);
+    line.querySelector("[data-ratio]").textContent = fmt(ratio(t.color, t.backgroundColor));
+  });
+
+  // Tipografia, espaço, raio, sombra e fontes: o valor vem de tokens.css.
+  var rootStyle = getComputedStyle(root);
+  document.querySelectorAll("[data-token]").forEach(function (e) {
+    e.textContent = rootStyle.getPropertyValue(e.getAttribute("data-token")).trim();
+  });
+  document.querySelectorAll("[data-type]").forEach(function (e) {
+    var p = "--ruvor-type-" + e.getAttribute("data-type") + "-";
+    e.textContent = ["size", "leading", "tracking", "weight"].map(function (k) {
+      return rootStyle.getPropertyValue(p + k).trim();
+    }).join(" · ");
+  });
+
+  // Qual fonte o navegador está desenhando. document.fonts.check sozinho devolve true para
+  // fonte local ausente em alguns navegadores, por isso a medida de largura confirma.
+  function hasFont(name) {
+    var checked = !document.fonts || document.fonts.check('16px "' + name + '"');
+    var ctx = document.createElement("canvas").getContext("2d");
+    var sample = "mmmmmmmmmmlli1WQ";
+    return checked && ["monospace", "serif"].some(function (base) {
+      ctx.font = "72px " + base;
+      var w0 = ctx.measureText(sample).width;
+      ctx.font = '72px "' + name + '", ' + base;
+      return ctx.measureText(sample).width !== w0;
+    });
+  }
+  function reportFont() {
+    var out = document.getElementById("kit-fonte");
+    if (hasFont("Avenir Next")) out.textContent = "Fonte em uso: Avenir Next — a primeira da pilha.";
+    else if (hasFont("Segoe UI")) out.textContent = "Fonte em uso: Segoe UI — Avenir Next não está instalada.";
+    else out.textContent = "Fonte em uso: fonte de reserva (sans-serif do sistema) — nem Avenir Next nem Segoe UI estão instaladas.";
+  }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reportFont);
+  else reportFont();
+})();
+</script>
+</body>
+</html>
