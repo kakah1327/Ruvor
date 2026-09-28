@@ -42,7 +42,7 @@ terminado.
 | [M3.1 — Fundamentos](M3.1-fundamentos.md) | [M3.1](../specs/M3.1-fundamentos.md) | ✅ executado e fechado |
 | [M3.2 — Contexto](M3.2-contexto.md) | [M3.2](../specs/M3.2-contexto.md) | ✅ executado e fechado |
 | [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | [M1.6a](../specs/M1.6a-fundacao-da-aplicacao.md) | ✅ aprovado; em implementação |
-| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 aprovada, em implementação; a fase 2 espera o M1.6a |
+| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 executada; a fase 2 espera o M1.6a |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.

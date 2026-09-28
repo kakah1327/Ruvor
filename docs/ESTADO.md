@@ -13,9 +13,11 @@
 **Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
 **Bloco:** na frente `marco1`, o **M1.5b fechou em 2026-09-27**, e **o M1.6 é o próximo**; na
 frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não
-está definido
-**Frentes:** duas ativas desde 2026-09-26 — `marco1` (M1.5b ✅ → M1.6) e `fundamentos` (M3.1 ✅ e
-M3.2 ✅, com o Kauã); a `identidade` (M2.1) está definida e espera dono. O andamento de cada uma está em [`frentes/`](frentes/); quem
+está definido; na frente `identidade`, o **M2.1a** está com a **fase 1 implementada** (2026-09-27)
+e a fase 2 espera o M1.6a ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md))
+**Frentes:** `marco1` (M1.5b ✅ → M1.6, com o darkside171) e `identidade` (M2.1 → M4.2 → M4.1,
+com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
+`fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
 **Ramo:** um por bloco, e PR para entrar na `main`, mesclada pelo dono da frente com a CI
@@ -57,8 +59,12 @@ dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 2
 retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
 treina só o que falta e reconstitui a série inteira do backtest por previsão — em segundos por
 ativo, igual campo a campo ao cálculo do zero, que `compute_risk --full` ainda faz. O motor está
-no `0.3.0`. Vinte e sete tabelas, em cinco apps. Ainda não há API de negócio nem tela de
-produto.
+no `0.3.0`. **Desde a fase 1 do M2.1a há identidade:** sessão do Django no banco, cache no Redis
+(banco 1), papel `admin`/`member` por organização, organização pessoal, e-mail único sem
+diferença de caixa, a regra de cada rota de conta como serviço de `apps/accounts`, o bloqueio de
+entrada por (e-mail, IP), `core.access_event` — a auditoria de acesso, que só cresce —,
+`manage.py create_organization`, e o `createsuperuser` funcionando. Vinte e nove tabelas, em cinco
+apps. Ainda não há API de negócio nem tela de produto: as rotas de conta são a fase 2.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1066,6 +1072,36 @@ tipadas por `celery-types`).
 
 **A dívida de tipos do Celery está quitada** (ver "Dívida registrada").
 
+### M2.1a — Identidade e acesso, fase 1
+
+Spec em [`specs/M2.1a-identidade-e-acesso.md`](specs/M2.1a-identidade-e-acesso.md) e plano em
+[`planos/M2.1a-identidade-e-acesso.md`](planos/M2.1a-identidade-e-acesso.md). Frente `identidade`,
+ramo `identidade/M2.1-identidade-e-acesso`. **Só a fase 1**
+([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)): sem rota HTTP e sem importar
+`rest_framework`; a fase 2 espera o M1.6a. Spec: duas revisões adversariais (a 1 reprovou, 1 grave;
+a 2 aprovou). Plano: duas (a 1 reprovou, 1 grave; a 2 aprovou). Seis commits de tarefa, T1 a T6, e
+um de correção na T5.
+
+| Verificação | Resultado |
+|---|---|
+| Sessão, middleware, cookies, cache, validadores (V-01, V-02, V-17) | ✅ `public.django_session`; `MIDDLEWARE` na ordem do RF-01; `Secure` segue `RUVOR_SECURE_COOKIES`; cache `RedisCache` em `RUVOR_CACHE_URL` (banco 1) e `LocMemCache` na suíte |
+| Migration `0003` com dado real (V-22, dado) | ✅ dois usuários inseridos pelo `psql` em caixa mista, `migrate accounts 0003` sem `pending trigger events`: e-mails minúsculos, superusuário `admin`, o outro `member`; a unicidade de `Lower(email)` virou o índice `user_email_lower_uniq` |
+| Serviços da conta, gestão, comando, auditoria (V-05 a V-14, V-16, V-18) | ✅ 93 testes em `tests/accounts/` |
+| Concorrência do `last_admin` (V-11) | ✅ duas threads, `transaction=True`: termina com uma `admin` |
+| **Execução real (V-24)** | ✅ `createsuperuser --noinput` na `ruvor`; `create_organization` com senha provisória; pelos serviços: troca obrigatória, criação, desativação (a sessão cai), `last_admin`, cadastro com organização pessoal, bloqueio na 6ª tentativa com a senha certa (`wait_seconds` 900; a chave no banco 1 do Redis, o 0 só com o Celery), saída; 14 linhas em `core.access_event`, coluna a coluna como o RF-24 |
+| Suíte, tipos, estilo | ✅ **715 testes** no `worker`; `mypy` estrito limpo; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança |
+
+**As 18 mutações da T7 reprovaram**, cada uma no teste previsto, e o código voltou limpo depois
+de cada uma.
+
+**Duas armadilhas novas, em [aprendizados](aprendizados.md):** o `flush` do `transaction=True`
+só vê cinco tabelas do `public` — não limpa `core`, `bronze`, `silver` nem `gold`, e o `TRUNCATE`
+falha sem `available_apps` —; e o `remove_constraint` do Django passa em silêncio sem remover
+índice fora do `public`.
+
+Oito decisões: [D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) a
+[D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md).
+
 ## Próximo passo
 
 O M1.5b entrou na `main` pela PR #4, em 2026-09-27. **Na frente `marco1`, a spec do M1.6 — Aplicação web**: a API de leitura, o kit completo, os mockups e as
@@ -1087,6 +1123,11 @@ confirmou (ver o M1.5b, acima).
 M1.5b, os retratos. Ela ainda se reconstrói — o preço está em `silver`, e um `--full` dos quatro
 ativos leva ~5,5 min —, mas só para a série de
 hoje, não para a de cada dia passado.
+
+**Na frente `identidade`, a fase 2 do M2.1a**, quando o M1.6a estiver na `main`: as rotas de
+conta, a autenticação do DRF por sessão, o CSRF das rotas, o limite por IP, os códigos no tratador
+e o `requested_by` ([spec](specs/M2.1a-identidade-e-acesso.md#as-duas-fases)). Antes dela, combinar
+com a `marco1` a coluna `core.compute_request.requested_by`, que é migration da app dela.
 
 **Na frente `fundamentos`, o próximo bloco não está definido.** O M3.2 fecha o Marco 3 do
 ROADMAP para esta frente, e a escolha é do dono dela ([frentes/fundamentos.md](frentes/fundamentos.md)).
@@ -1112,7 +1153,9 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
 | **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
-| **`createsuperuser` não funciona.** O gerente exige organização e o comando não tem como fornecê-la: pôr `organization` em `REQUIRED_FIELDS` faria o `create_superuser` receber a **chave crua**, porque `ForeignKey.clean` devolve a pk (`createsuperuser.py:150,233`). Falha com `ValueError: o usuario precisa de organizacao` | `backend/apps/accounts/managers.py`, comentado no próprio arquivo | **M2.1**, que constrói o fluxo de identidade e decide como um primeiro usuário nasce. Enquanto isso, criar usuário exige `shell` |
+| ~~`createsuperuser` não funciona.~~ | ~~`backend/apps/accounts/managers.py`~~ | ✅ **quitada na fase 1 do M2.1a** — sem organização, o superusuário vai para a `ruvor`, como `admin` ([D-105](decisoes/D-105-superusuario-mora-na-ruvor-restringe-a-d-39.md)); `--noinput` com as `DJANGO_SUPERUSER_*` funciona |
+| **Quem esquece a senha da organização pessoal fica sem saída.** Não há envio de e-mail: a redefinição é da administradora, e na organização pessoal ela é a própria pessoa. Até lá, o operador redefine por `shell` | `backend/apps/accounts/services.py` | O primeiro bloco que decidir envio de e-mail (hospedagem) — [spec M2.1a, Riscos](specs/M2.1a-identidade-e-acesso.md#riscos-e-questões-em-aberto) |
+| **`django_session` cresce sem limpeza.** Sessão vencida fica na tabela até alguém rodar `manage.py clearsessions` | `public.django_session` | Uma entrada própria no Beat quando o volume justificar, ou na hospedagem |
 | **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |

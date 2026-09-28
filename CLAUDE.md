@@ -121,8 +121,9 @@ Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêine
 ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
 comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
 de adequação por ativo —, calculado **pela fila**, **agendado** pelo Celery Beat e, desde o
-M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Ainda não existe API de
-negócio nem tela de produto.
+M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Desde a fase 1 do M2.1a
+há **identidade**: sessão, papel por organização, a regra das rotas de conta como serviço e a
+auditoria de acesso. Ainda não existe API de negócio nem tela de produto.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -146,7 +147,7 @@ negócio nem tela de produto.
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
   [D-72](docs/decisoes/D-72-o-fecho-escreve-metadado-de-execucao-restringe-a-d-16.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
-  `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)); 622 testes com pytest-django, que
+  `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)); 715 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -155,9 +156,17 @@ negócio nem tela de produto.
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
   `silver.disclosure`, e as sete tabelas da `gold`, `gold.behavior_metric`,
   `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
-  `gold.fundamental_indicator` e `gold.peer_comparison` — vinte e sete ao todo. O `AUTH_USER_MODEL`
-  é próprio e autentica por e-mail
-  ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md)). `manage.py
+  `gold.fundamental_indicator` e `gold.peer_comparison`, mais `core.access_event` e
+  `public.django_session` — vinte e nove ao todo. O `AUTH_USER_MODEL`
+  é próprio e autentica por e-mail, **sem diferença de caixa**
+  ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
+  [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem
+  papel `admin` ou `member` na organização, e a organização pode ser pessoal. `apps/accounts`
+  tem a regra das rotas de conta como serviço (`services.py`), sem importar o DRF, o bloqueio de
+  entrada por (e-mail, IP) no cache do Django — Redis, banco 1, `RUVOR_CACHE_URL` —, a auditoria
+  `core.access_event`, que só cresce, e `manage.py create_organization`; o `createsuperuser` põe
+  o superusuário na `ruvor` ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)
+  a [D-107](docs/decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
   ([D-47](docs/decisoes/D-47-fonte-do-catalogo-e-o-site-da-b3.md),
   [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md));
