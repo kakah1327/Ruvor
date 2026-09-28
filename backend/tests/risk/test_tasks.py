@@ -49,6 +49,7 @@ from engine.experiments.runner import ExperimentResult, run_experiment
 from engine.models import get_model, load_all_model_modules
 from engine.models.base import VaRModel
 from engine.snapshots import Snapshot
+from pytest_django import DjangoCaptureOnCommitCallbacks
 
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
@@ -295,6 +296,7 @@ def _limpas(run: RiskRun, model_name: str) -> None:
 @pytest.mark.django_db
 def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
     fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
 ) -> None:
     """Os nove numa ordem que nao e a de `MODELS`: o cabecalho sai **por custo** (D-73) --
     tradicionais, GARCH, ML --, e dentro de cada categoria na ordem pedida. O
@@ -317,7 +319,8 @@ def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
         "caviar",
     ]
 
-    run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, pedidos)
+    with django_capture_on_commit_callbacks(execute=True):
+        run_id = _abrir_execucao("AAA3", INICIO.isoformat(), 42, pedidos)
 
     assert run_id is not None
     assert len(fila) == 1
@@ -347,10 +350,12 @@ def test_v02_a_abertura_enfileira_um_chord_de_nove_e_nao_executa_nenhum(
 @pytest.mark.django_db
 def test_serie_curta_na_abertura_devolve_none_sem_linha_e_sem_fila(
     fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
 ) -> None:
     _serie("AAA3", config.MIN_SESSIONS - 1)
 
-    assert _abrir_execucao("AAA3", INICIO.isoformat(), 42, BARATOS) is None
+    with django_capture_on_commit_callbacks(execute=True):
+        assert _abrir_execucao("AAA3", INICIO.isoformat(), 42, BARATOS) is None
     assert RiskRun.objects.count() == 0
     assert fila == []
 
@@ -746,7 +751,10 @@ def _contagens(run: RiskRun) -> dict[tuple[str, str], tuple[int | None, int | No
 
 
 @pytest.mark.django_db
-def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(fila: list[Any]) -> None:
+def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(
+    fila: list[Any],
+    django_capture_on_commit_callbacks: DjangoCaptureOnCommitCallbacks,
+) -> None:
     """Os nove modelos de verdade, redes incluidas, pelos dois caminhos sobre a mesma serie.
 
     O assincrono segue o que foi **enfileirado**: a abertura sai da fila do
@@ -766,7 +774,8 @@ def test_v07_sincrono_e_assincrono_gravam_o_mesmo_com_os_nove(fila: list[Any]) -
     enqueue_compute(["AAA3"], now=_relogio(MAIS_DEPOIS))
     (abertura,) = _aberturas(fila)
     fila.clear()
-    run_id = _abrir_execucao(*abertura)
+    with django_capture_on_commit_callbacks(execute=True):
+        run_id = _abrir_execucao(*abertura)
     assert run_id is not None
     (grupo,) = fila
     for tarefa in grupo.tasks:
