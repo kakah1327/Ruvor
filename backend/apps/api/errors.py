@@ -13,6 +13,9 @@ Desde a fase 2 do M2.1a, a lista ganha tres linhas (RF-27 da spec do M2.1a):
 - `ValidationError` -> 400 `invalid_parameter`, com os erros por campo em `details.fields`;
 - `Throttled` -> 429 `too_many_requests`, com `Retry-After` e `details.wait_seconds`.
 
+E, desde o M4.2 (RF-11), `AuthenticationFailed` -> 401 `invalid_api_key`, pela mesma regra do
+`NotAuthenticated`: e o que a autenticacao por chave levanta.
+
 Os cabecalhos sao postos aqui porque quem os copiaria da excecao e o `exception_handler`
 padrao do DRF, que este tratador substitui.
 """
@@ -27,6 +30,7 @@ from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.http import Http404
 from rest_framework.exceptions import (
     APIException,
+    AuthenticationFailed,
     MethodNotAllowed,
     NotAcceptable,
     NotAuthenticated,
@@ -107,7 +111,13 @@ def handle_exception(exc: Exception, context: dict[str, Any]) -> Response:
         auth_header = getattr(exc, "auth_header", None)
         if auth_header:
             headers["WWW-Authenticate"] = str(auth_header)
-    elif isinstance(exc, NotAuthenticated):
+    elif isinstance(exc, AuthenticationFailed) and exc.status_code == 401:
+        # a chave de API recusada (M4.2, RF-11): a mesma regra do `NotAuthenticated`
+        status, code, message = 401, "invalid_api_key", "Chave de API inválida."
+        auth_header = getattr(exc, "auth_header", None)
+        if auth_header:
+            headers["WWW-Authenticate"] = str(auth_header)
+    elif isinstance(exc, NotAuthenticated | AuthenticationFailed):
         # rebaixado a 403 pela `APIView`: nenhum autenticador deu `WWW-Authenticate`
         status, code = 403, "permission_denied"
         message = "Sem permissão para acessar este recurso."

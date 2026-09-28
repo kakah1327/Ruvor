@@ -15,7 +15,7 @@ quem esta logado. Roda no `initial()` do DRF, antes da view -- falha de CSRF tam
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, ClassVar
 
 from django.middleware.csrf import get_token
 from rest_framework.exceptions import APIException, Throttled, ValidationError
@@ -51,6 +51,8 @@ STATUS_BY_CODE: dict[str, int] = {
     "personal_organization": 409,
     "last_admin": 409,
     "use_password_route": 409,
+    "api_key_not_found": 404,  # M4.2
+    "api_key_limit": 409,
 }
 
 
@@ -90,6 +92,7 @@ class CsrfView(APIView):
     """`GET auth/csrf`: garante o cookie `csrftoken` (RF-04)."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def get(self, request: Request) -> Response:
         get_token(request._request)
@@ -100,6 +103,7 @@ class SignupView(APIView):
     """`POST auth/signup`: cadastro com organizacao pessoal (RF-09)."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
     def post(self, request: Request) -> Response:
@@ -116,6 +120,7 @@ class LoginView(APIView):
     """`POST auth/login` (RF-10). O `login()` do Django troca o `csrftoken`."""
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
     def post(self, request: Request) -> Response:
@@ -132,6 +137,7 @@ class LogoutView(APIView):
     """`POST auth/logout` (RF-11)."""
 
     permission_classes = [IsAuthenticated]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def post(self, request: Request) -> Response:
         try:
@@ -145,6 +151,7 @@ class MeView(APIView):
     """`GET auth/me`: quem esta logado, aceito com senha provisoria."""
 
     permission_classes = [IsAuthenticated]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def get(self, request: Request) -> Response:
         return Response(services.me_body(_user(request)))
@@ -169,6 +176,7 @@ class OrganizationUsersView(APIView):
     """`GET organization/users` lista e `POST` cria (RF-15, RF-16)."""
 
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def get(self, request: Request) -> Response:
         limit = _query_int(request, "limit", 50)
@@ -206,6 +214,7 @@ class OrganizationUserView(APIView):
     """`PATCH organization/users/{email}`: papel e/ou ativo (RF-17)."""
 
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def patch(self, request: Request, email: str) -> Response:
         changes = request.data
@@ -227,6 +236,7 @@ class TemporaryPasswordView(APIView):
     """`POST organization/users/{email}/temporary-password` (RF-18)."""
 
     permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
 
     def post(self, request: Request, email: str) -> Response:
         try:
@@ -244,6 +254,7 @@ class PasswordView(APIView):
     """`POST auth/password`: troca a propria senha (RF-13)."""
 
     permission_classes = [IsAuthenticated]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = None  # M4.2, RF-07: a chave nao alcanca
     throttle_classes = [AuthRateThrottle]  # noqa: RUF012 -- idem
 
     def post(self, request: Request) -> Response:

@@ -168,7 +168,7 @@ def test_rota_de_saude_nao_muda(client: Client, debug: bool) -> None:
             "invalid_parameter",
             {"fields": {"non_field_errors": ["y"]}},
         ),
-        (AuthenticationFailed(), 500, "internal_error", {}),
+        (AuthenticationFailed(), 401, "invalid_api_key", {}),  # M4.2, RF-11
         (APIException(), 500, "internal_error", {}),
     ],
 )

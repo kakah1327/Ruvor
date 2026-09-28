@@ -33,7 +33,8 @@ BACKEND = Path(__file__).resolve().parents[2]
 def test_rest_framework_tem_as_chaves_da_fase_2() -> None:
     rf = settings.REST_FRAMEWORK
     assert rf["DEFAULT_AUTHENTICATION_CLASSES"] == [
-        "apps.accounts.authentication.SessionAuthentication"
+        "apps.accounts.authentication.SessionAuthentication",
+        "apps.accounts.authentication.ApiKeyAuthentication",  # M4.2, RF-06
     ]
     assert rf["NUM_PROXIES"] == 0
     assert rf["DEFAULT_THROTTLE_RATES"] == {"auth": "10/min"}
