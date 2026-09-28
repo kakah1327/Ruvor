@@ -9,6 +9,7 @@ import {
 
 import { Shell } from "./components/Shell";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
+import { SearchScreen } from "./screens/SearchScreen";
 
 /**
  * A rota do ativo (RF-01): o ticker em minúsculas é aceito, e o endereço passa a mostrar
@@ -34,8 +35,7 @@ export const routes: RouteObject[] = [
   {
     element: <Shell />,
     children: [
-      // A busca entra aqui na T7.
-      { index: true, element: null },
+      { index: true, element: <SearchScreen /> },
       { path: "ativos/:ticker", element: <AssetRoute /> },
       { path: "*", element: <NotFoundScreen /> },
     ],

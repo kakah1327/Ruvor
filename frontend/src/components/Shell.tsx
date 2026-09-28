@@ -4,6 +4,8 @@ import { Link, Outlet, useLocation, useOutletContext } from "react-router";
 
 import { TEXTOS } from "../content/textos";
 import { formatDate, formatInstant } from "../format/numbers";
+import { Glyph } from "./Glyph";
+import { SearchBox } from "./SearchBox";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 /** A proveniência da tela do ativo, no rodapé (RF-04, RF-16): a T11 a preenche. */
@@ -26,25 +28,6 @@ export function useShellContext(): ShellContext {
 
 /** O instante no fuso da B3, como no `ativo.html` aprovado. */
 const PROVENANCE_TIME_ZONE = "America/Sao_Paulo";
-
-// Os ícones de brand/ruvor/icons/regular/ (D-93), o `d` copiado do arquivo oficial.
-const INFO_PATH =
-  "M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z";
-const DATABASE_PATH =
-  "M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z";
-
-function Glyph({ path }: { path: string }) {
-  return (
-    <svg
-      className="ruvor-glyph"
-      viewBox="0 0 256 256"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d={path} />
-    </svg>
-  );
-}
 
 /**
  * O casco (RF-01 a RF-04): a barra superior, a área da tela e o rodapé, em toda rota.
@@ -78,8 +61,12 @@ export function Shell() {
           <b>{TEXTOS["casco.marca"]}</b>
         </Link>
 
-        {/* O lugar da busca na barra: a T7 o preenche. */}
-        <div className="ruvor-topbar__spacer" aria-hidden="true" />
+        {/* RF-02: na página de busca, a barra não tem campo — o grande basta. */}
+        {pathname === "/" ? (
+          <div className="ruvor-topbar__spacer" aria-hidden="true" />
+        ) : (
+          <SearchBox variant="bar" />
+        )}
 
         <ThemeSwitch />
       </header>
@@ -91,11 +78,11 @@ export function Shell() {
 
         <footer className="ruvor-footer">
           <p>
-            <Glyph path={INFO_PATH} />
+            <Glyph name="info" />
             <span>{TEXTOS["rodape.ressalva"]}</span>
           </p>
           <p>
-            <Glyph path={DATABASE_PATH} />
+            <Glyph name="database" />
             <span>
               {TEXTOS["rodape.fonte"]}
               {provenance !== null && (
