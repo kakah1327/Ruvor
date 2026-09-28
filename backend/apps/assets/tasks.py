@@ -11,9 +11,10 @@ sao contrato: sao eles que vao no `CELERY_BEAT_SCHEDULE`.
   ticker ruim cancelaria o recalculo diario inteiro. Qualquer outra excecao propaga -- a
   corrente so nao segue se a ingestao nao chegou a rodar;
 - `rotina_diaria` e o elo: o `beat_schedule` nao aceita `chain`, so nome de tarefa, entao
-  a corrente preco -> risco e montada aqui. O segundo elo e **imutavel** (`.si()`): com
-  `.s()`, o texto devolvido por `importar_precos` chegaria como `calculated_at_iso`, e o
-  `datetime.fromisoformat` do recalculo estouraria.
+  a corrente preco -> metricas -> risco e montada aqui (D-69, RF-21 do M1.6a). O segundo e
+  o terceiro elos sao **imutaveis** (`.si()`): com `.s()`, o texto devolvido pelo elo
+  anterior chegaria como argumento posicional -- o `calcular_metricas` nao recebe nenhum, e
+  no recalculo viraria `calculated_at_iso`, que o `datetime.fromisoformat` estouraria.
 
 `call_command` e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os
 testes os substituem. O `_enqueue` e proprio, nao o de `apps.risk.tasks`.
@@ -28,6 +29,7 @@ from celery import chain
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from apps.analytics.tasks import calcular_metricas
 from apps.risk.tasks import recalcular_cobertos
 from config.celery import app
 
@@ -55,8 +57,10 @@ def _importar_precos() -> str:
 
 
 def _rotina_diaria() -> None:
-    """Enfileira a corrente: primeiro os precos, depois o recalculo dos ativos cobertos."""
-    _enqueue(chain(importar_precos.s(), recalcular_cobertos.si()))
+    """Enfileira a corrente: os precos, as metricas e o recalculo dos ativos cobertos."""
+    _enqueue(
+        chain(importar_precos.s(), calcular_metricas.si(), recalcular_cobertos.si())
+    )
 
 
 # Registro sem a sintaxe de decorador, como em `config/tasks.py`.
