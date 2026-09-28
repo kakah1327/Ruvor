@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     "rest_framework",
+    "drf_spectacular",
     "apps.accounts",
     "apps.assets",
     "apps.analytics",
@@ -116,6 +117,16 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"auth": "10/min"},
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    # O gerador do drf-spectacular exige o proprio AutoSchema em toda view (M4.2, RF-12).
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+# O esquema OpenAPI da API (M4.2, RF-12; D-110). `SERVE_INCLUDE_SCHEMA` verdadeiro: a propria
+# rota do esquema entra nele, como o resto de `/api/v1/`.
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Ruvor API",
+    "VERSION": "1",
+    "SERVE_INCLUDE_SCHEMA": True,
 }
 
 DATABASES: dict[str, dict[str, str]] = {
