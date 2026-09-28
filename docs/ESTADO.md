@@ -71,8 +71,10 @@ mockup. **Desde a fase 1 do M2.1a há identidade:** sessão do Django no banco, 
 (banco 1), papel `admin`/`member` por organização, organização pessoal, e-mail único sem
 diferença de caixa, a regra de cada rota de conta como serviço de `apps/accounts`, o bloqueio de
 entrada por (e-mail, IP), `core.access_event` — a auditoria de acesso, que só cresce —,
-`manage.py create_organization`, e o `createsuperuser` funcionando. Trinta tabelas, em seis apps. Ainda não há tela de produto; as rotas de conta são a fase 2
-do M2.1a.
+`manage.py create_organization`, e o `createsuperuser` funcionando. Trinta tabelas, em seis apps. Ainda não há tela de produto. **Desde a fase 2 do M2.1a**
+(no ramo da `identidade`, sem a `requested_by`, que espera a migration da `marco1`) há as rotas de
+conta: `auth/*` e `organization/users*`, com sessão do Django e CSRF, 401 `not_authenticated`
+para quem não entrou, `AccountReady` em toda view que exige conta e o limite `auth` por IP.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos

@@ -876,15 +876,19 @@ reprova — erro ou número —, não só que reprovou.
 ## Mutação em `backend/config/*.py` derruba a `web`, e ela não volta sozinha
 
 **Quando:** ao aplicar uma mutação de prova, ou qualquer edição que quebre a importação, em
-`backend/config/` com o ambiente de pé.
+`backend/config/` com o ambiente de pé — **ou em qualquer módulo que o `runserver` carrega no
+começo**, como a classe de `DEFAULT_AUTHENTICATION_CLASSES` (medido na mutação 26 do M2.1a, em
+`apps/accounts/authentication.py`).
 
 **Problema:** a `web` roda o `runserver` com recarga automática. A edição quebrada derruba o
 processo, e o contêiner não se recupera quando o arquivo é revertido — a recarga não tem mais
 quem a faça. Os critérios seguintes que dependem da `web` reprovam por outra causa, e a
-mutação parece ter morto mais do que devia.
+mutação parece ter morto mais do que devia. **O `docker compose ps` continua dizendo
+`healthy`** por um tempo, enquanto o proxy do Vite já responde 502.
 
-**Faça:** depois de reverter uma mutação em `config/`, confira `docker compose ps` e suba a
-`web` de novo (`docker compose up -d --wait web`) antes do próximo critério.
+**Faça:** depois de reverter uma mutação que quebre import, não confie no `ps`: peça
+`curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/health` e, se não for 200,
+`docker compose restart web` antes do próximo critério.
 
 
 ## `docker compose pause` marca o contêiner `unhealthy` por conta própria
@@ -1158,3 +1162,81 @@ mutação pode "reprovar" pelo motivo errado, ou uma suíte verde passar por aca
 — ver [O worktree não é o que o contêiner monta](#o-worktree-não-é-o-que-o-contêiner-monta)).
 Trilhas paralelas dividem o frontend e o backend, não duas rodadas do backend. Na T13, as
 mutações rodam em série, e a suíte inteira duas vezes seguidas, depois delas.
+
+
+## A classe de autenticação padrão do DRF é importada no meio do import do DRF
+
+**Quando:** ao escrever a classe que vai em `REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]`,
+ou qualquer módulo que ela importe no topo.
+
+**Problema:** `rest_framework/views.py:18` importa `rest_framework.schemas`, e
+`schemas/__init__.py:32` avalia `DEFAULT_AUTHENTICATION_CLASSES` num argumento padrão — antes de
+`views.py` definir `set_rollback`. Se a classe importar, no topo, algo que importe
+`rest_framework.views` (o `apps/api/errors.py` faz isso), o primeiro import do DRF no processo
+quebra com `ImportError: cannot import name 'set_rollback' from partially initialized module
+'rest_framework.views'`. Nos testes, cai já na coleta; na `web`, derruba o `runserver`.
+
+**Faça:** o que a classe precisar de `apps.api` entra **dentro do método**, com um comentário
+dizendo por quê (`apps/accounts/authentication.py`). Um teste em subprocesso —
+`django.setup(); import rest_framework.views` como primeiro import do DRF — guarda a regra.
+
+
+## O `EXCEPTION_HANDLER` próprio perde os cabeçalhos do 401 e do 429
+
+**Quando:** ao mapear `NotAuthenticated` ou `Throttled` num tratador de exceção do DRF que
+substitui o padrão (`apps/api/errors.py`).
+
+**Problema:** a `APIView` põe o `WWW-Authenticate` em `exc.auth_header`, e o `Throttled` guarda
+a espera em `exc.wait`; quem copia os dois para a resposta é o `exception_handler` padrão do
+DRF. O tratador próprio que só devolve `Response(corpo, status=…)` responde 401 sem
+`WWW-Authenticate` e 429 sem `Retry-After`. E o 401 fixo por `isinstance(exc,
+NotAuthenticated)` esconde o rebaixamento: sem autenticador que dê cabeçalho, a `APIView` muda
+`exc.status_code` para 403, e o teste que devia pegar isso passa. Os stubs do DRF também não
+declaram `wait` nem `auth_header` — o `mypy` recusa o acesso direto.
+
+**Faça:** copie os cabeçalhos no tratador (`getattr(exc, "auth_header", None)`,
+`getattr(exc, "wait", None)`) e tire o status de `exc.status_code`.
+
+
+## O `ScopedRateThrottle` conta por usuário, não por IP
+
+**Quando:** ao limitar tentativas "por IP" numa rota que aceita, ou exige, quem está logado.
+
+**Problema:** o `get_cache_key` do `ScopedRateThrottle` (`throttling.py:235-250`) usa
+`request.user.pk` quando há login, e o IP só para anônimo. Numa rota como `auth/password`, que
+exige login, o limite vira por usuário, em silêncio. E a taxa (`THROTTLE_RATES`) é lida no
+import da classe (`throttling.py:66`): mudar `REST_FRAMEWORK` no teste não muda nada.
+
+**Faça:** classe própria sobre `SimpleRateThrottle` com `get_cache_key` sempre por
+`self.get_ident(request)` (`AuthRateThrottle`, em `apps/accounts/views.py`). No teste, baixe a
+taxa com `monkeypatch.setattr(Classe, "THROTTLE_RATES", …)`, e prove o eixo com dois usuários
+no mesmo IP — é o caso que separa IP de usuário.
+
+
+## O Windows reserva faixas de porta, e o contêiner não sobe
+
+**Quando:** ao rodar `docker compose up` no Windows e um serviço falhar com
+`ports are not available: exposing port TCP 0.0.0.0:<porta> … bind: Foi feita uma tentativa de
+acesso a um soquete de uma maneira que é proibida pelas permissões de acesso`.
+
+**Problema:** o Hyper-V e o WinNAT reservam faixas de porta dinâmicas, que mudam entre
+reinicializações. Em 2026-09-28 a faixa 56319–57018 estava reservada e engolia a porta do Redis
+do `.env.example` (`RUVOR_PORT_REDIS=56379`). Nada no repositório mudou; a máquina mudou.
+
+**Faça:** `netsh interface ipv4 show excludedportrange protocol=tcp` mostra as faixas. Troque a
+porta publicada no `.env` local (as portas `RUVOR_PORT_*` existem para isso), para uma fora
+delas — a porta interna dos contêineres não muda.
+
+
+## Depois de dependência nova na `main`, a imagem velha dá erro de `mypy` que não é seu
+
+**Quando:** ao voltar a trabalhar depois de mesclar a `main`, com contêineres criados antes
+dela, e o `mypy` do `worker` acusar `module is installed, but missing library stubs or py.typed
+marker` em código que você não tocou.
+
+**Problema:** as dependências vivem na imagem, não no código montado. O M1.6a trouxe os
+`djangorestframework-stubs`; a imagem de antes dele não os tem, e o `mypy` reprova dezenas de
+linhas de `apps/api/`.
+
+**Faça:** `docker compose build web worker` e
+`docker compose up -d --wait --force-recreate web worker beat` antes da primeira verificação.

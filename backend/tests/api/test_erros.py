@@ -13,7 +13,14 @@ import pytest
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
 from django.http import Http404
 from django.test import Client
-from rest_framework.exceptions import ParseError, ValidationError
+from rest_framework.exceptions import (
+    APIException,
+    AuthenticationFailed,
+    NotAuthenticated,
+    ParseError,
+    Throttled,
+    ValidationError,
+)
 
 from apps.api.errors import ApiError, handle_exception
 from apps.api.views import ApiNotFound
@@ -101,11 +108,14 @@ def test_corpo_json_malformado_e_invalid_parameter(client: Client, debug: bool) 
 
 
 @URLS_DE_TESTE
-def test_view_sem_permissao_declarada_nasce_fechada(
+def test_view_sem_permissao_declarada_nasce_fechada_com_401(
     client: Client, debug: bool
 ) -> None:
-    erro = _erro(client.get("/test/sem-permissao"), 403, "permission_denied")
+    # Desde o M2.1a (RF-03) ha autenticacao: quem nao entrou recebe 401, nao 403.
+    resposta = client.get("/test/sem-permissao")
+    erro = _erro(resposta, 401, "not_authenticated")
     assert erro["details"] == {}
+    assert resposta["WWW-Authenticate"] == "Session"
 
 
 @URLS_DE_TESTE
@@ -130,7 +140,7 @@ def test_rota_de_saude_nao_muda(client: Client, debug: bool) -> None:
 
 
 # O mapeamento, direto no tratador: as excecoes do Django que as views de teste nao
-# alcancam, a de negocio com detalhes, e uma do DRF fora da lista fechada.
+# alcancam, a de negocio com detalhes, e as do DRF fora da lista fechada.
 @pytest.mark.parametrize(
     ("excecao", "status", "code", "details"),
     [
@@ -146,7 +156,20 @@ def test_rota_de_saude_nao_muda(client: Client, debug: bool) -> None:
             {"ticker": "XPTO9"},
         ),
         (ApiError(422, "asset_inactive", "Ativo inativo."), 422, "asset_inactive", {}),
-        (ValidationError("fora da lista"), 500, "internal_error", {}),
+        (
+            ValidationError({"email": ["x"]}),
+            400,
+            "invalid_parameter",
+            {"fields": {"email": ["x"]}},
+        ),
+        (
+            ValidationError(["y"]),
+            400,
+            "invalid_parameter",
+            {"fields": {"non_field_errors": ["y"]}},
+        ),
+        (AuthenticationFailed(), 500, "internal_error", {}),
+        (APIException(), 500, "internal_error", {}),
     ],
 )
 def test_mapeamento_do_tratador(
@@ -162,3 +185,39 @@ def test_mapeamento_do_tratador(
         }
     }
     assert resposta.data["error"]["message"]
+
+
+# M2.1a, RF-27: os tres mapeamentos que levam cabecalho ou dependem do status da excecao.
+def test_not_authenticated_com_cabecalho_e_401_com_www_authenticate() -> None:
+    excecao = NotAuthenticated()
+    # o que a `APIView` poe quando ha autenticador (atributo fora dos stubs)
+    setattr(excecao, "auth_header", "Session")
+    resposta = handle_exception(excecao, {})
+    assert resposta.status_code == 401
+    assert resposta.data["error"]["code"] == "not_authenticated"
+    assert resposta.data["error"]["details"] == {}
+    assert resposta["WWW-Authenticate"] == "Session"
+
+
+def test_not_authenticated_rebaixado_pela_apiview_e_403_permission_denied() -> None:
+    excecao = NotAuthenticated()
+    excecao.status_code = 403  # o que a `APIView` faz sem autenticador que de cabecalho
+    resposta = handle_exception(excecao, {})
+    assert resposta.status_code == 403
+    assert resposta.data["error"]["code"] == "permission_denied"
+    assert "WWW-Authenticate" not in resposta
+
+
+def test_throttled_e_429_com_retry_after_arredondado_para_cima() -> None:
+    resposta = handle_exception(Throttled(wait=2.2), {})
+    assert resposta.status_code == 429
+    assert resposta.data["error"]["code"] == "too_many_requests"
+    assert resposta.data["error"]["details"] == {"wait_seconds": 3}
+    assert resposta["Retry-After"] == "3"
+
+
+def test_throttled_sem_espera_nao_tem_retry_after() -> None:
+    resposta = handle_exception(Throttled(wait=None), {})
+    assert resposta.status_code == 429
+    assert resposta.data["error"]["details"] == {"wait_seconds": None}
+    assert "Retry-After" not in resposta
