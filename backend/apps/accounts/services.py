@@ -9,11 +9,17 @@ de gestao recebem quem pede (`actor`) e o IP.
 `login_throttled`, que nao mudam nada, gravam sozinhos. O cache do bloqueio fica fora das
 transacoes -- nao e transacional.
 
+**As chaves de API (M4.2).** `core.api_key` tem o filtro automatico por organizacao (RF-13):
+**todo servico que toca `ApiKey` se escopa sozinho**, com `organization_scope(<organization_id de
+quem pede>)` -- funciona igual pela rota, pelo teste direto, por um comando ou numa thread nova,
+que nao herda o contexto.
+
 **Nada aqui importa `rest_framework`** (`test_fase1_sem_drf`).
 """
 
 from __future__ import annotations
 
+import hashlib
 import secrets
 from collections.abc import Mapping
 from typing import Any
@@ -34,8 +40,9 @@ from apps.accounts import lockout
 from apps.accounts.audit import record
 from apps.accounts.errors import AccountError
 from apps.accounts.managers import UserManager
-from apps.accounts.models import AccessEvent, Organization, User
+from apps.accounts.models import AccessEvent, ApiKey, Organization, User
 from apps.accounts.passwords import generate_temporary_password
+from apps.accounts.tenancy import organization_scope
 
 # As restricoes de unicidade do e-mail: a do `unique=True` da `0001` e a de `Lower(email)`
 # da `0003`. Outro `IntegrityError` -- o `slug` da organizacao pessoal, numa corrida
@@ -430,6 +437,7 @@ def update_user(
         target.save(update_fields=["role", "is_active"])
         if antes["is_active"] and not target.is_active:
             _drop_sessions(target)
+            _revoke_all(target, actor=actor, via="deactivation", ip=ip)
         record(
             AccessEvent.Kind.USER_UPDATED,
             email=target.email,
@@ -458,6 +466,7 @@ def reset_temporary_password(
         target.must_change_password = True
         target.save(update_fields=["password", "must_change_password"])
         _drop_sessions(target)
+        _revoke_all(target, actor=actor, via="temporary_password_reset", ip=ip)
         record(
             AccessEvent.Kind.TEMPORARY_PASSWORD_RESET,
             email=target.email,
@@ -467,3 +476,132 @@ def reset_temporary_password(
             ip=ip,
         )
     return target, senha
+
+
+# --- as chaves de API (M4.2, RF-02 a RF-05, RF-09, RF-10) --------------------------------
+
+MAX_ACTIVE_KEYS = 10
+_PREFIX_ATTEMPTS = 5
+_PREFIX_CONSTRAINT = "api_key_prefix_key"  # o nome que o `unique=True` do `prefix` gera
+
+
+def _after_user_lock() -> None:
+    """Costura dos testes concorrentes: roda logo depois da trava do usuario."""
+
+
+def api_key_body(key: ApiKey) -> dict[str, Any]:
+    """O corpo `api_key`, lista fechada (M4.2, RF-03)."""
+    return {
+        "prefix": key.prefix,
+        "name": key.name,
+        "scopes": list(key.scopes),
+        "created_at": key.created_at,
+        "last_used_at": key.last_used_at,
+    }
+
+
+def _secret_hash(secret: str) -> str:
+    return hashlib.sha256(secret.encode()).hexdigest()
+
+
+def _is_prefix_violation(exc: IntegrityError) -> bool:
+    diag = getattr(exc.__cause__, "diag", None)
+    return getattr(diag, "constraint_name", None) == _PREFIX_CONSTRAINT
+
+
+def _active_keys(user: User) -> QuerySet[ApiKey]:
+    """As chaves ativas da pessoa. Pede organizacao no contexto: o gerente e o filtrado."""
+    return ApiKey.objects.filter(user=user, revoked_at__isnull=True)
+
+
+def create_api_key(actor: User, *, name: str, ip: str | None) -> tuple[ApiKey, str]:
+    """Cria a chave e devolve o segredo -- a unica vez em que ele aparece (RF-03).
+
+    A contagem das ativas e a criacao sao serializadas pela trava da linha da pessoa: dois
+    pedidos simultaneos com 9 ativas terminam com 10, e o outro recebe `api_key_limit`. O
+    `prefix` que colide e gerado de novo, num *savepoint*, ate 5 tentativas no total (RF-02).
+    """
+    name = name.strip()
+    if not 1 <= len(name) <= 60:
+        raise _invalid({"name": ["O nome precisa ter de 1 a 60 caracteres."]})
+    with organization_scope(actor.organization_id), transaction.atomic():
+        User.objects.select_for_update().get(pk=actor.pk)
+        _after_user_lock()
+        if _active_keys(actor).count() >= MAX_ACTIVE_KEYS:
+            raise AccountError(
+                "api_key_limit",
+                f"Limite de {MAX_ACTIVE_KEYS} chaves ativas atingido.",
+                {"max": MAX_ACTIVE_KEYS},
+            )
+        for tentativa in range(_PREFIX_ATTEMPTS):
+            prefix = secrets.token_hex(4)
+            secret = f"rvr_{prefix}_{secrets.token_urlsafe(32)}"
+            try:
+                with transaction.atomic():
+                    key = ApiKey.objects.create(
+                        user=actor,
+                        name=name,
+                        prefix=prefix,
+                        secret_hash=_secret_hash(secret),
+                        scopes=[ApiKey.Scope.READ.value],
+                    )
+                break
+            except IntegrityError as exc:
+                if not _is_prefix_violation(exc) or tentativa == _PREFIX_ATTEMPTS - 1:
+                    raise
+        record(
+            AccessEvent.Kind.API_KEY_CREATED,
+            email=actor.email,
+            actor=actor,
+            organization=actor.organization,
+            ip=ip,
+            details={"prefix": key.prefix, "name": key.name},
+        )
+    return key, secret
+
+
+def list_api_keys(actor: User) -> list[ApiKey]:
+    """As chaves ativas de quem pede, da mais nova para a mais velha (RF-04)."""
+    with organization_scope(actor.organization_id):
+        return list(_active_keys(actor).order_by("-created_at", "-pk"))
+
+
+def revoke_api_key(actor: User, prefix: str, *, ip: str | None) -> None:
+    """Revoga a propria chave (RF-05). De outra pessoa, ja revogada ou inexistente: o mesmo
+    `api_key_not_found`."""
+    with organization_scope(actor.organization_id), transaction.atomic():
+        try:
+            key = _active_keys(actor).select_for_update().get(prefix=prefix)
+        except ApiKey.DoesNotExist:
+            raise AccountError(
+                "api_key_not_found", "Chave não encontrada.", {}
+            ) from None
+        key.revoked_at = timezone.now()
+        key.save(update_fields=["revoked_at"])
+        record(
+            AccessEvent.Kind.API_KEY_REVOKED,
+            email=actor.email,
+            actor=actor,
+            organization=actor.organization,
+            ip=ip,
+            details={"prefix": key.prefix, "via": "owner"},
+        )
+
+
+def _revoke_all(target: User, *, actor: User, via: str, ip: str | None) -> None:
+    """Revoga toda chave ativa do alvo (RF-09), dentro da transacao de quem chama. O alvo e da
+    organizacao de quem pede (`_get_target`), e e com ela que o servico se escopa."""
+    agora = timezone.now()
+    with organization_scope(actor.organization_id):
+        for key in _active_keys(target).order_by("pk"):
+            key.revoked_at = agora
+            key.save(update_fields=["revoked_at"])
+            record(
+                AccessEvent.Kind.API_KEY_REVOKED,
+                email=target.email,
+                actor=actor,
+                target=target,
+                organization=target.organization,
+                ip=ip,
+                details={"prefix": key.prefix, "via": via},
+            )

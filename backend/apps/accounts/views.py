@@ -51,6 +51,8 @@ STATUS_BY_CODE: dict[str, int] = {
     "personal_organization": 409,
     "last_admin": 409,
     "use_password_route": 409,
+    "api_key_not_found": 404,  # M4.2
+    "api_key_limit": 409,
 }
 
 
