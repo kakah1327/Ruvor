@@ -1,0 +1,119 @@
+{
+  "source": "@phosphor-icons/core",
+  "version": "2.1.1",
+  "icons": {
+    "magnifying-glass": {
+      "regular": "regular/magnifying-glass.svg"
+    },
+    "x": {
+      "regular": "regular/x.svg"
+    },
+    "caret-right": {
+      "regular": "regular/caret-right.svg"
+    },
+    "caret-down": {
+      "regular": "regular/caret-down.svg"
+    },
+    "arrow-left": {
+      "regular": "regular/arrow-left.svg"
+    },
+    "arrow-square-out": {
+      "regular": "regular/arrow-square-out.svg"
+    },
+    "download-simple": {
+      "regular": "regular/download-simple.svg"
+    },
+    "arrows-clockwise": {
+      "regular": "regular/arrows-clockwise.svg"
+    },
+    "spinner-gap": {
+      "regular": "regular/spinner-gap.svg"
+    },
+    "clock": {
+      "regular": "regular/clock.svg"
+    },
+    "calendar-blank": {
+      "regular": "regular/calendar-blank.svg"
+    },
+    "info": {
+      "regular": "regular/info.svg",
+      "duotone": "duotone/info.svg"
+    },
+    "question": {
+      "regular": "regular/question.svg"
+    },
+    "check-circle": {
+      "regular": "regular/check-circle.svg",
+      "duotone": "duotone/check-circle.svg"
+    },
+    "x-circle": {
+      "regular": "regular/x-circle.svg",
+      "duotone": "duotone/x-circle.svg"
+    },
+    "warning": {
+      "regular": "regular/warning.svg",
+      "duotone": "duotone/warning.svg"
+    },
+    "shield-check": {
+      "regular": "regular/shield-check.svg"
+    },
+    "shield-warning": {
+      "regular": "regular/shield-warning.svg"
+    },
+    "flag": {
+      "regular": "regular/flag.svg",
+      "duotone": "duotone/flag.svg"
+    },
+    "scales": {
+      "regular": "regular/scales.svg"
+    },
+    "pulse": {
+      "regular": "regular/pulse.svg"
+    },
+    "chart-line": {
+      "regular": "regular/chart-line.svg"
+    },
+    "chart-bar": {
+      "regular": "regular/chart-bar.svg"
+    },
+    "trend-up": {
+      "regular": "regular/trend-up.svg"
+    },
+    "trend-down": {
+      "regular": "regular/trend-down.svg"
+    },
+    "percent": {
+      "regular": "regular/percent.svg"
+    },
+    "sigma": {
+      "regular": "regular/sigma.svg"
+    },
+    "gauge": {
+      "regular": "regular/gauge.svg"
+    },
+    "stack": {
+      "regular": "regular/stack.svg"
+    },
+    "database": {
+      "regular": "regular/database.svg"
+    },
+    "buildings": {
+      "regular": "regular/buildings.svg"
+    },
+    "briefcase": {
+      "regular": "regular/briefcase.svg"
+    },
+    "file-text": {
+      "regular": "regular/file-text.svg"
+    },
+    "gear": {
+      "regular": "regular/gear.svg"
+    },
+    "user": {
+      "regular": "regular/user.svg"
+    },
+    "sign-out": {
+      "regular": "regular/sign-out.svg"
+    }
+  }
+}

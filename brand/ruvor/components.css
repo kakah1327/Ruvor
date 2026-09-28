@@ -10,6 +10,9 @@
  *
  * Estados (RF-03): :hover, :focus-visible (anel obrigatório, nunca retirado), :active,
  * :disabled e [aria-disabled="true"], [aria-busy="true"] e, no campo, [aria-invalid="true"].
+ *
+ * Ícones (D-93): o svg de icons/, inline, com .ruvor-glyph. A cor é a do texto; o ícone nunca
+ * é o único sinal — vem com rótulo, ou com aria-label no botão só de ícone (.ruvor-btn--icon).
  */
 
 /* --- Base da página --------------------------------------------------------------- */
@@ -24,6 +27,29 @@
   font-weight: var(--ruvor-type-body-weight);
   line-height: var(--ruvor-type-body-leading);
   letter-spacing: var(--ruvor-type-body-tracking);
+}
+
+/* --- Ícone ao lado do texto (D-93) ---------------------------------------------- */
+
+/* O svg de brand/ruvor/icons/regular/, inline. Quem o põe ao lado do rótulo dá o espaço
+   (gap) na própria regra; fora de flex, o vertical-align o assenta na linha do texto. */
+.ruvor-glyph {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  vertical-align: -0.2em;
+}
+
+.ruvor-glyph--sm {
+  width: 14px;
+  height: 14px;
+}
+
+.ruvor-glyph--lg {
+  width: 20px;
+  height: 20px;
 }
 
 /* --- Barra superior e navegação -------------------------------------------------- */
@@ -70,6 +96,7 @@
 .ruvor-nav__link {
   display: flex;
   align-items: center;
+  gap: 6px;
   position: relative;
   /* o respiro lateral e devolvido pela margem: o arranjo e o do mockup, e o anel de foco
      cabe dentro do link, que estica na altura inteira da barra */
@@ -214,6 +241,10 @@
 
 .ruvor-btn {
   box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font: inherit;
   font-weight: var(--ruvor-type-small-weight);
   border: 1px solid var(--ruvor-border);
@@ -250,6 +281,14 @@
 
 .ruvor-btn--ghost {
   background: transparent;
+}
+
+/* Botão só de ícone: quadrado, da altura do botão com rótulo (a linha mais o preenchimento
+   e a borda). O aria-label é obrigatório — o ícone não é rótulo. */
+.ruvor-btn--icon {
+  padding: 0;
+  width: calc(1lh + 20px);
+  height: calc(1lh + 20px);
 }
 
 .ruvor-btn--ghost:hover:not(:disabled, [aria-disabled="true"]) {
@@ -319,11 +358,17 @@
 }
 
 .ruvor-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--ruvor-type-micro-size);
   color: var(--ruvor-text-muted);
 }
 
 .ruvor-field__error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--ruvor-type-micro-size);
   font-weight: var(--ruvor-type-micro-weight);
   color: var(--ruvor-critical-text);
@@ -470,15 +515,14 @@
   flex: none;
 }
 
+/* O desenho é o duotone da semântica (icons/duotone/): decision → flag, review → warning,
+   evidence → info, validated → check-circle, critical → x-circle. Forma cheia, não traço:
+   a camada de fundo é a mesma cor, com a opacidade do próprio desenho. */
 .ruvor-icon svg {
   display: block;
-  width: 19px;
-  height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
 }
 
 .ruvor-icon--decision {
@@ -582,7 +626,11 @@
 
 /* --- Destaque, código e esqueleto ------------------------------------------------ */
 
+/* O ícone vai ao lado do conteúdo, que fica num só filho. */
 .ruvor-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   border-radius: var(--ruvor-radius-md);
   padding: 17px;
   background: var(--ruvor-callout);

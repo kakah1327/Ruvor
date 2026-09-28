@@ -108,6 +108,28 @@ não foi aprovado — o caminho é acrescentar o token aqui, não improvisar na 
 
 ---
 
+## Ícones
+
+Do [Phosphor](https://phosphoricons.com) (MIT), num conjunto fechado copiado para
+[`icons/`](icons/) ([D-93](../../docs/decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)):
+um `.svg` por ícone e peso, a licença em `icons/LICENSE` e o `icons.json`, que lista nome, peso,
+arquivo e a versão de origem do pacote `@phosphor-icons/core`. O frontend **não** instala o
+pacote.
+
+| Peso | Onde |
+|---|---|
+| `regular` | a interface: botão, tag, link da barra, cabeçalho de painel, `callout`, dica e erro de campo — `svg` inline com `.ruvor-glyph` (16 px; `--sm` 14, `--lg` 20) |
+| `duotone` | só os sinais (`.ruvor-icon`): `decision` → `flag`, `review` → `warning`, `evidence` → `info`, `validated` → `check-circle`, `critical` → `x-circle` |
+
+**A cor do ícone é a do texto** (`currentColor`); o arquivo não carrega cor. **Ícone nunca é o
+único sinal**: vem com rótulo, ou com `aria-label` no botão só de ícone (`.ruvor-btn--icon`), e
+o `svg` decorativo leva `aria-hidden="true"`. Os desenhos não se alteram. Ícone novo entra por
+acréscimo ao conjunto, do mesmo Phosphor, com entrada no `icons.json` — o teste
+`frontend/tests/icones.test.ts` reprova arquivo sem entrada, cor fixa e ícone fora da
+[vitrine](../../docs/mockups/M1.6a/kit.html).
+
+---
+
 ## Como consumir no produto
 
 ```css

@@ -148,6 +148,7 @@ services:
     volumes:
       - ./frontend:/repo/frontend
       - ./brand/ruvor:/repo/brand/ruvor:ro
+      - ./docs/mockups:/repo/docs/mockups:ro
       - /repo/frontend/node_modules
     ports:
       - "${RUVOR_PORT_FRONTEND:?defina no .env}:5173"
