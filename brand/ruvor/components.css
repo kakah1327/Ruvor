@@ -148,6 +148,20 @@
   gap: 20px;
 }
 
+.ruvor-workspace--full {
+  grid-template-columns: 1fr;
+}
+
+.ruvor-push {
+  margin-left: auto;
+}
+
+.ruvor-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 17px 20px;
+}
+
 /* --- Títulos --------------------------------------------------------------------- */
 
 .ruvor-eyebrow {
@@ -628,7 +642,8 @@
   }
 
   .ruvor-grid--2,
-  .ruvor-grid--3 {
+  .ruvor-grid--3,
+  .ruvor-form-grid {
     grid-template-columns: 1fr;
   }
 
