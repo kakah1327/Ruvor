@@ -9,7 +9,7 @@ Cada bloco recebe spec própria → plano próprio → implementação, conforme
 
 **Frentes trabalham ao mesmo tempo** desde 2026-09-26
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)): `marco1` fica com o M1.5b e o
-M1.6, `fundamentos` com o M3.1 e o M3.2; `identidade`, com o M2.1, espera dono. A ordem dos marcos é a da entrega ao
+M1.6, `fundamentos` com o M3.1 e o M3.2; `identidade`, com o M2.1, o M4.2 e o M4.1, é do Kauã desde 2026-09-27 — sem telas: toda interface visual é da `marco1`. A ordem dos marcos é a da entrega ao
 usuário; o que impede um bloco de começar é dependência. Quem faz o quê está em
 [FRENTES.md](FRENTES.md).
 
@@ -67,8 +67,8 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| 🟡 | **M2.1a — Identidade e acesso** | o backend: sessão, cadastro, entrada, papéis `admin`/`member` por organização, gestão de usuários pela administradora, auditoria de acesso e `requested_by` — frente `identidade`. O M2.1 foi dividido em dois em 2026-09-27 |
-| ⬜ | **M2.1b — As telas de acesso** | login, cadastro, troca de senha e gestão de usuários, cada uma com mockup aprovado, sobre o casco e o kit do M1.6b |
+| 🟡 | **M2.1a — Identidade e acesso** | o backend: sessão, cadastro, entrada, papéis `admin`/`member` por organização, gestão de usuários pela administradora, auditoria de acesso e `requested_by` — frente `identidade`, em duas fases ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)): a 1 sem nada do M1.6a, a 2 com as rotas, depois do M1.6a. As telas que consomem as rotas são da `marco1` |
+| ⬜ | **Telas de acesso** | login, cadastro, troca de senha e gestão de usuários, cada uma com mockup aprovado, sobre o casco e o kit do M1.6b e as rotas do M2.1a — **frente `marco1`** (toda interface visual é dela, decisão do darkside171, 2026-09-27); o bloco é dela nomear |
 | ⬜ | **M2.2 — Carteira** | composição pelo usuário e risco de carteira |
 | ⬜ | **M2.3 — Camada explicativa** | leitura iniciante/avançado como sistema |
 | ⬜ | **M2.4 — Regime de laboratório** | a camada 3 validada ao longo de uma década, na plataforma ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); veio do Marco 1 pela [D-74](decisoes/D-74-o-marco-1-e-so-producao.md) |
@@ -90,8 +90,8 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M4.1 — Relatórios** | exportáveis e auditáveis |
-| ⬜ | **M4.2 — API pública** | chaves, escopos, quotas, documentação |
+| ⬜ | **M4.1 — Relatórios** | exportáveis e auditáveis — frente `identidade`, depois do M4.2 |
+| ⬜ | **M4.2 — API pública** | chaves, escopos, quotas, documentação — frente `identidade`, depois do M2.1 |
 
 ---
 

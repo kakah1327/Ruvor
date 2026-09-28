@@ -1,9 +1,11 @@
 # Frente `identidade`
 
 **Dono:** kakah1327 (Kauã), desde 2026-09-27 — também dono da `fundamentos`, que está parada
-**Blocos:** M2.1a — Identidade e acesso (backend) → M2.1b — As telas de acesso
-([ROADMAP](../ROADMAP.md#marco-2--vira-plataforma)).
-**Cerca:** `backend/apps/accounts/` e os testes dela; telas de login só depois do casco do M1.6.
+**Blocos:** M2.1 — Identidade e acesso (spec e plano como **M2.1a**, em duas fases) → M4.2 —
+API pública → M4.1 — Relatórios ([ROADMAP](../ROADMAP.md)).
+**Cerca:** `backend/apps/accounts/` e os testes dela. **Sem telas:** toda interface visual —
+telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login;
+esta frente descreve as rotas que elas consomem.
 Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 **Faixa de decisões:** D-100 a D-119.
 
@@ -30,9 +32,8 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 | De | O quê | Estado |
 |---|---|---|
 | `marco1` | **convenções da API HTTP** | ✅ [D-86](../decisoes/D-86-convencoes-da-api-http.md) |
-| `marco1` | **a base da API** (`apps/api`, o tratador de erro, `REST_FRAMEWORK`) e o `POST /risk` | ⬜ M1.6a, plano aprovado, implementação não começou |
+| `marco1` | **a base da API** (`apps/api`, o tratador de erro, `REST_FRAMEWORK`) e o `POST /risk` — só a fase 2 espera: as rotas de conta e a permissão nas views de `apps/api` | ⬜ M1.6a, plano aprovado, implementação não começou |
 | `marco1` | a migration de `core.compute_request.requested_by` | 🔴 a combinar |
-| `marco1` | **casco do frontend e kit completo**, para as telas do M2.1b | ⬜ M1.6a/M1.6b |
 
 ## Registro
 
@@ -40,3 +41,4 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 |---|---|
 | 2026-09-26 | frente criada pela D-84 |
 | 2026-09-27 | o Kauã assume a frente. Decidido com o dono: M2.1 dividido em M2.1a (backend) e M2.1b (telas); sessão do Django com CSRF; cadastro aberto com organização pessoal; papéis `admin` e `member` por organização; organização real por comando, usuário criado pela administradora com senha provisória; auditoria de eventos de acesso; recuperação de senha por e-mail fora (dívida); `requested_by` preenchido por este bloco, com revisão da `marco1`. Máquina preparada (`docker compose up`). Spec escrita, com as premissas conferidas no DRF 3.18.1 e no Django 6.1.1 |
+| 2026-09-27 | **correção de escopo** (decisão do darkside171): as telas não são desta frente — toda interface visual é da `marco1`. Blocos da frente: M2.1 → M4.2 → M4.1; cerca sem telas; o M2.1 não depende do M1.6b. Spec do M2.1a, `FRENTES.md` e `ROADMAP.md` corrigidos |

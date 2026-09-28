@@ -29,7 +29,7 @@ a frente e crie o ramo pelo formato abaixo.
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
 | `marco1` | darkside171 | M1.5b ✅ → M1.6 | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5b-treino-separado` — bloco fechado, PR de implementação a abrir; o M1.6 abre ramo próprio depois do merge |
-| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1a → M2.1b | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
+| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
 
 **Hoje são duas frentes ativas**, `marco1` e `identidade`. A `fundamentos` fechou o M3.2 e está
@@ -51,7 +51,7 @@ revisa a PR.
 | Frente | Pastas |
 |---|---|
 | `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, a app da API de leitura que o M1.6 criar, e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6/`; os serviços `worker` e `beat` no `compose.yaml` |
-| `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1; as telas de login **numa pasta própria** de `frontend/src/`, **só depois** de o M1.6 entregar o casco (ver contratos) |
+| `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1 (`backend/tests/accounts/`). **Sem telas:** toda interface visual — telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login, que consomem as rotas do M2.1 |
 | `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
 **Migration:** cada app tem sequência própria, e ninguém cria migration em app de outra frente.
@@ -82,9 +82,10 @@ mudança passa pela revisão da frente que o consome.
 
 | Contrato | Produz | Consome | Estado |
 |---|---|---|---|
-| **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | 🔴 **aberto.** O DRF já está decidido ([D-11](decisoes/D-11-pilha-tecnologica.md)); o resto não. Decidir numa decisão própria **antes da primeira das duas specs que publicar rota**, revisada pelas duas frentes |
-| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `identidade` (telas de login) | ⬜ não existe. O kit está incompleto ([ESTADO](ESTADO.md#pendências-que-bloqueiam-trabalho-futuro)). A `identidade` faz o backend primeiro |
-| **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | ⬜ a spec do M2.1 combina com a `marco1` quem escreve a linha |
+| **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | ✅ **decididas** pela [D-86](decisoes/D-86-convencoes-da-api-http.md); o mecanismo de autenticação é do M2.1, sessão do Django ([D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)) |
+| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `marco1` — as telas, inclusive as de login, são dela | ⬜ M1.6a/M1.6b. A `identidade` não consome: não tem tela |
+| **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | 🟡 combinado na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-com-outras-frentes): o código é do M2.1a (fase 2), a coluna de `core.compute_request` e a migration dela são da `marco1` |
+| **As rotas de conta**: `/api/v1/auth/*` e `/api/v1/organization/users` | `identidade` (M2.1a) | `marco1` (as telas de login e de gestão) | 🟡 descritas na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-externos); nascem na fase 2 |
 | **`silver.asset`**: o catálogo, por ticker | `marco1` | `fundamentos` liga fundamento a ativo | ✅ existe. **Só cresce**: coluna nova pode, mudar ou tirar coluna exige a revisão da `fundamentos` |
 | **`silver.price`**: o preço diário, por ativo | `marco1` | `fundamentos` lê `asset`, `date` e `close` para os múltiplos | ✅ existe. **Só cresce**, como o catálogo: mudar o sentido dessas colunas exige a revisão da `fundamentos` |
 | **`core.user` e `core.organization`** | `identidade` | todas, no futuro | ✅ existe. A `identidade` muda. Enquanto nada fora de `accounts` depende deles, não há consumidor a proteger |
