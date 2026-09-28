@@ -629,7 +629,7 @@ def test_pedido_vencido_sai_expired_e_continua_aberto_no_banco(
         "status": "expired",
         "requested_at": _iso(pedido.requested_at),
         "finished_at": None,
-        "reason": "",
+        "reason": "expirado (30 min)",
         "error": "",
         "risk_run_id": None,
     }

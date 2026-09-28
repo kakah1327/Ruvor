@@ -30,7 +30,7 @@ ela roda na `web`.
   subprocesso, que ele está no registro do `worker`; outro importa todos os submódulos de
   `apps.api` com um bloqueador em `sys.meta_path` para os módulos proibidos
   ([spec do M1.6a](../specs/M1.6a-fundacao-da-aplicacao.md#rf-19), V-10 e V-18).
-- O domínio do pedido mora em `apps/api/ondemand.py`, que só importa modelos e `django.db` — é
+- O domínio do pedido mora em `apps/api/ondemand.py`, que só importa modelos, `django.db`, as configurações e a aplicação Celery (`config.celery.app`, para o `send_task`) — o único caminho indireto que o RF-10 vigia, e o V-10 prova que ele não arrasta o motor — é
   o que a `web` e o `worker` compartilham.
 - Tarefa nova que a `web` precise enfileirar segue a mesma forma, e o nome entra no teste pelo
   próprio código.

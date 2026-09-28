@@ -16,7 +16,7 @@ from rest_framework import serializers
 
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.models import ComputeRequest
-from apps.api.ondemand import effective_status
+from apps.api.ondemand import effective_status, expired_reason, is_expired
 from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
 from apps.risk.config import ALPHAS
 from apps.risk.models import RiskResult, RiskRun
@@ -241,11 +241,14 @@ class InProgressRunSerializer(serializers.ModelSerializer[RiskRun]):
 
 class ComputeRequestSerializer(serializers.ModelSerializer[ComputeRequest]):
     """O ultimo pedido sob demanda. O `status` e o **calculado** (RF-18): o pedido gravado
-    aberto e vencido pelo relogio sai `expired`, sem gravar. O instante vem do contexto,
-    `now`.
+    aberto e vencido pelo relogio sai `expired`, sem gravar, e com o motivo de expirado
+    (`expirado (N min)`, o da lista fechada do RF-15) -- o corpo e coerente com o que o
+    pedido vai ser quando alguem o fechar. `finished_at` continua nulo: ninguem o fechou.
+    O instante vem do contexto, `now`.
     """
 
     status = serializers.SerializerMethodField()
+    reason = serializers.SerializerMethodField()
     risk_run_id = serializers.IntegerField(read_only=True, allow_null=True)
 
     class Meta:
@@ -263,3 +266,7 @@ class ComputeRequestSerializer(serializers.ModelSerializer[ComputeRequest]):
     def get_status(self, req: ComputeRequest) -> str:
         now: datetime = self.context["now"]
         return effective_status(req, now)
+
+    def get_reason(self, req: ComputeRequest) -> str:
+        now: datetime = self.context["now"]
+        return expired_reason() if is_expired(req, now) else req.reason

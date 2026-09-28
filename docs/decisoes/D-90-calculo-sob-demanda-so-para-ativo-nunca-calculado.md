@@ -27,7 +27,7 @@ redes treinando, e o `worker` desta máquina tem duas vagas e o teto de 8 GB do 
    `pg_advisory_xact_lock` numa chave constante — a trava vale com zero pedidos abertos, o que uma
    trava de linha não faria. Passou do teto, 429 `on_demand_queue_full`.
 5. **Expiração**: pedido aberto há mais de `RUVOR_ON_DEMAND_TIMEOUT_MIN` (padrão 30) é tratado
-   como fechado para a trava e para o teto. Quem grava `expired` é o `POST`, a cadeia e o fecho;
+   como fechado para a trava e para o teto. Quem grava `expired` é todo ponto que fecha o pedido — o `POST`, a cadeia, a abertura (na série curta), o fecho e a recusa do broker;
    **o `GET` não escreve** — mostra o estado calculado.
 6. **O pedido fecha com a `risk_run`**, no fecho do M1.5, não na abertura — fechar na abertura
    soltaria a trava com o risco ainda rodando. `expired` é final: um pedido vencido não vira
