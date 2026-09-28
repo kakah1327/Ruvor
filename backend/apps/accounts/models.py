@@ -10,12 +10,13 @@ A chave primaria nao e declarada: o `DEFAULT_AUTO_FIELD` do Django 6.1 ja e
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 from apps.accounts.managers import UserManager
 
@@ -87,3 +88,68 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self) -> str:
         return self.email
 
+
+class AccessEventQuerySet(models.QuerySet["AccessEvent"]):
+    """Recusa as escritas em massa: a auditoria so cresce (RF-25)."""
+
+    def update(self, **kwargs: Any) -> int:
+        raise TypeError("access_event so cresce")
+
+    def delete(self) -> tuple[int, dict[str, int]]:
+        raise TypeError("access_event so cresce")
+
+
+class AccessEvent(models.Model):
+    """Um evento de acesso ou de alteracao de usuario (M2.1a, RF-23 e RF-24, D-104).
+
+    Uma linha por evento, gravada na mesma transacao da mudanca que descreve, e **nunca**
+    alterada nem apagada. Nenhuma rota le a tabela neste bloco: o filtro por organizacao
+    (D-41) e do primeiro bloco que a ler. Nunca guarda senha.
+    """
+
+    class Kind(models.TextChoices):
+        SIGNUP = "signup"
+        LOGIN = "login"
+        LOGIN_FAILED = "login_failed"
+        LOGIN_THROTTLED = "login_throttled"
+        LOGOUT = "logout"
+        PASSWORD_CHANGED = "password_changed"
+        USER_CREATED = "user_created"
+        USER_UPDATED = "user_updated"
+        TEMPORARY_PASSWORD_RESET = "temporary_password_reset"
+
+    occurred_at = models.DateTimeField(default=timezone.now)
+    kind = models.CharField(max_length=30, choices=Kind)
+    actor = models.ForeignKey(
+        User, on_delete=models.PROTECT, null=True, related_name="+"
+    )
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, null=True, related_name="+"
+    )
+    target = models.ForeignKey(
+        User, on_delete=models.PROTECT, null=True, related_name="+"
+    )
+    email = models.CharField(max_length=254)
+    ip = models.GenericIPAddressField(null=True)
+    details = models.JSONField(default=dict)
+
+    objects = AccessEventQuerySet.as_manager()
+
+    class Meta:
+        db_table = 'core"."access_event'
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["organization", "occurred_at"], name="access_event_org_at"
+            ),
+            models.Index(fields=["email", "occurred_at"], name="access_event_email_at"),
+        ]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self._state.adding:
+            raise TypeError("access_event so cresce")
+        super().save(*args, **kwargs)
+
+    def delete(
+        self, using: Any = None, keep_parents: bool = False
+    ) -> tuple[int, dict[str, int]]:
+        raise TypeError("access_event so cresce")
