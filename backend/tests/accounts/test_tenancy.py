@@ -6,6 +6,9 @@ D-41 mandou provar -- o acessor reverso, o `full_clean` e o gerente base.
 
 from __future__ import annotations
 
+import ast
+from pathlib import Path
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -164,3 +167,28 @@ def test_sem_contexto_o_gerente_base_serve_ao_django(
     assert ApiKey.unscoped.get(pk=chave_a.pk).name == "renomeada"
     with pytest.raises(ProtectedError):
         chave_a.user.delete()
+
+
+# --- a saida sem escopo so em lugar nomeado (T4)  ----------------------------------------
+
+APPS = Path(__file__).resolve().parents[2] / "apps"
+CHAMADORES_DE_UNSCOPED = {"accounts/authentication.py"}
+
+
+def _chamadores_de_unscoped() -> set[str]:
+    achados: set[str] = set()
+    for arquivo in APPS.rglob("*.py"):
+        if "migrations" in arquivo.parts:
+            continue
+        arvore = ast.parse(arquivo.read_text(encoding="utf-8"))
+        for no in ast.walk(arvore):
+            if isinstance(no, ast.Attribute) and no.attr == "unscoped":
+                achados.add(arquivo.relative_to(APPS).as_posix())
+    return achados
+
+
+def test_unscoped_so_nos_lugares_nomeados() -> None:
+    achados = _chamadores_de_unscoped()
+    # contra a varredura inerte: ela acha a chamada que existe
+    assert "accounts/authentication.py" in achados
+    assert achados <= CHAMADORES_DE_UNSCOPED, achados - CHAMADORES_DE_UNSCOPED

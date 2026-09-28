@@ -113,7 +113,9 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.errors.handle_exception",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "apps.accounts.authentication.SessionAuthentication"
+        "apps.accounts.authentication.SessionAuthentication",
+        # a chave de API, depois da sessao (M4.2, RF-06): o `WWW-Authenticate` continua `Session`
+        "apps.accounts.authentication.ApiKeyAuthentication",
     ],
     "NUM_PROXIES": 0,
     "DEFAULT_THROTTLE_RATES": {"auth": "10/min"},
