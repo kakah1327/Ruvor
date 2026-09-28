@@ -1,55 +1,48 @@
 import { useEffect, useState } from "react";
+import {
+  createBrowserRouter,
+  type RouteObject,
+  RouterProvider,
+  useNavigate,
+  useParams,
+} from "react-router";
 
-type BackendState = "pending" | "ok" | "unavailable";
+import { Shell } from "./components/Shell";
+import { NotFoundScreen } from "./screens/NotFoundScreen";
 
-const LABEL: Record<BackendState, string> = {
-  pending: "verificando…",
-  ok: "ok",
-  unavailable: "indisponível",
-};
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-
-/** F2b-10: ok so quando a resposta e 2xx e o corpo JSON tem status === "ok". */
-async function checkBackend(): Promise<BackendState> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/health`);
-    if (!response.ok) {
-      return "unavailable";
-    }
-    const body: unknown = await response.json();
-    const status =
-      typeof body === "object" && body !== null && "status" in body
-        ? (body as { status: unknown }).status
-        : undefined;
-    return status === "ok" ? "ok" : "unavailable";
-  } catch {
-    return "unavailable";
-  }
-}
-
-export function App() {
-  const [backend, setBackend] = useState<BackendState>("pending");
+/**
+ * A rota do ativo (RF-01): o ticker em minúsculas é aceito, e o endereço passa a mostrar
+ * maiúsculas **sem entrada nova no histórico** — `replace`, não `push`. A tela do ativo
+ * entra aqui na T10.
+ */
+function AssetRoute() {
+  const { ticker = "" } = useParams();
+  const navigate = useNavigate();
+  const upper = ticker.toUpperCase();
 
   useEffect(() => {
-    let cancelled = false;
-    void checkBackend().then((state) => {
-      if (!cancelled) {
-        setBackend(state);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (ticker !== upper) {
+      void navigate(`/ativos/${encodeURIComponent(upper)}`, { replace: true });
+    }
+  }, [navigate, ticker, upper]);
 
-  return (
-    <main className="shell">
-      <img className="shell__mark" alt="Símbolo Ruvor" src="/ruvor-mark.svg" />
-      <h1>Ruvor</h1>
-      <p role="status" className={`status status--${backend}`}>
-        Backend: {LABEL[backend]}
-      </p>
-    </main>
-  );
+  return null;
+}
+
+/** As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. */
+export const routes: RouteObject[] = [
+  {
+    element: <Shell />,
+    children: [
+      // A busca entra aqui na T7.
+      { index: true, element: null },
+      { path: "ativos/:ticker", element: <AssetRoute /> },
+      { path: "*", element: <NotFoundScreen /> },
+    ],
+  },
+];
+
+export function App() {
+  const [router] = useState(() => createBrowserRouter(routes));
+  return <RouterProvider router={router} />;
 }
