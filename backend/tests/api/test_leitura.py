@@ -289,6 +289,7 @@ def test_precos_com_intervalo_fechado_nas_duas_pontas(client: Client) -> None:
         "2026-09-23",
         "2026-09-24",
     ]
+    assert all(set(p) == CHAVES_PRECO for p in corpo["results"])
 
 
 def test_precos_so_com_from_ou_so_com_to(client: Client) -> None:
