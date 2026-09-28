@@ -1043,6 +1043,42 @@ exatamente 80.842.
 **Faça:** conte a medição pela mesma chave que o requisito usa, e registre a consulta junto do
 número. Quando a execução divergir, recalcule pelas duas chaves antes de supor que a fonte mudou.
 
+## O `flush` do `transaction=True` não vê as tabelas com esquema no `db_table`
+
+**Quando:** ao escrever o primeiro teste `transaction=True` (duas conexões, trava, corrida) em
+qualquer app.
+
+**Problema:** o `flush` que o pytest-django roda no fim lista as tabelas por
+`connection.introspection.django_table_names(only_existing=True)`, que olha o `search_path` —
+e só acha **cinco** tabelas do `public` (medido em 2026-09-27). Duas consequências, as duas
+silenciosas até o primeiro teste desse tipo (o do M2.1a):
+
+1. **O `TRUNCATE` falha**: `cannot truncate a table referenced in a foreign key constraint —
+   Table "user_user_permissions" references "auth_permission"`. A tabela de junção mora em
+   `core`, o `flush` não a vê, e o `TRUNCATE` de `auth_permission` sem `CASCADE` é recusado.
+2. **O que o teste gravou em `core`, `bronze`, `silver` e `gold` fica** para os testes
+   seguintes: o `flush` não apaga — e, pelo mesmo motivo, não apaga a `ruvor` nem o `IBOV`.
+
+**Faça:** declare `available_apps` na marca (`pytest.mark.django_db(transaction=True,
+available_apps=[...])`): com ele, o Django usa `TRUNCATE ... CASCADE`. E limpe o que o teste
+gravou numa fixture **de módulo** que desmonta depois do último `flush` — o molde é
+`restaura_dados_de_migracao` em `backend/tests/accounts/conftest.py`. Uma fixture de função
+pedida pelo teste desmonta **antes** do `flush` do `_django_db_helper`.
+
+## `remove_constraint` do Django não acha índice em esquema que não seja o `public`
+
+**Quando:** ao remover, em teste ou migration, uma restrição que o Django implementa como
+índice — `UniqueConstraint` com expressão (`Lower("email")`), com condição, ou `Index` — numa
+tabela com esquema no `db_table`.
+
+**Problema:** o Django emite `DROP INDEX IF EXISTS "nome"`, sem esquema. O índice mora no
+esquema da tabela (`core`), o `search_path` é `public`, e o `IF EXISTS` faz o comando passar
+**em silêncio** sem remover nada. O teste que dependia da remoção falhou com a própria restrição
+(`duplicate key value violates unique constraint "user_email_lower_uniq"`); a volta de uma
+migration com `AddConstraint` passaria sem erro e deixaria o índice no banco.
+
+**Faça:** remova com SQL qualificado — `DROP INDEX core.user_email_lower_uniq` — e, na volta de
+migration, confira no `pg_indexes` que o índice saiu.
 
 ## O `flush` do Django não enxerga tabela com esquema no `db_table`, e sem `available_apps` nem roda
 
@@ -1063,6 +1099,10 @@ desmontagem, e nada é apagado. O M1.6a aprovou o plano com essa premissa e só 
 tabela dos quatro esquemas, pela lista de `pg_tables`, com `RESTART IDENTITY CASCADE`, e recria a
 organização e o `IBOV`). **Todo** teste `transaction=True` usa as duas, pedindo a fixture por
 `usefixtures`. A guarda é o `tests/test_organizacao.py` na suíte inteira.
+
+**O M2.1a achou o mesmo** (verbete acima) e resolveu por uma fixture de **módulo** que
+restaura depois do último `flush`; o M1.6a, por uma de função que limpa **antes** dele. As duas
+convivem na suíte — cada uma nos testes da sua frente.
 
 
 ## Num teste `db` comum, o `on_commit` só roda quando a captura termina

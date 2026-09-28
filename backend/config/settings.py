@@ -33,6 +33,7 @@ ALLOWED_HOSTS = _split_hosts(os.environ.get("RUVOR_ALLOWED_HOSTS", ""))
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
+    "django.contrib.sessions",
     "rest_framework",
     "apps.accounts",
     "apps.assets",
@@ -44,13 +45,57 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "accounts.User"
 
-# MIDDLEWARE nao ganha AuthenticationMiddleware: a exigencia (auth.E013) so dispara com
-# LoginRequiredMiddleware presente, e ele nao esta. Sessao e autenticacao de requisicao
-# sao do M2.1.
+# Sessao do Django no banco, CSRF e o usuario da requisicao (M2.1a, RF-01), na ordem que o
+# Django recomenda. As views do DRF sao `csrf_exempt`: o middleware nao as confere, quem
+# confere e a autenticacao do DRF (fase 2 do M2.1a).
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 ]
+
+# Cookies (RF-02). `Secure` so com HTTPS, que o ambiente local nao tem; a hospedagem liga.
+# O `csrftoken` fica legivel pelo frontend, que o devolve em `X-CSRFToken`.
+_SECURE_COOKIES = os.environ.get("RUVOR_SECURE_COOKIES", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = _SECURE_COOKIES
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = _SECURE_COOKIES
+CSRF_TRUSTED_ORIGINS = _split_hosts(os.environ.get("RUVOR_CSRF_TRUSTED_ORIGINS", ""))
+
+# RF-12. O validador de semelhanca procura `username`, `first_name` e `last_name` por
+# padrao, que o usuario do projeto nao tem: sem `user_attributes`, ele nao ve o `name`.
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "OPTIONS": {"user_attributes": ("email", "name")},
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 10},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# Cache do Django (RF-22): o contador do bloqueio de entrada. Banco proprio do Redis -- o do
+# `RUVOR_REDIS_URL` e o broker e o backend de resultados do Celery, e o `clear()` do
+# `RedisCache` e `flushdb`. Nenhum codigo de `apps/` chama `cache.clear()`.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": _required("RUVOR_CACHE_URL"),
+        "KEY_PREFIX": "ruvor",
+    }
+}
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"

@@ -130,7 +130,8 @@ porque dado operacional não é camada de linhagem, e empurrá-lo para dentro de
 ([D-37](decisoes/D-37-esquema-core-para-dado-operacional.md)). Os identificadores ficam em
 inglês — `silver` e `gold`, e não `prata` e `ouro` —, ainda que o texto siga chamando as
 camadas pelos nomes em português ([D-40](decisoes/D-40-identificadores-de-esquema-em-ingles.md)).
-O `public` guarda o encanamento do Django: `django_migrations`, `auth_*` e `django_content_type`
+O `public` guarda o encanamento do Django: `django_migrations`, `auth_*`, `django_content_type` e
+`django_session`
 ([D-38](decisoes/D-38-public-guarda-o-encanamento.md)).
 
 ### Por que a camada bronze é obrigatória aqui
@@ -177,8 +178,12 @@ automático é teatro: um dia alguém esquece e um cliente vê dado de outro.
 e o mecanismo é obrigação do bloco que criar a primeira tabela privada de domínio, a carteira
 no M2.2, onde há contra o que prová-lo. O `user` é exceção permanente: os backends de
 autenticação do Django alcançam o modelo por `_default_manager`, e a busca no login é anterior
-a saber a que organização a pessoa pertence — então o M2.1 precisa isolar listagem de usuário
-por outro meio, e não pelo ORM ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)).
+a saber a que organização a pessoa pertence — então o M2.1 isola a listagem de usuário por outro
+meio, e não pelo ORM ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)): toda
+consulta de usuário da gestão parte de `_org_users(actor)`, em `apps/accounts/services.py`, que filtra
+pela organização de quem pede. `core.access_event` é privada e não tem filtro automático porque
+nenhuma rota a lê; o filtro é do primeiro bloco que a ler
+([D-104](decisoes/D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md)).
 
 Ver [D-08](decisoes/D-08-dono-do-dado-no-schema.md),
 [D-24](decisoes/D-24-organizacao-desde-a-primeira-migration.md),

@@ -105,6 +105,14 @@ conversas e entre agentes.
 | [D-132](D-132-pares-sao-o-segmento-da-b3-pela-tupla.md) | Os pares são o segmento da B3, ou o subsetor, pela tupla; a posição é o percentil |
 | [D-133](D-133-coleta-de-comunicados-diaria-restringe-a-d-127.md) | A coleta de comunicados é diária, em entrada própria do Beat; restringe a D-127 |
 | [D-134](D-134-tarefas-celery-tipadas-por-celery-types.md) | As tarefas Celery são tipadas por `celery-types` |
+| [D-100](D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) | A API autentica por sessão do Django, com CSRF; 401 com `WWW-Authenticate: Session` |
+| [D-101](D-101-cadastro-aberto-com-organizacao-pessoal.md) | Cadastro aberto, com organização pessoal; organização real só por comando |
+| [D-102](D-102-papeis-admin-e-member-por-organizacao.md) | Dois papéis por organização, `admin` e `member`; `is_staff` é da plataforma; toda view que exige conta declara `AccountReady` |
+| [D-103](D-103-senha-provisoria-gerada-pelo-servidor.md) | Usuário de organização real nasce com senha provisória gerada pelo servidor, mostrada uma vez, e troca obrigatória |
+| [D-104](D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md) | A auditoria de acesso mora em `core.access_event`, que só cresce; ninguém a lê neste bloco, e o filtro por organização é do primeiro bloco que a ler — restringe a D-41 |
+| [D-105](D-105-superusuario-mora-na-ruvor-restringe-a-d-39.md) | O superusuário mora na organização `ruvor`, como `admin` — restringe a D-39 |
+| [D-106](D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md) | O limite de tentativas conta no cache do Django, no Redis, num banco próprio: por IP e por (e-mail, IP); o e-mail é único sem diferença de caixa |
+| [D-107](D-107-m2-1a-em-duas-fases-restringe-a-d-82.md) | O M2.1a implementa em duas fases, com uma PR cada — restringe a D-82 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

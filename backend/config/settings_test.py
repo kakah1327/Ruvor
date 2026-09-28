@@ -18,5 +18,10 @@ os.environ.setdefault("RUVOR_DB_NAME", "nao-usar")
 os.environ.setdefault("RUVOR_DB_USER", "nao-usar")
 os.environ.setdefault("RUVOR_DB_PASSWORD", "nao-usar")
 os.environ.setdefault("RUVOR_REDIS_URL", "redis://nao-usar:1/0")
+os.environ.setdefault("RUVOR_CACHE_URL", "redis://nao-usar:1/1")
 
 from config.settings import *  # noqa: F403
+
+# O cache da suite e o de memoria (M2.1a, RF-22): nenhum teste escreve no Redis vivo, e o
+# contador do bloqueio de uma rodada nao vaza para a seguinte.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
