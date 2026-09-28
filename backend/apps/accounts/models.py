@@ -15,6 +15,7 @@ from typing import ClassVar
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models.functions import Lower
 
 from apps.accounts.managers import UserManager
 
@@ -24,6 +25,9 @@ class Organization(models.Model):
 
     name = models.CharField(max_length=120)
     slug = models.SlugField(max_length=60, unique=True)
+    # A organizacao pessoal implicita da D-24, de quem se cadastrou sozinho: um usuario so,
+    # `admin`, sem gestao de usuarios (M2.1a, RF-06). A `ruvor` e real.
+    is_personal = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -40,7 +44,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     `username` do `AbstractUser` seria justamente a migracao cara que este bloco evita.
     De `AbstractBaseUser` vem `password` e `last_login`; de `PermissionsMixin` vem
     `is_superuser`, `groups` e `user_permissions`.
+
+    O e-mail e guardado em minusculas, e o banco garante a unicidade sem diferenca de
+    caixa (M2.1a, RF-08). `role` e o papel **na organizacao**; `is_staff` e
+    `is_superuser` sao da plataforma e nao dao poder em organizacao nenhuma (RF-05).
     """
+
+    class Role(models.TextChoices):
+        ADMIN = "admin"
+        MEMBER = "member"
 
     email = models.EmailField(max_length=254, unique=True)
     name = models.CharField(max_length=120)
@@ -49,6 +61,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         on_delete=models.PROTECT,
         related_name="users",
     )
+    # Sem `default`: quem cria diz o papel, e o gerente poe `member` quando nao vem.
+    role = models.CharField(max_length=10, choices=Role)
+    # Senha posta por outra pessoa (a administradora, o comando): so a troca libera (RF-07).
+    must_change_password = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -59,11 +75,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     EMAIL_FIELD = "email"
     # O `USERNAME_FIELD` nunca entra em `REQUIRED_FIELDS` — e o que o `auth.E002`
     # reprova. A organizacao tambem fica de fora: `createsuperuser` passaria a chave
-    # primaria crua, e resolver isso e do M2.1, que constroi o fluxo de autenticacao.
+    # primaria crua. Sem organizacao, o gerente poe o superusuario na `ruvor` (D-105).
     REQUIRED_FIELDS: ClassVar[list[str]] = ["name"]
 
     class Meta:
         db_table = 'core"."user'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(Lower("email"), name="user_email_lower_uniq"),
+        ]
 
     def __str__(self) -> str:
         return self.email
+
