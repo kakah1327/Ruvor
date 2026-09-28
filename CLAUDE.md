@@ -161,7 +161,7 @@ existe tela de produto.
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; __TESTES__ testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 943 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
