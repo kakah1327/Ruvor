@@ -9,13 +9,12 @@
 <style>
   /*
    * Mockup da busca e do casco (M1.6b, T2). Só var(--ruvor-*): nenhuma cor e nenhum tamanho de
-   * fonte literal. Valores estruturais (1px de borda, larguras, porcentagem) são os únicos
-   * literais. Os ícones são os svg de brand/ruvor/icons/ (D-93), copiados para o <svg> de
+   * fonte literal. Os ícones são os svg de brand/ruvor/icons/ (D-93), copiados para o <svg> de
    * símbolos no início do <body>.
    *
-   * Tudo o que tem prefixo bsc- é ESTILO LOCAL deste mockup: componente que o kit ainda não
-   * tem. Aprovado o mockup, a T5 o leva a brand/ruvor/components.css com o prefixo ruvor-.
-   * O que tem prefixo mk- é a moldura do mockup (o seletor de estados) e não é tela.
+   * Os componentes que este mockup desenhou como estilo local (prefixo bsc-) foram levados a
+   * brand/ruvor/components.css pela T5, com o prefixo ruvor-; a tela usa as classes do kit.
+   * O que fica aqui, com prefixo mk-, é a moldura do mockup (o seletor de estados) e não é tela.
    */
 
   /* --- Moldura do mockup: não é tela ------------------------------------------------ */
@@ -34,255 +33,10 @@
   .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
   .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
   .mk-log { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-page[hidden] { display: none; }
 
-  /* --- Casco ------------------------------------------------------------------------ */
-  .bsc-shell { grid-template-rows: 1fr auto; }
-  .bsc-brand { color: inherit; text-decoration: none; border-radius: var(--ruvor-radius-sm); }
-  .bsc-top-search { position: relative; width: 100%; max-width: 440px; }
-  .bsc-top-search[hidden] { display: none; }
-
-  /* A chave de tema: três botões com rótulo, sobre a barra escura. */
-  .bsc-theme {
-    display: inline-flex;
-    padding: 2px;
-    gap: 2px;
-    border: 1px solid var(--ruvor-avatar);
-    border-radius: var(--ruvor-radius-sm);
-  }
-  .bsc-theme__btn {
-    font: inherit;
-    font-size: var(--ruvor-type-micro-size);
-    font-weight: var(--ruvor-type-micro-weight);
-    padding: 5px 10px;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--ruvor-topbar-link);
-    cursor: pointer;
-  }
-  .bsc-theme__btn:hover { color: var(--ruvor-topbar-text); }
-  .bsc-theme__btn[aria-pressed="true"] { background: var(--ruvor-avatar); color: var(--ruvor-topbar-text); }
-
-  /* --- O campo de busca ------------------------------------------------------------- */
-  .bsc-field { position: relative; }
-  .bsc-field > .ruvor-glyph {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--ruvor-text-muted);
-    pointer-events: none;
-  }
-  .bsc-field .ruvor-input { padding-left: 36px; padding-right: 40px; }
-  .bsc-field .ruvor-input::-webkit-search-cancel-button { display: none; }
-  .bsc-field .ruvor-input::placeholder { color: var(--ruvor-text-muted); opacity: 1; }
-  .bsc-clear {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--ruvor-text-muted);
-    cursor: pointer;
-  }
-  .bsc-clear:hover { background: var(--ruvor-control-hover); color: var(--ruvor-ink); }
-  .bsc-clear:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 0; }
-  .bsc-clear[hidden] { display: none; }
-
-  /* Grande, na página inicial. */
-  .bsc-field--lg .ruvor-input {
-    font-size: var(--ruvor-type-h3-size);
-    padding-block: 14px;
-    padding-left: 44px;
-    border-radius: var(--ruvor-radius-md);
-    box-shadow: var(--ruvor-shadow-panel);
-  }
-  .bsc-field--lg > .ruvor-glyph { left: 16px; }
-  .bsc-field--lg .bsc-clear { right: 10px; }
-
-  /* Compacto, na barra. */
-  .bsc-field--bar .ruvor-input { padding-block: 7px; }
-
-  /* --- A lista de resultados -------------------------------------------------------- */
-  .bsc-list { list-style: none; margin: 0; padding: 0; }
-  .bsc-option > a {
-    display: grid;
-    grid-template-columns: 76px minmax(0, 1fr) auto 16px;
-    align-items: center;
-    gap: var(--ruvor-space-3);
-    padding: 11px var(--ruvor-space-4);
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid var(--ruvor-table-rule);
-  }
-  .bsc-option:last-child > a { border-bottom: 0; }
-  .bsc-option > a:hover,
-  .bsc-option[aria-selected="true"] > a { background: var(--ruvor-control-hover); }
-  .bsc-option[aria-selected="true"] > a { box-shadow: inset 3px 0 0 var(--ruvor-decision); }
-  .bsc-option > a:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: -2px; }
-  .bsc-ticker {
-    font-family: var(--ruvor-font-mono);
-    font-weight: var(--ruvor-type-small-weight);
-    font-size: var(--ruvor-type-small-size);
-  }
-  .bsc-name { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--ruvor-space-2); }
-  .bsc-name b { font-weight: var(--ruvor-type-small-weight); }
-  .bsc-name span { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
-  .bsc-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ruvor-space-1); }
-  .bsc-go { color: var(--ruvor-text-muted); }
-
-  /* Tag sem semântica de alerta ("sem dados ainda"; na tela do ativo, "não julgado"). */
-  .bsc-tag--neutral { background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); }
-
-  /* A lista na página inicial: um painel, inteira na página. */
-  .bsc-results { margin-top: var(--ruvor-space-5); }
-  .bsc-results__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--ruvor-space-2);
-    margin-bottom: var(--ruvor-space-3);
-    color: var(--ruvor-text-muted);
-  }
-  .bsc-results__head b { color: var(--ruvor-ink); }
-  .bsc-results .ruvor-panel { overflow: hidden; }
-  .bsc-more {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--ruvor-space-3);
-    margin-top: var(--ruvor-space-3);
-    color: var(--ruvor-text-muted);
-  }
-
-  /* Carregando: linhas de esqueleto do tamanho de uma linha de resultado. */
-  .bsc-skel-row { display: grid; grid-template-columns: 76px 1fr 90px; gap: var(--ruvor-space-3); padding: 14px var(--ruvor-space-4); border-bottom: 1px solid var(--ruvor-table-rule); }
-  .bsc-skel-row:last-child { border-bottom: 0; }
-  .bsc-skel-row > span { height: 12px; border-radius: var(--ruvor-radius-sm); }
-
-  /* Sem resultado e erro, na página inicial. */
-  .bsc-empty { padding: var(--ruvor-space-5); }
-  .bsc-empty p { margin: var(--ruvor-space-1) 0 0; color: var(--ruvor-text-muted); }
-  .bsc-error .ruvor-btn { margin-top: var(--ruvor-space-3); }
-  .bsc-error p { margin: var(--ruvor-space-1) 0 0; color: var(--ruvor-text-muted); }
-
-  /* A sugestão do estado vazio. */
-  .bsc-suggest { margin-top: var(--ruvor-space-6); }
-  .bsc-suggest .ruvor-eyebrow { color: var(--ruvor-text-muted); }
-  .bsc-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); }
-  .bsc-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--ruvor-space-2);
-    padding: 9px 13px;
-    border: 1px solid var(--ruvor-border);
-    border-radius: var(--ruvor-radius-sm);
-    background: var(--ruvor-surface);
-    color: var(--ruvor-ink);
-    text-decoration: none;
-    font-family: var(--ruvor-font-mono);
-    font-weight: var(--ruvor-type-small-weight);
-    font-size: var(--ruvor-type-small-size);
-  }
-  .bsc-chip:hover { background: var(--ruvor-control-hover); border-color: var(--ruvor-text-muted); }
-  .bsc-chip:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
-  .bsc-suggest > p:last-child { margin: var(--ruvor-space-3) 0 0; color: var(--ruvor-text-muted); }
-
-  /* A lista suspensa da barra. A cor volta à da página: a barra pinta o texto de claro. */
-  .bsc-pop {
-    position: absolute;
-    z-index: 10;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    min-width: 320px;
-    background: var(--ruvor-surface);
-    color: var(--ruvor-ink);
-    border: 1px solid var(--ruvor-border);
-    border-radius: var(--ruvor-radius-md);
-    box-shadow: var(--ruvor-shadow);
-    overflow: hidden;
-  }
-  .bsc-pop[hidden] { display: none; }
-  .bsc-pop .bsc-option > a { grid-template-columns: 64px minmax(0, 1fr) auto; padding: 9px var(--ruvor-space-3); }
-  .bsc-pop .bsc-go { display: none; }
-  .bsc-pop__foot {
-    padding: var(--ruvor-space-2) var(--ruvor-space-3);
-    border-top: 1px solid var(--ruvor-table-rule);
-    background: var(--ruvor-table-head);
-    color: var(--ruvor-text-muted);
-    font-size: var(--ruvor-type-micro-size);
-  }
-  .bsc-pop__msg { padding: var(--ruvor-space-3); }
-  .bsc-pop__msg p { margin: var(--ruvor-space-1) 0 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
-  .bsc-pop__msg .ruvor-btn { margin-top: var(--ruvor-space-2); }
-  .bsc-pop__msg--error b { color: var(--ruvor-critical-text); }
-  .bsc-pop__msg--loading { display: flex; align-items: center; gap: var(--ruvor-space-2); color: var(--ruvor-text-muted); }
-
-  /* --- Páginas ---------------------------------------------------------------------- */
-  .bsc-home { max-width: 760px; }
-  .bsc-home .ruvor-sub { margin-bottom: var(--ruvor-space-5); }
-  .bsc-notfound { max-width: 620px; }
-  .bsc-notfound .ruvor-btn { margin-top: var(--ruvor-space-5); text-decoration: none; }
-  .bsc-path { font-family: var(--ruvor-font-mono); color: var(--ruvor-ink); }
-  .bsc-page[hidden] { display: none; }
-
-  /* --- Rodapé ----------------------------------------------------------------------- */
-  .bsc-footer {
-    display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: var(--ruvor-space-3) var(--ruvor-space-6);
-    padding: var(--ruvor-space-5) 40px;
-    border-top: 1px solid var(--ruvor-border);
-    color: var(--ruvor-text-muted);
-    font-size: var(--ruvor-type-micro-size);
-  }
-  .bsc-footer p { margin: 0; display: flex; align-items: flex-start; gap: var(--ruvor-space-2); max-width: 72ch; }
-  .bsc-footer .ruvor-glyph { margin-top: 1px; }
-
-  .bsc-sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  @keyframes bsc-spin { to { transform: rotate(360deg); } }
-  .bsc-spin { animation: bsc-spin 1.2s linear infinite; }
-  @media (prefers-reduced-motion: reduce) { .bsc-spin { animation: none; } }
-
-  /* --- Estreito: a barra em duas linhas, a busca embaixo ----------------------------- */
   @media (max-width: 720px) {
     .mk-bar { padding-inline: var(--ruvor-space-4); }
-    .ruvor-topbar {
-      height: auto;
-      min-height: 60px;
-      grid-template-columns: auto auto;
-      justify-content: space-between;
-      gap: var(--ruvor-space-2) var(--ruvor-space-3);
-      padding: var(--ruvor-space-2) var(--ruvor-space-4);
-    }
-    .bsc-spacer { display: none; }
-    .bsc-top-search { grid-column: 1 / -1; grid-row: 2; max-width: none; margin-bottom: var(--ruvor-space-1); }
-    .bsc-pop { min-width: 0; }
-    .ruvor-content { padding: var(--ruvor-space-5) var(--ruvor-space-4) var(--ruvor-space-6); }
-    .ruvor-display { font-size: var(--ruvor-type-h2-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); }
-    .bsc-option > a { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; padding-inline: var(--ruvor-space-3); }
-    .bsc-option > a > .bsc-ticker { grid-column: 1; grid-row: 1; }
-    .bsc-option > a > .bsc-tags { grid-column: 2; grid-row: 1 / span 2; }
-    .bsc-option > a > .bsc-name { grid-column: 1; grid-row: 2; }
-    .bsc-option > a > .bsc-go { display: none; }
-    .bsc-pop .bsc-option > a { grid-template-columns: minmax(0, 1fr) auto; }
-    .bsc-footer { grid-template-columns: 1fr; padding: var(--ruvor-space-5) var(--ruvor-space-4); }
   }
 </style>
 </head>
@@ -326,59 +80,59 @@
 
 <!-- ============================================================ A TELA -->
 <header class="ruvor-topbar">
-  <a class="ruvor-brand bsc-brand" href="/" data-nav="home" aria-label="Ruvor, ir para a busca"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></a>
+  <a class="ruvor-brand" href="/" data-nav="home" aria-label="Ruvor, ir para a busca"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></a>
 
-  <div class="bsc-top-search" id="top-search" hidden>
-    <div class="bsc-field bsc-field--bar">
+  <div class="ruvor-topbar__search" id="top-search" hidden>
+    <div class="ruvor-search ruvor-search--bar">
       <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
-      <input class="ruvor-input" id="top-q" type="search" autocomplete="off" spellcheck="false"
+      <input class="ruvor-input ruvor-search__input" id="top-q" type="search" autocomplete="off" spellcheck="false"
         role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="top-list"
         aria-label="Buscar ativo" placeholder="Buscar ativo">
-      <button class="bsc-clear" type="button" data-clear="top" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+      <button class="ruvor-search__clear" type="button" data-clear="top" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
     </div>
-    <div class="bsc-pop" id="top-pop" hidden></div>
+    <div class="ruvor-search__popover" id="top-pop" hidden></div>
   </div>
-  <div class="bsc-spacer" aria-hidden="true" id="top-spacer"></div>
+  <div class="ruvor-topbar__spacer" aria-hidden="true" id="top-spacer"></div>
 
-  <div class="bsc-theme" role="group" aria-label="Tema">
-    <button class="bsc-theme__btn" type="button" data-set-theme="light" aria-pressed="false">Claro</button>
-    <button class="bsc-theme__btn" type="button" data-set-theme="dark" aria-pressed="false">Escuro</button>
-    <button class="bsc-theme__btn" type="button" data-set-theme="system" aria-pressed="true">Sistema</button>
+  <div class="ruvor-segmented" role="group" aria-label="Tema">
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false">Claro</button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false">Escuro</button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true">Sistema</button>
   </div>
 </header>
 
-<div class="ruvor-workspace ruvor-workspace--full bsc-shell">
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
   <main class="ruvor-content">
 
     <!-- ---------------------------------------------------------- página inicial: a busca -->
-    <section class="bsc-page bsc-home" id="page-home" aria-labelledby="home-title">
+    <section class="mk-page ruvor-home" id="page-home" aria-labelledby="home-title">
       <p class="ruvor-eyebrow">Busca</p>
       <h1 class="ruvor-display" id="home-title">Qual ativo você quer analisar?</h1>
       <p class="ruvor-sub">Digite o código ou o nome de uma ação da B3, ou do Ibovespa. Na página do ativo, você vê como o preço se comportou e quanto nove métodos estimam que ele pode perder em um dia.</p>
 
-      <div class="bsc-field bsc-field--lg">
+      <div class="ruvor-search ruvor-search--lg">
         <svg class="ruvor-glyph ruvor-glyph--lg" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
-        <input class="ruvor-input" id="home-q" type="search" autocomplete="off" spellcheck="false"
+        <input class="ruvor-input ruvor-search__input" id="home-q" type="search" autocomplete="off" spellcheck="false"
           role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="home-list"
           aria-label="Buscar ativo por código ou nome" placeholder="Código ou nome, como PETR4">
-        <button class="bsc-clear" type="button" data-clear="home" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+        <button class="ruvor-search__clear" type="button" data-clear="home" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
       </div>
 
       <div id="home-out"></div>
     </section>
 
     <!-- ---------------------------------------------------------- página não encontrada -->
-    <section class="bsc-page bsc-notfound" id="page-404" aria-labelledby="nf-title" hidden>
+    <section class="mk-page ruvor-notfound" id="page-404" aria-labelledby="nf-title" hidden>
       <p class="ruvor-eyebrow">Endereço desconhecido</p>
       <h1 class="ruvor-display" id="nf-title">Página não encontrada.</h1>
-      <p class="ruvor-sub">Nenhuma página do Ruvor fica em <span class="bsc-path">/ativo/itub4</span>. O endereço pode ter sido digitado errado.</p>
+      <p class="ruvor-sub">Nenhuma página do Ruvor fica em <span class="ruvor-path">/ativo/itub4</span>. O endereço pode ter sido digitado errado.</p>
       <p class="ruvor-sub">Para chegar a um ativo, busque pelo código ou pelo nome.</p>
       <a class="ruvor-btn ruvor-btn--primary" href="/" data-nav="home"><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-arrow-left"/></svg><span>Ir para a busca</span></a>
     </section>
 
   </main>
 
-  <footer class="bsc-footer">
+  <footer class="ruvor-footer">
     <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span>O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.</span></p>
     <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span>Fontes: catálogo de ativos da B3 e preços do Yahoo Finance.</span></p>
   </footer>
@@ -458,28 +212,28 @@
   }
 
   function tagsFor(a) {
-    var box = el("span", "bsc-tags");
+    var box = el("span", "ruvor-search__tags");
     if (a.kind === "index") box.appendChild(el("span", "ruvor-tag ruvor-tag--evidence", T.tagIndice));
     if (a.status === "inactive") box.appendChild(el("span", "ruvor-tag ruvor-tag--review", T.tagInativo));
-    if (!a.has_prices) box.appendChild(el("span", "ruvor-tag bsc-tag--neutral", T.tagSemDados));
+    if (!a.has_prices) box.appendChild(el("span", "ruvor-tag ruvor-tag--neutral", T.tagSemDados));
     return box;
   }
 
   function optionFor(a, idPrefix, i) {
-    var li = el("li", "bsc-option");
+    var li = el("li", "ruvor-search__option");
     li.id = idPrefix + "-opt-" + i;
     li.setAttribute("role", "option");
     li.setAttribute("aria-selected", "false");
-    var link = el("a");
+    var link = el("a", "ruvor-search__link");
     link.href = "/ativos/" + a.ticker;
     link.setAttribute("tabindex", "-1");
-    link.appendChild(el("span", "bsc-ticker", a.ticker));
-    var name = el("span", "bsc-name");
+    link.appendChild(el("span", "ruvor-search__ticker", a.ticker));
+    var name = el("span", "ruvor-search__name");
     name.appendChild(el("b", null, a.trading_name));
     if (a.sector) name.appendChild(el("span", null, a.sector));
     link.appendChild(name);
     link.appendChild(tagsFor(a));
-    var go = icon("i-caret-right", "ruvor-glyph--sm bsc-go");
+    var go = icon("i-caret-right", "ruvor-glyph--sm ruvor-search__go");
     link.appendChild(go);
     li.appendChild(link);
     return li;
@@ -541,7 +295,7 @@
   };
   Combo.prototype.highlight = function (i) {
     var opts = this.options();
-    opts.forEach(function (o, k) { o.setAttribute("aria-selected", String(k === i)); });
+    opts.forEach(function (o, k) { o.setAttribute("aria-selected", String(k === i)); o.classList.toggle("ruvor-search__option--active", k === i); });
     this.active = i;
     if (i >= 0 && opts[i]) {
       this.input.setAttribute("aria-activedescendant", opts[i].id);
@@ -564,15 +318,15 @@
   // ---------------------------------------------------------------- página inicial
   var homeOut = document.getElementById("home-out");
   function renderSuggest() {
-    var box = el("section", "bsc-suggest");
+    var box = el("section", "ruvor-search__suggest");
     box.setAttribute("aria-labelledby", "sug-title");
     var h = el("h2", "ruvor-eyebrow", T.sugestaoTitulo);
     h.id = "sug-title";
     box.appendChild(h);
-    var ul = el("ul", "bsc-chips");
+    var ul = el("ul", "ruvor-chips");
     SUGESTOES.forEach(function (t) {
       var li = el("li");
-      var a = el("a", "bsc-chip", t);
+      var a = el("a", "ruvor-chip", t);
       a.href = "/ativos/" + t;
       li.appendChild(a);
       ul.appendChild(li);
@@ -585,8 +339,8 @@
     homeOut.replaceChildren();
     if (s.kind === "vazio") { homeOut.appendChild(renderSuggest()); return; }
 
-    var wrap = el("div", "bsc-results");
-    var head = el("p", "bsc-results__head");
+    var wrap = el("div", "ruvor-search__results");
+    var head = el("p", "ruvor-search__count");
     head.setAttribute("aria-live", "polite");
     wrap.appendChild(head);
 
@@ -595,7 +349,7 @@
       var panel = el("div", "ruvor-panel");
       panel.setAttribute("aria-busy", "true");
       for (var i = 0; i < 4; i++) {
-        var row = el("div", "bsc-skel-row");
+        var row = el("div", "ruvor-search__skeleton");
         row.setAttribute("aria-hidden", "true");
         row.appendChild(el("span", "ruvor-skeleton"));
         row.appendChild(el("span", "ruvor-skeleton"));
@@ -604,12 +358,12 @@
       }
       wrap.appendChild(panel);
     } else if (s.kind === "sem-resultado") {
-      var empty = el("div", "ruvor-panel bsc-empty");
+      var empty = el("div", "ruvor-panel ruvor-search__empty");
       empty.appendChild(el("b", null, T.semResultado(s.q)));
       empty.appendChild(el("p", null, T.semResultadoDica));
       wrap.appendChild(empty);
     } else if (s.kind === "erro") {
-      var err = el("div", "ruvor-callout ruvor-callout--critical bsc-error");
+      var err = el("div", "ruvor-callout ruvor-callout--critical ruvor-search__error");
       err.setAttribute("role", "alert");
       var ic = el("span", "ruvor-icon ruvor-icon--critical");
       ic.appendChild(icon("i-duo-x-circle"));
@@ -628,7 +382,7 @@
     } else if (s.kind === "resultados") {
       head.appendChild(el("b", null, T.contagem(s.count, s.q)));
       var panelR = el("div", "ruvor-panel");
-      var ul = el("ul", "bsc-list");
+      var ul = el("ul", "ruvor-search__list");
       ul.id = "home-list";
       ul.setAttribute("role", "listbox");
       ul.setAttribute("aria-label", T.contagem(s.count, s.q));
@@ -636,7 +390,7 @@
       panelR.appendChild(ul);
       wrap.appendChild(panelR);
       if (s.count > s.results.length) {
-        var more = el("div", "bsc-more");
+        var more = el("div", "ruvor-search__more");
         var btn = el("button", "ruvor-btn", T.mostrarMais);
         btn.type = "button";
         if (s.loadingMore) { btn.setAttribute("aria-busy", "true"); btn.disabled = true; }
@@ -660,19 +414,19 @@
     pop.replaceChildren();
     pop.hidden = s.kind === "vazio";
     if (s.kind === "carregando") {
-      var ld = el("div", "bsc-pop__msg bsc-pop__msg--loading");
+      var ld = el("div", "ruvor-search__msg ruvor-search__msg--loading");
       ld.setAttribute("aria-live", "polite");
-      ld.appendChild(icon("i-spinner-gap", "bsc-spin"));
+      ld.appendChild(icon("i-spinner-gap", "ruvor-spin"));
       ld.appendChild(el("span", null, T.buscando));
       pop.appendChild(ld);
     } else if (s.kind === "sem-resultado") {
-      var m = el("div", "bsc-pop__msg");
+      var m = el("div", "ruvor-search__msg");
       m.setAttribute("aria-live", "polite");
       m.appendChild(el("b", null, T.semResultado(s.q)));
       m.appendChild(el("p", null, T.semResultadoDica));
       pop.appendChild(m);
     } else if (s.kind === "erro") {
-      var e = el("div", "bsc-pop__msg bsc-pop__msg--error");
+      var e = el("div", "ruvor-search__msg ruvor-search__msg--error");
       e.setAttribute("role", "alert");
       e.appendChild(el("b", null, T.erroTitulo));
       e.appendChild(el("p", null, T.erroTexto));
@@ -684,13 +438,13 @@
       e.appendChild(retry);
       pop.appendChild(e);
     } else if (s.kind === "resultados") {
-      var ul = el("ul", "bsc-list");
+      var ul = el("ul", "ruvor-search__list");
       ul.id = "top-list";
       ul.setAttribute("role", "listbox");
       ul.setAttribute("aria-label", T.contagem(s.count, s.q));
       s.results.forEach(function (a, k) { ul.appendChild(optionFor(a, "top", k)); });
       pop.appendChild(ul);
-      var foot = el("div", "bsc-pop__foot", T.suspensaRodape(s.results.length, s.count));
+      var foot = el("div", "ruvor-search__foot", T.suspensaRodape(s.results.length, s.count));
       foot.setAttribute("aria-live", "polite");
       pop.appendChild(foot);
     }

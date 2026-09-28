@@ -40,6 +40,7 @@
   --ruvor-topbar-account: #D2D2D0;
   --ruvor-topbar-edge: #292A2E;
   --ruvor-avatar: #45464B;
+  --ruvor-topbar-control: #45464B;
   --ruvor-on-decision: #FFFFFF;
   --ruvor-choice-selected: #FBF5F5;
   --ruvor-table-head: #F1F0ED;
@@ -91,6 +92,7 @@
   --ruvor-topbar-account: #C4C4C2;
   --ruvor-topbar-edge: #3A3B40;
   --ruvor-avatar: #2E2F34;
+  --ruvor-topbar-control: #2E2F34;
   --ruvor-on-decision: #1D1E21;
   --ruvor-choice-selected: #3A2A2F;
   --ruvor-table-head: #2E2F34;
@@ -143,6 +145,7 @@
     --ruvor-topbar-account: #C4C4C2;
     --ruvor-topbar-edge: #3A3B40;
     --ruvor-avatar: #2E2F34;
+    --ruvor-topbar-control: #2E2F34;
     --ruvor-on-decision: #1D1E21;
     --ruvor-choice-selected: #3A2A2F;
     --ruvor-table-head: #2E2F34;

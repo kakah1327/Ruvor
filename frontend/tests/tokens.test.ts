@@ -96,6 +96,8 @@ const CORRESPONDENCE: ReadonlyArray<readonly [string, Source]> = [
   ["topbar-account", r(".account", "color")],
   ["topbar-edge", NONE],
   ["avatar", r(".avatar", "background")],
+  // M1.6b: o controle sobre a barra (a chave de tema), com o valor do avatar e nome próprio.
+  ["topbar-control", NONE],
   ["on-decision", r(".btn.primary", "color")],
   ["choice-selected", r(".choice.on", "background")],
   ["table-head", r("th", "background")],
@@ -245,6 +247,8 @@ const PAIRS: readonly Pair[] = [
   ["topbar-account", "topbar", 4.5],
   ["topbar-text", "topbar", 4.5],
   ["topbar-account", "avatar", 4.5],
+  // M1.6b: o botão marcado da chave de tema.
+  ["topbar-text", "topbar-control", 4.5],
   ["code-text", "code-bg", 4.5],
   ["validated", "bg", 4.5],
   ["critical", "bg", 4.5],
@@ -416,6 +420,14 @@ const INTERACTIVE = [
   ".ruvor-select",
   ".ruvor-choice",
   ".ruvor-nav__link",
+  // M1.6b (T5): a marca como link, a chave de tema, a busca e a tabela que abre.
+  ".ruvor-brand",
+  ".ruvor-segmented__btn",
+  ".ruvor-search__input",
+  ".ruvor-search__clear",
+  ".ruvor-search__link",
+  ".ruvor-chip",
+  ".ruvor-table__toggle",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -455,6 +467,7 @@ describe("V-05 — foco visível", () => {
       ".ruvor-input:focus-visible",
       ".ruvor-select:focus-visible",
       ".ruvor-choice:focus-visible",
+      ".ruvor-search__input:focus-visible",
     ]) {
       const at = index(component);
       expect(at, component).toBeGreaterThan(-1);

@@ -73,10 +73,14 @@
   gap: 38px;
 }
 
+/* A marca pode ser link (volta à busca, M1.6b): sem sublinhado e na cor da barra. */
 .ruvor-brand {
   display: flex;
   align-items: center;
   gap: 10px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--ruvor-radius-sm);
 }
 
 .ruvor-brand img {
@@ -255,6 +259,8 @@
   color: var(--ruvor-ink);
   padding: 9px 13px;
   cursor: pointer;
+  /* o botão também pode ser <a> (M1.6b: "Ir para a busca", "Ir para o risco") */
+  text-decoration: none;
 }
 
 .ruvor-btn:has(> .ruvor-glyph) {
@@ -671,6 +677,1056 @@
   white-space: pre-wrap;
 }
 
+/* ==================================================================================
+ * M1.6b — os componentes e o arranjo das telas (T5). Vieram do estilo local dos três
+ * mockups aprovados, docs/mockups/M1.6b/: busca.html (bsc-), ativo.html (atv-) e
+ * ativo-estados.html (est-). As telas do produto usam estas classes e não escrevem CSS.
+ * Ficam antes do anel sobre fundo escuro: dentro da barra, ele vence o foco delas — menos o
+ * do que fica sobre fundo claro dentro da barra (o limpar do campo e a lista suspensa), que
+ * leva um seletor a mais.
+ * ================================================================================== */
+
+/* --- Casco: a barra, a área e o rodapé -------------------------------------------- */
+
+/* O casco de uma coluna: a área em cima, o rodapé embaixo, preso ao pé da janela. */
+.ruvor-workspace--footer {
+  grid-template-rows: 1fr auto;
+}
+
+/* O lugar da busca na barra (ou o vão, na página de busca, que não a tem). */
+.ruvor-topbar__search {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+}
+
+.ruvor-topbar .ruvor-brand:focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+/* A chave de tema: três botões com rótulo, sobre a barra escura (só na barra). */
+.ruvor-segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--ruvor-topbar-control);
+  border-radius: var(--ruvor-radius-sm);
+}
+
+.ruvor-segmented__btn {
+  font: inherit;
+  font-size: var(--ruvor-type-micro-size);
+  font-weight: var(--ruvor-type-micro-weight);
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ruvor-topbar-link);
+  cursor: pointer;
+}
+
+.ruvor-segmented__btn:hover {
+  color: var(--ruvor-topbar-text);
+}
+
+.ruvor-segmented__btn:focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+.ruvor-segmented__btn[aria-pressed="true"] {
+  background: var(--ruvor-topbar-control);
+  color: var(--ruvor-topbar-text);
+}
+
+/* O rodapé: a ressalva e a fonte dos dados, cada uma com o seu ícone. */
+.ruvor-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--ruvor-space-3) var(--ruvor-space-6);
+  padding: var(--ruvor-space-5) 40px;
+  border-top: 1px solid var(--ruvor-border);
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-footer p {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ruvor-space-2);
+  max-width: 72ch;
+}
+
+.ruvor-footer .ruvor-glyph {
+  margin-top: 1px;
+}
+
+/* Só para leitor de tela. */
+.ruvor-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* O ícone que gira (spinner-gap), enquanto algo carrega. */
+.ruvor-spin {
+  transform-origin: center;
+  animation: ruvor-spin 1.2s linear infinite;
+}
+
+@keyframes ruvor-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruvor-spin {
+    animation: none;
+  }
+}
+
+/* --- Busca: o campo, a lista e a lista suspensa ---------------------------------- */
+
+/* O campo: a lupa à esquerda, o input (.ruvor-input.ruvor-search__input) e o limpar. */
+.ruvor-search {
+  position: relative;
+}
+
+.ruvor-search > .ruvor-glyph {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ruvor-text-muted);
+  pointer-events: none;
+}
+
+.ruvor-search__input {
+  padding-left: 36px;
+  padding-right: 40px;
+}
+
+.ruvor-search__input:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-search__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.ruvor-search__input::placeholder {
+  color: var(--ruvor-text-muted);
+  opacity: 1;
+}
+
+.ruvor-search__clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ruvor-text-muted);
+  cursor: pointer;
+}
+
+.ruvor-search__clear:hover {
+  background: var(--ruvor-control-hover);
+  color: var(--ruvor-ink);
+}
+
+/* Em (0,3,0): o limpar fica sobre o fundo claro do campo, também na barra — vence o anel
+   sobre fundo escuro, como no mockup. */
+.ruvor-search > .ruvor-search__clear:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 0;
+}
+
+.ruvor-search__clear[hidden] {
+  display: none;
+}
+
+/* Grande, na página de busca. */
+.ruvor-search--lg .ruvor-search__input {
+  font-size: var(--ruvor-type-h3-size);
+  padding-block: 14px;
+  padding-left: 44px;
+  border-radius: var(--ruvor-radius-md);
+  box-shadow: var(--ruvor-shadow-panel);
+}
+
+.ruvor-search--lg > .ruvor-glyph {
+  left: 16px;
+}
+
+.ruvor-search--lg .ruvor-search__clear {
+  right: 10px;
+}
+
+/* Compacto, na barra. */
+.ruvor-search--bar .ruvor-search__input {
+  padding-block: 7px;
+}
+
+/* A lista (role="listbox"): cada opção é um link para o ativo. A opção ativa pelo teclado
+   leva .ruvor-search__option--active, junto do aria-selected="true". */
+.ruvor-search__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ruvor-search__link {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+  padding: 11px var(--ruvor-space-4);
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-search__option:last-child > .ruvor-search__link {
+  border-bottom: 0;
+}
+
+.ruvor-search__link:hover,
+.ruvor-search__option--active > .ruvor-search__link {
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-search__option--active > .ruvor-search__link {
+  box-shadow: inset 3px 0 0 var(--ruvor-decision);
+}
+
+/* Em (0,3,0): dentro da lista suspensa da barra, vence o anel sobre fundo escuro. */
+.ruvor-search__option > .ruvor-search__link:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: -2px;
+}
+
+.ruvor-search__ticker {
+  font-family: var(--ruvor-font-mono);
+  font-weight: var(--ruvor-type-small-weight);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-search__name {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--ruvor-space-2);
+}
+
+.ruvor-search__name b {
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-search__name span {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-search__tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ruvor-space-1);
+}
+
+.ruvor-search__go {
+  color: var(--ruvor-text-muted);
+}
+
+/* A lista na página de busca: um painel, inteira na página. */
+.ruvor-search__results {
+  margin-top: var(--ruvor-space-5);
+}
+
+.ruvor-search__count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruvor-space-2);
+  margin-bottom: var(--ruvor-space-3);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-search__count b {
+  color: var(--ruvor-ink);
+}
+
+.ruvor-search__results .ruvor-panel {
+  overflow: hidden;
+}
+
+.ruvor-search__more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+  margin-top: var(--ruvor-space-3);
+  color: var(--ruvor-text-muted);
+}
+
+/* Carregando: linhas de esqueleto do tamanho de uma linha de resultado. */
+.ruvor-search__skeleton {
+  display: grid;
+  grid-template-columns: 76px 1fr 90px;
+  gap: var(--ruvor-space-3);
+  padding: 14px var(--ruvor-space-4);
+  border-bottom: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-search__skeleton:last-child {
+  border-bottom: 0;
+}
+
+.ruvor-search__skeleton > span {
+  height: 12px;
+  border-radius: var(--ruvor-radius-sm);
+}
+
+/* Sem resultado (num painel) e erro (num callout crítico), na página de busca. */
+.ruvor-search__empty {
+  padding: var(--ruvor-space-5);
+}
+
+.ruvor-search__empty p,
+.ruvor-search__error p {
+  margin: var(--ruvor-space-1) 0 0;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-search__error .ruvor-btn {
+  margin-top: var(--ruvor-space-3);
+}
+
+/* A sugestão do estado vazio: título, os atalhos e uma nota. */
+.ruvor-search__suggest {
+  margin-top: var(--ruvor-space-6);
+}
+
+.ruvor-search__suggest .ruvor-eyebrow {
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-search__suggest > p:last-child {
+  margin: var(--ruvor-space-3) 0 0;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  padding: 9px 13px;
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-sm);
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  text-decoration: none;
+  font-family: var(--ruvor-font-mono);
+  font-weight: var(--ruvor-type-small-weight);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-chip:hover {
+  background: var(--ruvor-control-hover);
+  border-color: var(--ruvor-text-muted);
+}
+
+.ruvor-chip:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+/* A lista suspensa da barra. A cor volta à da página: a barra pinta o texto de claro. */
+.ruvor-search__popover {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  min-width: 320px;
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-md);
+  box-shadow: var(--ruvor-shadow);
+  overflow: hidden;
+}
+
+.ruvor-search__popover .ruvor-search__link {
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  padding: 9px var(--ruvor-space-3);
+}
+
+.ruvor-search__popover .ruvor-search__go {
+  display: none;
+}
+
+.ruvor-search__foot {
+  padding: var(--ruvor-space-2) var(--ruvor-space-3);
+  border-top: 1px solid var(--ruvor-table-rule);
+  background: var(--ruvor-table-head);
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-search__msg {
+  padding: var(--ruvor-space-3);
+}
+
+.ruvor-search__msg p {
+  margin: var(--ruvor-space-1) 0 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-search__msg .ruvor-btn {
+  margin-top: var(--ruvor-space-2);
+}
+
+.ruvor-search__msg--error b {
+  color: var(--ruvor-critical-text);
+}
+
+.ruvor-search__msg--loading {
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  color: var(--ruvor-text-muted);
+}
+
+/* --- Páginas: a busca e o não encontrado ---------------------------------------- */
+
+.ruvor-home {
+  max-width: 760px;
+}
+
+.ruvor-home .ruvor-sub {
+  margin-bottom: var(--ruvor-space-5);
+}
+
+.ruvor-notfound {
+  max-width: 620px;
+}
+
+.ruvor-notfound .ruvor-btn,
+.ruvor-notfound .ruvor-search {
+  margin-top: var(--ruvor-space-5);
+}
+
+/* O endereço digitado, citado na frase. */
+.ruvor-path {
+  font-family: var(--ruvor-font-mono);
+  color: var(--ruvor-ink);
+}
+
+/* --- A tela do ativo: pilhas, seções e a frase junto do número ----------------------- */
+
+/* Uma pilha vertical: a coluna da tela (--loose), uma seção, um grupo de painéis. */
+.ruvor-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-4);
+  min-width: 0;
+}
+
+.ruvor-stack--loose {
+  gap: var(--ruvor-space-6);
+}
+
+/* O cabeçalho de uma seção: sobrancelha e título, e uma tag ao lado. */
+.ruvor-section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ruvor-space-2) var(--ruvor-space-4);
+}
+
+.ruvor-muted {
+  color: var(--ruvor-text-muted);
+}
+
+/* A frase que acompanha um número (RF-21 do M1.6b): pequena, discreta, em linha curta. */
+.ruvor-note {
+  margin: 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+  line-height: var(--ruvor-type-micro-leading);
+  max-width: 70ch;
+}
+
+/* A nota ao pé de um painel. */
+.ruvor-panel__note {
+  margin: var(--ruvor-space-4) 0 0;
+}
+
+/* O esqueleto do tamanho de uma seção, e o curto. */
+.ruvor-skeleton--block {
+  height: calc(var(--ruvor-space-7) * 2);
+  border-radius: var(--ruvor-radius-md);
+}
+
+.ruvor-skeleton--short {
+  height: var(--ruvor-space-6);
+}
+
+/* O erro de uma seção: a frase e o "tentar de novo" na mesma linha. */
+.ruvor-callout--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+}
+
+/* A tag sem semântica de alerta: "não julgado", "sem dados ainda", segmento de listagem. */
+.ruvor-tag--neutral {
+  background: var(--ruvor-surface-2);
+  color: var(--ruvor-text-muted);
+}
+
+/* Uma lista de tags (ul), sem marcador. */
+.ruvor-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* --- A tela do ativo: o cabeçalho (camada 1) ------------------------------------------ */
+
+.ruvor-asset-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--ruvor-space-5);
+}
+
+.ruvor-asset-head__id {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.ruvor-asset-head__name {
+  margin: var(--ruvor-space-2) 0 0;
+  font-size: var(--ruvor-type-h3-size);
+  font-weight: var(--ruvor-type-h3-weight);
+}
+
+.ruvor-asset-head__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-2);
+  margin-top: var(--ruvor-space-3);
+}
+
+/* O último fechamento, num painel ao lado da identidade. */
+.ruvor-asset-head__last {
+  flex: 0 1 320px;
+  min-width: 0;
+  padding: var(--ruvor-space-4);
+}
+
+.ruvor-asset-head__value {
+  font-size: var(--ruvor-type-display-size);
+  font-weight: var(--ruvor-type-display-weight);
+  letter-spacing: var(--ruvor-type-display-tracking);
+  line-height: var(--ruvor-type-display-leading);
+  margin: var(--ruvor-space-2) 0;
+}
+
+/* A classificação na B3, setor › subsetor › segmento (ol). */
+.ruvor-crumbs {
+  margin: var(--ruvor-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-1) var(--ruvor-space-2);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-crumbs li + li::before {
+  content: "›";
+  margin-right: var(--ruvor-space-2);
+}
+
+/* --- A tela do ativo: número com a frase, e os blocos (camada 2) ----------------------- */
+
+.ruvor-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  min-width: 0;
+}
+
+.ruvor-stat__label {
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-stat__value {
+  font-size: var(--ruvor-type-h2-size);
+  font-weight: var(--ruvor-type-h2-weight);
+  line-height: var(--ruvor-type-h2-leading);
+  letter-spacing: var(--ruvor-type-h2-tracking);
+}
+
+.ruvor-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--ruvor-space-5) var(--ruvor-space-5);
+}
+
+/* Os painéis do comportamento, dois a dois; o largo ocupa a linha. */
+.ruvor-blocks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ruvor-space-4);
+}
+
+.ruvor-blocks > .ruvor-blocks__wide {
+  grid-column: 1 / -1;
+}
+
+/* --- Gráficos: a área, os atalhos, a legenda e a dica --------------------------------- */
+
+.ruvor-chart {
+  position: relative;
+  min-width: 0;
+}
+
+/* A faixa acima do gráfico: atalhos ou legenda de um lado, a leitura do outro. */
+.ruvor-chart__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruvor-space-2) var(--ruvor-space-4);
+  margin-bottom: var(--ruvor-space-3);
+}
+
+.ruvor-chart__readout {
+  font-size: var(--ruvor-type-small-size);
+}
+
+/* As duas pontas do histograma, embaixo dele. */
+.ruvor-chart__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ruvor-space-3);
+  margin-top: var(--ruvor-space-1);
+  font-size: var(--ruvor-type-micro-size);
+  color: var(--ruvor-text-muted);
+}
+
+/* O resumo do gráfico em texto, com .ruvor-note. */
+.ruvor-chart__summary {
+  margin: var(--ruvor-space-3) 0 0;
+}
+
+/* A dica por barra, sobre o gráfico. */
+.ruvor-chart__tip {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  white-space: nowrap;
+  padding: 6px 9px;
+  border-radius: var(--ruvor-radius-sm);
+  background: var(--ruvor-code-bg);
+  color: var(--ruvor-code-text);
+  font-size: var(--ruvor-type-micro-size);
+  font-weight: var(--ruvor-type-micro-weight);
+}
+
+.ruvor-chart__tip[hidden] {
+  display: none;
+}
+
+/* O gráfico sem dado: a área dele, com a frase no meio. */
+.ruvor-chart__empty {
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  padding: var(--ruvor-space-5);
+  border: 1px dashed var(--ruvor-border);
+  border-radius: var(--ruvor-radius-md);
+  text-align: center;
+}
+
+.ruvor-chart__empty p {
+  margin: 0;
+  max-width: 46ch;
+}
+
+.ruvor-chart__empty p + p {
+  margin-top: var(--ruvor-space-1);
+}
+
+/* Os atalhos de período: botões do kit lado a lado; o marcado, em tinta cheia. */
+.ruvor-btn-group {
+  display: flex;
+  gap: var(--ruvor-space-1);
+}
+
+.ruvor-btn-group .ruvor-btn {
+  padding: 6px 10px;
+}
+
+.ruvor-btn-group .ruvor-btn[aria-pressed="true"] {
+  background: var(--ruvor-ink);
+  color: var(--ruvor-paper);
+  border-color: var(--ruvor-ink);
+}
+
+.ruvor-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-2) var(--ruvor-space-4);
+  font-size: var(--ruvor-type-micro-size);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-legend__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: var(--ruvor-space-1);
+  vertical-align: -1px;
+}
+
+.ruvor-legend__swatch--critical {
+  background: var(--ruvor-critical);
+}
+
+.ruvor-legend__swatch--evidence {
+  background: var(--ruvor-evidence);
+}
+
+/* --- A tela do ativo: o risco (camada 3) -------------------------------------------- */
+
+/* Os dois níveis, 95% e 99%, lado a lado. */
+.ruvor-levels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ruvor-space-4);
+}
+
+.ruvor-level {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-level__title {
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  margin: 0;
+}
+
+/* A faixa entre os modelos: o número grande (b) e o horizonte (small). */
+.ruvor-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-range b {
+  font-size: var(--ruvor-type-display-size);
+  letter-spacing: var(--ruvor-type-display-tracking);
+  line-height: var(--ruvor-type-display-leading);
+}
+
+.ruvor-range small {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+/* A barra da perda, na cor da evidência (a verde do kit é a do ranking). */
+.ruvor-bar--evidence .ruvor-bar__fill {
+  background: var(--ruvor-evidence);
+}
+
+/* A barra de progresso (role="progressbar"): a trilha e o preenchimento da barra do kit. */
+.ruvor-progress {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: 7px;
+  border-radius: 9px;
+  background: var(--ruvor-bar-track);
+  overflow: hidden;
+}
+
+.ruvor-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: 9px;
+  background: var(--ruvor-evidence);
+}
+
+/* A tabela dos modelos: largura fixa, a primeira coluna (col) com o nome. */
+.ruvor-table--models {
+  table-layout: fixed;
+}
+
+.ruvor-table__col--lead {
+  width: 34%;
+}
+
+/* A linha que abre: o botão (aria-expanded) no nome, e a linha de detalhe logo abaixo. */
+.ruvor-table__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  font: inherit;
+  font-weight: var(--ruvor-type-small-weight);
+  color: var(--ruvor-ink);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ruvor-table__toggle:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ruvor-table__toggle .ruvor-glyph {
+  transition: transform 0.15s;
+}
+
+.ruvor-table__toggle[aria-expanded="true"] .ruvor-glyph {
+  transform: rotate(90deg);
+}
+
+/* A linha aberta: o estado vem do aria-expanded do botão, sem classe a mais. */
+.ruvor-table__row--expandable:has(> td > .ruvor-table__toggle[aria-expanded="true"]) > td {
+  border-bottom: 0;
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-table__detail > td {
+  background: var(--ruvor-control-hover);
+  padding: var(--ruvor-space-2) var(--ruvor-space-4) var(--ruvor-space-5);
+}
+
+.ruvor-table__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ruvor-space-5);
+}
+
+/* A linha de baixo do nome (a família do modelo), alinhada ao texto depois da seta. */
+.ruvor-table__sub {
+  display: block;
+  margin-left: calc(16px + var(--ruvor-space-2));
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+/* A última coluna à direita (a tabela dos proventos). */
+.ruvor-table--end td:last-child,
+.ruvor-table--end th:last-child {
+  text-align: right;
+}
+
+/* Uma célula em pilha: a perda, a barra e a tag. */
+.ruvor-cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.ruvor-cell-stack .ruvor-bar {
+  width: 100%;
+  max-width: 220px;
+}
+
+.ruvor-loss b {
+  font-size: var(--ruvor-type-h3-size);
+}
+
+.ruvor-loss small {
+  color: var(--ruvor-text-muted);
+  margin-left: var(--ruvor-space-1);
+}
+
+/* Os testes de um modelo (dl): rótulo, valor e tag, e a frase embaixo. */
+.ruvor-tests {
+  margin: var(--ruvor-space-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-test {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ruvor-space-1) var(--ruvor-space-3);
+  align-items: baseline;
+}
+
+.ruvor-test dt {
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-test dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-test .ruvor-note {
+  grid-column: 1 / -1;
+}
+
+/* --- A trilha do cálculo, na coluna lateral ------------------------------------------ */
+
+/* O conteúdo da coluna lateral, preso ao topo na rolagem. A coluna que leva a trilha usa
+   .ruvor-rail--stack: abaixo de 1000 px ela não some, vai para depois do conteúdo. */
+.ruvor-rail__inner {
+  position: sticky;
+  top: var(--ruvor-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-rail__inner > .ruvor-eyebrow {
+  color: var(--ruvor-text-muted);
+  margin: 0;
+}
+
+.ruvor-trail {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ruvor-trail > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ruvor-space-3);
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ruvor-border);
+}
+
+.ruvor-trail dt {
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-trail dd {
+  margin: 0;
+  text-align: right;
+  font-weight: var(--ruvor-type-small-weight);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- Os estados de uma seção (RF-17 do M1.6b) -------------------------------------- */
+
+/* O painel de estado: o sinal, o título, a frase, o andamento e a ação. Dentro de um
+   .ruvor-panel__body; ou solto, com --notice, como aviso acima do resultado. */
+.ruvor-state {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-state__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-2);
+  min-width: 0;
+  flex: 1;
+}
+
+.ruvor-state__title {
+  margin: 0;
+  font-size: var(--ruvor-type-h3-size);
+  font-weight: var(--ruvor-type-h3-weight);
+  line-height: var(--ruvor-type-h3-leading);
+}
+
+.ruvor-state__text {
+  margin: 0;
+  max-width: 70ch;
+}
+
+.ruvor-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-3);
+  margin-top: var(--ruvor-space-2);
+}
+
+.ruvor-state--notice {
+  padding: var(--ruvor-space-3) var(--ruvor-space-4);
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-md);
+  background: var(--ruvor-surface);
+}
+
+.ruvor-state--notice .ruvor-state__title {
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  line-height: var(--ruvor-type-small-leading);
+}
+
+/* A resposta do pedido, junto do botão. */
+.ruvor-state__reply {
+  margin: 0;
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-state__reply--critical {
+  color: var(--ruvor-critical-text);
+}
+
+.ruvor-state__reply--muted {
+  color: var(--ruvor-text-muted);
+}
+
 /* O anel sobre fundo escuro: dentro da barra e do bloco de código. Em (0,2,0) e depois dos
    componentes, vence o anel claro de .ruvor-btn, .ruvor-input, .ruvor-select e .ruvor-choice
    (também (0,2,0)) quando eles estão nesses fundos; o link da barra tem regra própria em
@@ -679,6 +1735,12 @@
 .ruvor-code :focus-visible {
   outline: 2px solid var(--ruvor-focus-on-dark);
   outline-offset: 2px;
+}
+
+/* A exceção: a lista suspensa da busca fica dentro da barra, mas o fundo dela é claro. Em
+   (0,3,0), devolve o anel claro ao que ela contém (o "tentar de novo", por exemplo). */
+.ruvor-topbar .ruvor-search__popover :focus-visible {
+  outline-color: var(--ruvor-focus);
 }
 
 /* Carregando, quando é bloco: o elemento leva .ruvor-skeleton e aria-busy="true". */
@@ -726,5 +1788,130 @@
 
   .ruvor-nav {
     display: none;
+  }
+
+  /* M1.6b: a coluna lateral com --stack não some — vai para depois do conteúdo. */
+  .ruvor-rail--stack {
+    display: block;
+    border-left: 0;
+    border-top: 1px solid var(--ruvor-border);
+  }
+
+  .ruvor-blocks,
+  .ruvor-levels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* M1.6b: estreito. A barra em duas linhas, com a busca embaixo; o conteúdo com menos
+   margem; o título da página no degrau h2. */
+@media (max-width: 720px) {
+  .ruvor-topbar {
+    height: auto;
+    min-height: 60px;
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    gap: var(--ruvor-space-2) var(--ruvor-space-3);
+    padding: var(--ruvor-space-2) var(--ruvor-space-4);
+  }
+
+  .ruvor-topbar__spacer {
+    display: none;
+  }
+
+  .ruvor-topbar__search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
+    margin-bottom: var(--ruvor-space-1);
+  }
+
+  .ruvor-content {
+    padding: var(--ruvor-space-5) var(--ruvor-space-4) var(--ruvor-space-6);
+  }
+
+  .ruvor-display {
+    font-size: var(--ruvor-type-h2-size);
+    line-height: var(--ruvor-type-h2-leading);
+    letter-spacing: var(--ruvor-type-h2-tracking);
+  }
+
+  .ruvor-rail--stack {
+    padding: var(--ruvor-space-5) var(--ruvor-space-4);
+  }
+
+  .ruvor-footer {
+    grid-template-columns: 1fr;
+    padding: var(--ruvor-space-5) var(--ruvor-space-4);
+  }
+
+  /* A opção da busca em duas linhas: código e nome à esquerda, as tags à direita. */
+  .ruvor-search__popover {
+    min-width: 0;
+  }
+
+  .ruvor-search__link {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 2px;
+    padding-inline: var(--ruvor-space-3);
+  }
+
+  .ruvor-search__link > .ruvor-search__ticker {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ruvor-search__link > .ruvor-search__tags {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .ruvor-search__link > .ruvor-search__name {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .ruvor-search__link > .ruvor-search__go {
+    display: none;
+  }
+
+  .ruvor-search__popover .ruvor-search__link {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ruvor-stats {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  /* A tabela dos modelos em 360 px: menos respiro, o nome quebra. */
+  .ruvor-table--models td,
+  .ruvor-table--models th {
+    padding-inline: 6px;
+  }
+
+  .ruvor-table--models .ruvor-table__detail > td {
+    padding-inline: var(--ruvor-space-3);
+  }
+
+  .ruvor-table__detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ruvor-table__toggle {
+    gap: var(--ruvor-space-1);
+    min-width: 0;
+  }
+
+  .ruvor-table__toggle > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ruvor-table__sub {
+    margin-left: calc(16px + var(--ruvor-space-1));
+  }
+
+  .ruvor-state {
+    flex-direction: column;
   }
 }

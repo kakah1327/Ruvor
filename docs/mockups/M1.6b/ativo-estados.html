@@ -15,10 +15,15 @@
    *
    * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal.
    *
-   * Prefixos: bsc- é o estilo local do casco, copiado do busca.html; atv- é o estilo local da
-   * tela do ativo, copiado do ativo.html; est- é estilo local NOVO deste mockup (o painel de
-   * estado, a barra de progresso, o gráfico vazio); mk- é a moldura do mockup e não é tela.
-   * O que for componente vai ao kit pela T5.
+   * O estilo local deste mockup (bsc-, copiado do busca.html; atv-, do ativo.html; est-, novo
+   * aqui) foi levado a brand/ruvor/components.css pela T5, com o prefixo ruvor-; a tela usa as
+   * classes do kit. O que fica aqui:
+   *   - a moldura do mockup (mk-), que não é tela;
+   *   - est-split, que mostra a seção de risco com a trilha ao lado, fora da tela inteira: no
+   *     produto, é a .ruvor-workspace com a .ruvor-rail.ruvor-rail--stack;
+   *   - abaixo de 720 px, a primeira coluna da tabela dos modelos a 30% (o kit, como o
+   *     ativo.html, a deixa em 34%) e a família do modelo com o recuo de 24 px (o kit, como o
+   *     ativo.html, a recua 20 px, alinhada ao nome) — o que este mockup mostrava.
    */
 
   /* --- Moldura do mockup: não é tela ------------------------------------------------ */
@@ -39,134 +44,19 @@
   .mk-motivos { width: 100%; }
   .mk-motivos td:first-child, .mk-motivos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
 
-  /* --- Casco (do busca.html) -------------------------------------------------------- */
-  .bsc-shell { grid-template-rows: 1fr auto; }
-  .bsc-brand { color: inherit; text-decoration: none; border-radius: var(--ruvor-radius-sm); }
-  .bsc-top-search { position: relative; width: 100%; max-width: 440px; }
-  .bsc-theme { display: inline-flex; padding: 2px; gap: 2px; border: 1px solid var(--ruvor-avatar); border-radius: var(--ruvor-radius-sm); }
-  .bsc-theme__btn { font: inherit; font-size: var(--ruvor-type-micro-size); font-weight: var(--ruvor-type-micro-weight); padding: 5px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ruvor-topbar-link); cursor: pointer; }
-  .bsc-theme__btn:hover { color: var(--ruvor-topbar-text); }
-  .bsc-theme__btn[aria-pressed="true"] { background: var(--ruvor-avatar); color: var(--ruvor-topbar-text); }
-  .bsc-field { position: relative; }
-  .bsc-field > .ruvor-glyph { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ruvor-text-muted); pointer-events: none; }
-  .bsc-field .ruvor-input { padding-left: 36px; padding-right: 40px; }
-  .bsc-field .ruvor-input::-webkit-search-cancel-button { display: none; }
-  .bsc-field .ruvor-input::placeholder { color: var(--ruvor-text-muted); opacity: 1; }
-  .bsc-field--lg .ruvor-input { font-size: var(--ruvor-type-h3-size); padding-block: 14px; padding-left: 44px; border-radius: var(--ruvor-radius-md); box-shadow: var(--ruvor-shadow-panel); }
-  .bsc-field--lg > .ruvor-glyph { left: 16px; }
-  .bsc-field--bar .ruvor-input { padding-block: 7px; }
-  .bsc-notfound { max-width: 620px; }
-  .bsc-notfound .bsc-field { margin-top: var(--ruvor-space-5); }
-  .bsc-path { font-family: var(--ruvor-font-mono); color: var(--ruvor-ink); }
-  .bsc-footer { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--ruvor-space-3) var(--ruvor-space-6); padding: var(--ruvor-space-5) 40px; border-top: 1px solid var(--ruvor-border); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
-  .bsc-footer p { margin: 0; display: flex; align-items: flex-start; gap: var(--ruvor-space-2); max-width: 72ch; }
-  .bsc-footer .ruvor-glyph { margin-top: 1px; }
-  @keyframes bsc-spin { to { transform: rotate(360deg); } }
-  .bsc-spin { animation: bsc-spin 1.2s linear infinite; }
-  @media (prefers-reduced-motion: reduce) { .bsc-spin { animation: none; } }
-
-  /* --- A tela do ativo (do ativo.html) ---------------------------------------------- */
-  .atv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .atv-section { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
-  .atv-stack { display: flex; flex-direction: column; gap: var(--ruvor-space-4); min-width: 0; }
-  .atv-section__head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--ruvor-space-2) var(--ruvor-space-4); }
-  .atv-section__head .ruvor-sub { margin: 0; }
-  .atv-muted { color: var(--ruvor-text-muted); }
-  .atv-why { margin: 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); max-width: 70ch; }
-  .atv-skel { height: calc(var(--ruvor-space-7) * 2); border-radius: var(--ruvor-radius-md); }
-  .atv-skel--short { height: var(--ruvor-space-6); }
-  .atv-error { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-3); }
-  .atv-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--ruvor-space-5); }
-  .atv-head__id { flex: 1 1 320px; min-width: 0; }
-  .atv-head__name { margin: var(--ruvor-space-2) 0 0; font-size: var(--ruvor-type-h3-size); font-weight: var(--ruvor-type-h3-weight); }
-  .atv-tags { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); margin-top: var(--ruvor-space-3); }
-  .atv-crumbs { margin: var(--ruvor-space-3) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--ruvor-space-1) var(--ruvor-space-2); color: var(--ruvor-text-muted); }
-  .atv-crumbs li + li::before { content: "›"; margin-right: var(--ruvor-space-2); }
-  .atv-last { flex: 0 1 320px; min-width: 0; padding: var(--ruvor-space-4); }
-  .atv-last__value { font-size: var(--ruvor-type-display-size); font-weight: var(--ruvor-type-display-weight); letter-spacing: var(--ruvor-type-display-tracking); line-height: var(--ruvor-type-display-leading); margin: var(--ruvor-space-2) 0; }
-  .atv-stat { display: flex; flex-direction: column; gap: var(--ruvor-space-1); min-width: 0; }
-  .atv-stat__label { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); }
-  .atv-stat__value { font-size: var(--ruvor-type-h2-size); font-weight: var(--ruvor-type-h2-weight); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); }
-  .atv-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--ruvor-space-5) var(--ruvor-space-5); }
-  .atv-blocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ruvor-space-4); }
-  .atv-blocks > .atv-wide { grid-column: 1 / -1; }
-  .atv-block__note { margin: var(--ruvor-space-4) 0 0; }
-  .atv-events { width: 100%; }
-  .atv-events td:last-child, .atv-events th:last-child { text-align: right; }
-  .atv-levels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ruvor-space-4); }
-  .atv-level { display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
-  .atv-range { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-2); }
-  .atv-range b { font-size: var(--ruvor-type-display-size); letter-spacing: var(--ruvor-type-display-tracking); line-height: var(--ruvor-type-display-leading); }
-  .atv-range small { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); }
-  .atv-ok-list { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); margin: 0; padding: 0; list-style: none; }
-  .atv-verdict-head { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); margin: 0; }
-  .atv-tag--neutral { background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); }
-  .atv-legend { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2) var(--ruvor-space-4); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
-  .atv-models { table-layout: fixed; }
-  .atv-models col.atv-c-model { width: 34%; }
-  .atv-toggle { display: inline-flex; align-items: center; gap: var(--ruvor-space-2); font: inherit; font-weight: var(--ruvor-type-small-weight); color: var(--ruvor-ink); background: transparent; border: 0; padding: 0; cursor: pointer; text-align: left; }
-  .atv-toggle:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
-  .atv-toggle .ruvor-glyph { transition: transform .15s; }
-  .atv-toggle[aria-expanded="true"] .ruvor-glyph { transform: rotate(90deg); }
-  .atv-cat { display: block; margin-left: calc(16px + var(--ruvor-space-2)); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
-  .atv-cell { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-  .atv-cell .ruvor-bar { width: 100%; max-width: 220px; }
-  .atv-bar .ruvor-bar__fill { background: var(--ruvor-evidence); }
-  .atv-loss b { font-size: var(--ruvor-type-h3-size); }
-  .atv-rail .ruvor-eyebrow { color: var(--ruvor-text-muted); margin: 0; }
-  .atv-rail__inner { display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
-  .atv-trail { margin: 0; display: flex; flex-direction: column; }
-  .atv-trail > div { display: flex; justify-content: space-between; gap: var(--ruvor-space-3); padding: 9px 0; border-bottom: 1px solid var(--ruvor-border); }
-  .atv-trail dt { color: var(--ruvor-text-muted); }
-  .atv-trail dd { margin: 0; text-align: right; font-weight: var(--ruvor-type-small-weight); min-width: 0; overflow-wrap: anywhere; }
-
-  /* --- Novo neste mockup: os estados ------------------------------------------------ */
-  /* A seção de risco com a trilha ao lado, como no ativo.html; abaixo de 1000 px, embaixo. */
+  /* --- A seção de risco com a trilha ao lado, fora da tela inteira ------------------ */
   .est-split { display: grid; grid-template-columns: minmax(0, 1fr) 292px; gap: 0; border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-md); overflow: hidden; background: var(--ruvor-paper); }
   .est-split > .est-split__main { padding: var(--ruvor-space-5); min-width: 0; }
-  .est-split > .ruvor-rail { display: block; }
-  /* O painel de estado: o sinal, o título, a frase, o andamento e a ação. */
-  .est-state { display: flex; align-items: flex-start; gap: var(--ruvor-space-3); }
-  .est-state__body { display: flex; flex-direction: column; gap: var(--ruvor-space-2); min-width: 0; flex: 1; }
-  .est-state__title { margin: 0; font-size: var(--ruvor-type-h3-size); font-weight: var(--ruvor-type-h3-weight); line-height: var(--ruvor-type-h3-leading); }
-  .est-state__text { margin: 0; max-width: 70ch; }
-  .est-state__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); margin-top: var(--ruvor-space-2); }
-  .est-state--notice { padding: var(--ruvor-space-3) var(--ruvor-space-4); border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-md); background: var(--ruvor-surface); }
-  .est-state--notice .est-state__title { font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); line-height: var(--ruvor-type-small-leading); }
-  .est-state .ruvor-icon .bsc-spin { transform-origin: center; }
-  /* A barra de progresso (RF-17, E4): a trilha e o preenchimento do kit, com a cor da evidência. */
-  .est-progress { display: block; width: 100%; max-width: 420px; height: 7px; border-radius: 9px; background: var(--ruvor-bar-track); overflow: hidden; }
-  .est-progress__fill { display: block; height: 100%; border-radius: 9px; background: var(--ruvor-evidence); }
-  a.ruvor-btn.est-link-btn { text-decoration: none; }
-  /* A resposta do pedido, junto do botão. */
-  .est-reply { margin: 0; font-size: var(--ruvor-type-small-size); }
-  .est-reply--critical { color: var(--ruvor-critical-text); }
-  .est-reply--muted { color: var(--ruvor-text-muted); }
-  /* O gráfico vazio: a área do gráfico, com a frase no meio. */
-  .est-empty { display: grid; place-items: center; min-height: 200px; padding: var(--ruvor-space-5); border: 1px dashed var(--ruvor-border); border-radius: var(--ruvor-radius-md); text-align: center; }
-  .est-empty p { margin: 0; max-width: 46ch; }
-  .est-empty p + p { margin-top: var(--ruvor-space-1); }
 
   @media (max-width: 1000px) {
-    .atv-blocks, .atv-levels { grid-template-columns: minmax(0, 1fr); }
     .est-split { grid-template-columns: minmax(0, 1fr); }
-    .est-split > .ruvor-rail { border-left: 0; border-top: 1px solid var(--ruvor-border); }
   }
   @media (max-width: 720px) {
     .mk-bar { padding-inline: var(--ruvor-space-4); }
-    .ruvor-topbar { height: auto; min-height: 60px; grid-template-columns: auto auto; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
-    .bsc-top-search { grid-column: 1 / -1; grid-row: 2; max-width: none; margin-bottom: var(--ruvor-space-1); }
-    .ruvor-content { padding: var(--ruvor-space-5) var(--ruvor-space-4) var(--ruvor-space-6); }
-    .ruvor-display { font-size: var(--ruvor-type-h2-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); }
-    .bsc-footer { grid-template-columns: 1fr; padding: var(--ruvor-space-5) var(--ruvor-space-4); }
     .est-split > .est-split__main { padding: var(--ruvor-space-4) var(--ruvor-space-3); }
     .est-split > .ruvor-rail { padding: var(--ruvor-space-4) var(--ruvor-space-3); }
-    .atv-models col.atv-c-model { width: 30%; }
-    .ruvor-table.atv-models td, .ruvor-table.atv-models th { padding-inline: 6px; }
-    .atv-toggle { gap: var(--ruvor-space-1); min-width: 0; }
-    .atv-toggle > span { min-width: 0; overflow-wrap: anywhere; }
-    .atv-stats { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-    .est-state { flex-direction: column; }
+    .ruvor-table__col--lead { width: 30%; }
+    .ruvor-table__sub { margin-left: calc(16px + var(--ruvor-space-2)); }
   }
 </style>
 </head>
@@ -220,26 +110,26 @@
 
 <!-- ============================================================ A TELA -->
 <header class="ruvor-topbar">
-  <a class="ruvor-brand bsc-brand" href="busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
-  <div class="bsc-top-search" role="search">
-    <div class="bsc-field bsc-field--bar">
+  <a class="ruvor-brand" href="busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
       <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
-      <input class="ruvor-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
     </div>
   </div>
-  <div class="bsc-theme" role="group" data-t-aria="casco.tema.rotulo">
-    <button class="bsc-theme__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
-    <button class="bsc-theme__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
-    <button class="bsc-theme__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+  <div class="ruvor-segmented" role="group" data-t-aria="casco.tema.rotulo">
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
   </div>
 </header>
 
-<div class="ruvor-workspace ruvor-workspace--full bsc-shell">
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
   <main class="ruvor-content">
     <div class="mk-cases" id="cases"></div>
   </main>
 
-  <footer class="bsc-footer">
+  <footer class="ruvor-footer">
     <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
     <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
   </footer>
@@ -485,7 +375,7 @@ function traduzirMotivo(reason) {
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const glyph = (id, cls = "") => `<svg class="ruvor-glyph ${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
-const why = (text) => `<p class="atv-why">${esc(text)}</p>`;
+const why = (text) => `<p class="ruvor-note">${esc(text)}</p>`;
 
 for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
 for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
@@ -580,35 +470,35 @@ const EVENTS_ITUB4 = { ticker: "ITUB4", results: [
 
 // ================================================================ AS PEÇAS DA TELA
 function riskHead() {
-  return `<div class="atv-section__head"><div><p class="ruvor-eyebrow">${esc(T("risco.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("risco.titulo"))}</h2></div></div>
+  return `<div class="ruvor-section-head"><div><p class="ruvor-eyebrow">${esc(T("risco.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("risco.titulo"))}</h2></div></div>
     <p class="ruvor-sub">${esc(T("risco.intro"))}</p>`;
 }
 function riskSection(state, body) {
-  return `<section class="atv-section" data-risk-state="${state}">${riskHead()}<div aria-live="polite">${body}</div></section>`;
+  return `<section class="ruvor-stack" data-risk-state="${state}">${riskHead()}<div aria-live="polite">${body}</div></section>`;
 }
 // O painel de estado. tone: evidence | review | critical; icon: id do símbolo.
 function statePanel({ tone = "evidence", icon = "i-duo-info", spin = false, title, text = "", progress = null, notes = [], actions = "", notice = false }) {
   const bar = progress
-    ? `<span class="est-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${progress.e}" aria-valuenow="${progress.w}" aria-label="${esc(title)}"><span class="est-progress__fill" style="width: ${(100 * progress.w / progress.e).toFixed(1)}%"></span></span>`
+    ? `<span class="ruvor-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${progress.e}" aria-valuenow="${progress.w}" aria-label="${esc(title)}"><span class="ruvor-progress__fill" style="width: ${(100 * progress.w / progress.e).toFixed(1)}%"></span></span>`
     : "";
-  const inner = `<span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"${spin ? ' class="bsc-spin"' : ""}><use href="#${icon}"/></svg></span>
-    <div class="est-state__body">
-      <p class="est-state__title">${esc(title)}</p>
-      ${text ? `<p class="est-state__text">${esc(text)}</p>` : ""}
+  const inner = `<span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"${spin ? ' class="ruvor-spin"' : ""}><use href="#${icon}"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(title)}</p>
+      ${text ? `<p class="ruvor-state__text">${esc(text)}</p>` : ""}
       ${bar}
       ${notes.map((n) => why(n)).join("")}
-      ${actions ? `<div class="est-state__actions">${actions}</div>` : ""}
+      ${actions ? `<div class="ruvor-state__actions">${actions}</div>` : ""}
     </div>`;
   return notice
-    ? `<div class="est-state est-state--notice">${inner}</div>`
-    : `<div class="ruvor-panel"><div class="ruvor-panel__body est-state">${inner}</div></div>`;
+    ? `<div class="ruvor-state ruvor-state--notice">${inner}</div>`
+    : `<div class="ruvor-panel"><div class="ruvor-panel__body ruvor-state">${inner}</div></div>`;
 }
 const btnCalc = (key = "risco.pedido.calcular", busy = false) =>
-  `<button class="ruvor-btn ruvor-btn--primary" type="button"${busy ? ' aria-busy="true" disabled' : ""}>${busy ? glyph("i-spinner-gap", "bsc-spin") : glyph("i-chart-line")}<span>${esc(T(key))}</span></button>`;
+  `<button class="ruvor-btn ruvor-btn--primary" type="button"${busy ? ' aria-busy="true" disabled' : ""}>${busy ? glyph("i-spinner-gap", "ruvor-spin") : glyph("i-chart-line")}<span>${esc(T(key))}</span></button>`;
 function sectionError() {
-  return `<div class="ruvor-callout ruvor-callout--critical atv-error" role="alert"><span>${esc(T("ativo.erroSecao"))}</span><button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("ativo.tentarDeNovo"))}</span></button></div>`;
+  return `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${esc(T("ativo.erroSecao"))}</span><button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("ativo.tentarDeNovo"))}</span></button></div>`;
 }
-const skeleton = () => `<div class="ruvor-skeleton atv-skel" role="status" aria-busy="true"><span class="atv-sr">${esc(T("risco.carregando"))}</span></div>`;
+const skeleton = () => `<div class="ruvor-skeleton ruvor-skeleton--block" role="status" aria-busy="true"><span class="ruvor-sr-only">${esc(T("risco.carregando"))}</span></div>`;
 
 // ---- o risco, do ativo.html (E2): "em 1 dia" só junto da faixa e no cabeçalho das colunas
 function discordancia(results, alpha) {
@@ -621,7 +511,7 @@ function naoRejeitados(results, alpha) {
   return { adequados: MODEL_ORDER.filter((m) => at.some((r) => r.model_name === m && r.adequate === true)), julgados: at.filter((r) => r.adequate !== null).length };
 }
 const verdictTag = (r) => (r == null || r.adequate == null
-  ? `<span class="ruvor-tag atv-tag--neutral">${esc(T("risco.tag.naoJulgado"))}</span>`
+  ? `<span class="ruvor-tag ruvor-tag--neutral">${esc(T("risco.tag.naoJulgado"))}</span>`
   : r.adequate ? `<span class="ruvor-tag ruvor-tag--validated">${esc(T("risco.tag.adequado"))}</span>`
                : `<span class="ruvor-tag ruvor-tag--review">${esc(T("risco.tag.naoAdequado"))}</span>`);
 function levelPanel(results, alpha) {
@@ -632,14 +522,14 @@ function levelPanel(results, alpha) {
   const perda = alpha === "0.0500" ? T("risco.perda95") : T("risco.perda99");
   const disc = T("risco.discordancia", d && fLoss.format(d.min), d && fLoss.format(d.max), d?.n ?? 0, MODEL_ORDER.length, cadaN, d && fLoss.format(d.min));
   const list = nr.adequados.map((m) => `<li><span class="ruvor-tag ruvor-tag--validated">${glyph("i-check-circle", "ruvor-glyph--sm")}${esc(T(`risco.modelo.${m}`))}</span></li>`).join("");
-  return `<article class="ruvor-panel"><div class="ruvor-panel__body atv-level">
+  return `<article class="ruvor-panel"><div class="ruvor-panel__body ruvor-level">
     <p class="ruvor-eyebrow">${esc(T(`risco.nivel.${alpha}`))}</p>
-    <p class="atv-range"><b class="ruvor-num">${esc(range)}</b><small>${esc(T("risco.horizonte"))}</small></p>
+    <p class="ruvor-range"><b class="ruvor-num">${esc(range)}</b><small>${esc(T("risco.horizonte"))}</small></p>
     ${why(perda)}
     ${why(disc)}
     <div class="ruvor-divider"></div>
-    <p class="atv-verdict-head">${esc(T("risco.naoRejeitados.titulo"))}</p>
-    ${list ? `<ul class="atv-ok-list">${list}</ul>` : ""}
+    <p class="ruvor-level__title">${esc(T("risco.naoRejeitados.titulo"))}</p>
+    ${list ? `<ul class="ruvor-tag-list">${list}</ul>` : ""}
     ${why(T("risco.naoRejeitados", nr.adequados.length, nr.julgados, MODEL_ORDER.length))}
   </div></article>`;
 }
@@ -648,23 +538,23 @@ function modelsTable(results) {
   const all = results.filter((r) => r.var_latest != null).map((r) => lossFromVar(Number(r.var_latest)));
   const scale = Math.max(...all, 0) || 1;
   const cell = (r) => {
-    if (r == null || r.var_latest == null) return `<td><div class="atv-cell"><span class="atv-loss"><b class="ruvor-num">—</b></span>${verdictTag(r)}</div></td>`;
+    if (r == null || r.var_latest == null) return `<td><div class="ruvor-cell-stack"><span class="ruvor-loss"><b class="ruvor-num">—</b></span>${verdictTag(r)}</div></td>`;
     const l = lossFromVar(Number(r.var_latest));
-    return `<td><div class="atv-cell"><span class="atv-loss"><b class="ruvor-num">${esc(fLoss.format(l))}</b></span><span class="ruvor-bar atv-bar" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * l / scale).toFixed(1)}%"></span></span>${verdictTag(r)}</div></td>`;
+    return `<td><div class="ruvor-cell-stack"><span class="ruvor-loss"><b class="ruvor-num">${esc(fLoss.format(l))}</b></span><span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * l / scale).toFixed(1)}%"></span></span>${verdictTag(r)}</div></td>`;
   };
   const rows = MODEL_ORDER.map((m) => `<tr data-model="${m}">
-      <td><button class="atv-toggle" type="button" aria-expanded="false" aria-label="${esc(T("risco.tabela.abrir", T(`risco.modelo.${m}`)))}">${glyph("i-caret-right")}<span>${esc(T(`risco.modelo.${m}`))}</span></button><span class="atv-cat">${esc(T(`risco.categoria.${CATEGORY[m]}`))}</span></td>
+      <td><button class="ruvor-table__toggle" type="button" aria-expanded="false" aria-label="${esc(T("risco.tabela.abrir", T(`risco.modelo.${m}`)))}">${glyph("i-caret-right")}<span>${esc(T(`risco.modelo.${m}`))}</span></button><span class="ruvor-table__sub">${esc(T(`risco.categoria.${CATEGORY[m]}`))}</span></td>
       ${cell(at(m, "0.0500"))}${cell(at(m, "0.0100"))}
     </tr>`).join("");
   return `<section class="ruvor-panel">
     <div class="ruvor-panel__head">${glyph("i-scales")}<h3 class="ruvor-h3">${esc(T("risco.tabela.titulo"))}</h3></div>
     <div class="ruvor-panel__body">
       ${why(T("risco.tabela.intro"))}
-      <div class="atv-legend" style="margin: var(--ruvor-space-3) 0 var(--ruvor-space-2); align-items: center">${verdictTag({ adequate: true })}${verdictTag({ adequate: false })}${verdictTag(null)}</div>
+      <div class="ruvor-legend" style="margin: var(--ruvor-space-3) 0 var(--ruvor-space-2); align-items: center">${verdictTag({ adequate: true })}${verdictTag({ adequate: false })}${verdictTag(null)}</div>
       ${why(T("risco.veredito"))}
     </div>
-    <table class="ruvor-table atv-models">
-      <colgroup><col class="atv-c-model"><col><col></colgroup>
+    <table class="ruvor-table ruvor-table--models">
+      <colgroup><col class="ruvor-table__col--lead"><col><col></colgroup>
       <thead><tr><th scope="col">${esc(T("risco.tabela.col.modelo"))}</th><th scope="col">${esc(T("risco.tabela.col.0.0500"))}</th><th scope="col">${esc(T("risco.tabela.col.0.0100"))}</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -676,7 +566,7 @@ function trail(l) {
     : T("risco.trilha.status.failed");
   const item = (k, v) => `<div><dt>${esc(T(`risco.trilha.${k}`))}</dt><dd>${esc(v)}</dd></div>`;
   return `${why(T("risco.trilha"))}
-    <dl class="atv-trail">
+    <dl class="ruvor-trail">
       ${item("asOf", fDate(l.as_of_date))}
       ${item("firstPrice", fDate(l.first_price_date))}
       ${item("priceCount", fInt.format(l.price_count))}
@@ -693,29 +583,29 @@ function trail(l) {
 }
 function withTrail(section, latest) {
   return `<div class="est-split"><div class="est-split__main">${section}</div>
-    <aside class="ruvor-rail atv-rail"><div class="atv-rail__inner"><p class="ruvor-eyebrow">${esc(T("risco.trilha.titulo"))}</p>${trail(latest)}</div></aside></div>`;
+    <aside class="ruvor-rail ruvor-rail--stack"><div class="ruvor-rail__inner"><p class="ruvor-eyebrow">${esc(T("risco.trilha.titulo"))}</p>${trail(latest)}</div></aside></div>`;
 }
 
 // ---- cabeçalho e comportamento, do ativo.html
 function head(a) {
   const crumbs = [a.sector, a.subsector, a.segment].filter(Boolean).map((s) => `<li>${esc(s)}</li>`).join("");
   const lp = a.last_price;
-  return `<section class="atv-head">
-    <div class="atv-head__id">
+  return `<section class="ruvor-asset-head">
+    <div class="ruvor-asset-head__id">
       <p class="ruvor-eyebrow">${esc(a.trading_name)}</p>
       <h1 class="ruvor-display">${esc(a.ticker)}</h1>
-      <p class="atv-head__name">${esc(a.name)}</p>
-      <div class="atv-tags">
+      <p class="ruvor-asset-head__name">${esc(a.name)}</p>
+      <div class="ruvor-asset-head__tags">
         <span class="ruvor-tag ruvor-tag--evidence">${esc(T(`ativo.tipo.${a.kind}`))}</span>
         <span class="ruvor-tag ${a.status === "active" ? "ruvor-tag--validated" : "ruvor-tag--review"}">${esc(T(`ativo.situacao.${a.status}`))}</span>
-        ${a.listing_segment ? `<span class="ruvor-tag atv-tag--neutral">${esc(T("ativo.listagem", a.listing_segment))}</span>` : ""}
+        ${a.listing_segment ? `<span class="ruvor-tag ruvor-tag--neutral">${esc(T("ativo.listagem", a.listing_segment))}</span>` : ""}
       </div>
-      ${crumbs ? `<ol class="atv-crumbs" aria-label="${esc(T("ativo.classificacao"))}">${crumbs}</ol>` : ""}
+      ${crumbs ? `<ol class="ruvor-crumbs" aria-label="${esc(T("ativo.classificacao"))}">${crumbs}</ol>` : ""}
     </div>
-    <div class="ruvor-panel atv-last">
+    <div class="ruvor-panel ruvor-asset-head__last">
       <p class="ruvor-eyebrow">${esc(T("ativo.ultimoFechamento.rotulo"))}</p>
-      ${lp ? `<p class="atv-last__value ruvor-num">${esc(fMoney.format(Number(lp.close)))}</p>${why(T("ativo.ultimoFechamento", fDate(lp.date)))}`
-           : `<p class="atv-last__value">—</p>${why(T("ativo.semPreco"))}`}
+      ${lp ? `<p class="ruvor-asset-head__value ruvor-num">${esc(fMoney.format(Number(lp.close)))}</p>${why(T("ativo.ultimoFechamento", fDate(lp.date)))}`
+           : `<p class="ruvor-asset-head__value">—</p>${why(T("ativo.semPreco"))}`}
     </div>
   </section>`;
 }
@@ -723,13 +613,13 @@ function pricePanel(inner) {
   return `<section class="ruvor-panel"><div class="ruvor-panel__head">${glyph("i-chart-line")}<h2 class="ruvor-h3">${esc(T("ativo.preco.titulo"))}</h2></div><div class="ruvor-panel__body">${inner}</div></section>`;
 }
 function stat(key, value, phrase) {
-  return `<div class="atv-stat"><span class="atv-stat__label">${esc(T(`comportamento.rotulo.${key}`))}</span><span class="atv-stat__value ruvor-num">${esc(value)}</span>${phrase ? why(phrase) : ""}</div>`;
+  return `<div class="ruvor-stat"><span class="ruvor-stat__label">${esc(T(`comportamento.rotulo.${key}`))}</span><span class="ruvor-stat__value ruvor-num">${esc(value)}</span>${phrase ? why(phrase) : ""}</div>`;
 }
 function block(titleKey, inner, note, wide = false) {
-  return `<section class="ruvor-panel${wide ? " atv-wide" : ""}"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(titleKey))}</h3></div><div class="ruvor-panel__body">${inner}${note ? `<p class="atv-why atv-block__note">${esc(note)}</p>` : ""}</div></section>`;
+  return `<section class="ruvor-panel${wide ? " ruvor-blocks__wide" : ""}"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(titleKey))}</h3></div><div class="ruvor-panel__body">${inner}${note ? `<p class="ruvor-note ruvor-panel__note">${esc(note)}</p>` : ""}</div></section>`;
 }
 function behaviorHead(asof) {
-  return `<div class="atv-section__head"><div><p class="ruvor-eyebrow">${esc(T("comportamento.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("comportamento.titulo"))}</h2></div>${asof ? `<span class="ruvor-tag ruvor-tag--evidence">${esc(T("comportamento.ate", fDate(asof)))}</span>` : ""}</div>
+  return `<div class="ruvor-section-head"><div><p class="ruvor-eyebrow">${esc(T("comportamento.sobrancelha"))}</p><h2 class="ruvor-h2">${esc(T("comportamento.titulo"))}</h2></div>${asof ? `<span class="ruvor-tag ruvor-tag--evidence">${esc(T("comportamento.ate", fDate(asof)))}</span>` : ""}</div>
     <p class="ruvor-sub">${esc(T("comportamento.intro"))}</p>`;
 }
 
@@ -740,9 +630,9 @@ const add = (view, tag, what, body, screen) => cases.push({ view, tag, what, bod
 
 // E2 — o risco e o recálculo
 add("E2", "E2", "latest ok · in_progress presente (12 de 18) · request nulo — o risco continua na tela", B.E2,
-  withTrail(riskSection("E2", `<div class="atv-stack">
+  withTrail(riskSection("E2", `<div class="ruvor-stack">
     ${statePanel({ notice: true, icon: "i-spinner-gap", spin: true, title: T("risco.estado.recalculando", 12, 18), progress: { w: 12, e: 18 }, notes: [T("risco.estado.recalculando.nota")] })}
-    <div class="atv-levels">${ALPHAS.map((a) => levelPanel(B.E2.latest.results, a)).join("")}</div>
+    <div class="ruvor-levels">${ALPHAS.map((a) => levelPanel(B.E2.latest.results, a)).join("")}</div>
     ${modelsTable(B.E2.latest.results)}
   </div>`), B.E2.latest));
 
@@ -750,7 +640,7 @@ add("E2", "E2", "latest ok · in_progress presente (12 de 18) · request nulo �
 add("E3", "E3", "latest failed (nenhum resultado gravado) · in_progress nulo — sem botão: o POST daria 409", B.E3,
   withTrail(riskSection("E3", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E3.titulo"), text: T("risco.estado.E3") })), B.E3.latest));
 add("E3", "E3 com recálculo", "latest failed · in_progress presente (3 de 18) — o acompanhamento segue (RF-20)", B.E3r,
-  withTrail(riskSection("E3", `<div class="atv-stack">
+  withTrail(riskSection("E3", `<div class="ruvor-stack">
     ${statePanel({ notice: true, icon: "i-spinner-gap", spin: true, title: T("risco.estado.recalculando", 3, 18), progress: { w: 3, e: 18 }, notes: [T("risco.estado.recalculando.notaFalha")] })}
     ${statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E3.titulo"), text: T("risco.estado.E3") })}
   </div>`), B.E3r.latest));
@@ -800,15 +690,15 @@ add("carregando", "RISCO_ERRO", "o /risk falhou (500, rede ou resposta fora do f
 
 // As respostas do POST (RF-19)
 add("pedido", "botão ocupado", "o POST saiu e não voltou: aria-busy e desabilitado", { risk: B.E8 },
-  riskSection("E8", invite(`${btnCalc("risco.pedido.calcular", true)}<p class="est-reply est-reply--muted" role="status">${esc(T("risco.pedido.enviando"))}</p>`)));
+  riskSection("E8", invite(`${btnCalc("risco.pedido.calcular", true)}<p class="ruvor-state__reply ruvor-state__reply--muted" role="status">${esc(T("risco.pedido.enviando"))}</p>`)));
 add("pedido", "429", "on_demand_queue_full — o botão volta", { status: 429, error: { code: "on_demand_queue_full", message: "A fila de cálculo sob demanda está cheia (3 pedidos abertos).", details: { max: 3 } } },
-  riskSection("E8", invite(`${btnCalc()}<p class="est-reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>`)));
+  riskSection("E8", invite(`${btnCalc()}<p class="ruvor-state__reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>`)));
 add("pedido", "outro erro", "erro no formato da D-86 — a mensagem dela, e o botão de volta", { status: 500, error: { code: "internal_error", message: "Erro interno. Tente de novo mais tarde.", details: {} } },
-  riskSection("E8", invite(`${btnCalc()}<p class="est-reply est-reply--critical" role="alert">${esc(T("risco.pedido.erro", "Erro interno. Tente de novo mais tarde."))}</p>`)));
+  riskSection("E8", invite(`${btnCalc()}<p class="ruvor-state__reply ruvor-state__reply--critical" role="alert">${esc(T("risco.pedido.erro", "Erro interno. Tente de novo mais tarde."))}</p>`)));
 add("pedido", "sem resposta", "network_error ou unexpected_response (sem mensagem da D-86) — texto fixo, e o botão de volta", { status: 0, code: "network_error" },
-  riskSection("E8", invite(`${btnCalc()}<p class="est-reply est-reply--critical" role="alert">${esc(T("risco.pedido.semResposta"))}</p>`)));
+  riskSection("E8", invite(`${btnCalc()}<p class="ruvor-state__reply ruvor-state__reply--critical" role="alert">${esc(T("risco.pedido.semResposta"))}</p>`)));
 add("pedido", "E7 · 429", "o calcular de novo também recebe a fila cheia", { status: 429, error: { code: "on_demand_queue_full" } },
-  riskSection("E7", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E7.titulo"), text: traduzirMotivo("falhou na coleta"), notes: [T("risco.estado.E7.nota")], actions: `${btnCalc("risco.pedido.deNovo")}<p class="est-reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>` })));
+  riskSection("E7", statePanel({ tone: "review", icon: "i-duo-warning", title: T("risco.estado.E7.titulo"), text: traduzirMotivo("falhou na coleta"), notes: [T("risco.estado.E7.nota")], actions: `${btnCalc("risco.pedido.deNovo")}<p class="ruvor-state__reply" role="alert">${esc(T("risco.pedido.filaCheia"))}</p>` })));
 
 // Os motivos: a tabela da tradução
 const MOTIVOS_TODOS = [
@@ -830,8 +720,8 @@ add("motivos", "os motivos", "a lista fechada de backend/apps/api/ondemand.py (R
 
 // Fora do risco — o comportamento
 add("comportamento", "metric: null", "/metrics devolve { ticker, metric: null } — aponta para o convite do risco", { ticker: "AALR3", metric: null },
-  `<section class="atv-section">${behaviorHead(null)}
-    ${statePanel({ icon: "i-duo-info", title: T("comportamento.naoCalculado"), text: T("comportamento.naoCalculado.nota"), actions: `<a class="ruvor-btn est-link-btn" href="#">${glyph("i-chart-line")}<span>${esc(T("comportamento.irParaRisco"))}</span></a>` })}
+  `<section class="ruvor-stack">${behaviorHead(null)}
+    ${statePanel({ icon: "i-duo-info", title: T("comportamento.naoCalculado"), text: T("comportamento.naoCalculado.nota"), actions: `<a class="ruvor-btn" href="#">${glyph("i-chart-line")}<span>${esc(T("comportamento.irParaRisco"))}</span></a>` })}
   </section>`);
 {
   const m = METRIC_CURTA;
@@ -839,50 +729,50 @@ add("comportamento", "metric: null", "/metrics devolve { ticker, metric: null } 
   const months = { return_1m: 1, return_3m: 3, return_6m: 6, return_12m: 12, return_36m: 36, return_60m: 60, return_120m: 120, return_ytd: null };
   const rets = Object.entries(months).map(([k, mo]) => (m[k] == null ? stat(k, "—", mo ? T("comportamento.nulo.janela", mo) : "") : stat(k, minus(fPctS.format(Number(m[k]))), T(`comportamento.${k}`, x100(Number(m[k])))))).join("");
   const vols = stat("volatility_12m", fPct1.format(Number(m.volatility_12m)), T("comportamento.volatility_12m", fPct1.format(Number(m.volatility_12m)))) + stat("volatility_60m", "—", T("comportamento.nulo.janela", 60));
-  const hist = `<p class="atv-muted">${esc(T("comportamento.histogramaCurto"))}</p>
-    <div class="atv-stats" style="margin-top: var(--ruvor-space-5)">${stat("skewness", "—", T("comportamento.nulo.janela", 60))}${stat("excess_kurtosis", "—", T("comportamento.nulo.janela", 60))}</div>`;
+  const hist = `<p class="ruvor-muted">${esc(T("comportamento.histogramaCurto"))}</p>
+    <div class="ruvor-stats" style="margin-top: var(--ruvor-space-5)">${stat("skewness", "—", T("comportamento.nulo.janela", 60))}${stat("excess_kurtosis", "—", T("comportamento.nulo.janela", 60))}</div>`;
   add("comportamento", "série curta", "statistical_observations nulo e os 42 baldes zerados: a frase no lugar do gráfico; e os nulos de janela", { metric: { ...m, histogram: "42 baldes com count 0" } },
-    `<section class="atv-section">${behaviorHead(m.as_of_date)}<div class="atv-blocks">
-      ${block("comportamento.bloco.retornos", `<div class="atv-stats">${rets}</div>`, T("comportamento.nota.retornos"), true)}
-      ${block("comportamento.bloco.volatilidade", `<div class="atv-stats">${vols}</div>`)}
+    `<section class="ruvor-stack">${behaviorHead(m.as_of_date)}<div class="ruvor-blocks">
+      ${block("comportamento.bloco.retornos", `<div class="ruvor-stats">${rets}</div>`, T("comportamento.nota.retornos"), true)}
+      ${block("comportamento.bloco.volatilidade", `<div class="ruvor-stats">${vols}</div>`)}
       ${block("comportamento.bloco.distribuicao", hist, null)}
     </div></section>`);
 }
 
 // Fora do risco — cabeçalho: sem preço; o índice
 add("cabecalho", "sem preço", "identidade com last_price nulo e has_prices false; /prices com results vazio", { asset: ASSET_SEM_PRECO, prices: { ticker: "AALR3", from: null, to: null, results: [] } },
-  `<div class="atv-stack">${head(ASSET_SEM_PRECO)}
-    ${pricePanel(`${why(T("ativo.precoAjustado"))}<div class="est-empty" style="margin-top: var(--ruvor-space-3)"><div><p>${esc(T("ativo.preco.vazio"))}</p><p class="atv-why">${esc(T("ativo.preco.vazio.nota"))}</p></div></div>`)}
+  `<div class="ruvor-stack">${head(ASSET_SEM_PRECO)}
+    ${pricePanel(`${why(T("ativo.precoAjustado"))}<div class="ruvor-chart__empty" style="margin-top: var(--ruvor-space-3)"><div><p>${esc(T("ativo.preco.vazio"))}</p><p class="ruvor-note">${esc(T("ativo.preco.vazio.nota"))}</p></div></div>`)}
   </div>`);
 add("cabecalho", "o índice", "IBOV: beta_60m, correlation_60m e benchmark_observations nulos por identidade", { asset: ASSET_IBOV, metric: METRIC_IBOV_REL },
-  `<div class="atv-stack">${head(ASSET_IBOV)}
-    <div class="atv-blocks">${block("comportamento.bloco.ibov", `<div class="atv-stats">${stat("beta_60m", "—", T("comportamento.nulo.referencia"))}${stat("correlation_60m", "—", T("comportamento.nulo.referencia"))}</div>`, null)}</div>
+  `<div class="ruvor-stack">${head(ASSET_IBOV)}
+    <div class="ruvor-blocks">${block("comportamento.bloco.ibov", `<div class="ruvor-stats">${stat("beta_60m", "—", T("comportamento.nulo.referencia"))}${stat("correlation_60m", "—", T("comportamento.nulo.referencia"))}</div>`, null)}</div>
   </div>`);
 
 // Fora do risco — ativo não encontrado
 add("nao-encontrado", "ativo não encontrado", "a identidade respondeu 404 asset_not_found: a tela inteira vira isto, com a busca", { status: 404, error: { code: "asset_not_found", message: "Ativo XPTO3 não existe.", details: { ticker: "XPTO3" } } },
-  `<section class="bsc-notfound">
+  `<section class="ruvor-notfound">
     <p class="ruvor-eyebrow">${esc(T("ativo.naoEncontrado.sobrancelha"))}</p>
     <h1 class="ruvor-display">${esc(T("ativo.naoEncontrado.titulo"))}</h1>
     <p class="ruvor-sub">${esc(T("ativo.naoEncontrado", "XPTO3"))}</p>
     <p class="ruvor-sub">${esc(T("ativo.naoEncontrado.dica"))}</p>
-    <div class="bsc-field bsc-field--lg" role="search">
+    <div class="ruvor-search ruvor-search--lg" role="search">
       <svg class="ruvor-glyph ruvor-glyph--lg" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
-      <input class="ruvor-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="${esc(T("busca.campo.rotulo"))}" placeholder="${esc(T("busca.campo.placeholder"))}">
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="${esc(T("busca.campo.rotulo"))}" placeholder="${esc(T("busca.campo.placeholder"))}">
     </div>
   </section>`);
 
 // Fora do risco — o erro de uma seção
 add("erro-secao", "erro de uma seção", "/prices respondeu 500: o erro fica no painel do preço, com tentar de novo; os proventos, logo abaixo, carregaram", { prices: { status: 500 }, events: EVENTS_ITUB4 },
-  `<div class="atv-stack">
+  `<div class="ruvor-stack">
     ${pricePanel(sectionError())}
-    <section class="ruvor-panel"><div class="ruvor-panel__head">${glyph("i-calendar-blank")}<h2 class="ruvor-h3">${esc(T("ativo.eventos.titulo"))}</h2><span class="ruvor-push atv-muted">${esc(T("ativo.eventos.periodo", "28/09/2026"))}</span></div>
-      <div class="ruvor-panel__body"><table class="ruvor-table atv-events"><thead><tr><th scope="col">${esc(T("ativo.eventos.col.data"))}</th><th scope="col">${esc(T("ativo.eventos.col.tipo"))}</th><th scope="col">${esc(T("ativo.eventos.col.valor"))}</th></tr></thead>
+    <section class="ruvor-panel"><div class="ruvor-panel__head">${glyph("i-calendar-blank")}<h2 class="ruvor-h3">${esc(T("ativo.eventos.titulo"))}</h2><span class="ruvor-push ruvor-muted">${esc(T("ativo.eventos.periodo", "28/09/2026"))}</span></div>
+      <div class="ruvor-panel__body"><table class="ruvor-table ruvor-table--end"><thead><tr><th scope="col">${esc(T("ativo.eventos.col.data"))}</th><th scope="col">${esc(T("ativo.eventos.col.tipo"))}</th><th scope="col">${esc(T("ativo.eventos.col.valor"))}</th></tr></thead>
       <tbody>${EVENTS_ITUB4.results.map((e) => `<tr><td class="ruvor-num">${fDate(e.date)}</td><td>${esc(T(`ativo.eventos.${e.kind}`))}</td><td class="ruvor-num">${esc(T("ativo.eventos.valor", fMoneyEv.format(Number(e.amount))))}</td></tr>`).join("")}</tbody></table></div>
     </section>
   </div>`);
 add("erro-secao", "erro do cabeçalho", "a identidade respondeu 500 (não 404): o erro fica no cabeçalho, e o resto da tela continua", { asset: { status: 500 } },
-  `<section class="atv-head"><div class="atv-head__id">${sectionError()}</div></section>`);
+  `<section class="ruvor-asset-head"><div class="ruvor-asset-head__id">${sectionError()}</div></section>`);
 
 // ---------------------------------------------------------------- montagem
 const host = $("#cases");
@@ -895,7 +785,7 @@ host.innerHTML = cases.map((c, i) => `<section class="mk-case" data-view="${c.vi
 </section>`).join("");
 
 // A linha que abre, como no ativo.html (no E2 as linhas começam fechadas).
-for (const btn of host.querySelectorAll(".atv-toggle")) {
+for (const btn of host.querySelectorAll(".ruvor-table__toggle")) {
   btn.addEventListener("click", () => btn.setAttribute("aria-expanded", String(btn.getAttribute("aria-expanded") !== "true")));
 }
 for (const a of host.querySelectorAll("a[href='#']")) a.addEventListener("click", (e) => e.preventDefault());
