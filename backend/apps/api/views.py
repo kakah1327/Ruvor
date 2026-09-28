@@ -1,4 +1,7 @@
-"""As views da API. Nesta etapa, so a view final de `/api/`.
+"""As views da API: a view final de `/api/` e as rotas de leitura de `/api/v1/` (RF-11).
+
+Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao do
+`REST_FRAMEWORK` e `IsAuthenticated`, e uma view que esquecesse a sua nasceria fechada.
 
 Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `engine`,
 `pandas`, `apps.risk.tasks`, `apps.risk.compute`, `apps.risk.snapshots` ou
@@ -7,12 +10,43 @@ Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `
 
 from __future__ import annotations
 
+import re
+from datetime import date
 from typing import Any, NoReturn
 
+from django.db.models import (
+    Case,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.api.errors import ApiError
+from apps.api.serializers import (
+    AssetDetailSerializer,
+    AssetItemSerializer,
+    BehaviorMetricSerializer,
+    CorporateEventSerializer,
+    PriceSerializer,
+)
+from apps.assets.models import Asset, CorporateEvent, Price
+
+# A paginacao da busca (RF-12).
+DEFAULT_LIMIT = 20
+MAX_LIMIT = 100
+
+_INTEGER = re.compile(r"-?[0-9]+")
 
 
 class ApiNotFound(APIView):
@@ -53,3 +87,182 @@ class ApiNotFound(APIView):
 
     def trace(self, request: Request, *args: Any, **kwargs: Any) -> NoReturn:
         raise NotFound
+
+
+def _invalid(parameter: str, message: str) -> ApiError:
+    return ApiError(400, "invalid_parameter", message, {"parameter": parameter})
+
+
+def _int_param(request: Request, name: str, default: int, low: int, high: int) -> int:
+    """Um inteiro da query string entre `low` e `high`; ausente, o padrao. So digitos, com
+    sinal opcional — o `int()` sozinho aceitaria espaco e sublinhado.
+    """
+    raw = request.query_params.get(name)
+    if raw is None:
+        return default
+    if not _INTEGER.fullmatch(raw):
+        raise _invalid(name, f"O parâmetro {name} precisa ser um número inteiro.")
+    value = int(raw)
+    if not low <= value <= high:
+        raise _invalid(name, f"O parâmetro {name} precisa estar entre {low} e {high}.")
+    return value
+
+
+def _date_param(request: Request, name: str) -> date | None:
+    raw = request.query_params.get(name)
+    if raw is None:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        raise _invalid(
+            name, f"O parâmetro {name} precisa ser uma data no formato AAAA-MM-DD."
+        ) from None
+
+
+def _with_has_prices(assets: QuerySet[Asset]) -> QuerySet[Asset]:
+    return assets.annotate(
+        has_prices=Exists(Price.objects.filter(asset=OuterRef("pk")))
+    )
+
+
+def _asset(ticker: str) -> Asset:
+    """O ativo do catalogo pelo ticker, sem distincao de caixa; ausente, 404."""
+    wanted = ticker.upper()
+    asset = _with_has_prices(Asset.objects.filter(ticker=wanted)).first()
+    if asset is None:
+        raise ApiError(
+            404, "asset_not_found", f"Ativo {wanted} não existe.", {"ticker": wanted}
+        )
+    return asset
+
+
+def search_assets(q: str) -> QuerySet[Asset]:
+    """A busca do RF-12: `q` aparado; ticker igual (grupo 0), prefixo de ticker (grupo 1),
+    nome ou nome de pregao contendo `q` (grupo 2); ordem `(grupo, ticker)`. `q` vazio lista
+    o catalogo inteiro, por ticker.
+    """
+    q = q.strip()
+    assets = Asset.objects.all()
+    if not q:
+        return assets.order_by("ticker")
+    upper = q.upper()
+    return (
+        assets.filter(
+            Q(ticker__startswith=upper)
+            | Q(name__icontains=q)
+            | Q(trading_name__icontains=q)
+        )
+        .annotate(
+            search_group=Case(
+                When(ticker=upper, then=Value(0)),
+                When(ticker__startswith=upper, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("search_group", "ticker")
+    )
+
+
+class AssetListView(APIView):
+    """`GET /api/v1/assets?q=&limit=&offset=`: a busca no catalogo, paginada (RF-12)."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request) -> Response:
+        limit = _int_param(request, "limit", DEFAULT_LIMIT, 1, MAX_LIMIT)
+        offset = _int_param(request, "offset", 0, 0, 2**63 - 1)
+        found = search_assets(request.query_params.get("q", ""))
+        page = _with_has_prices(found)[offset : offset + limit]
+        return Response(
+            {
+                "count": found.count(),
+                "limit": limit,
+                "offset": offset,
+                "results": AssetItemSerializer(page, many=True).data,
+            }
+        )
+
+
+class AssetDetailView(APIView):
+    """`GET /api/v1/assets/{ticker}`: a identidade e o ultimo pregao."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(AssetDetailSerializer(_asset(ticker)).data)
+
+
+class AssetPricesView(APIView):
+    """`GET /api/v1/assets/{ticker}/prices?from=&to=`: a serie diaria no intervalo, inteira
+    — sem paginacao, excecao declarada a D-86 (RF-11).
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        start = _date_param(request, "from")
+        end = _date_param(request, "to")
+        if start is not None and end is not None and start > end:
+            raise _invalid("from", "O parâmetro from não pode ser posterior a to.")
+        asset = _asset(ticker)
+        prices = Price.objects.filter(asset=asset)
+        if start is not None:
+            prices = prices.filter(date__gte=start)
+        if end is not None:
+            prices = prices.filter(date__lte=end)
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "from": None if start is None else start.isoformat(),
+                "to": None if end is None else end.isoformat(),
+                "results": PriceSerializer(prices.order_by("date"), many=True).data,
+            }
+        )
+
+
+class AssetEventsView(APIView):
+    """`GET /api/v1/assets/{ticker}/events`: proventos e desdobramentos, inteiros."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        events = CorporateEvent.objects.filter(asset=asset).order_by("date", "kind")
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "results": CorporateEventSerializer(events, many=True).data,
+            }
+        )
+
+
+class AssetMetricsView(APIView):
+    """`GET /api/v1/assets/{ticker}/metrics`: a ultima linha de `gold.behavior_metric` e os
+    baldes do histograma; `metric` nulo se o ativo nunca foi calculado.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        metric = (
+            BehaviorMetric.objects.filter(asset=asset)
+            .prefetch_related(
+                Prefetch(
+                    "bins",
+                    queryset=ReturnHistogramBin.objects.order_by("bin_index"),
+                )
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "metric": None
+                if metric is None
+                else BehaviorMetricSerializer(metric).data,
+            }
+        )

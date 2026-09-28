@@ -35,8 +35,8 @@ MODULOS_PROIBIDOS = frozenset(
     }
 )
 
-# A rota resolvida pelo `config.urls`. A T7 do M1.6a troca por `/api/v1/assets`.
-ROTA = "/api/v1/nada"
+# A rota resolvida pelo `config.urls`: a primeira rota de negocio de `/api/v1/`.
+ROTA = "/api/v1/assets"
 
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 _RAIZ_API = Path(apps.api.__file__).parent
@@ -111,11 +111,14 @@ def test_apps_api_e_config_urls_nao_carregam_o_motor() -> None:
     assert achado["tentados"] == [], achado
     assert achado["carregados"] == [], achado
     # Contra a sonda inerte: a varredura alcancou os modulos da app, e a rota passou
-    # pelo `config.urls` ate a view final.
-    assert {"apps.api.errors", "apps.api.urls", "apps.api.views"} <= set(
-        achado["importados"]
-    ), achado
-    assert achado["view"] == "apps.api.views.ApiNotFound", achado
+    # pelo `config.urls` ate a view da busca.
+    assert {
+        "apps.api.errors",
+        "apps.api.serializers",
+        "apps.api.urls",
+        "apps.api.views",
+    } <= set(achado["importados"]), achado
+    assert achado["view"] == "apps.api.views.AssetListView", achado
 
 
 def _proibido(nome: str) -> bool:
