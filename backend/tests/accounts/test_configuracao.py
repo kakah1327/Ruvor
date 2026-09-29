@@ -33,6 +33,8 @@ _MODULOS_DA_FASE_2 = {
     "views.py",
     "serializers.py",
     "urls.py",
+    "throttling.py",  # M4.2
+    "schema.py",
 }
 
 _SCRIPT = """
@@ -79,6 +81,7 @@ def test_v01_middleware_e_a_lista_do_rf01() -> None:
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
+        "apps.accounts.tenancy.OrganizationScopeMiddleware",  # M4.2, RF-13
     ]
 
 

@@ -43,6 +43,7 @@ terminado.
 | [M3.2 — Contexto](M3.2-contexto.md) | [M3.2](../specs/M3.2-contexto.md) | ✅ executado e fechado |
 | [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | [M1.6a](../specs/M1.6a-fundacao-da-aplicacao.md) | ✅ executado e fechado |
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 executada; a fase 2 espera o M1.6a |
+| [M4.2 — API pública](M4.2-api-publica.md) | [M4.2](../specs/M4.2-api-publica.md) | ✅ executado (T0 a T10) em 2026-09-28 |
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.

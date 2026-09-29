@@ -19,6 +19,7 @@ from django.db.models.functions import Lower
 from django.utils import timezone
 
 from apps.accounts.managers import UserManager
+from apps.accounts.tenancy import OrganizationScopedManager
 
 
 class Organization(models.Model):
@@ -117,6 +118,8 @@ class AccessEvent(models.Model):
         USER_CREATED = "user_created"
         USER_UPDATED = "user_updated"
         TEMPORARY_PASSWORD_RESET = "temporary_password_reset"
+        API_KEY_CREATED = "api_key_created"  # M4.2, RF-10
+        API_KEY_REVOKED = "api_key_revoked"
 
     occurred_at = models.DateTimeField(default=timezone.now)
     kind = models.CharField(max_length=30, choices=Kind)
@@ -153,3 +156,46 @@ class AccessEvent(models.Model):
         self, using: Any = None, keep_parents: bool = False
     ) -> tuple[int, dict[str, int]]:
         raise TypeError("access_event so cresce")
+
+
+class ApiKey(models.Model):
+    """Uma chave de API pessoal, de leitura (M4.2, RF-01; D-108, D-111).
+
+    **O segredo nunca e guardado**: so o SHA-256 dele, em `secret_hash`, e o `prefix`, a parte
+    publica que identifica a chave em lista e em log. `revoked_at` nulo e chave ativa.
+
+    **A primeira tabela privada com o filtro automatico por organizacao** (RF-13; D-41, D-112):
+    `objects` filtra pela organizacao do contexto, pela da dona (`organization_field`), e levanta
+    sem contexto. `unscoped` e o gerente base, que o Django usa no `refresh_from_db`, no `save`
+    de linha existente e na coleta da exclusao; chamada explicita a ele so nos lugares que o
+    teste de `tests/accounts/test_tenancy.py` lista.
+    """
+
+    organization_field = "user__organization_id"
+
+    class Scope(models.TextChoices):
+        READ = "read"
+
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="api_keys")
+    name = models.CharField(max_length=60)
+    prefix = models.CharField(max_length=8, unique=True)
+    secret_hash = models.CharField(max_length=64)
+    scopes = models.JSONField(default=list)
+    created_at = models.DateTimeField(default=timezone.now)
+    last_used_at = models.DateTimeField(null=True)
+    revoked_at = models.DateTimeField(null=True)
+
+    objects = OrganizationScopedManager[
+        "ApiKey"
+    ]()  # o primeiro declarado: o gerente padrao
+    unscoped = models.Manager["ApiKey"]()
+
+    class Meta:
+        db_table = 'core"."api_key'
+        base_manager_name = "unscoped"
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["user", "revoked_at"], name="api_key_user_revoked")
+        ]
+
+    def __str__(self) -> str:
+        return self.prefix

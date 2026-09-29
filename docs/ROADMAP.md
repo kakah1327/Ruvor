@@ -91,7 +91,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 | | Bloco | Entrega |
 |---|---|---|
 | ⬜ | **M4.1 — Relatórios** | exportáveis e auditáveis — frente `identidade`, depois do M4.2 |
-| ⬜ | **M4.2 — API pública** | chaves, escopos, quotas, documentação — frente `identidade`, depois do M2.1 |
+| ✅ | **M4.2 — API pública** | **fechado em 2026-09-28**: chave pessoal de leitura (`/api/v1/api-keys`), taxa em toda rota — por chave, por usuário e por IP —, o filtro automático por organização em `core.api_key` e o esquema OpenAPI em `/api/v1/schema`, gerado pelo drf-spectacular sem aviso nem erro ([D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md) a [D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)) — frente `identidade` |
 
 ---
 

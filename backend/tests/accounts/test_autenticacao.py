@@ -33,11 +33,20 @@ BACKEND = Path(__file__).resolve().parents[2]
 def test_rest_framework_tem_as_chaves_da_fase_2() -> None:
     rf = settings.REST_FRAMEWORK
     assert rf["DEFAULT_AUTHENTICATION_CLASSES"] == [
-        "apps.accounts.authentication.SessionAuthentication"
+        "apps.accounts.authentication.SessionAuthentication",
+        "apps.accounts.authentication.ApiKeyAuthentication",  # M4.2, RF-06
     ]
     assert rf["NUM_PROXIES"] == 0
-    assert rf["DEFAULT_THROTTLE_RATES"] == {"auth": "10/min"}
-    assert "DEFAULT_THROTTLE_CLASSES" not in rf
+    # M4.2, RF-08: a taxa de toda rota, com os padroes (a suite nao le o .env)
+    assert rf["DEFAULT_THROTTLE_CLASSES"] == [
+        "apps.accounts.throttling.ApiRateThrottle"
+    ]
+    assert rf["DEFAULT_THROTTLE_RATES"] == {
+        "auth": "10/min",
+        "api_key": "600/min",
+        "user": "600/min",
+        "anon": "60/min",
+    }
 
 
 @URLS_DE_TESTE

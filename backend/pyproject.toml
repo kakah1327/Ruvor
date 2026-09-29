@@ -9,6 +9,7 @@ dependencies = [
     "celery>=5.6",
     "redis>=8.1",
     "psycopg[binary]>=3.3",
+    "drf-spectacular==0.30.0",
 ]
 
 [project.optional-dependencies]
