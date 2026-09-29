@@ -21,6 +21,10 @@ backend/celerybeat-schedule
 # frontend (Vite/React)
 frontend/node_modules/
 
+# execucao real do M1.6b (roteiro do Playwright): dependencias e capturas geradas
+frontend/e2e/node_modules/
+frontend/e2e/capturas/
+
 # saida gerada por tools/garch_rcheck/export_for_r.py (reproduzivel, nao versionada)
 tools/garch_rcheck/train_returns.csv
 tools/garch_rcheck/python_arch_params.json
