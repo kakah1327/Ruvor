@@ -1219,3 +1219,15 @@ a tela do ativo faz dez pedidos a `/api/v1/`, não cinco. Quem lê o `Performanc
 disso conclui que o custo da API é o dobro.
 
 **Faça:** diga no relato que a medida é de desenvolvimento, ou meça sobre o `vite build` servido.
+
+## `docker compose start` reaproveita a configuração antiga do contêiner
+
+**Quando:** ao religar um serviço parado (`docker compose stop beat` na execução real, e `start` no fim)
+depois que o `compose.yaml` ganhou variável nova.
+
+**Problema:** o `start` sobe o contêiner **como ele foi criado**, sem a variável acrescentada depois. No
+fecho do M1.6b, o `beat` — criado antes da fase 1 do M2.1a — não subiu: `ImproperlyConfigured:
+variavel de ambiente obrigatoria ausente: RUVOR_CACHE_URL`, e ficou parado sem ninguém notar.
+
+**Faça:** religue com `docker compose up -d --no-deps <serviço>`, que recria o contêiner se a
+configuração mudou, e confira `docker compose ps` e o log depois.
