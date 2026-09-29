@@ -117,6 +117,11 @@ conversas e entre agentes.
 | [D-105](D-105-superusuario-mora-na-ruvor-restringe-a-d-39.md) | O superusuário mora na organização `ruvor`, como `admin` — restringe a D-39 |
 | [D-106](D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md) | O limite de tentativas conta no cache do Django, no Redis, num banco próprio: por IP e por (e-mail, IP); o e-mail é único sem diferença de caixa |
 | [D-107](D-107-m2-1a-em-duas-fases-restringe-a-d-82.md) | O M2.1a implementa em duas fases, com uma PR cada — restringe a D-82 |
+| [D-108](D-108-a-api-aceita-chave-pessoal-de-leitura.md) | A API aceita chave pessoal de leitura, que age como a dona e só lê rotas com `api_key_scope = "read"`, por método seguro; o padrão é recusar — estende a D-100 |
+| [D-109](D-109-toda-rota-da-api-tem-taxa.md) | Toda rota da API tem taxa: por chave, por usuário e, para anônimo, por IP, ajustável por variável |
+| [D-110](D-110-a-descricao-da-api-e-o-esquema-openapi-gerado.md) | A descrição da API é o esquema OpenAPI gerado pelo drf-spectacular, sem aviso nem erro — substitui a documentação manual que a D-11 previa |
+| [D-111](D-111-a-chave-guarda-so-o-hash-e-a-conta-mudada-revoga.md) | A chave guarda só o SHA-256 do segredo, mostrado uma vez; desativar e redefinir a senha revogam as chaves |
+| [D-112](D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md) | O filtro automático por organização nasce no M4.2, em `core.api_key`: gerente que falha fechado, contexto posto pela autenticação e pelo serviço — cumpre a D-41 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

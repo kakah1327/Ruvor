@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.sessions",
     "rest_framework",
+    "drf_spectacular",
     "apps.accounts",
     "apps.assets",
     "apps.analytics",
@@ -54,6 +55,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Por ultimo: zera a organizacao do contexto no comeco e no fim de cada pedido (M4.2, RF-13).
+    "apps.accounts.tenancy.OrganizationScopeMiddleware",
 ]
 
 # Cookies (RF-02). `Secure` so com HTTPS, que o ambiente local nao tem; a hospedagem liga.
@@ -101,15 +104,57 @@ ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# A API HTTP (D-86, RF-09 do M1.6a). Sem classe de autenticacao, o DRF entrega um
-# AnonymousUser, o IsAuthenticated nega e a excecao e PermissionDenied: uma view que
-# esqueca de declarar a sua permissao nasce fechada, com 403 `permission_denied`.
+# A API HTTP (D-86, RF-09 do M1.6a). A autenticacao e a sessao do Django, com CSRF (M2.1a,
+# RF-03; D-100): uma view que esqueca de declarar a sua permissao herda `IsAuthenticated` e
+# nasce fechada, com 401 `not_authenticated` e `WWW-Authenticate: Session`. O limite `auth`
+# (RF-21) conta por IP, e so as views que declaram `AuthRateThrottle` o usam;
+# `NUM_PROXIES = 0` faz o IP ser o `REMOTE_ADDR` -- sem hospedagem, nao ha proxy confiavel.
+
+
+def _rate(name: str, default: str) -> str:
+    # vazia vale o padrao: o compose a passa vazia
+    return os.environ.get(name) or default
+
+
+# A taxa de toda rota (M4.2, RF-08): por chave, por usuario ou por IP. `auth` e a do limite de
+# `signup`, `login` e `password` (M2.1a, RF-21), que declaram a propria classe.
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "apps.api.errors.handle_exception",
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.accounts.authentication.SessionAuthentication",
+        # a chave de API, depois da sessao (M4.2, RF-06): o `WWW-Authenticate` continua `Session`
+        "apps.accounts.authentication.ApiKeyAuthentication",
+    ],
+    "NUM_PROXIES": 0,
+    "DEFAULT_THROTTLE_CLASSES": ["apps.accounts.throttling.ApiRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": "10/min",
+        "api_key": _rate("RUVOR_THROTTLE_API_KEY", "600/min"),
+        "user": _rate("RUVOR_THROTTLE_USER", "600/min"),
+        "anon": _rate("RUVOR_THROTTLE_ANON", "60/min"),
+    },
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    # O gerador do drf-spectacular exige o AutoSchema dele em toda view; este e uma subclasse,
+    # que poe o erro `default` e tira o `Bearer` de quem a chave nao alcanca (M4.2, RF-12).
+    "DEFAULT_SCHEMA_CLASS": "apps.accounts.schema.AutoSchema",
+}
+
+# O esquema OpenAPI da API (M4.2, RF-12; D-110). `SERVE_INCLUDE_SCHEMA` verdadeiro: a propria
+# rota do esquema entra nele, como o resto de `/api/v1/`.
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Ruvor API",
+    "VERSION": "1",
+    "SERVE_INCLUDE_SCHEMA": True,
+    # Dois campos `kind` e dois `status` com escolhas diferentes: sem nome proprio, o gerador
+    # inventa um com sufixo de hash e avisa -- e o `--fail-on-warn` reprova.
+    "ENUM_NAME_OVERRIDES": {
+        "AssetKindEnum": "apps.assets.models.Asset.Kind",
+        "AssetStatusEnum": "apps.assets.models.Asset.Status",
+        "CorporateEventKindEnum": "apps.assets.models.CorporateEvent.Kind",
+        "RiskRunStatusEnum": "apps.risk.models.RiskRun.Status",
+    },
 }
 
 DATABASES: dict[str, dict[str, str]] = {

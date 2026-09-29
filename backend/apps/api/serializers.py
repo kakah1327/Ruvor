@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
@@ -103,6 +104,7 @@ class AssetDetailSerializer(serializers.ModelSerializer[Asset]):
             "last_price",
         )
 
+    @extend_schema_field(LastPriceSerializer(allow_null=True))  # M4.2, RF-12
     def get_last_price(self, asset: Asset) -> dict[str, Any] | None:
         last = Price.objects.filter(asset=asset).order_by("-date").first()
         return None if last is None else dict(LastPriceSerializer(last).data)
@@ -270,3 +272,50 @@ class ComputeRequestSerializer(serializers.ModelSerializer[ComputeRequest]):
     def get_reason(self, req: ComputeRequest) -> str:
         now: datetime = self.context["now"]
         return expired_reason() if is_expired(req, now) else req.reason
+
+
+# --- os envelopes, so descricao, para o esquema OpenAPI (M4.2, RF-12) -----------------------
+# As views montam o corpo a mao; estes serializadores so o descrevem, reusando os de item.
+
+
+class AssetListOut(serializers.Serializer[None]):
+    count = serializers.IntegerField()
+    limit = serializers.IntegerField()
+    offset = serializers.IntegerField()
+    results = AssetItemSerializer(many=True)
+
+
+class AssetPricesOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    # `from` e palavra reservada: o campo entra pelo `get_fields`, na ordem do corpo
+    to = serializers.DateField(allow_null=True)
+    results = PriceSerializer(many=True)
+
+    def get_fields(self) -> dict[str, serializers.Field[Any, Any, Any, Any]]:
+        fields = super().get_fields()
+        return {
+            "ticker": fields["ticker"],
+            "from": serializers.DateField(allow_null=True),
+            "to": fields["to"],
+            "results": fields["results"],
+        }
+
+
+class AssetEventsOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    results = CorporateEventSerializer(many=True)
+
+
+class AssetMetricsOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    metric = BehaviorMetricSerializer(allow_null=True)
+
+
+class AssetRiskOut(serializers.Serializer[None]):
+    """`risk_body`."""
+
+    ticker = serializers.CharField()
+    covered = serializers.BooleanField()
+    latest = LatestRunSerializer(allow_null=True)
+    in_progress = InProgressRunSerializer(allow_null=True)
+    request = ComputeRequestSerializer(allow_null=True)

@@ -13,10 +13,12 @@
 **Marco:** ✅ **Marco 1 fechado em 2026-09-29** — a ação, e o risco dela; a Fundação fechou em
 2026-09-08
 **Bloco:** na frente `marco1`, o **M1.6b fechou em 2026-09-29** — as telas —, depois do M1.6a, e **o
-M1.6c é o próximo**: as camadas 4 e 5 na tela ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)); na frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1,
-e o próximo bloco dela não está definido; na frente `identidade`, o **M2.1a** está com a **fase 1
-implementada** (2026-09-27), e a fase 2 esperava o M1.6a, que entrou em 2026-09-28
-([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md))
+M1.6c é o próximo**: as camadas 4 e 5 na tela ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)); na frente
+`fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
+definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`,
+que espera a migration da `marco1`
+([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)), e o **M4.2 fechou em
+2026-09-28** — o M4.1 é o próximo
 **Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c, com o darkside171) e `identidade` (M2.1 → M4.2 →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
@@ -72,8 +74,18 @@ mockup. **Desde a fase 1 do M2.1a há identidade:** sessão do Django no banco, 
 (banco 1), papel `admin`/`member` por organização, organização pessoal, e-mail único sem
 diferença de caixa, a regra de cada rota de conta como serviço de `apps/accounts`, o bloqueio de
 entrada por (e-mail, IP), `core.access_event` — a auditoria de acesso, que só cresce —,
-`manage.py create_organization`, e o `createsuperuser` funcionando. Trinta tabelas, em seis apps. As rotas de conta são a fase 2
-do M2.1a. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
+`manage.py create_organization`, e o `createsuperuser` funcionando. **Desde a fase 2 do M2.1a**
+(sem a `requested_by`, que espera a migration da `marco1`) há as rotas de
+conta: `auth/*` e `organization/users*`, com sessão do Django e CSRF, 401 `not_authenticated`
+para quem não entrou, `AccountReady` em toda view que exige conta e o limite `auth` por IP.
+**Desde o M4.2 a API é pública:** a sessão cria chaves pessoais de leitura em `api-keys`, e a
+chave (`Authorization: Bearer rvr_…`) lê as rotas que declaram `api_key_scope = "read"`, só por
+método seguro — conta, gestão e as próprias chaves, não. **Toda rota tem taxa**: por chave, por
+usuário e, para anônimo, por IP — as rotas de leitura continuam `AllowAny`, agora com 60 pedidos
+por minuto por IP, ajustável por `RUVOR_THROTTLE_ANON`. `GET /api/v1/schema` devolve o esquema
+OpenAPI, gerado pelo drf-spectacular sem aviso nem erro. E há o **filtro automático por
+organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. Trinta e uma tabelas, em
+seis apps. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
 identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
 não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px.
@@ -1114,6 +1126,38 @@ falha sem `available_apps` —; e o `remove_constraint` do Django passa em silê
 Oito decisões: [D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) a
 [D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md).
 
+### M4.2 — API pública
+
+Spec em [`specs/M4.2-api-publica.md`](specs/M4.2-api-publica.md) e plano em
+[`planos/M4.2-api-publica.md`](planos/M4.2-api-publica.md). Frente `identidade`, ramo
+`identidade/M4.2-api-publica`, nascido do da fase 2 do M2.1a. Spec: três revisões adversariais (a
+terceira aprovou). Plano: duas (a 1 reprovou, 2 graves; a 2 aprovou). Nove commits de tarefa, T0 a
+T8, e o do fecho.
+
+| Verificação | Resultado |
+|---|---|
+| drf-spectacular 0.30.0 sobre Django 6.1.1 (T0) | ✅ instala, gera e valida; a linha de base tinha 23 avisos e 87 erros, que a T8 zerou |
+| O filtro por organização (V-17) | ✅ o gerente levanta sem contexto, o middleware zera no começo e no fim do pedido, o acessor reverso filtra, `ApiKey.unscoped` só em `authentication.py` |
+| Criar, listar, revogar (V-02 a V-05, V-12) | ✅ pelos serviços e pela rota; duas criações simultâneas com 9 ativas terminam com 10; desativar e redefinir a senha provisória revogam |
+| Autenticação e alcance (V-06 a V-09, V-13) | ✅ as cinco falhas dão o mesmo 401 `invalid_api_key`; a chave lê as rotas `"read"` e recebe 403 `api_key_not_allowed` no resto, inclusive `api-keys`; não passa pelo CSRF |
+| A taxa (V-10, V-11) | ✅ as três variáveis — ausentes e vazias valem o padrão; cada linha do RF-08 dá 429 com `Retry-After`; duas chaves e dois IPs contam separado; a suíte inteira verde com a taxa anônima real |
+| O esquema (V-14) | ✅ `spectacular --validate --fail-on-warn` limpo; o resolvedor contra o esquema nos dois sentidos, 21 operações; `apiKeyAuth` só nas `"read"`; `default` → `ApiError` em toda operação |
+| **Execução real (V-16)** | ✅ pelo proxy do Vite, com `curl`: cadastro, chave criada; a chave leu `/assets`, `/assets/ITUB4/risk` e `/schema` (`application/vnd.oai.openapi+json`) e recebeu 403 no `POST /risk`; revogada, 401. No `psql`: `last_used_at` gravado e `signup`, `api_key_created` e `api_key_revoked` com o IP do contêiner `frontend`. A **61ª** leitura anônima no minuto → 429, `Retry-After: 56`, com o `.env` sem `RUVOR_THROTTLE_ANON` |
+| Suíte, tipos, estilo | ✅ **1147 testes** no `worker`; `mypy` estrito limpo em 207 arquivos; `ruff check` e `ruff format --check` limpos |
+
+**As 19 mutações da T9 reprovaram**, cada uma no teste previsto, e o código voltou limpo depois de
+cada uma. A 16 — tirar o `cache.clear()` de `tests/conftest.py` — reprovou a suíte inteira com 49
+falhas: a taxa anônima real é alcançada pela suíte, e a limpeza é o que a segura. A 19 — importar
+`APIView` no topo de `throttling.py` — derruba a partida do pytest com o `ImportError` do import
+parcial do DRF, e derrubou também a `web`, que precisou de `restart`.
+
+**Duas armadilhas novas, em [aprendizados](aprendizados.md):** o `--fail-on-warn` reprova enum com
+o mesmo nome de campo (`ENUM_NAME_OVERRIDES` resolve), e a contagem de avisos do drf-spectacular
+sobrevive entre testes (`GENERATOR_STATS.reset()`).
+
+Cinco decisões: [D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md) a
+[D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md).
+
 ### M1.6a — Fundação da aplicação
 
 Spec em [`specs/M1.6a-fundacao-da-aplicacao.md`](specs/M1.6a-fundacao-da-aplicacao.md) e plano em
@@ -1284,10 +1328,13 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, a fase 2 do M2.1a**, quando o M1.6a estiver na `main`: as rotas de
-conta, a autenticação do DRF por sessão, o CSRF das rotas, o limite por IP, os códigos no tratador
-e o `requested_by` ([spec](specs/M2.1a-identidade-e-acesso.md#as-duas-fases)). Antes dela, combinar
-com a `marco1` a coluna `core.compute_request.requested_by`, que é migration da app dela.
+**Na frente `identidade`, o resto do M2.1a e o M4.1.** A `requested_by` (T14 da fase 2) espera
+a migration de `core.compute_request.requested_by`, pedida à `marco1` no contrato do
+[plano da fase 2](planos/M2.1a-identidade-e-acesso.md#pré-condição-externa--a-coluna-requested_by).
+Depois, o M4.1 — Relatórios. **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
+`api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa
+`force_login`, não `force_authenticate`; em dev, suba `RUVOR_THROTTLE_ANON` no `.env` — a página
+de ativo são cinco `GET`, todos com o IP do contêiner `frontend`.
 
 **Na frente `fundamentos`, o próximo bloco não está definido.** O M3.2 fecha o Marco 3 do
 ROADMAP para esta frente, e a escolha é do dono dela ([frentes/fundamentos.md](frentes/fundamentos.md)).
@@ -1312,10 +1359,11 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)). O M1.6a acrescentou duas tarefas, limpas no `mypy`, e a guarda que o `mypy` não dá: `tests/test_tipos.py` reprova o override de `celery` de volta (V-19d) |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
-| **Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro" | `backend/apps/accounts/models.py` (`User.organization`) | **M2.2**, o bloco que cria a primeira tabela privada de domínio: é obrigação dele, não dívida difusa — [D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md). O `user` é **exceção permanente**, e o M2.1 precisa isolar listagem de usuário por outro meio |
+| ~~**Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro"~~ | ~~`backend/apps/accounts/models.py` (`User.organization`)~~ | ✅ **quitada no M4.2** — `apps/accounts/tenancy.py`, aplicado à primeira tabela privada, `core.api_key` ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); o M2.2 só o aplica. `core.user` e `core.access_event` ficam fora, por nome ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md), [D-104](decisoes/D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md)) |
 | ~~`createsuperuser` não funciona.~~ | ~~`backend/apps/accounts/managers.py`~~ | ✅ **quitada na fase 1 do M2.1a** — sem organização, o superusuário vai para a `ruvor`, como `admin` ([D-105](decisoes/D-105-superusuario-mora-na-ruvor-restringe-a-d-39.md)); `--noinput` com as `DJANGO_SUPERUSER_*` funciona |
 | **Quem esquece a senha da organização pessoal fica sem saída.** Não há envio de e-mail: a redefinição é da administradora, e na organização pessoal ela é a própria pessoa. Até lá, o operador redefine por `shell` | `backend/apps/accounts/services.py` | O primeiro bloco que decidir envio de e-mail (hospedagem) — [spec M2.1a, Riscos](specs/M2.1a-identidade-e-acesso.md#riscos-e-questões-em-aberto) |
 | **`django_session` cresce sem limpeza.** Sessão vencida fica na tabela até alguém rodar `manage.py clearsessions` | `public.django_session` | Uma entrada própria no Beat quando o volume justificar, ou na hospedagem |
+| **A taxa anônima depende de `NUM_PROXIES`.** Sem ele certo, atrás de um proxy todo pedido chega com o IP do proxy, e os 60 por minuto por IP viram teto do site inteiro — o mesmo risco do limite `auth` do M2.1a, agora sobre a leitura | `backend/config/settings.py`, `REST_FRAMEWORK["NUM_PROXIES"]` | A hospedagem, antes de expor a API ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
 | **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
 | **A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento | `backend/apps/api/views.py`, a busca do RF-12 do M1.6a | Quando a busca for revista — é mudança de contrato da API (`unaccent` no Postgres ou normalização na conformação) |

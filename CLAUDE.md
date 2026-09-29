@@ -125,6 +125,8 @@ M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Desde a
 há **identidade**: sessão, papel por organização, a regra das rotas de conta como serviço e a
 auditoria de acesso. Desde o M1.6a existem a **API de leitura** em `/api/v1/`, o **cálculo sob
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
+M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
+**filtro automático por organização**. Desde o
 M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — o Marco 1 está fechado.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
@@ -144,7 +146,19 @@ M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — 
   `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
   pedido aberto por ativo em `core.compute_request`, teto global e expiração
   ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
-  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); a
+  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); e as
+  rotas de conta, `auth/*` e `organization/users*`, com sessão do Django e CSRF — quem não entrou
+  recebe 401 `not_authenticated`, e toda view que exige conta declara `AccountReady`
+  ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md),
+  [D-102](docs/decisoes/D-102-papeis-admin-e-member-por-organizacao.md)); desde o M4.2, a
+  **chave pessoal de leitura** (`api-keys*`, `Authorization: Bearer rvr_…`), que só lê as views
+  com `api_key_scope = "read"`, por método seguro — **toda view declara `api_key_scope`** e
+  `extend_schema` —, a **taxa em toda rota**, por chave, por usuário e, para anônimo, por IP
+  (`RUVOR_THROTTLE_*`), e o esquema OpenAPI em `GET /api/v1/schema`, gerado pelo drf-spectacular
+  sem aviso nem erro ([D-108](docs/decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md) a
+  [D-111](docs/decisoes/D-111-a-chave-guarda-so-o-hash-e-a-conta-mudada-revoga.md)); tabela
+  privada nova usa o gerente de `apps/accounts/tenancy.py`, que filtra pela organização do
+  contexto e levanta sem ela ([D-112](docs/decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); a
   `apps/api` não importa o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
   Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as treze tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
@@ -161,22 +175,22 @@ M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 947 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1151 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
-  as tabelas `core.organization`, `core.user` e `core.compute_request`, a organização fixa do Marco 1 (`slug`
+  as tabelas `core.organization`, `core.user`, `core.compute_request` e `core.api_key`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
   `silver.disclosure`, e as sete tabelas da `gold`, `gold.behavior_metric`,
   `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
   `gold.fundamental_indicator` e `gold.peer_comparison`, mais `core.compute_request`,
-  `core.access_event` e `public.django_session` — trinta ao todo. O `AUTH_USER_MODEL`
+  `core.access_event`, `core.api_key` e `public.django_session` — trinta e uma ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail, **sem diferença de caixa**
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
   [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem
   papel `admin` ou `member` na organização, e a organização pode ser pessoal. `apps/accounts`
-  tem a regra das rotas de conta como serviço (`services.py`), sem importar o DRF, o bloqueio de
+  tem a regra das rotas de conta como serviço (`services.py`), sem importar o DRF, e as views dela por cima, o bloqueio de
   entrada por (e-mail, IP) no cache do Django — Redis, banco 1, `RUVOR_CACHE_URL` —, a auditoria
   `core.access_event`, que só cresce, e `manage.py create_organization`; o `createsuperuser` põe
   o superusuário na `ruvor` ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)

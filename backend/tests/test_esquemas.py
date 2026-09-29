@@ -41,6 +41,7 @@ TABELAS = {
     "bronze.cvm_file",
     "bronze.yahoo_chart",
     "core.access_event",
+    "core.api_key",
     "core.compute_request",
     "core.organization",
     "core.user",

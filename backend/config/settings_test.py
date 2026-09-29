@@ -20,6 +20,12 @@ os.environ.setdefault("RUVOR_DB_PASSWORD", "nao-usar")
 os.environ.setdefault("RUVOR_REDIS_URL", "redis://nao-usar:1/0")
 os.environ.setdefault("RUVOR_CACHE_URL", "redis://nao-usar:1/1")
 
+# As taxas da API (M4.2, RF-08) com `=`, e nao `setdefault`: a suite roda com os padroes mesmo
+# que o .env de dev suba a `ANON`. E o que faz o V-11 medir a taxa real.
+os.environ["RUVOR_THROTTLE_API_KEY"] = ""
+os.environ["RUVOR_THROTTLE_USER"] = ""
+os.environ["RUVOR_THROTTLE_ANON"] = ""
+
 from config.settings import *  # noqa: F403
 
 # O cache da suite e o de memoria (M2.1a, RF-22): nenhum teste escreve no Redis vivo, e o

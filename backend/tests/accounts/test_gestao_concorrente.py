@@ -11,8 +11,8 @@ vira uma barreira de duas partes com `timeout`:
 - **sem a trava** (a mutacao), as duas passam pela barreira contando duas `admin`, as duas
   rebaixam, e a organizacao fica sem nenhuma.
 
-O `flush` do `transaction=True` apaga a `ruvor` e o `IBOV`; a fixture de modulo
-`restaura_dados_de_migracao` os devolve depois do ultimo teste deste modulo.
+O banco e o de todo teste `transaction=True` do repositorio: a marca `TRANSACIONAL` e a fixture
+`banco_limpo`, de `tests/api/migracao.py`, que devolve o banco como a migration o deixou.
 """
 
 from __future__ import annotations
@@ -26,21 +26,9 @@ from apps.accounts import services
 from apps.accounts.errors import AccountError
 from apps.accounts.models import User
 from tests.accounts.conftest import organizacao, usuario
+from tests.api.migracao import TRANSACIONAL, banco_limpo  # noqa: F401
 
-# `available_apps` e o que faz o `flush` do fim usar `TRUNCATE ... CASCADE`: sem ele, o
-# `flush` lista as tabelas pelo `search_path` e nao ve as de juncao do usuario, que moram em
-# `core` (`user_user_permissions`), e o `TRUNCATE` de `auth_permission` e recusado.
-_APPS = [
-    "django.contrib.contenttypes",
-    "django.contrib.auth",
-    "django.contrib.sessions",
-    "apps.accounts",
-]
-
-pytestmark = [
-    pytest.mark.django_db(transaction=True, available_apps=_APPS),
-    pytest.mark.usefixtures("restaura_dados_de_migracao"),
-]
+pytestmark = [TRANSACIONAL, pytest.mark.usefixtures("banco_limpo")]
 
 
 def test_v11_rebaixamento_cruzado_termina_com_uma_admin(
