@@ -9,7 +9,9 @@ from django.urls import URLPattern, URLResolver, path
 
 from apps.api.views import (
     AssetDetailView,
+    AssetDisclosuresView,
     AssetEventsView,
+    AssetFundamentalsView,
     AssetListView,
     AssetMetricsView,
     AssetPricesView,
@@ -23,4 +25,6 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("assets/<str:ticker>/events", AssetEventsView.as_view()),
     path("assets/<str:ticker>/metrics", AssetMetricsView.as_view()),
     path("assets/<str:ticker>/risk", AssetRiskView.as_view()),
+    path("assets/<str:ticker>/fundamentals", AssetFundamentalsView.as_view()),
+    path("assets/<str:ticker>/disclosures", AssetDisclosuresView.as_view()),
 ]

@@ -58,16 +58,24 @@ from apps.api.serializers import (
     BehaviorMetricSerializer,
     ComputeRequestSerializer,
     CorporateEventSerializer,
+    DisclosureItemOut,
+    DisclosuresOut,
+    FundamentalsOut,
+    IndicatorOut,
     InProgressRunSerializer,
     LatestRunSerializer,
+    PeersOut,
     PriceSerializer,
 )
 from apps.assets.models import Asset, CorporateEvent, Price
+from apps.fundamentals.models import Company, Disclosure, FundamentalIndicator
 from apps.risk.models import RiskResult, RiskRun
 
 # A paginacao da busca (RF-12).
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
+# A paginacao dos comunicados (M1.6c, RF-03).
+DISCLOSURES_DEFAULT_LIMIT = 10
 
 _INTEGER = re.compile(r"-?[0-9]+")
 
@@ -326,6 +334,119 @@ class AssetMetricsView(APIView):
                 "metric": None
                 if metric is None
                 else BehaviorMetricSerializer(metric).data,
+            }
+        )
+
+
+class AssetFundamentalsView(APIView):
+    """`GET /api/v1/assets/{ticker}/fundamentals` (M1.6c, RF-02): a linha de
+    `gold.fundamental_indicator` de maior `calculated_at` e a comparacao **dela** com os
+    pares -- a ligacao um-para-um, nunca a comparacao mais recente do ativo. `indicator`
+    nulo se o ativo nunca foi calculado; `peers` nulo se aquele indicador ficou sem
+    comparacao.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(responses={200: FundamentalsOut})
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        indicator = (
+            FundamentalIndicator.objects.filter(asset=asset)
+            .select_related("statement", "peer_comparison")
+            .order_by("-calculated_at")
+            .first()
+        )
+        # sem comparacao, o acesso levanta `RelatedObjectDoesNotExist`, um `AttributeError`
+        peers = (
+            None if indicator is None else getattr(indicator, "peer_comparison", None)
+        )
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "indicator": None
+                if indicator is None
+                else IndicatorOut(indicator).data,
+                "peers": None if peers is None else PeersOut(peers).data,
+            }
+        )
+
+
+class AssetDisclosuresView(APIView):
+    """`GET /api/v1/assets/{ticker}/disclosures?category=&limit=&offset=` (M1.6c, RF-03):
+    os comunicados da companhia a CVM, paginados.
+
+    A ligacao e por valor, `silver.disclosure.code_cvm = silver.asset.code_cvm` (D-126),
+    **sem passar por `silver.company`**, que nao tem a companhia sem ITR/DFP. Ordem
+    `-delivered_on`, desempate por `link`. `company` nulo so quando o ativo nao tem
+    `code_cvm`; o nome vem de `silver.company` e, sem linha la, do comunicado mais recente
+    de qualquer categoria.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "category", OpenApiTypes.STR, enum=Disclosure.Category.values
+            ),
+            OpenApiParameter(
+                "limit", OpenApiTypes.INT, default=DISCLOSURES_DEFAULT_LIMIT
+            ),
+            OpenApiParameter("offset", OpenApiTypes.INT, default=0),
+        ],
+        responses={200: DisclosuresOut},
+    )
+    def get(self, request: Request, ticker: str) -> Response:
+        category = request.query_params.get("category", "")
+        if category and category not in Disclosure.Category.values:
+            raise _invalid(
+                "category",
+                "O parâmetro category precisa ser um de: "
+                + ", ".join(Disclosure.Category.values)
+                + ".",
+            )
+        limit = _int_param(request, "limit", DISCLOSURES_DEFAULT_LIMIT, 1, MAX_LIMIT)
+        offset = _int_param(request, "offset", 0, 0, 2**63 - 1)
+        asset = _asset(ticker)
+        if not asset.code_cvm:
+            return Response(
+                {
+                    "ticker": asset.ticker,
+                    "company": None,
+                    "count": 0,
+                    "limit": limit,
+                    "offset": offset,
+                    "results": [],
+                }
+            )
+        every = Disclosure.objects.filter(code_cvm=asset.code_cvm).order_by(
+            "-delivered_on", "link"
+        )
+        name = (
+            Company.objects.filter(code_cvm=asset.code_cvm)
+            .values_list("name", flat=True)
+            .first()
+        )
+        if name is None:
+            name = every.values_list("company_name", flat=True).first()
+        found = every.filter(category=category) if category else every
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "company": {"code_cvm": asset.code_cvm, "name": name},
+                "count": found.count(),
+                "limit": limit,
+                "offset": offset,
+                "results": DisclosureItemOut(
+                    found[offset : offset + limit], many=True
+                ).data,
             }
         )
 

@@ -32,6 +32,8 @@ LEITURA = {
     leitura.AssetEventsView,
     leitura.AssetMetricsView,
     leitura.AssetRiskView,
+    leitura.AssetFundamentalsView,
+    leitura.AssetDisclosuresView,
     leitura.ApiNotFound,
     conta.SchemaView,
 }
@@ -130,6 +132,8 @@ def _nao_alcanca(resposta: Any) -> None:
         "/api/v1/assets/IBOV/prices",
         "/api/v1/assets/IBOV/events",
         "/api/v1/assets/IBOV/risk",
+        "/api/v1/assets/IBOV/fundamentals",
+        "/api/v1/assets/IBOV/disclosures",
     ],
 )
 def test_v08_a_chave_le_as_rotas_de_leitura(cliente: APIClient, rota: str) -> None:
