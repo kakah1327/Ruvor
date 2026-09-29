@@ -1338,3 +1338,26 @@ com campo de escolha de nome repetido precisa de entrada nova.
 zera antes de gerar. Um aviso emitido por outro teste no mesmo processo reprovaria este.
 
 **Faça:** `GENERATOR_STATS.reset()` logo antes do `call_command`.
+
+## `git add backend` falha pelo `backend/nul`
+
+**Quando:** ao fazer `git add` de um diretório inteiro do backend (`git add backend`, `git add -A`).
+
+**Problema:** existe um `backend/nul` não rastreado — `nul` é nome reservado do Windows, criado por algum redirecionamento
+para `nul` num shell que o tratou como arquivo. O `git add` do diretório para com `error: open("backend/nul"): No such file
+or directory` e `fatal: adding files failed`, e nada é adicionado.
+
+**Faça:** adicione pelos caminhos (`git add backend/apps/api backend/tests/api …`). Não tente apagar o `nul` pelo Explorer;
+se precisar, `rm //?/E:/…/backend/nul` pelo prefixo de caminho longo.
+
+## A medida da taxa conta do lado do cliente, e o `StrictMode` inflaciona
+
+**Quando:** ao medir quantos pedidos a tela faz até a taxa responder 429.
+
+**Problema:** o roteiro conta os pedidos pela rede do navegador; em desenvolvimento o `StrictMode` faz cada rota duas vezes e
+aborta parte delas, e esses abortados entram na conta. No M1.6c, 84 pedidos contados para 81 respondidos antes do primeiro
+429 — com o limite em 60.
+
+**Faça:** registre os dois números (o do cliente e as respostas 200 antes do 429) e diga que a medida é de
+desenvolvimento; para medir o servidor, conte no servidor ou meça sobre o `vite build`.
+

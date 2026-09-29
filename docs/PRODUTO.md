@@ -130,6 +130,8 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 
 - Fundamentos (camada 4), com fonte adequada para B3
 - Contexto e comparação setorial (camada 5)
+- Na tela do ativo desde o M1.6c, depois do risco, com a posição entre os pares e os comunicados da companhia à CVM
+  ([D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md))
 
 ### Marco 4 — produto institucional
 

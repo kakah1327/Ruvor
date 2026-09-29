@@ -9,21 +9,19 @@
 
 ## Agora
 
-**Bloco:** M1.6b — As telas, **fechado em 2026-09-29**; o próximo é o M1.6c
-**Etapa:** implementação e FECHA feitos no ramo; **PR de implementação a abrir pelo dono da frente**
-([D-85](../decisoes/D-85-o-dono-da-frente-aprova-a-propria-pr.md))
-**Ramo:** `marco1/M1.6b-as-telas`, com a spec, o plano, os três mockups aprovados e as decisões D-94 a
-D-98
+**Bloco:** M1.6c — Fundamentos e contexto na tela, **fechado em 2026-09-29**; os blocos M1.5b a M1.6c da frente
+estão todos fechados
+**Etapa:** implementação e FECHA feitos no ramo; **PR de implementação a abrir pelo dono**, revisada pela
+`fundamentos` (D-99)
+**Ramo:** `marco1/M1.6c-fundamentos-e-contexto`
 
 ## Próximo passo
 
-1. Abrir as PRs do M1.6b — spec, plano e implementação — e mesclá-las com a CI verde.
-2. **M1.6c — Fundamentos e contexto na tela**: as camadas 4 e 5, com as rotas escritas pela `marco1` em
-   `apps/api` e revisadas pela `fundamentos` ([D-95](../decisoes/D-95-o-m1-6-em-tres-blocos.md)). A faixa
-   da `marco1` tem uma decisão livre (D-99); a spec reserva a próxima faixa.
-3. As **telas de acesso**, depois da fase 2 do M2.1a, sobre o casco do M1.6b.
-4. Olhar a zona de Basileia a 5% (ver *Aberto* no [ESTADO](../ESTADO.md#aberto-e-aguardando-decisão));
-   a tela não a mostra até lá.
+1. Abrir a PR do M1.6c — spec, plano e implementação — e mesclá-la com a CI verde, com a revisão da `fundamentos`.
+2. **A migration de `core.compute_request.requested_by`**, que a `identidade` pediu à `marco1` no contrato do plano
+   da fase 2 do M2.1a: sem ela, a T14 do M2.1a espera.
+3. As **telas de acesso**, sobre o casco do M1.6b e as rotas de conta do M2.1a.
+4. Olhar a zona de Basileia a 5% (ver *Aberto* no [ESTADO](../ESTADO.md#aberto-e-aguardando-decisão)).
 
 ## Depois
 
@@ -48,3 +46,4 @@ O M1.6c completa a tela com as camadas 4 e 5; as telas de acesso usam o casco do
 | 2026-09-28 | M1.6a fechado: T1 a T14 e a T4b, a vitrine aprovada no portão, D-87 a D-93; a PR de implementação fica para o dono abrir |
 | 2026-09-28 | M1.6a mesclado (PR #12). M1.6b aberto: telas com as camadas 1 a 3; as 4 e 5 vão para o M1.6c (D-95); 5.1 e 5.2 entram (D-96); frase fixa por número (D-97); 1 dia (D-98); três bibliotecas de gráfico comparadas com dado real, o uPlot escolhido (D-94) |
 | 2026-09-29 | M1.6b fechado: T1 a T13, os três portões de mockup, D-94 a D-98; o AALR3 pedido pela tela e calculado em 100,8 s; a PR de implementação fica para o dono abrir |
+| 2026-09-29 | M1.6b mesclado (PR #16). M1.6c fechado: T0 a T8, o mockup aprovado, D-99; as tabelas da `fundamentos` viraram contrato; a taxa do anônimo medida; a PR de implementação fica para o dono abrir |

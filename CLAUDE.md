@@ -127,7 +127,8 @@ auditoria de acesso. Desde o M1.6a existem a **API de leitura** em `/api/v1/`, o
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
 M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
 **filtro automático por organização**. Desde o
-M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — o Marco 1 está fechado.
+M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechado —, e desde o M1.6c a tela tem as
+cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -175,7 +176,7 @@ M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1151 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1215 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -239,7 +240,7 @@ M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — 
   casco (`components/Shell.tsx`); consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
   `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
   `src/content/`** (copiado dos mockups aprovados), e varreduras reprovam cor literal, texto literal
-  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 731 testes.
+  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 1091 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,

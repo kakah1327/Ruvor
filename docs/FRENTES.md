@@ -28,9 +28,9 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6b-as-telas` — M1.6b fechado; a PR de implementação é do dono; o M1.6c abre ramo próprio |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6c-fundamentos-e-contexto` — M1.6c fechado; a PR de implementação é do dono, revisada pela `fundamentos` |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
-| `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
+| `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
 **Hoje são duas frentes ativas**, `marco1` e `identidade`. A `fundamentos` fechou o M3.2 e está
 parada, sem próximo bloco definido; o Kauã, dono dela, assumiu a `identidade` em 2026-09-27.
@@ -90,6 +90,11 @@ mudança passa pela revisão da frente que o consome.
 | **`silver.price`**: o preço diário, por ativo | `marco1` | `fundamentos` lê `asset`, `date` e `close` para os múltiplos | ✅ existe. **Só cresce**, como o catálogo: mudar o sentido dessas colunas exige a revisão da `fundamentos` |
 | **`core.user` e `core.organization`** | `identidade` | todas, no futuro | ✅ existe. A `identidade` muda. Enquanto nada fora de `accounts` depende deles, não há consumidor a proteger |
 | **O filtro automático por organização**: `apps/accounts/tenancy.py` | `identidade` (M4.2) | toda frente que criar tabela privada (a primeira é o M2.2) | ✅ existe ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)). Outras frentes o **usam**, não o mudam: tabela privada nova usa o `OrganizationScopedManager` como gerente padrão, com `organization_field` e um gerente base sem escopo |
+| **`gold.fundamental_indicator`**: o último indicador por ação | `fundamentos` | `marco1` (a rota `/fundamentals`, M1.6c) | ✅ contrato **"só cresce"** ([D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)): as colunas do RF-02 da [spec do M1.6c](specs/M1.6c-fundamentos-e-contexto.md), mais `asset` e `statement`. Coluna nova pode; mudar o sentido, renomear ou tirar uma lida exige a revisão da `marco1` |
+| **`gold.peer_comparison`**: a posição entre os pares | `fundamentos` | `marco1` | ✅ "só cresce": `peer_level`, `group_*`, as dezoito `{ind}_peer_median`/`_percentile`/`_peer_count` e a ligação um-para-um com o indicador — a tela lê a comparação **do próprio indicador** |
+| **`silver.disclosure`**: os comunicados da companhia à CVM | `fundamentos` | `marco1` (a rota `/disclosures`) | ✅ "só cresce": as colunas do RF-03 do M1.6c, mais `code_cvm` e `company_name`; a ligação é direta por `silver.asset.code_cvm` |
+| **`silver.company`** e três colunas de **`silver.financial_statement`** | `fundamentos` | `marco1` | ✅ "só cresce": `company.code_cvm`, `company.name`; `reference_date`, `source`, `scope` do balanço do indicador |
+| **As listas de valores que a tela traduz**: `account_plan`, `per_share_missing` (com os campos que cada motivo anula, `REASON_NULLS`), `market_cap_missing` (os literais de `market_cap()`), `peer_level`, `category` | `fundamentos` | `marco1` | ✅ **valor novo é mudança de contrato**: a PR da `fundamentos` passa pela revisão da `marco1`, que atualiza a tradução e `backend/tests/api/test_valores_fundamentos.py` — o teste lê as listas da fonte e reprova a mudança |
 | **`CELERY_BEAT_SCHEDULE`** | cada frente, a própria entrada | — | ✅ arquivo comum. A `fundamentos` acrescenta a sua e não mexe no horário das outras |
 
 ---
@@ -106,8 +111,8 @@ outras frentes.
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
 | D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c | — |
-| D-100 a D-119 | `identidade` | D-100 a D-107 |
-| D-120 a D-139 | `fundamentos` | D-120 a D-129 |
+| D-100 a D-119 | `identidade` | D-100 a D-112 |
+| D-120 a D-139 | `fundamentos` | D-120 a D-134 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da
 spec seguinte.
