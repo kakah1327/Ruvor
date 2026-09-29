@@ -1,13 +1,15 @@
 /**
  * A tela do ativo (T10): o cabeçalho, o preço, os proventos e o comportamento.
  *
- * - V-04 na parte de tela (RF-06): as cinco rotas pedidas juntas; `404 asset_not_found` na
- *   identidade vira "ativo não encontrado"; qualquer outro erro fica na seção da rota, com
- *   "tentar de novo", e o resto da tela renderiza;
+ * - V-04 na parte de tela (RF-06): as rotas pedidas juntas — sete desde o M1.6c, com
+ *   `/fundamentals` e `/disclosures` (V-10 do M1.6c) —; `404 asset_not_found` na identidade vira
+ *   "ativo não encontrado"; qualquer outro erro fica na seção da rota, com "tentar de novo", e o
+ *   resto da tela renderiza;
  * - V-06 (RF-10): cada campo formatado em pt-BR; o nulo mostra "—" e o porquê, **nunca** zero;
  *   o índice com beta nulo diz que é a referência; `metric: null`;
  * - V-14 das seções desta tarefa (RF-21): a frase de cada número está junto dele;
- * - `data-ready` e o `reloadAll()` que a T11 usa.
+ * - `data-ready` e o `reloadAll()` que a T11 usa; as duas seções do M1.6c depois do risco, fora
+ *   do `data-ready`.
  *
  * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
  * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
@@ -28,8 +30,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "../src/App";
 import type {
   AssetDetail,
+  Disclosures,
   EventRow,
   Events,
+  Fundamentals,
   HistogramBin,
   Metric,
   Metrics,
@@ -210,9 +214,38 @@ const RISK: Risk = {
   request: null,
 };
 
+/** Sem indicador calculado: a seção Fundamentos fica no vazio, sem alerta. */
+const FUNDAMENTALS: Fundamentals = { ticker: "ITUB4", indicator: null, peers: null };
+
+const DISCLOSURES: Disclosures = {
+  ticker: "ITUB4",
+  company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },
+  count: 1,
+  limit: 10,
+  offset: 0,
+  results: [
+    {
+      delivered_on: "2026-09-25",
+      reference_date: "2026-09-25",
+      category: "fato_relevante",
+      kind: "Fato Relevante",
+      species: "",
+      title: "Título do fato relevante",
+      link: "https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo=1",
+    },
+  ],
+};
+
 // ---------------------------------------------------------------- o duplo do fetch
 
-type Route = "asset" | "prices" | "events" | "metrics" | "risk";
+type Route =
+  | "asset"
+  | "prices"
+  | "events"
+  | "metrics"
+  | "risk"
+  | "fundamentals"
+  | "disclosures";
 type Reply = { status: number; body: unknown };
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -227,12 +260,14 @@ let calls: Call[] = [];
 /** A resposta de cada rota; `undefined` deixa o pedido pendente até o teste responder. */
 let replies: Partial<Record<Route, Reply>> = {};
 
+/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
 function routeOf(url: string): Route {
-  const match = /^\/api\/v1\/assets\/[^/]+(?:\/(prices|events|metrics|risk))?$/.exec(
-    url,
-  );
+  const match =
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+      url,
+    );
   if (match === null) throw new Error(`pedido inesperado: ${url}`);
-  return (match[1] as Route | undefined) ?? "asset";
+  return (match[1] ?? match[2] ?? "asset") as Route;
 }
 
 function fakeResponse({ status, body }: Reply): Response {
@@ -267,6 +302,8 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     events: ok(EVENTS),
     metrics: ok({ ticker: "ITUB4", metric: METRIC } satisfies Metrics),
     risk: ok(RISK),
+    fundamentals: ok(FUNDAMENTALS),
+    disclosures: ok(DISCLOSURES),
     ...over,
   };
 }
@@ -297,6 +334,10 @@ const panel = (title: string) =>
 const pricePanel = () => panel(TEXTOS["ativo.preco.titulo"]);
 const eventsPanel = () => panel(TEXTOS["ativo.eventos.titulo"]);
 const behavior = () => panel(TEXTOS["comportamento.titulo"]);
+const fundamentalsSection = () =>
+  main().querySelector<HTMLElement>('[data-section="fundamentals"]') as HTMLElement;
+const disclosuresSection = () =>
+  main().querySelector<HTMLElement>('[data-section="disclosures"]') as HTMLElement;
 const block = (title: string) =>
   within(behavior())
     .getByRole("heading", { name: title })
@@ -319,8 +360,8 @@ async function loaded(): Promise<void> {
 
 // ---------------------------------------------------------------- RF-06
 
-describe("RF-06 — as cinco rotas, cada seção sozinha", () => {
-  it("pede as cinco juntas, antes de qualquer resposta", () => {
+describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () => {
+  it("pede as sete juntas, antes de qualquer resposta", () => {
     replies = {};
     renderAsset();
     expect(calls.map((c) => c.url).sort()).toEqual(
@@ -330,8 +371,26 @@ describe("RF-06 — as cinco rotas, cada seção sozinha", () => {
         "/api/v1/assets/ITUB4/metrics",
         "/api/v1/assets/ITUB4/prices",
         "/api/v1/assets/ITUB4/risk",
+        "/api/v1/assets/ITUB4/fundamentals",
+        "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
       ].sort(),
     );
+  });
+
+  it("as duas seções do M1.6c vêm depois do risco: Fundamentos, depois Comunicados", async () => {
+    renderAsset();
+    await loaded();
+    const risco = document.getElementById("risco") as HTMLElement;
+    const follows = (a: Node, b: Node) =>
+      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    expect(follows(risco, fundamentalsSection())).toBe(true);
+    expect(follows(fundamentalsSection(), disclosuresSection())).toBe(true);
+    expect(risco.contains(fundamentalsSection())).toBe(false);
+    await waitFor(() =>
+      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
+    );
+    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
+    expect(disclosuresSection().getAttribute("data-company")).toBe("19348");
   });
 
   it("a lenta não segura a rápida: o comportamento chega com a identidade pendente", async () => {
@@ -397,6 +456,8 @@ describe("RF-06 — as cinco rotas, cada seção sozinha", () => {
     ["prices", () => pricePanel()],
     ["events", () => eventsPanel()],
     ["metrics", () => behavior()],
+    ["fundamentals", () => fundamentalsSection()],
+    ["disclosures", () => disclosuresSection()],
   ] as const)(
     "%s com 500: o erro só na seção dela, e as outras renderizam",
     async (route, section) => {
@@ -422,6 +483,16 @@ describe("RF-06 — as cinco rotas, cada seção sozinha", () => {
       }
       if (route !== "metrics") {
         await waitFor(() => expect(statValue("return_12m")).toBe("+25,8%"));
+      }
+      if (route !== "fundamentals") {
+        await waitFor(() =>
+          expect(fundamentalsSection().getAttribute("data-state")).toBe("empty"),
+        );
+      }
+      if (route !== "disclosures") {
+        await waitFor(() =>
+          expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
+        );
       }
 
       // tentar de novo pede só a rota da seção
@@ -480,6 +551,20 @@ describe("data-ready e reloadAll()", () => {
 
     await reply("risk", ok(RISK));
     expect(readyAttr()).toBe("true");
+    // as duas seções do M1.6c seguem carregando: o data-ready não as espera
+    expect(fundamentalsSection().getAttribute("data-state")).toBe("loading");
+    expect(disclosuresSection().getAttribute("data-state")).toBe("loading");
+  });
+
+  it("as duas seções do M1.6c terminadas não bastam: o risco pendente segura", async () => {
+    allOk({ risk: undefined });
+    stubFetch();
+    renderAsset();
+    await waitFor(() =>
+      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
+    );
+    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
+    expect(main().querySelector("[data-ready]")).toBeNull();
   });
 
   it("o risco em erro também termina", async () => {
@@ -497,10 +582,14 @@ describe("data-ready e reloadAll()", () => {
     expect(main().querySelector("[data-ready]")).toBeNull();
   });
 
-  it("reloadAll pede as cinco de novo sem apagar o que já chegou, e troca quando o novo chega", async () => {
+  it("reloadAll pede as seis de novo sem apagar o que já chegou, incrementa o reloadToken, e troca quando o novo chega", async () => {
     const { result } = renderHook(() => useAssetData("ITUB4"));
     await waitFor(() => expect(result.current.risk.state).toBe("ok"));
     await waitFor(() => expect(result.current.asset.state).toBe("ok"));
+    await waitFor(() => expect(result.current.fundamentals.state).toBe("ok"));
+    // o hook não pede /disclosures: é a seção Comunicados que pede
+    expect(calls.some((c) => c.route === "disclosures")).toBe(false);
+    const token = result.current.reloadToken;
 
     replies = {};
     const before = calls.length;
@@ -510,9 +599,17 @@ describe("data-ready e reloadAll()", () => {
         .slice(before)
         .map((c) => c.route)
         .sort(),
-    ).toEqual(["asset", "events", "metrics", "prices", "risk"]);
+    ).toEqual(["asset", "events", "fundamentals", "metrics", "prices", "risk"]);
+    expect(result.current.reloadToken).toBe(token + 1);
     // enquanto recarrega, o dado anterior fica
-    for (const key of ["asset", "prices", "events", "metrics", "risk"] as const) {
+    for (const key of [
+      "asset",
+      "prices",
+      "events",
+      "metrics",
+      "risk",
+      "fundamentals",
+    ] as const) {
       expect(result.current[key].state).toBe("ok");
     }
 

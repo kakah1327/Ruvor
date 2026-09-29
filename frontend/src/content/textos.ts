@@ -70,7 +70,8 @@ export const TEXTOS = {
 
   // O rodapé (RF-04).
   "rodape.ressalva": RESSALVA,
-  "rodape.fonte": "Fontes: catálogo de ativos da B3 e preços do Yahoo Finance.",
+  "rodape.fonte":
+    "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
   "rodape.ultimoPregao": (data: string) => `Último pregão usado: ${data}.`,
   "rodape.calculadoEm": (data: string, hora: string) =>
     `Risco calculado em ${data} às ${hora}.`,

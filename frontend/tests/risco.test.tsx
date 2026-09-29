@@ -223,7 +223,15 @@ const E1 = risk({ covered: true, latest: run(apiOrder()) });
 
 // ---------------------------------------------------------------- o duplo do fetch
 
-type Route = "asset" | "prices" | "events" | "metrics" | "risk" | "post";
+type Route =
+  | "asset"
+  | "prices"
+  | "events"
+  | "metrics"
+  | "risk"
+  | "fundamentals"
+  | "disclosures"
+  | "post";
 type Reply = { status: number; body: unknown } | "network" | "html";
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -244,16 +252,18 @@ type Call = {
 let calls: Call[] = [];
 let replies: Partial<Record<Route, Reply>> = {};
 
+/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
 function routeOf(url: string, method: string): Route {
-  const match = /^\/api\/v1\/assets\/[^/]+(?:\/(prices|events|metrics|risk))?$/.exec(
-    url,
-  );
+  const match =
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+      url,
+    );
   if (match === null) throw new Error(`pedido inesperado: ${url}`);
   if (method === "POST") {
     if (match[1] !== "risk") throw new Error(`POST inesperado: ${url}`);
     return "post";
   }
-  return (match[1] as Route | undefined) ?? "asset";
+  return (match[1] ?? match[2] ?? "asset") as Route;
 }
 
 function stubFetch(): void {
@@ -301,6 +311,15 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     events: ok({ ticker: "ITUB4", results: [] }),
     metrics: ok({ ticker: "ITUB4", metric: null }),
     risk: ok(E1),
+    fundamentals: ok({ ticker: "ITUB4", indicator: null, peers: null }),
+    disclosures: ok({
+      ticker: "ITUB4",
+      company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },
+      count: 0,
+      limit: 10,
+      offset: 0,
+      results: [],
+    }),
     ...over,
   };
 }
