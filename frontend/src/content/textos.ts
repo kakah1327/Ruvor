@@ -428,6 +428,179 @@ export const TEXTOS = {
     `O pedido passou de ${n} minutos sem terminar e foi encerrado.`,
   "motivos.desconhecido": (raw: string) =>
     `O pedido terminou sem um motivo conhecido (${raw}).`,
+
+  // fundamentos.* — a seção Fundamentos (M1.6c, RF-05 a RF-10): do registro `TEXTOS` do
+  // `docs/mockups/M1.6c/ativo-fundamentos.html` aprovado, com o ajuste do portão
+  // (`fundamentos.pares.abaixoDeTodas`, no lugar de `posicao` quando k = 0). Os argumentos
+  // chegam formatados; `negativo` escolhe o ramo.
+  "fundamentos.sobrancelha": "O que o balanço mostra",
+  "fundamentos.titulo": "Fundamentos",
+  "fundamentos.intro":
+    "Os números do último balanço que a companhia entregou à CVM: quanto vendeu, quanto lucrou, quanto deve e quanto vale cada ação no papel. Ao lado de seis deles, a posição da companhia entre as do mesmo grupo na B3.",
+  // proveniencia(data do balanço, "ITR"|"DFP", instante do cálculo) — RF-05
+  "fundamentos.proveniencia": (ref: string, fonte: string, calc: string) =>
+    `balanço de ${ref} (${fonte}), calculado em ${calc}`,
+  "fundamentos.fonte.itr": "ITR",
+  "fundamentos.fonte.dfp": "DFP",
+  "fundamentos.fonteNota":
+    "ITR é o balanço trimestral e DFP, o anual; os dois são entregues pela companhia à CVM. Os fundamentos são calculados de novo uma vez por semana.",
+  "fundamentos.carregando": "Carregando os fundamentos deste ativo.",
+  "fundamentos.naoCalculado.titulo": "Os fundamentos deste ativo não foram calculados.",
+  "fundamentos.naoCalculado.indice":
+    "O Ibovespa não é uma companhia: não tem balanço, nem fundamentos.",
+  "fundamentos.naoCalculado.nota":
+    "Eles saem dos balanços trimestrais e anuais entregues à CVM, e o cálculo, semanal, não tem resultado para este ativo.",
+
+  // fundamentos.bloco.* e fundamentos.nota.* — os cinco blocos (RF-06)
+  "fundamentos.bloco.resultado": "Resultado em 12 meses",
+  "fundamentos.bloco.rentabilidade": "Rentabilidade",
+  "fundamentos.bloco.endividamento": "Endividamento",
+  "fundamentos.bloco.porAcao": "Por ação e múltiplos",
+  "fundamentos.bloco.tamanho": "Tamanho",
+  "fundamentos.nota.resultado":
+    "Os três somam os quatro últimos trimestres do balanço.",
+  "fundamentos.nota.endividamento":
+    "A dívida bruta são os empréstimos e financiamentos, incluindo o arrendamento; o caixa inclui as aplicações financeiras.",
+  "fundamentos.nota.porAcao":
+    "O lucro e o patrimônio por ação usam a quantidade de ações do balanço; o P/L e o P/VP, o preço de um pregão.",
+  "fundamentos.nota.tamanho":
+    "O patrimônio e o ativo são a posição na data do balanço; o valor de mercado usa o preço das ações.",
+
+  // fundamentos.rotulo.* — o nome de cada número
+  "fundamentos.rotulo.revenue_ttm": "Receita líquida",
+  "fundamentos.rotulo.ebit_ttm": "Resultado operacional (EBIT)",
+  "fundamentos.rotulo.net_income_ttm": "Lucro líquido",
+  "fundamentos.rotulo.net_margin": "Margem líquida",
+  "fundamentos.rotulo.ebit_margin": "Margem operacional (EBIT)",
+  "fundamentos.rotulo.roe": "Retorno sobre o patrimônio (ROE)",
+  "fundamentos.rotulo.gross_debt": "Dívida bruta",
+  "fundamentos.rotulo.cash": "Caixa e aplicações",
+  "fundamentos.rotulo.net_debt": "Dívida líquida",
+  "fundamentos.rotulo.net_debt_to_equity": "Dívida líquida sobre o patrimônio",
+  "fundamentos.rotulo.close": "Preço usado",
+  "fundamentos.rotulo.eps": "Lucro por ação (LPA)",
+  "fundamentos.rotulo.bvps": "Patrimônio por ação (VPA)",
+  "fundamentos.rotulo.pe": "Preço sobre lucro (P/L)",
+  "fundamentos.rotulo.pb": "Preço sobre patrimônio (P/VP)",
+  "fundamentos.rotulo.equity_parent": "Patrimônio líquido",
+  "fundamentos.rotulo.total_assets": "Ativo total",
+  "fundamentos.rotulo.market_cap": "Valor de mercado",
+  "fundamentos.vezes": (x: string) => `${x} vezes`,
+  "fundamentos.semValor": "sem valor",
+
+  // fundamentos.<campo> — a frase de cada número presente (D-97). negativo: boolean.
+  "fundamentos.revenue_ttm":
+    "O que a companhia vendeu nos últimos 12 meses, descontados os impostos sobre a venda, as devoluções e os abatimentos.",
+  "fundamentos.ebit_ttm": (negativo: boolean) =>
+    negativo
+      ? "Negativo: a operação deu prejuízo nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro."
+      : "O que a operação rendeu nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro.",
+  "fundamentos.net_income_ttm": (negativo: boolean) =>
+    negativo
+      ? "Negativo: nos últimos 12 meses, custos, juros e impostos passaram do que a companhia vendeu, e ela teve prejuízo."
+      : "O que sobrou para os acionistas da companhia nos últimos 12 meses, depois de custos, juros e impostos.",
+  // margens e ROE: (cada R$ 100 → valor, negativo)
+  "fundamentos.net_margin": (x: string, negativo: boolean) =>
+    negativo
+      ? `De cada R$ 100 vendidos, a companhia perdeu ${x}.`
+      : `De cada R$ 100 vendidos, ${x} viraram lucro para os acionistas.`,
+  "fundamentos.ebit_margin": (x: string, negativo: boolean) =>
+    negativo
+      ? `De cada R$ 100 vendidos, a operação perdeu ${x}, antes de juros e impostos.`
+      : `De cada R$ 100 vendidos, ${x} sobraram da operação, antes de juros e impostos.`,
+  "fundamentos.roe": (x: string, negativo: boolean) =>
+    negativo
+      ? `Cada R$ 100 do patrimônio dos acionistas tiveram ${x} de prejuízo nos últimos 12 meses.`
+      : `Cada R$ 100 do patrimônio dos acionistas geraram ${x} de lucro nos últimos 12 meses.`,
+  "fundamentos.gross_debt":
+    "Os empréstimos e financiamentos, de curto e de longo prazo, incluindo o arrendamento — os aluguéis de longo prazo que o balanço conta como dívida.",
+  "fundamentos.cash": "O dinheiro em caixa mais as aplicações financeiras.",
+  "fundamentos.net_debt": (negativo: boolean) =>
+    negativo
+      ? "Negativa: o caixa é maior que a dívida bruta."
+      : "A dívida bruta menos o caixa: o que restaria de dívida se todo o caixa fosse usado para pagá-la.",
+  "fundamentos.net_debt_to_equity": (x: string, negativo: boolean) =>
+    negativo
+      ? "Negativa: o caixa é maior que a dívida bruta, e não sobra dívida para comparar com o patrimônio."
+      : `A dívida líquida perto do patrimônio dos acionistas: para cada R$ 100 de patrimônio, ${x} de dívida líquida.`,
+  // close(data do preço) e closeOutraData(data do preço, último pregão da identidade) — RF-06
+  "fundamentos.close": (data: string) =>
+    `O fechamento de ${data}, o preço que entra no P/L e no P/VP.`,
+  "fundamentos.closeOutraData": (data: string, ultimo: string) =>
+    `O fechamento de ${data}, não o do último pregão coletado (${ultimo}): os fundamentos são calculados uma vez por semana, com o último preço de até 10 dias antes do cálculo.`,
+  // eps(quantidade de ações, negativo), bvps(quantidade de ações)
+  "fundamentos.eps": (acoes: string, negativo: boolean) =>
+    negativo
+      ? `O prejuízo dos últimos 12 meses dividido pelas ${acoes} ações da companhia, somadas todas as classes.`
+      : `O lucro dos últimos 12 meses dividido pelas ${acoes} ações da companhia, somadas todas as classes.`,
+  "fundamentos.bvps": (acoes: string) =>
+    `O patrimônio dos acionistas dividido pelas mesmas ${acoes} ações.`,
+  // pe(data, preço, P/L com uma casa, negativo) e pb(data, preço, P/VP) — o preço usado (RF-06)
+  "fundamentos.pe": (data: string, preco: string, x: string, negativo: boolean) =>
+    negativo
+      ? `Negativo porque a companhia teve prejuízo nos últimos 12 meses. Com o fechamento de ${data}, ${preco}, ele não diz em quantos anos o lucro pagaria o preço: não houve lucro.`
+      : `O preço dividido pelo lucro por ação, com o fechamento de ${data}, ${preco}: o preço equivale a ${x} anos do lucro dos últimos 12 meses.`,
+  "fundamentos.pb": (data: string, preco: string, x: string) =>
+    `O preço dividido pelo patrimônio por ação, com o fechamento de ${data}, ${preco}: a bolsa paga ${x} vezes o valor que o balanço dá a cada ação.`,
+  "fundamentos.equity_parent": (negativo: boolean) =>
+    negativo
+      ? "Negativo: a companhia deve mais do que tem, descontada a parte dos sócios de fora nas controladas."
+      : "O que é dos acionistas da companhia: tudo o que ela tem, menos o que deve e a parte dos sócios de fora nas controladas.",
+  "fundamentos.total_assets":
+    "Tudo o que a companhia tem no balanço: caixa, créditos a receber, estoques, investimentos, imóveis e equipamentos.",
+  "fundamentos.market_cap":
+    "O preço de cada classe de ação vezes a quantidade dela, somados: quanto a bolsa diz que a companhia inteira vale.",
+
+  // fundamentos.nulo.* — o porquê de cada nulo (RF-07), pela atribuição de `nulos.ts`. bank e
+  // insurance dividem a frase.
+  "fundamentos.nulo.planoFinanceiro":
+    "Bancos e seguradoras publicam o balanço em outro formato, e este número não se aplica a eles.",
+  "fundamentos.nulo.planoDesconhecido":
+    "O plano de contas desta companhia não foi reconhecido, e receita, margens e dívida não são calculadas.",
+  "fundamentos.nulo.porAcao.unit":
+    "Este código é uma unit, um pacote com ações de mais de uma classe: o preço e os números por ação não valem para ele.",
+  "fundamentos.nulo.porAcao.stale_statement":
+    "O último balanço entregue tem mais de 460 dias, velho demais para os números por ação e para o preço de hoje.",
+  "fundamentos.nulo.porAcao.no_share_count":
+    "O balanço não informa a quantidade de ações — a CVM só a traz de 2020 em diante —, e sem ela não há número por ação.",
+  "fundamentos.nulo.porAcao.share_scale_unknown":
+    "O balanço informa a quantidade de ações sem dizer se ela está em unidades ou em milhares, e não foi possível descobrir; sem isso, não há número por ação.",
+  "fundamentos.nulo.porAcao.no_price":
+    "Não há preço desta ação coletado até 10 dias antes do cálculo, e sem preço não há P/L nem P/VP.",
+  "fundamentos.nulo.valorMercado.stale_statement":
+    "O último balanço entregue tem mais de 460 dias, e a quantidade de ações dele não serve para o valor de mercado de hoje.",
+  "fundamentos.nulo.valorMercado.no_share_count":
+    "O balanço não informa a quantidade de ações — a CVM só a traz de 2020 em diante —, e sem ela não há valor de mercado.",
+  "fundamentos.nulo.valorMercado.share_scale_unknown":
+    "O balanço informa a quantidade de ações sem dizer se ela está em unidades ou em milhares, e não foi possível descobrir; sem isso, não há valor de mercado.",
+  "fundamentos.nulo.valorMercado.ambiguous_class":
+    "A companhia tem mais de um código negociado na mesma classe de ação, e não há como saber qual preço usar.",
+  "fundamentos.nulo.valorMercado.no_price":
+    "Não há preço coletado de nenhuma classe de ação da companhia.",
+  "fundamentos.nulo.valorMercado.missing_class_price":
+    "Falta o preço de uma das classes de ação da companhia, ordinária ou preferencial, e o valor de mercado soma todas.",
+  "fundamentos.nulo.generico": "O balanço não permite calcular este número.",
+
+  // fundamentos.pares.* — o grupo e a posição (RF-09, RF-10). Sem julgar: acima não é bom.
+  "fundamentos.pares.segmento": (segmento: string) =>
+    `Comparado com as companhias do segmento ${segmento}, na B3.`,
+  "fundamentos.pares.subsetor": (subsetor: string) =>
+    `Comparado com as companhias do subsetor ${subsetor}, na B3: o segmento desta companhia não formou grupo, porque tem menos de três companhias ou não está informado.`,
+  "fundamentos.pares.nenhum":
+    "Não há companhias comparáveis suficientes no segmento nem no subsetor desta companhia.",
+  "fundamentos.pares.indisponivel":
+    "A comparação com os pares não está disponível para este cálculo.",
+  "fundamentos.pares.leitura":
+    "A posição diz acima de quantas companhias do grupo o número está, contando só as que têm aquele indicador calculado. Acima não quer dizer bom, nem abaixo quer dizer ruim: numa dívida, estar acima é dever mais.",
+  "fundamentos.pares.rotulo": "Entre os pares",
+  // posicao(k, n − 1) — k = round(percentile × (n − 1)), n = count
+  "fundamentos.pares.posicao": (k: string, outras: string) =>
+    `Acima de ${k} das outras ${outras} companhias do grupo com este indicador calculado.`,
+  // abaixoDeTodas(n − 1) — no lugar de posicao quando k = 0 (ajuste do portão, 2026-09-29)
+  "fundamentos.pares.abaixoDeTodas": (outras: string) =>
+    `Abaixo de todas as outras ${outras} companhias do grupo com este indicador calculado.`,
+  "fundamentos.pares.mediana": (m: string) => `Mediana do grupo: ${m}.`,
+  "fundamentos.pares.semComparacao": "Sem comparação para este indicador.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

@@ -202,3 +202,78 @@ export type Risk = {
   in_progress: InProgress | null;
   request: ComputeRequest | null;
 };
+
+/** O plano de contas do balanço (`AccountPlan` em `backend/apps/fundamentals/models.py`). */
+export type AccountPlan = "general" | "bank" | "insurance" | "unknown";
+
+/**
+ * A linha de `gold.fundamental_indicator` (M1.6c, RF-02), com os nomes das colunas.
+ * `per_share_missing` e `market_cap_missing` são texto livre no banco (sem `choices`): um
+ * valor fora das listas de `content/nulos.ts` cai na frase genérica (RF-07).
+ */
+export type Indicator = {
+  calculated_at: string;
+  statement: {
+    reference_date: string;
+    source: "itr" | "dfp";
+    scope: "consolidated" | "individual";
+  };
+  account_plan: AccountPlan;
+  scope: "consolidated" | "individual";
+  revenue_ttm: Dec | null;
+  ebit_ttm: Dec | null;
+  net_income_ttm: Dec | null;
+  equity_parent: Dec | null;
+  total_assets: Dec | null;
+  gross_debt: Dec | null;
+  cash: Dec | null;
+  net_debt: Dec | null;
+  net_margin: Dec | null;
+  ebit_margin: Dec | null;
+  roe: Dec | null;
+  net_debt_to_equity: Dec | null;
+  price_date: string | null;
+  close: Dec | null;
+  shares_total: number | null;
+  eps: Dec | null;
+  bvps: Dec | null;
+  pe: Dec | null;
+  pb: Dec | null;
+  per_share_missing: string | null;
+  market_cap: Dec | null;
+  market_cap_missing: string | null;
+};
+
+/** A posição de um indicador entre os pares: as três colunas `{ind}_*`, agrupadas. */
+export type PeerIndicator = {
+  median: Dec | null;
+  percentile: Dec | null;
+  count: number | null;
+};
+
+/** Os seis indicadores comparados com os pares (M3.2), na ordem de `PeersOut`. */
+export const PEER_INDICATORS = [
+  "roe",
+  "net_margin",
+  "ebit_margin",
+  "net_debt_to_equity",
+  "pe",
+  "pb",
+] as const;
+
+export type PeerIndicatorName = (typeof PEER_INDICATORS)[number];
+
+/** A comparação do próprio indicador com os pares (`gold.peer_comparison`). */
+export type Peers = {
+  peer_level: "segment" | "subsector" | "none";
+  group_sector: string | null;
+  group_subsector: string | null;
+  group_segment: string | null;
+} & Record<PeerIndicatorName, PeerIndicator>;
+
+/** `GET /api/v1/assets/{ticker}/fundamentals`. */
+export type Fundamentals = {
+  ticker: string;
+  indicator: Indicator | null;
+  peers: Peers | null;
+};
