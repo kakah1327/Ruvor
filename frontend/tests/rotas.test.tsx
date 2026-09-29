@@ -5,10 +5,14 @@
  */
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App, routes } from "../src/App";
 import { TEXTOS } from "../src/content/textos";
+
+// A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
+// no import, e o jsdom não o tem. Aqui nenhum gráfico chega a ser desenhado.
+vi.mock("uplot", () => ({ default: class {} }));
 
 afterEach(() => {
   cleanup(); // sem globals: true no Vitest, a Testing Library nao limpa o DOM sozinha

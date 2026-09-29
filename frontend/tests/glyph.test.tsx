@@ -24,14 +24,16 @@ const SRC = resolve(HERE, "../src");
 const REGULAR: RegularGlyph[] = [
   "arrow-left",
   "arrows-clockwise",
+  "calendar-blank",
   "caret-right",
+  "chart-line",
   "database",
   "info",
   "magnifying-glass",
   "spinner-gap",
   "x",
 ];
-const DUOTONE: DuotoneGlyph[] = ["x-circle"];
+const DUOTONE: DuotoneGlyph[] = ["info", "x-circle"];
 
 /** Os `d` do arquivo, lidos à parte do componente. */
 function fileDrawing(path: string): string[] {

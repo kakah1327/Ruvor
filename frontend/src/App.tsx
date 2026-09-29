@@ -8,13 +8,14 @@ import {
 } from "react-router";
 
 import { Shell } from "./components/Shell";
+import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 
 /**
  * A rota do ativo (RF-01): o ticker em minúsculas é aceito, e o endereço passa a mostrar
- * maiúsculas **sem entrada nova no histórico** — `replace`, não `push`. A tela do ativo
- * entra aqui na T10.
+ * maiúsculas **sem entrada nova no histórico** — `replace`, não `push`. A tela só monta com
+ * o código já em maiúsculas, e a chave pelo código a remonta do zero ao trocar de ativo.
  */
 function AssetRoute() {
   const { ticker = "" } = useParams();
@@ -27,7 +28,7 @@ function AssetRoute() {
     }
   }, [navigate, ticker, upper]);
 
-  return null;
+  return ticker === upper ? <AssetScreen key={upper} ticker={upper} /> : null;
 }
 
 /** As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. */

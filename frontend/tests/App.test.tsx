@@ -9,6 +9,10 @@ import { App } from "../src/App";
 import { RESSALVA } from "../src/content/ressalva";
 import { TEXTOS } from "../src/content/textos";
 
+// A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
+// no import, e o jsdom não o tem. Aqui nenhum gráfico chega a ser desenhado.
+vi.mock("uplot", () => ({ default: class {} }));
+
 afterEach(() => {
   cleanup(); // sem globals: true no Vitest, a Testing Library nao limpa o DOM sozinha
   vi.unstubAllGlobals();

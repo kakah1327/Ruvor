@@ -119,3 +119,33 @@ export function formatInstant(value: string, timeZone?: string): string {
     parts.find((p) => p.type === type)?.value ?? "";
   return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")}`;
 }
+
+const decimalFormats = new Map<number, Intl.NumberFormat>();
+
+/** Número com `digits` casas fixas, sem unidade: 0.8512 → "0,85" (com 2). */
+export function formatDecimal(value: number, digits: number): string {
+  let format = decimalFormats.get(digits);
+  if (format === undefined) {
+    format = new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+    decimalFormats.set(digits, format);
+  }
+  return format.format(value);
+}
+
+const currencyPrecise = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 6,
+});
+
+/**
+ * Valor em reais com até seis casas, para o provento por ação, que a API guarda com seis:
+ * 0.0217 → "R$ 0,0217".
+ */
+export function formatCurrencyPrecise(value: number): string {
+  return currencyPrecise.format(value);
+}

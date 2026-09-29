@@ -175,6 +175,7 @@
 }
 
 .ruvor-content {
+  min-width: 0;
   padding: 34px 40px 48px;
 }
 
@@ -190,8 +191,9 @@
   gap: 20px;
 }
 
+/* minmax(0, …): a coluna não cresce além da tela quando o conteúdo tem largura mínima maior. */
 .ruvor-workspace--full {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .ruvor-push {
@@ -1769,7 +1771,7 @@
 
 @media (max-width: 1000px) {
   .ruvor-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ruvor-rail {
@@ -1806,6 +1808,13 @@
 /* M1.6b: estreito. A barra em duas linhas, com a busca embaixo; o conteúdo com menos
    margem; o título da página no degrau h2. */
 @media (max-width: 720px) {
+  /* A tabela dos proventos cabe em 360 px com menos recuo lateral nas células. */
+  .ruvor-table--end th,
+  .ruvor-table--end td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
   .ruvor-topbar {
     height: auto;
     min-height: 60px;

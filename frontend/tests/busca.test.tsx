@@ -22,6 +22,10 @@ import type { AssetItem, AssetPage } from "../src/api/types";
 import { SUGESTOES } from "../src/content/sugestoes";
 import { TEXTOS } from "../src/content/textos";
 
+// A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
+// no import, e o jsdom não o tem. Aqui nenhum gráfico chega a ser desenhado.
+vi.mock("uplot", () => ({ default: class {} }));
+
 type Call = {
   url: string;
   /** Responde 200 com o corpo. */
