@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Busca e casco (M1.6b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da busca e do casco (M1.6b, T2). Só var(--ruvor-*): nenhuma cor e nenhum tamanho de
+   * fonte literal. Os ícones são os svg de brand/ruvor/icons/ (D-93), copiados para o <svg> de
+   * símbolos no início do <body>.
+   *
+   * Os componentes que este mockup desenhou como estilo local (prefixo bsc-) foram levados a
+   * brand/ruvor/components.css pela T5, com o prefixo ruvor-; a tela usa as classes do kit.
+   * O que fica aqui, com prefixo mk-, é a moldura do mockup (o seletor de estados) e não é tela.
+   */
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ruvor-space-2) var(--ruvor-space-3);
+    padding: var(--ruvor-space-2) var(--ruvor-space-5);
+    background: var(--ruvor-surface-2);
+    border-bottom: 1px dashed var(--ruvor-text-muted);
+  }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-log { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-page[hidden] { display: none; }
+
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-duo-x-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M1.6b · busca e casco · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Página inicial">
+    <span>Página inicial:</span>
+    <button class="ruvor-btn" type="button" data-mk="vazio">vazio</button>
+    <button class="ruvor-btn" type="button" data-mk="carregando">carregando</button>
+    <button class="ruvor-btn" type="button" data-mk="resultados">digitando</button>
+    <button class="ruvor-btn" type="button" data-mk="mais">mostrar mais</button>
+    <button class="ruvor-btn" type="button" data-mk="sem-resultado">sem resultado</button>
+    <button class="ruvor-btn" type="button" data-mk="erro">erro</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Outra página">
+    <span>Outra página:</span>
+    <button class="ruvor-btn" type="button" data-mk="suspensa">lista suspensa</button>
+    <button class="ruvor-btn" type="button" data-mk="suspensa-carregando">suspensa carregando</button>
+    <button class="ruvor-btn" type="button" data-mk="suspensa-sem-resultado">suspensa sem resultado</button>
+    <button class="ruvor-btn" type="button" data-mk="suspensa-erro">suspensa erro</button>
+    <button class="ruvor-btn" type="button" data-mk="nao-encontrada">página não encontrada</button>
+  </div>
+  <span class="mk-log" id="mk-log" aria-live="polite"></span>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="/" data-nav="home" aria-label="Ruvor, ir para a busca"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></a>
+
+  <div class="ruvor-topbar__search" id="top-search" hidden>
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" id="top-q" type="search" autocomplete="off" spellcheck="false"
+        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="top-list"
+        aria-label="Buscar ativo" placeholder="Buscar ativo">
+      <button class="ruvor-search__clear" type="button" data-clear="top" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="ruvor-search__popover" id="top-pop" hidden></div>
+  </div>
+  <div class="ruvor-topbar__spacer" aria-hidden="true" id="top-spacer"></div>
+
+  <div class="ruvor-segmented" role="group" aria-label="Tema">
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false">Claro</button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false">Escuro</button>
+    <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true">Sistema</button>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <main class="ruvor-content">
+
+    <!-- ---------------------------------------------------------- página inicial: a busca -->
+    <section class="mk-page ruvor-home" id="page-home" aria-labelledby="home-title">
+      <p class="ruvor-eyebrow">Busca</p>
+      <h1 class="ruvor-display" id="home-title">Qual ativo você quer analisar?</h1>
+      <p class="ruvor-sub">Digite o código ou o nome de uma ação da B3, ou do Ibovespa. Na página do ativo, você vê como o preço se comportou e quanto nove métodos estimam que ele pode perder em um dia.</p>
+
+      <div class="ruvor-search ruvor-search--lg">
+        <svg class="ruvor-glyph ruvor-glyph--lg" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+        <input class="ruvor-input ruvor-search__input" id="home-q" type="search" autocomplete="off" spellcheck="false"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="home-list"
+          aria-label="Buscar ativo por código ou nome" placeholder="Código ou nome, como PETR4">
+        <button class="ruvor-search__clear" type="button" data-clear="home" aria-label="Limpar a busca" hidden><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-x"/></svg></button>
+      </div>
+
+      <div id="home-out"></div>
+    </section>
+
+    <!-- ---------------------------------------------------------- página não encontrada -->
+    <section class="mk-page ruvor-notfound" id="page-404" aria-labelledby="nf-title" hidden>
+      <p class="ruvor-eyebrow">Endereço desconhecido</p>
+      <h1 class="ruvor-display" id="nf-title">Página não encontrada.</h1>
+      <p class="ruvor-sub">Nenhuma página do Ruvor fica em <span class="ruvor-path">/ativo/itub4</span>. O endereço pode ter sido digitado errado.</p>
+      <p class="ruvor-sub">Para chegar a um ativo, busque pelo código ou pelo nome.</p>
+      <a class="ruvor-btn ruvor-btn--primary" href="/" data-nav="home"><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-arrow-left"/></svg><span>Ir para a busca</span></a>
+    </section>
+
+  </main>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span>O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.</span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span>Fontes: catálogo de ativos da B3 e preços do Yahoo Finance.</span></p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var API = "/api/v1/assets";
+  var HOME_LIMIT = 20;
+  var TOP_LIMIT = 8;
+  var DEBOUNCE_MS = 200;
+  var SUGESTOES = ["ITUB4", "PETR4", "VALE3", "BBDC4", "IBOV"];
+
+  // ---------------------------------------------------------------- textos da tela
+  // Todo texto visível que o script monta. Viram entradas de frontend/src/content/textos.ts.
+  var T = {
+    sugestaoTitulo: "ativos com risco calculado",
+    sugestaoNota: "Os outros ativos do catálogo podem ter o risco calculado na página de cada um.",
+    contagem: function (n, q) { return (n === 1 ? "1 ativo" : fmtInt(n) + " ativos") + " para “" + q + "”"; },
+    mostrando: function (a, n) { return "Mostrando " + fmtInt(a) + " de " + fmtInt(n) + "."; },
+    mostrarMais: "Mostrar mais",
+    buscando: "Buscando…",
+    semResultado: function (q) { return "Nenhum ativo com “" + q + "”."; },
+    semResultadoDica: "Confira o código ou tente uma parte do nome.",
+    erroTitulo: "A busca não respondeu.",
+    erroTexto: "Pode ser uma falha passageira do servidor.",
+    tentarDeNovo: "Tentar de novo",
+    suspensaRodape: function (a, n) { return fmtInt(a) + " de " + fmtInt(n) + " · continue digitando para filtrar"; },
+    tagIndice: "índice",
+    tagInativo: "inativo",
+    tagSemDados: "sem dados ainda"
+  };
+
+  function fmtInt(n) { return new Intl.NumberFormat("pt-BR").format(n); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function icon(id, cls) {
+    var ns = "http://www.w3.org/2000/svg";
+    var s = document.createElementNS(ns, "svg");
+    s.setAttribute("class", "ruvor-glyph" + (cls ? " " + cls : ""));
+    s.setAttribute("aria-hidden", "true");
+    s.setAttribute("focusable", "false");
+    var u = document.createElementNS(ns, "use");
+    u.setAttribute("href", "#" + id);
+    s.appendChild(u);
+    return s;
+  }
+  var log = document.getElementById("mk-log");
+  function mkLog(msg) { log.textContent = msg; }
+
+  // ---------------------------------------------------------------- tema
+  var themeBtns = document.querySelectorAll("[data-set-theme]");
+  function setTheme(theme) {
+    if (theme === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    themeBtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-set-theme") === theme)); });
+  }
+  themeBtns.forEach(function (b) { b.addEventListener("click", function () { setTheme(b.getAttribute("data-set-theme")); }); });
+
+  // ---------------------------------------------------------------- a consulta
+  // No mockup, "forçar" troca a resposta da API por erro ou por espera sem fim.
+  var force = null; // null | "erro" | "carregando"
+  function query(q, limit, offset) {
+    if (force === "erro") return Promise.reject(new Error("erro forçado pelo mockup"));
+    if (force === "carregando") return new Promise(function () {});
+    var url = API + "?q=" + encodeURIComponent(q) + "&limit=" + limit + "&offset=" + offset;
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    });
+  }
+
+  function tagsFor(a) {
+    var box = el("span", "ruvor-search__tags");
+    if (a.kind === "index") box.appendChild(el("span", "ruvor-tag ruvor-tag--evidence", T.tagIndice));
+    if (a.status === "inactive") box.appendChild(el("span", "ruvor-tag ruvor-tag--review", T.tagInativo));
+    if (!a.has_prices) box.appendChild(el("span", "ruvor-tag ruvor-tag--neutral", T.tagSemDados));
+    return box;
+  }
+
+  function optionFor(a, idPrefix, i) {
+    var li = el("li", "ruvor-search__option");
+    li.id = idPrefix + "-opt-" + i;
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", "false");
+    var link = el("a", "ruvor-search__link");
+    link.href = "/ativos/" + a.ticker;
+    link.setAttribute("tabindex", "-1");
+    link.appendChild(el("span", "ruvor-search__ticker", a.ticker));
+    var name = el("span", "ruvor-search__name");
+    name.appendChild(el("b", null, a.trading_name));
+    if (a.sector) name.appendChild(el("span", null, a.sector));
+    link.appendChild(name);
+    link.appendChild(tagsFor(a));
+    var go = icon("i-caret-right", "ruvor-glyph--sm ruvor-search__go");
+    link.appendChild(go);
+    li.appendChild(link);
+    return li;
+  }
+
+  // ---------------------------------------------------------------- combobox (os dois campos)
+  function Combo(opts) {
+    var self = this;
+    this.input = opts.input;
+    this.clearBtn = opts.clearBtn;
+    this.limit = opts.limit;
+    this.render = opts.render;
+    this.idPrefix = opts.idPrefix;
+    this.seq = 0;          // número da última consulta disparada
+    this.timer = null;
+    this.state = { kind: "vazio" };
+    this.active = -1;
+
+    this.input.addEventListener("input", function () { self.schedule(); });
+    this.input.addEventListener("keydown", function (e) { self.key(e); });
+    this.clearBtn.addEventListener("click", function () { self.set(""); self.input.focus(); });
+  }
+  Combo.prototype.set = function (q) { this.input.value = q; this.run(); };
+  Combo.prototype.schedule = function () {
+    var self = this;
+    clearTimeout(this.timer);
+    this.clearBtn.hidden = this.input.value === "";
+    this.timer = setTimeout(function () { self.run(); }, DEBOUNCE_MS);
+  };
+  Combo.prototype.run = function (offset, append) {
+    var self = this;
+    var q = this.input.value.trim();
+    this.clearBtn.hidden = this.input.value === "";
+    clearTimeout(this.timer);
+    var mine = ++this.seq;
+    if (q === "") { this.show({ kind: "vazio" }); return; }
+    offset = offset || 0;
+    if (!append) this.show({ kind: "carregando", q: q });
+    else this.show(Object.assign({}, this.state, { loadingMore: true }));
+    query(q, this.limit, offset).then(function (page) {
+      if (mine !== self.seq) return; // resposta atrasada de uma consulta anterior: descartada
+      var results = append ? self.state.results.concat(page.results) : page.results;
+      self.show(page.count === 0 ? { kind: "sem-resultado", q: q } : { kind: "resultados", q: q, count: page.count, results: results });
+    }, function () {
+      if (mine !== self.seq) return;
+      self.show({ kind: "erro", q: q });
+    });
+  };
+  Combo.prototype.show = function (state) {
+    this.state = state;
+    this.active = -1;
+    this.input.removeAttribute("aria-activedescendant");
+    this.render(this, state);
+    var open = state.kind !== "vazio";
+    this.input.setAttribute("aria-expanded", String(open && state.kind === "resultados"));
+  };
+  Combo.prototype.options = function () {
+    return Array.prototype.slice.call(document.querySelectorAll("#" + this.idPrefix + "-list [role=option]"));
+  };
+  Combo.prototype.highlight = function (i) {
+    var opts = this.options();
+    opts.forEach(function (o, k) { o.setAttribute("aria-selected", String(k === i)); o.classList.toggle("ruvor-search__option--active", k === i); });
+    this.active = i;
+    if (i >= 0 && opts[i]) {
+      this.input.setAttribute("aria-activedescendant", opts[i].id);
+      opts[i].scrollIntoView({ block: "nearest" });
+    } else this.input.removeAttribute("aria-activedescendant");
+  };
+  Combo.prototype.key = function (e) {
+    var opts = this.options();
+    if (e.key === "ArrowDown" && opts.length) { e.preventDefault(); this.highlight(Math.min(this.active + 1, opts.length - 1)); }
+    else if (e.key === "ArrowUp" && opts.length) { e.preventDefault(); this.highlight(Math.max(this.active - 1, 0)); }
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (!opts.length) return;           // sem resultado, nada
+      var o = opts[this.active >= 0 ? this.active : 0];
+      o.querySelector("a").click();
+    }
+    else if (e.key === "Escape") { e.preventDefault(); this.set(""); }
+  };
+
+  // ---------------------------------------------------------------- página inicial
+  var homeOut = document.getElementById("home-out");
+  function renderSuggest() {
+    var box = el("section", "ruvor-search__suggest");
+    box.setAttribute("aria-labelledby", "sug-title");
+    var h = el("h2", "ruvor-eyebrow", T.sugestaoTitulo);
+    h.id = "sug-title";
+    box.appendChild(h);
+    var ul = el("ul", "ruvor-chips");
+    SUGESTOES.forEach(function (t) {
+      var li = el("li");
+      var a = el("a", "ruvor-chip", t);
+      a.href = "/ativos/" + t;
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    box.appendChild(el("p", null, T.sugestaoNota));
+    return box;
+  }
+  function renderHome(combo, s) {
+    homeOut.replaceChildren();
+    if (s.kind === "vazio") { homeOut.appendChild(renderSuggest()); return; }
+
+    var wrap = el("div", "ruvor-search__results");
+    var head = el("p", "ruvor-search__count");
+    head.setAttribute("aria-live", "polite");
+    wrap.appendChild(head);
+
+    if (s.kind === "carregando") {
+      head.appendChild(el("span", null, T.buscando));
+      var panel = el("div", "ruvor-panel");
+      panel.setAttribute("aria-busy", "true");
+      for (var i = 0; i < 4; i++) {
+        var row = el("div", "ruvor-search__skeleton");
+        row.setAttribute("aria-hidden", "true");
+        row.appendChild(el("span", "ruvor-skeleton"));
+        row.appendChild(el("span", "ruvor-skeleton"));
+        row.appendChild(el("span", "ruvor-skeleton"));
+        panel.appendChild(row);
+      }
+      wrap.appendChild(panel);
+    } else if (s.kind === "sem-resultado") {
+      var empty = el("div", "ruvor-panel ruvor-search__empty");
+      empty.appendChild(el("b", null, T.semResultado(s.q)));
+      empty.appendChild(el("p", null, T.semResultadoDica));
+      wrap.appendChild(empty);
+    } else if (s.kind === "erro") {
+      var err = el("div", "ruvor-callout ruvor-callout--critical ruvor-search__error");
+      err.setAttribute("role", "alert");
+      var ic = el("span", "ruvor-icon ruvor-icon--critical");
+      ic.appendChild(icon("i-duo-x-circle"));
+      err.appendChild(ic);
+      var body = el("div");
+      body.appendChild(el("b", null, T.erroTitulo));
+      body.appendChild(el("p", null, T.erroTexto));
+      var retry = el("button", "ruvor-btn");
+      retry.type = "button";
+      retry.appendChild(icon("i-arrows-clockwise"));
+      retry.appendChild(el("span", null, T.tentarDeNovo));
+      retry.addEventListener("click", function () { force = null; combo.run(); });
+      body.appendChild(retry);
+      err.appendChild(body);
+      wrap.appendChild(err);
+    } else if (s.kind === "resultados") {
+      head.appendChild(el("b", null, T.contagem(s.count, s.q)));
+      var panelR = el("div", "ruvor-panel");
+      var ul = el("ul", "ruvor-search__list");
+      ul.id = "home-list";
+      ul.setAttribute("role", "listbox");
+      ul.setAttribute("aria-label", T.contagem(s.count, s.q));
+      s.results.forEach(function (a, k) { ul.appendChild(optionFor(a, "home", k)); });
+      panelR.appendChild(ul);
+      wrap.appendChild(panelR);
+      if (s.count > s.results.length) {
+        var more = el("div", "ruvor-search__more");
+        var btn = el("button", "ruvor-btn", T.mostrarMais);
+        btn.type = "button";
+        if (s.loadingMore) { btn.setAttribute("aria-busy", "true"); btn.disabled = true; }
+        btn.addEventListener("click", function () { combo.run(s.results.length, true); });
+        more.appendChild(btn);
+        more.appendChild(el("span", null, T.mostrando(s.results.length, s.count)));
+        wrap.appendChild(more);
+      }
+    }
+    homeOut.appendChild(wrap);
+  }
+  var home = new Combo({
+    input: document.getElementById("home-q"),
+    clearBtn: document.querySelector("[data-clear=home]"),
+    limit: HOME_LIMIT, idPrefix: "home", render: renderHome
+  });
+
+  // ---------------------------------------------------------------- barra superior
+  var pop = document.getElementById("top-pop");
+  function renderTop(combo, s) {
+    pop.replaceChildren();
+    pop.hidden = s.kind === "vazio";
+    if (s.kind === "carregando") {
+      var ld = el("div", "ruvor-search__msg ruvor-search__msg--loading");
+      ld.setAttribute("aria-live", "polite");
+      ld.appendChild(icon("i-spinner-gap", "ruvor-spin"));
+      ld.appendChild(el("span", null, T.buscando));
+      pop.appendChild(ld);
+    } else if (s.kind === "sem-resultado") {
+      var m = el("div", "ruvor-search__msg");
+      m.setAttribute("aria-live", "polite");
+      m.appendChild(el("b", null, T.semResultado(s.q)));
+      m.appendChild(el("p", null, T.semResultadoDica));
+      pop.appendChild(m);
+    } else if (s.kind === "erro") {
+      var e = el("div", "ruvor-search__msg ruvor-search__msg--error");
+      e.setAttribute("role", "alert");
+      e.appendChild(el("b", null, T.erroTitulo));
+      e.appendChild(el("p", null, T.erroTexto));
+      var retry = el("button", "ruvor-btn");
+      retry.type = "button";
+      retry.appendChild(icon("i-arrows-clockwise"));
+      retry.appendChild(el("span", null, T.tentarDeNovo));
+      retry.addEventListener("click", function () { force = null; combo.run(); combo.input.focus(); });
+      e.appendChild(retry);
+      pop.appendChild(e);
+    } else if (s.kind === "resultados") {
+      var ul = el("ul", "ruvor-search__list");
+      ul.id = "top-list";
+      ul.setAttribute("role", "listbox");
+      ul.setAttribute("aria-label", T.contagem(s.count, s.q));
+      s.results.forEach(function (a, k) { ul.appendChild(optionFor(a, "top", k)); });
+      pop.appendChild(ul);
+      var foot = el("div", "ruvor-search__foot", T.suspensaRodape(s.results.length, s.count));
+      foot.setAttribute("aria-live", "polite");
+      pop.appendChild(foot);
+    }
+  }
+  var top = new Combo({
+    input: document.getElementById("top-q"),
+    clearBtn: document.querySelector("[data-clear=top]"),
+    limit: TOP_LIMIT, idPrefix: "top", render: renderTop
+  });
+  // Fecha a lista suspensa ao sair do campo (clique fora).
+  document.addEventListener("click", function (e) {
+    if (!document.getElementById("top-search").contains(e.target)) pop.hidden = true;
+  });
+  top.input.addEventListener("focus", function () { if (top.state.kind !== "vazio") pop.hidden = false; });
+
+  // ---------------------------------------------------------------- páginas
+  var pageHome = document.getElementById("page-home");
+  var page404 = document.getElementById("page-404");
+  var topSearch = document.getElementById("top-search");
+  var topSpacer = document.getElementById("top-spacer");
+  function showPage(which) {
+    pageHome.hidden = which !== "home";
+    page404.hidden = which !== "404";
+    // RF-02: na página de busca, a barra não tem campo — o grande basta.
+    topSearch.hidden = which === "home";
+    topSpacer.hidden = which !== "home";
+  }
+
+  // Links de ativo e de volta: no mockup não saem da página.
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a) return;
+    e.preventDefault();
+    if (a.getAttribute("data-nav") === "home") { setState("vazio"); return; }
+    mkLog("no produto, abriria " + a.getAttribute("href"));
+  });
+
+  // ---------------------------------------------------------------- estados do mockup
+  var PRESETS = {
+    "vazio":                  { page: "home", q: "" },
+    "carregando":             { page: "home", q: "pet", force: "carregando" },
+    "resultados":             { page: "home", q: "pet" },
+    "mais":                   { page: "home", q: "ener" },
+    "sem-resultado":          { page: "home", q: "xyz" },
+    "erro":                   { page: "home", q: "pet", force: "erro" },
+    "suspensa":               { page: "404", top: "ib" },
+    "suspensa-carregando":    { page: "404", top: "ib", force: "carregando" },
+    "suspensa-sem-resultado": { page: "404", top: "xyz" },
+    "suspensa-erro":          { page: "404", top: "ib", force: "erro" },
+    "nao-encontrada":         { page: "404", top: "" }
+  };
+  var mkBtns = document.querySelectorAll("[data-mk]");
+  function setState(name) {
+    var p = PRESETS[name] || PRESETS.vazio;
+    mkBtns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-mk") === name)); });
+    mkLog("");
+    force = p.force || null;
+    showPage(p.page);
+    home.set(p.page === "home" ? p.q : "");
+    top.set(p.top || "");
+    if (p.page === "404") pop.hidden = !(p.top);
+  }
+  mkBtns.forEach(function (b) { b.addEventListener("click", function () { setState(b.getAttribute("data-mk")); }); });
+
+  // ?estado=…&tema=light|dark|system — para capturar cada estado direto.
+  var params = new URLSearchParams(location.search);
+  setTheme(params.get("tema") || "system");
+  setState(params.get("estado") || "vazio");
+})();
+</script>
+</body>
+</html>

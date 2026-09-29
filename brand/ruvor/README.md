@@ -155,6 +155,16 @@ títulos soltos. O estilo de base da página — fundo, cor e fonte do corpo —
 
 `tokens.json` espelha cores e escalas para ferramentas e implementações não-CSS.
 
+**As telas do M1.6b** (busca, casco e tela do ativo) usam só classes da folha: os componentes e
+o arranjo que os mockups aprovados de `docs/mockups/M1.6b/` desenharam foram levados a
+`components.css` — o campo de busca e a lista (`.ruvor-search*`), a chave de tema
+(`.ruvor-segmented`), o rodapé (`.ruvor-footer`), o cabeçalho do ativo, os números com a frase
+(`.ruvor-stat`, `.ruvor-note`), os gráficos (`.ruvor-chart*`), a tabela dos modelos com a linha
+que abre (`.ruvor-table--models`, `.ruvor-table__row--expandable`), os estados de uma seção
+(`.ruvor-state`, `.ruvor-progress`), a trilha (`.ruvor-rail--stack`, `.ruvor-trail`) e a quebra
+abaixo de 720 px. A vitrine mostra cada um, nos dois temas. O token `--ruvor-topbar-control` é
+o fundo e a borda da chave de tema sobre a barra (mesmo valor do avatar, nome próprio).
+
 ---
 
 ## Lacunas conhecidas

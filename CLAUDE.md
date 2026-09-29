@@ -118,7 +118,7 @@ Código — nomes de variável, função, classe — em inglês.
 
 Existem o **motor**, o **casco da aplicação**, o **ambiente local em contêiner**, a
 **fundação de dados** — os quatro esquemas do banco, as primeiras tabelas, o **catálogo de
-ações** da B3 e dez anos de preço de quatro ativos —, as primeiras **métricas de
+ações** da B3 e dez anos de preço de seis ativos — os quatro do Marco 1 e dois pedidos sob demanda —, as primeiras **métricas de
 comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e o veredito
 de adequação por ativo —, calculado **pela fila**, **agendado** pelo Celery Beat e, desde o
 M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Desde a fase 1 do M2.1a
@@ -126,7 +126,8 @@ há **identidade**: sessão, papel por organização, a regra das rotas de conta
 auditoria de acesso. Desde o M1.6a existem a **API de leitura** em `/api/v1/`, o **cálculo sob
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
 M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
-**filtro automático por organização**. Ainda não existe tela de produto.
+**filtro automático por organização**. Desde o
+M1.6b existem as **telas**: a busca e a tela do ativo, com as camadas 1 a 3 — o Marco 1 está fechado.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -174,7 +175,7 @@ M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1147 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1151 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -232,11 +233,15 @@ M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema 
   [D-131](docs/decisoes/D-131-documento-do-ipe-se-identifica-pelo-link.md)). O
   backend **não declara** `numpy` nem `pandas`: o `pandas` chega pelo motor, que só é
   instalado no `worker`.
-- `frontend/` — React em TypeScript estrito, Vite, Vitest. Uma tela de verificação, que
-  consome `brand/ruvor/tokens.css` e `components.css` pelo apelido `@brand`; o proxy do Vite leva
-  `/health` e `/api` à `web`. Uma varredura automatizada reprova cor literal em `frontend/src/` e
-  em `components.css`, e os testes do kit conferem os tokens contra os mockups, o contraste nos
-  dois temas e o conjunto de ícones — 345 testes. Lint e formatação são do **Biome**, por `npm run lint`
+- `frontend/` — React em TypeScript estrito, Vite, Vitest, `react-router` e o **uPlot** nos
+  gráficos ([D-94](docs/decisoes/D-94-os-graficos-sao-do-uplot.md)). As rotas `/` (a busca) e
+  `/ativos/{ticker}` (a tela do ativo, com o risco, o pedido de cálculo e o acompanhamento), dentro do
+  casco (`components/Shell.tsx`); consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
+  `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
+  `src/content/`** (copiado dos mockups aprovados), e varreduras reprovam cor literal, texto literal
+  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 731 testes.
+  `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
+  Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
   os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por
   `engine-strict` — mas isso é da imagem `node:24-slim`, não da máquina: quem não sair do

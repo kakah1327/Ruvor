@@ -1,0 +1,928 @@
+/**
+ * A tela do ativo (T10): o cabeçalho, o preço, os proventos e o comportamento.
+ *
+ * - V-04 na parte de tela (RF-06): as cinco rotas pedidas juntas; `404 asset_not_found` na
+ *   identidade vira "ativo não encontrado"; qualquer outro erro fica na seção da rota, com
+ *   "tentar de novo", e o resto da tela renderiza;
+ * - V-06 (RF-10): cada campo formatado em pt-BR; o nulo mostra "—" e o porquê, **nunca** zero;
+ *   o índice com beta nulo diz que é a referência; `metric: null`;
+ * - V-14 das seções desta tarefa (RF-21): a frase de cada número está junto dele;
+ * - `data-ready` e o `reloadAll()` que a T11 usa.
+ *
+ * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
+ * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
+ */
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { routes } from "../src/App";
+import type {
+  AssetDetail,
+  EventRow,
+  Events,
+  HistogramBin,
+  Metric,
+  Metrics,
+  PriceRow,
+  Prices,
+  Risk,
+} from "../src/api/types";
+import { TEXTOS } from "../src/content/textos";
+import { formatCurrency, formatCurrencyPrecise } from "../src/format/numbers";
+import { useAssetData } from "../src/screens/AssetScreen";
+
+// ---------------------------------------------------------------- o duplo do uPlot
+
+vi.mock("uplot", () => {
+  class FakeUPlot {
+    static paths = { bars: () => ({}) };
+    static tzDate = (date: Date) => date;
+    over = document.createElement("div");
+    setScale() {}
+    setSize() {}
+    destroy() {}
+  }
+  return { default: FakeUPlot };
+});
+
+// ---------------------------------------------------------------- os dados
+
+const ASSET: AssetDetail = {
+  ticker: "ITUB4",
+  name: "ITAU UNIBANCO HOLDING S.A.",
+  trading_name: "ITAUUNIBANCO",
+  kind: "stock",
+  sector: "Financeiro",
+  status: "active",
+  has_prices: true,
+  subsector: "Intermediários Financeiros",
+  segment: "Bancos",
+  listing_segment: "N1",
+  last_price: { date: "2026-09-28", close: "38.500000", adj_close: "38.500000" },
+};
+
+function priceRows(n: number): PriceRow[] {
+  const start = Date.UTC(2016, 0, 4);
+  return Array.from({ length: n }, (_, i) => {
+    const date = new Date(start + i * 86400000).toISOString().slice(0, 10);
+    const close = (20 + i / 10).toFixed(4);
+    return {
+      date,
+      open: close,
+      high: close,
+      low: close,
+      close,
+      adj_close: close,
+      volume: 1,
+    };
+  });
+}
+
+const PRICES: Prices = {
+  ticker: "ITUB4",
+  from: null,
+  to: null,
+  results: priceRows(40),
+};
+
+const EVENTS: Events = {
+  ticker: "ITUB4",
+  results: [
+    // fora da janela de 12 meses até 28/09/2026 (a janela exclui o início)
+    {
+      date: "2025-09-28",
+      kind: "dividend",
+      amount: "0.500000",
+      numerator: null,
+      denominator: null,
+    },
+    {
+      date: "2024-03-18",
+      kind: "split",
+      amount: null,
+      numerator: "11.0000",
+      denominator: "10.0000",
+    },
+    // dentro dela, fora de ordem
+    {
+      date: "2026-08-01",
+      kind: "dividend",
+      amount: "0.021700",
+      numerator: null,
+      denominator: null,
+    },
+    {
+      date: "2026-09-01",
+      kind: "dividend",
+      amount: "0.021700",
+      numerator: null,
+      denominator: null,
+    },
+    {
+      date: "2026-03-20",
+      kind: "split",
+      amount: null,
+      numerator: "12.0000",
+      denominator: "10.0000",
+    },
+  ] satisfies EventRow[],
+};
+
+function bins(counts: (i: number) => number): HistogramBin[] {
+  return Array.from({ length: 42 }, (_, i) => ({
+    bin_index: i,
+    lower_bound: i === 0 ? null : (-0.1 + (i - 1) * 0.005).toFixed(10),
+    upper_bound: i === 41 ? null : (-0.1 + i * 0.005).toFixed(10),
+    count: counts(i),
+  }));
+}
+
+const METRIC: Metric = {
+  calculated_at: "2026-09-28T19:30:02-03:00",
+  as_of_date: "2026-09-28",
+  first_price_date: "2016-09-22",
+  price_count: 2487,
+  return_1m: "0.0200000000",
+  return_3m: "-0.0500000000",
+  return_6m: "0.1000000000",
+  return_12m: "0.2581292498",
+  return_36m: "0.5000000000",
+  return_60m: "0.6616825124",
+  return_120m: "2.0829423310",
+  return_ytd: "0.1357090768",
+  volatility_12m: "0.1753240687",
+  volatility_60m: "0.2500000000",
+  max_drawdown: "-0.4681580885",
+  max_drawdown_peak_date: "2020-01-23",
+  max_drawdown_trough_date: "2020-03-23",
+  max_drawdown_recovery_date: "2021-01-06",
+  max_drawdown_recovery_sessions: 195,
+  beta_60m: "0.8512000000",
+  correlation_60m: "-0.1234000000",
+  benchmark_observations: 1230,
+  skewness: "-0.0470730429",
+  excess_kurtosis: "1.0654291607",
+  statistical_observations: 1247,
+  dividends_12m: "3.456700",
+  dividend_payments_12m: 14,
+  dividend_yield_12m: "0.0812345678",
+  avg_volume_21d: "25432100.00",
+  avg_volume_252d: "21000000.00",
+  histogram: bins((i) => (i === 20 ? 300 : i % 5)),
+};
+
+/** A série curta: as janelas longas nulas, a queda sem volta, a distribuição sem dado. */
+const METRIC_SHORT: Metric = {
+  ...METRIC,
+  first_price_date: "2025-01-02",
+  price_count: 430,
+  return_36m: null,
+  return_60m: null,
+  return_120m: null,
+  volatility_60m: null,
+  max_drawdown_recovery_date: null,
+  max_drawdown_recovery_sessions: null,
+  beta_60m: null,
+  correlation_60m: null,
+  benchmark_observations: null,
+  skewness: null,
+  excess_kurtosis: null,
+  statistical_observations: null,
+  avg_volume_252d: null,
+  histogram: bins(() => 0),
+};
+
+const RISK: Risk = {
+  ticker: "ITUB4",
+  covered: false,
+  latest: null,
+  in_progress: null,
+  request: null,
+};
+
+// ---------------------------------------------------------------- o duplo do fetch
+
+type Route = "asset" | "prices" | "events" | "metrics" | "risk";
+type Reply = { status: number; body: unknown };
+
+const ok = (body: unknown): Reply => ({ status: 200, body });
+const fail = (status: number, code = "internal_error"): Reply => ({
+  status,
+  body: { error: { code, message: "falhou", details: {} } },
+});
+
+type Call = { url: string; route: Route; resolve: (reply: Reply) => void };
+
+let calls: Call[] = [];
+/** A resposta de cada rota; `undefined` deixa o pedido pendente até o teste responder. */
+let replies: Partial<Record<Route, Reply>> = {};
+
+function routeOf(url: string): Route {
+  const match = /^\/api\/v1\/assets\/[^/]+(?:\/(prices|events|metrics|risk))?$/.exec(
+    url,
+  );
+  if (match === null) throw new Error(`pedido inesperado: ${url}`);
+  return (match[1] as Route | undefined) ?? "asset";
+}
+
+function fakeResponse({ status, body }: Reply): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  } as unknown as Response;
+}
+
+function stubFetch(): void {
+  calls = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(
+      (url: string) =>
+        new Promise<Response>((resolve) => {
+          const route = routeOf(url);
+          const call: Call = { url, route, resolve: (r) => resolve(fakeResponse(r)) };
+          calls.push(call);
+          const reply = replies[route];
+          if (reply !== undefined) call.resolve(reply);
+        }),
+    ),
+  );
+}
+
+function allOk(over: Partial<Record<Route, Reply>> = {}): void {
+  replies = {
+    asset: ok(ASSET),
+    prices: ok(PRICES),
+    events: ok(EVENTS),
+    metrics: ok({ ticker: "ITUB4", metric: METRIC } satisfies Metrics),
+    risk: ok(RISK),
+    ...over,
+  };
+}
+
+function renderAsset(ticker = "ITUB4") {
+  const router = createMemoryRouter(routes, { initialEntries: [`/ativos/${ticker}`] });
+  render(<RouterProvider router={router} />);
+  return router;
+}
+
+beforeEach(() => {
+  allOk();
+  stubFetch();
+});
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+// ---------------------------------------------------------------- as partes da tela
+
+const main = () => screen.getByRole("main");
+const header = () =>
+  main().querySelector<HTMLElement>(".ruvor-asset-head") as HTMLElement;
+const panel = (title: string) =>
+  screen.getByRole("heading", { name: title }).closest("section") as HTMLElement;
+const pricePanel = () => panel(TEXTOS["ativo.preco.titulo"]);
+const eventsPanel = () => panel(TEXTOS["ativo.eventos.titulo"]);
+const behavior = () => panel(TEXTOS["comportamento.titulo"]);
+const block = (title: string) =>
+  within(behavior())
+    .getByRole("heading", { name: title })
+    .closest("section") as HTMLElement;
+const stat = (field: string) =>
+  behavior().querySelector<HTMLElement>(`[data-field="${field}"]`) as HTMLElement;
+const statValue = (field: string) =>
+  stat(field).querySelector(".ruvor-stat__value")?.textContent;
+const statPhrase = (field: string) =>
+  stat(field).querySelector(".ruvor-note")?.textContent;
+
+async function loaded(): Promise<void> {
+  await waitFor(() =>
+    expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
+      "true",
+    ),
+  );
+  await waitFor(() => expect(behavior().querySelector("[aria-busy]")).toBeNull());
+}
+
+// ---------------------------------------------------------------- RF-06
+
+describe("RF-06 — as cinco rotas, cada seção sozinha", () => {
+  it("pede as cinco juntas, antes de qualquer resposta", () => {
+    replies = {};
+    renderAsset();
+    expect(calls.map((c) => c.url).sort()).toEqual(
+      [
+        "/api/v1/assets/ITUB4",
+        "/api/v1/assets/ITUB4/events",
+        "/api/v1/assets/ITUB4/metrics",
+        "/api/v1/assets/ITUB4/prices",
+        "/api/v1/assets/ITUB4/risk",
+      ].sort(),
+    );
+  });
+
+  it("a lenta não segura a rápida: o comportamento chega com a identidade pendente", async () => {
+    allOk({ asset: undefined });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(stat("return_12m")).not.toBeNull());
+    expect(header().getAttribute("aria-busy")).toBe("true");
+    expect(within(pricePanel()).getByRole("img")).toBeDefined();
+  });
+
+  it("404 asset_not_found na identidade: a tela inteira vira 'ativo não encontrado', com a busca", async () => {
+    allOk({ asset: fail(404, "asset_not_found") });
+    stubFetch();
+    renderAsset("XPTO3");
+    const title = await screen.findByRole("heading", {
+      name: TEXTOS["ativo.naoEncontrado.titulo"],
+    });
+    const page = title.closest("section") as HTMLElement;
+    expect(
+      within(page).getByText(TEXTOS["ativo.naoEncontrado"]("XPTO3")),
+    ).toBeDefined();
+    expect(within(page).getByText(TEXTOS["ativo.naoEncontrado.dica"])).toBeDefined();
+    expect(within(page).getByRole("combobox")).toBeDefined();
+    expect(
+      screen.queryByRole("heading", { name: TEXTOS["comportamento.titulo"] }),
+    ).toBeNull();
+    expect(page.getAttribute("data-ready")).toBe("true");
+  });
+
+  it("identidade com 500: o erro no cabeçalho, com tentar de novo, e o comportamento renderiza", async () => {
+    allOk({ asset: fail(500) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+
+    const alert = within(header()).getByRole("alert");
+    expect(alert.textContent).toContain(TEXTOS["ativo.erroSecao"]);
+    // o resto da tela continua
+    expect(
+      screen.queryByRole("heading", { name: TEXTOS["ativo.naoEncontrado.titulo"] }),
+    ).toBeNull();
+    expect(statValue("return_12m")).toBe("+25,8%");
+    expect(within(pricePanel()).getByRole("img")).toBeDefined();
+    expect(within(eventsPanel()).getByRole("table")).toBeDefined();
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+
+    // tentar de novo pede só a identidade
+    replies.asset = ok(ASSET);
+    const before = calls.length;
+    fireEvent.click(
+      within(alert).getByRole("button", { name: TEXTOS["ativo.tentarDeNovo"] }),
+    );
+    await waitFor(() =>
+      expect(within(header()).getByRole("heading", { level: 1 }).textContent).toBe(
+        "ITUB4",
+      ),
+    );
+    expect(calls.slice(before).map((c) => c.route)).toEqual(["asset"]);
+  });
+
+  it.each([
+    ["prices", () => pricePanel()],
+    ["events", () => eventsPanel()],
+    ["metrics", () => behavior()],
+  ] as const)(
+    "%s com 500: o erro só na seção dela, e as outras renderizam",
+    async (route, section) => {
+      allOk({ [route]: fail(500) });
+      stubFetch();
+      renderAsset();
+      await waitFor(() => expect(within(section()).getByRole("alert")).toBeDefined());
+      await waitFor(() =>
+        expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
+          "true",
+        ),
+      );
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+      expect(within(header()).getByRole("heading", { level: 1 }).textContent).toBe(
+        "ITUB4",
+      );
+      if (route !== "prices")
+        expect(within(pricePanel()).getByRole("img")).toBeDefined();
+      if (route !== "events") {
+        await waitFor(() =>
+          expect(within(eventsPanel()).getByRole("table")).toBeDefined(),
+        );
+      }
+      if (route !== "metrics") {
+        await waitFor(() => expect(statValue("return_12m")).toBe("+25,8%"));
+      }
+
+      // tentar de novo pede só a rota da seção
+      replies[route] = allOkReply(route);
+      const before = calls.length;
+      fireEvent.click(
+        within(section()).getByRole("button", { name: TEXTOS["ativo.tentarDeNovo"] }),
+      );
+      await waitFor(() => expect(within(section()).queryByRole("alert")).toBeNull());
+      expect(calls.slice(before).map((c) => c.route)).toEqual([route]);
+    },
+  );
+
+  it("erro de rede (network_error) também fica na seção", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (routeOf(url) === "prices") throw new TypeError("Failed to fetch");
+        return fakeResponse(allOkReply(routeOf(url)));
+      }),
+    );
+    renderAsset();
+    await waitFor(() => expect(within(pricePanel()).getByRole("alert")).toBeDefined());
+    await waitFor(() => expect(statValue("return_12m")).toBe("+25,8%"));
+  });
+});
+
+function allOkReply(route: Route): Reply {
+  const saved = replies;
+  allOk();
+  const reply = replies[route] as Reply;
+  replies = saved;
+  return reply;
+}
+
+// ---------------------------------------------------------------- data-ready e reloadAll
+
+describe("data-ready e reloadAll()", () => {
+  const readyAttr = () =>
+    main().querySelector("[data-ready]")?.getAttribute("data-ready");
+
+  it("só com o cabeçalho e o risco terminados", async () => {
+    replies = {};
+    renderAsset();
+    expect(main().querySelector("[data-ready]")).toBeNull();
+    const reply = (route: Route, r: Reply) =>
+      act(async () => {
+        for (const c of calls.filter((x) => x.route === route)) c.resolve(r);
+      });
+
+    await reply("asset", ok(ASSET));
+    await reply("prices", ok(PRICES));
+    await reply("metrics", ok({ ticker: "ITUB4", metric: METRIC }));
+    await reply("events", ok(EVENTS));
+    expect(main().querySelector("[data-ready]")).toBeNull();
+
+    await reply("risk", ok(RISK));
+    expect(readyAttr()).toBe("true");
+  });
+
+  it("o risco em erro também termina", async () => {
+    allOk({ risk: fail(500) });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(readyAttr()).toBe("true"));
+  });
+
+  it("o cabeçalho pendente segura, mesmo com o risco pronto", async () => {
+    allOk({ asset: undefined });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(stat("return_12m")).not.toBeNull());
+    expect(main().querySelector("[data-ready]")).toBeNull();
+  });
+
+  it("reloadAll pede as cinco de novo sem apagar o que já chegou, e troca quando o novo chega", async () => {
+    const { result } = renderHook(() => useAssetData("ITUB4"));
+    await waitFor(() => expect(result.current.risk.state).toBe("ok"));
+    await waitFor(() => expect(result.current.asset.state).toBe("ok"));
+
+    replies = {};
+    const before = calls.length;
+    act(() => result.current.reloadAll());
+    expect(
+      calls
+        .slice(before)
+        .map((c) => c.route)
+        .sort(),
+    ).toEqual(["asset", "events", "metrics", "prices", "risk"]);
+    // enquanto recarrega, o dado anterior fica
+    for (const key of ["asset", "prices", "events", "metrics", "risk"] as const) {
+      expect(result.current[key].state).toBe("ok");
+    }
+
+    const withPrice: AssetDetail = {
+      ...ASSET,
+      last_price: { date: "2026-09-29", close: "39.000000", adj_close: "39.000000" },
+    };
+    await act(async () => {
+      for (const c of calls.slice(before))
+        c.resolve(c.route === "asset" ? ok(withPrice) : allOkReply(c.route));
+    });
+    expect(result.current.asset).toEqual({ state: "ok", data: withPrice });
+  });
+
+  it("a resposta de um pedido já substituído é descartada", async () => {
+    replies = {};
+    const { result } = renderHook(() => useAssetData("ITUB4"));
+    const first = calls.find((c) => c.route === "asset") as Call;
+    act(() => result.current.reload.asset());
+    const second = calls.filter((c) => c.route === "asset").at(-1) as Call;
+    expect(second).not.toBe(first);
+
+    const newer: AssetDetail = { ...ASSET, name: "NOVO" };
+    await act(async () => second.resolve(ok(newer)));
+    await act(async () => first.resolve(ok(ASSET)));
+    expect(result.current.asset).toEqual({ state: "ok", data: newer });
+  });
+});
+
+// ---------------------------------------------------------------- RF-07
+
+describe("RF-07 — o cabeçalho", () => {
+  it("código, nomes, tags, classificação e o último fechamento com a data e a frase", async () => {
+    renderAsset();
+    await loaded();
+    const head = header();
+    expect(within(head).getByRole("heading", { level: 1 }).textContent).toBe("ITUB4");
+    expect(within(head).getByText("ITAUUNIBANCO")).toBeDefined();
+    expect(within(head).getByText("ITAU UNIBANCO HOLDING S.A.")).toBeDefined();
+    expect(within(head).getByText(TEXTOS["ativo.tipo.stock"])).toBeDefined();
+    expect(within(head).getByText(TEXTOS["ativo.situacao.active"])).toBeDefined();
+    expect(within(head).getByText(TEXTOS["ativo.listagem"]("N1"))).toBeDefined();
+    const crumbs = within(head).getByRole("list", {
+      name: TEXTOS["ativo.classificacao"],
+    });
+    expect([...crumbs.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
+      "Financeiro",
+      "Intermediários Financeiros",
+      "Bancos",
+    ]);
+    const last = head.querySelector(".ruvor-asset-head__last") as HTMLElement;
+    expect(last.querySelector("[data-value='last-close']")?.textContent).toBe(
+      formatCurrency(38.5),
+    );
+    expect(
+      within(last).getByText(TEXTOS["ativo.ultimoFechamento"]("28/09/2026")),
+    ).toBeDefined();
+  });
+
+  it("o nulo da classificação sai sem traço; sem listagem, sem a tag; inativo e índice", async () => {
+    allOk({
+      asset: ok({
+        ...ASSET,
+        kind: "index",
+        status: "inactive",
+        subsector: null,
+        listing_segment: null,
+      } satisfies AssetDetail),
+    });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    const head = header();
+    const crumbs = within(head).getByRole("list", {
+      name: TEXTOS["ativo.classificacao"],
+    });
+    expect([...crumbs.querySelectorAll("li")].map((li) => li.textContent)).toEqual([
+      "Financeiro",
+      "Bancos",
+    ]);
+    expect(within(head).queryByText(/segmento de listagem/)).toBeNull();
+    expect(within(head).getByText(TEXTOS["ativo.tipo.index"])).toBeDefined();
+    expect(
+      within(head).getByText(TEXTOS["ativo.situacao.inactive"]).className,
+    ).toContain("ruvor-tag--review");
+  });
+
+  it("sem classificação nenhuma, sem a lista", async () => {
+    allOk({ asset: ok({ ...ASSET, sector: null, subsector: null, segment: null }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    expect(within(header()).queryByRole("list")).toBeNull();
+  });
+
+  it("sem preço: '—' e 'sem preço coletado ainda' — nunca R$ 0,00", async () => {
+    allOk({ asset: ok({ ...ASSET, has_prices: false, last_price: null }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    const last = header().querySelector(".ruvor-asset-head__last") as HTMLElement;
+    expect(last.querySelector("[data-value='last-close']")?.textContent).toBe("—");
+    expect(within(last).getByText(TEXTOS["ativo.semPreco"])).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------- RF-08
+
+describe("RF-08 — o preço", () => {
+  it("a frase do preço ajustado junto do gráfico", async () => {
+    renderAsset();
+    await loaded();
+    const p = pricePanel();
+    expect(within(p).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
+    expect(within(p).getByRole("img")).toBeDefined();
+    expect(
+      within(p).getByRole("group", { name: TEXTOS["grafico.atalhos"] }),
+    ).toBeDefined();
+  });
+
+  it("sem preço: a frase e a área vazia", async () => {
+    allOk({ prices: ok({ ...PRICES, results: [] }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    const p = pricePanel();
+    expect(within(p).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
+    expect(within(p).getByText(TEXTOS["ativo.preco.vazio"])).toBeDefined();
+    expect(within(p).queryByRole("img")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- RF-09
+
+describe("RF-09 — proventos e desdobramentos", () => {
+  const rows = () =>
+    [...within(eventsPanel()).getAllByRole("row")]
+      .slice(1)
+      .map((tr) => [...tr.querySelectorAll("td")].map((td) => td.textContent));
+
+  it("os dos 12 meses até o último fechamento, do mais novo ao mais antigo; e ver todos", async () => {
+    renderAsset();
+    await loaded();
+    await waitFor(() => expect(within(eventsPanel()).getByRole("table")).toBeDefined());
+    expect(
+      within(eventsPanel()).getByText(TEXTOS["ativo.eventos.periodo"]("28/09/2026")),
+    ).toBeDefined();
+    const amount = TEXTOS["ativo.eventos.valor"](formatCurrencyPrecise(0.0217));
+    expect(rows()).toEqual([
+      ["01/09/2026", TEXTOS["ativo.eventos.dividend"], amount],
+      ["01/08/2026", TEXTOS["ativo.eventos.dividend"], amount],
+      [
+        "20/03/2026",
+        TEXTOS["ativo.eventos.split"],
+        TEXTOS["ativo.eventos.proporcao"]("12", "10"),
+      ],
+    ]);
+
+    const more = within(eventsPanel()).getByRole("button", {
+      name: TEXTOS["ativo.eventos.verTodos"]("5"),
+    });
+    expect(more.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(more);
+    expect(rows()).toHaveLength(5);
+    expect(rows()[4]).toEqual([
+      "18/03/2024",
+      TEXTOS["ativo.eventos.split"],
+      TEXTOS["ativo.eventos.proporcao"]("11", "10"),
+    ]);
+    fireEvent.click(
+      within(eventsPanel()).getByRole("button", {
+        name: TEXTOS["ativo.eventos.verMenos"],
+      }),
+    );
+    expect(rows()).toHaveLength(3);
+  });
+
+  it("sem eventos no período: a frase, e ver todos se houver antigos", async () => {
+    allOk({ events: ok({ ticker: "ITUB4", results: EVENTS.results.slice(0, 2) }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    await waitFor(() =>
+      expect(
+        within(eventsPanel()).getByText(TEXTOS["ativo.eventos.nenhum"]),
+      ).toBeDefined(),
+    );
+    expect(within(eventsPanel()).queryByRole("table")).toBeNull();
+    expect(
+      within(eventsPanel()).getByRole("button", {
+        name: TEXTOS["ativo.eventos.verTodos"]("2"),
+      }),
+    ).toBeDefined();
+  });
+
+  it("sem evento nenhum: a frase, sem ver todos", async () => {
+    allOk({ events: ok({ ticker: "IBOV", results: [] }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    await waitFor(() =>
+      expect(
+        within(eventsPanel()).getByText(TEXTOS["ativo.eventos.nenhum"]),
+      ).toBeDefined(),
+    );
+    expect(within(eventsPanel()).queryByRole("button")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- RF-10, RF-11 e V-14
+
+/** Cada campo com frase (a lista fechada do RF-21), o valor e a frase esperados. */
+const EXPECTED: Array<[field: string, value: string, phrase: string]> = [
+  ["return_1m", "+2,0%", TEXTOS["comportamento.return_1m"](formatCurrency(102))],
+  ["return_3m", "−5,0%", TEXTOS["comportamento.return_3m"](formatCurrency(95))],
+  ["return_6m", "+10,0%", TEXTOS["comportamento.return_6m"](formatCurrency(110))],
+  ["return_12m", "+25,8%", TEXTOS["comportamento.return_12m"](formatCurrency(125.81))],
+  ["return_36m", "+50,0%", TEXTOS["comportamento.return_36m"](formatCurrency(150))],
+  ["return_60m", "+66,2%", TEXTOS["comportamento.return_60m"](formatCurrency(166.17))],
+  [
+    "return_120m",
+    "+208,3%",
+    TEXTOS["comportamento.return_120m"](formatCurrency(308.29)),
+  ],
+  ["return_ytd", "+13,6%", TEXTOS["comportamento.return_ytd"](formatCurrency(113.57))],
+  ["volatility_12m", "17,5%", TEXTOS["comportamento.volatility_12m"]("17,5%")],
+  ["volatility_60m", "25,0%", TEXTOS["comportamento.volatility_60m"]("25,0%")],
+  [
+    "max_drawdown",
+    "−46,8%",
+    TEXTOS["comportamento.max_drawdown"](
+      "46,8%",
+      "23/01/2020",
+      "23/03/2020",
+      "22/09/2016",
+      "06/01/2021",
+    ),
+  ],
+  [
+    "max_drawdown_recovery_sessions",
+    "195",
+    TEXTOS["comportamento.max_drawdown_recovery_sessions"]("0,8"),
+  ],
+  ["beta_60m", "0,85", TEXTOS["comportamento.beta_60m"]("0,85%", false)],
+  ["correlation_60m", "−0,12", TEXTOS["comportamento.correlation_60m"]("−0,12")],
+  ["skewness", "−0,05", TEXTOS["comportamento.skewness"]("−0,05", -1)],
+  ["excess_kurtosis", "1,07", TEXTOS["comportamento.excess_kurtosis"]("1,07", 1)],
+  ["dividends_12m", formatCurrency(3.4567), TEXTOS["comportamento.dividends_12m"]],
+  ["dividend_payments_12m", "14", TEXTOS["comportamento.dividend_payments_12m"]],
+  [
+    "dividend_yield_12m",
+    "8,1%",
+    TEXTOS["comportamento.dividend_yield_12m"]("28/09/2026", formatCurrency(8.12)),
+  ],
+  [
+    "avg_volume_21d",
+    TEXTOS["comportamento.unidade.volume"]("25,4"),
+    TEXTOS["comportamento.avg_volume_21d"],
+  ],
+  [
+    "avg_volume_252d",
+    TEXTOS["comportamento.unidade.volume"]("21,0"),
+    TEXTOS["comportamento.avg_volume_252d"],
+  ],
+];
+
+describe("RF-10 — o comportamento, formatado em pt-BR, e V-14: a frase junto do número", () => {
+  it("a lista cobre os 19 campos com frase e as duas medidas da distribuição", () => {
+    expect(EXPECTED).toHaveLength(21);
+  });
+
+  it.each(EXPECTED)("%s: %s, com a frase", async (field, value, phrase) => {
+    renderAsset();
+    await loaded();
+    expect(statValue(field)).toBe(value);
+    expect(statPhrase(field)).toBe(phrase);
+  });
+
+  it("o cabeçalho do bloco diz até quando, e as notas dizem sobre quantos pregões", async () => {
+    renderAsset();
+    await loaded();
+    expect(
+      within(behavior()).getByText(TEXTOS["comportamento.ate"]("28/09/2026")),
+    ).toBeDefined();
+    expect(
+      within(block(TEXTOS["comportamento.bloco.ibov"])).getByText(
+        TEXTOS["comportamento.nota.ibov"]("1.230"),
+      ),
+    ).toBeDefined();
+    expect(
+      within(block(TEXTOS["comportamento.bloco.distribuicao"])).getByText(
+        TEXTOS["comportamento.nota.distribuicao"]("1.247"),
+      ),
+    ).toBeDefined();
+    expect(
+      within(block(TEXTOS["comportamento.bloco.retornos"])).getByText(
+        TEXTOS["comportamento.nota.retornos"],
+      ),
+    ).toBeDefined();
+  });
+
+  it("RF-11: o histograma com a frase dele, no bloco da distribuição", async () => {
+    renderAsset();
+    await loaded();
+    const dist = block(TEXTOS["comportamento.bloco.distribuicao"]);
+    expect(within(dist).getByText(TEXTOS["comportamento.histograma"])).toBeDefined();
+    expect(within(dist).getByRole("img")).toBeDefined();
+    expect(
+      within(dist).queryByText(TEXTOS["comportamento.histogramaCurto"]),
+    ).toBeNull();
+  });
+});
+
+describe("V-06 — nulo não é zero", () => {
+  /** Cada campo nulo da série curta: "—" e o porquê. */
+  const NULLS: Array<[field: string, phrase: string | null]> = [
+    ["return_36m", TEXTOS["comportamento.nulo.janela"](36)],
+    ["return_60m", TEXTOS["comportamento.nulo.janela"](60)],
+    ["return_120m", TEXTOS["comportamento.nulo.janela"](120)],
+    ["volatility_60m", TEXTOS["comportamento.nulo.janela"](60)],
+    ["max_drawdown_recovery_sessions", TEXTOS["comportamento.nulo.naoRecuperou"]],
+    ["beta_60m", TEXTOS["comportamento.nulo.janela"](60)],
+    ["correlation_60m", TEXTOS["comportamento.nulo.janela"](60)],
+    ["skewness", TEXTOS["comportamento.nulo.janela"](60)],
+    ["excess_kurtosis", TEXTOS["comportamento.nulo.janela"](60)],
+    ["avg_volume_252d", TEXTOS["comportamento.nulo.pregoes"](252)],
+  ];
+
+  beforeEach(() => {
+    allOk({ metrics: ok({ ticker: "ITUB4", metric: METRIC_SHORT }) });
+    stubFetch();
+  });
+
+  it.each(NULLS)("%s nulo mostra '—' e o porquê", async (field, phrase) => {
+    renderAsset();
+    await loaded();
+    expect(statValue(field)).toBe("—");
+    expect(statPhrase(field)).toBe(phrase);
+  });
+
+  it("a queda sem volta diz que ainda não voltou; o que não é nulo segue formatado", async () => {
+    renderAsset();
+    await loaded();
+    expect(statPhrase("max_drawdown")).toBe(
+      TEXTOS["comportamento.max_drawdown"](
+        "46,8%",
+        "23/01/2020",
+        "23/03/2020",
+        "02/01/2025",
+        null,
+      ),
+    );
+    expect(statValue("return_12m")).toBe("+25,8%");
+  });
+
+  it("a série curta: a frase no lugar do histograma, sem a nota de pregões", async () => {
+    renderAsset();
+    await loaded();
+    const dist = block(TEXTOS["comportamento.bloco.distribuicao"]);
+    expect(
+      within(dist).getByText(TEXTOS["comportamento.histogramaCurto"]),
+    ).toBeDefined();
+    expect(within(dist).queryByRole("img")).toBeNull();
+    expect(within(dist).queryByText(TEXTOS["comportamento.histograma"])).toBeNull();
+    expect(dist.querySelector(".ruvor-panel__note")).toBeNull();
+    expect(
+      block(TEXTOS["comportamento.bloco.ibov"]).querySelector(".ruvor-panel__note"),
+    ).toBeNull();
+  });
+
+  it("nenhum número em destaque de campo nulo é zero", async () => {
+    renderAsset();
+    await loaded();
+    for (const [field] of NULLS) {
+      expect(statValue(field)).not.toMatch(/\d/);
+    }
+  });
+
+  it("no índice, o beta e a correlação nulos dizem que ele é a própria referência", async () => {
+    allOk({
+      asset: ok({ ...ASSET, ticker: "IBOV", kind: "index" }),
+      metrics: ok({ ticker: "IBOV", metric: METRIC_SHORT }),
+    });
+    stubFetch();
+    renderAsset("IBOV");
+    await loaded();
+    for (const field of ["beta_60m", "correlation_60m"]) {
+      expect(statValue(field)).toBe("—");
+      expect(statPhrase(field)).toBe(TEXTOS["comportamento.nulo.referencia"]);
+    }
+  });
+
+  it("metric: null — ainda não calculado, apontando para o risco", async () => {
+    allOk({ metrics: ok({ ticker: "AALR3", metric: null } satisfies Metrics) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    const section = behavior();
+    expect(
+      within(section).getByText(TEXTOS["comportamento.naoCalculado"]),
+    ).toBeDefined();
+    expect(
+      within(section).getByText(TEXTOS["comportamento.naoCalculado.nota"]),
+    ).toBeDefined();
+    const link = within(section).getByRole("link", {
+      name: TEXTOS["comportamento.irParaRisco"],
+    });
+    expect(link.getAttribute("href")).toBe("#risco");
+    expect(document.getElementById("risco")).not.toBeNull();
+    expect(section.querySelector("[data-field]")).toBeNull();
+    expect(within(section).queryByText(/^até /)).toBeNull();
+  });
+});

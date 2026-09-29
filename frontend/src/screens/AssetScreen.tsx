@@ -1,0 +1,217 @@
+import { useCallback, useEffect, useId, useState } from "react";
+
+import { type Load, useResource } from "../api/resource";
+import type { AssetDetail, Events, Metrics, Prices, Risk } from "../api/types";
+import { AssetHeader } from "../components/AssetHeader";
+import { BehaviorSection } from "../components/BehaviorSection";
+import { EventsSection } from "../components/EventsSection";
+import { PriceSection } from "../components/PriceSection";
+import {
+  RiskSection,
+  sectionPending,
+  sectionStateOf,
+  wantsRail,
+} from "../components/RiskSection";
+import { SearchBox } from "../components/SearchBox";
+import { useShellContext } from "../components/Shell";
+import { TEXTOS } from "../content/textos";
+import { usePolling } from "../risk/usePolling";
+
+/** As cinco rotas do ativo, cada uma com o seu estado e o seu "tentar de novo". */
+export type AssetData = {
+  asset: Load<AssetDetail>;
+  prices: Load<Prices>;
+  events: Load<Events>;
+  metrics: Load<Metrics>;
+  risk: Load<Risk>;
+  reload: {
+    asset: () => void;
+    prices: () => void;
+    events: () => void;
+    metrics: () => void;
+    risk: () => void;
+  };
+  /**
+   * Pede as cinco de novo (RF-20: o fim do acompanhamento). Não apaga o que está na tela: cada
+   * seção mostra o dado anterior até o novo chegar (`useResource`).
+   */
+  reloadAll: () => void;
+};
+
+/**
+ * As cinco rotas do ativo em paralelo (RF-06): cada seção carrega sozinha, e a lenta não
+ * segura a rápida.
+ */
+export function useAssetData(ticker: string): AssetData {
+  const base = `/api/v1/assets/${encodeURIComponent(ticker)}`;
+  const asset = useResource<AssetDetail>(base);
+  const prices = useResource<Prices>(`${base}/prices`);
+  const events = useResource<Events>(`${base}/events`);
+  const metrics = useResource<Metrics>(`${base}/metrics`);
+  const risk = useResource<Risk>(`${base}/risk`);
+
+  const reloadAsset = asset.reload;
+  const reloadPrices = prices.reload;
+  const reloadEvents = events.reload;
+  const reloadMetrics = metrics.reload;
+  const reloadRisk = risk.reload;
+  const reloadAll = useCallback(() => {
+    reloadAsset();
+    reloadPrices();
+    reloadEvents();
+    reloadMetrics();
+    reloadRisk();
+  }, [reloadAsset, reloadPrices, reloadEvents, reloadMetrics, reloadRisk]);
+
+  return {
+    asset: asset.load,
+    prices: prices.load,
+    events: events.load,
+    metrics: metrics.load,
+    risk: risk.load,
+    reload: {
+      asset: reloadAsset,
+      prices: reloadPrices,
+      events: reloadEvents,
+      metrics: reloadMetrics,
+      risk: reloadRisk,
+    },
+    reloadAll,
+  };
+}
+
+/** A data de hoje no fuso do navegador, `AAAA-MM-DD`. */
+function today(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+/**
+ * O fim da janela dos proventos: o último fechamento, como no `ativo.html`; sem ele — ativo sem
+ * preço, ou a identidade em erro —, hoje. Nulo enquanto a identidade carrega.
+ */
+function eventsReference(asset: Load<AssetDetail>): string | null {
+  if (asset.state === "loading") return null;
+  if (asset.state === "ok" && asset.data.last_price !== null) {
+    return asset.data.last_price.date;
+  }
+  return today();
+}
+
+/** O código fora do catálogo (`404 asset_not_found` na identidade): a tela inteira, com a busca. */
+function AssetNotFound({ ticker }: { ticker: string }) {
+  const titleId = useId();
+  return (
+    <section className="ruvor-notfound" aria-labelledby={titleId} data-ready="true">
+      <p className="ruvor-eyebrow">{TEXTOS["ativo.naoEncontrado.sobrancelha"]}</p>
+      <h1 className="ruvor-display" id={titleId}>
+        {TEXTOS["ativo.naoEncontrado.titulo"]}
+      </h1>
+      <p className="ruvor-sub">{TEXTOS["ativo.naoEncontrado"](ticker)}</p>
+      <p className="ruvor-sub">{TEXTOS["ativo.naoEncontrado.dica"]}</p>
+      <SearchBox variant="page" />
+    </section>
+  );
+}
+
+/**
+ * O que a resposta do pedido de cálculo (RF-19) põe no lugar do `/risk`: o corpo do 202 (ou o
+ * `details` do 409), ou o 422 `asset_inactive`. Vale só enquanto o `/risk` da rota for o
+ * mesmo de quando a resposta chegou (`base`): o próximo `/risk` recebido — o do
+ * acompanhamento — o substitui.
+ */
+type Posted =
+  | { base: Load<Risk>; kind: "risk"; risk: Risk }
+  | { base: Load<Risk>; kind: "inactive" };
+
+/**
+ * A tela do ativo (RF-06 a RF-20): o cabeçalho, o preço, os proventos, o comportamento e o
+ * risco, com a trilha na coluna lateral do casco e a proveniência no rodapé.
+ *
+ * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
+ * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
+ * carregando: o do `/risk` e o da identidade e da série que o estado pede.
+ */
+export function AssetScreen({ ticker }: { ticker: string }) {
+  const data = useAssetData(ticker);
+  const { asset, prices, events, metrics } = data;
+  const { setProvenance, setRail, railElement } = useShellContext();
+
+  const [posted, setPosted] = useState<Posted | null>(null);
+  const current = posted !== null && posted.base === data.risk ? posted : null;
+  const riskLoad: Load<Risk> =
+    current?.kind === "risk" ? { state: "ok", data: current.risk } : data.risk;
+  const risk = riskLoad.state === "ok" ? riskLoad.data : null;
+  const state = sectionStateOf(riskLoad, asset, prices, current?.kind === "inactive");
+
+  usePolling(risk, data.reload.risk, data.reloadAll);
+
+  const notFound = asset.state === "error" && asset.error.code === "asset_not_found";
+
+  // A coluna lateral (a trilha) e a proveniência do rodapé (RF-04, RF-16): a do último
+  // cálculo fechado `ok` ou `partial`.
+  const railOn = !notFound && wantsRail(state, risk);
+  useEffect(() => {
+    setRail(railOn);
+  }, [setRail, railOn]);
+
+  const latest = risk?.latest ?? null;
+  const closed = latest !== null && latest.status !== "failed" ? latest : null;
+  const asOfDate = notFound ? null : (closed?.as_of_date ?? null);
+  const calculatedAt = notFound ? null : (closed?.calculated_at ?? null);
+  useEffect(() => {
+    setProvenance(
+      asOfDate === null || calculatedAt === null ? null : { asOfDate, calculatedAt },
+    );
+  }, [setProvenance, asOfDate, calculatedAt]);
+
+  const baseRisk = data.risk;
+  const onRisk = useCallback(
+    (next: Risk) => setPosted({ base: baseRisk, kind: "risk", risk: next }),
+    [baseRisk],
+  );
+  const onInactive = useCallback(
+    () => setPosted({ base: baseRisk, kind: "inactive" }),
+    [baseRisk],
+  );
+
+  if (notFound) {
+    return <AssetNotFound ticker={ticker} />;
+  }
+
+  const headDone = asset.state !== "loading";
+  const riskDone = !sectionPending(state);
+  const ready = headDone && riskDone;
+
+  return (
+    <div
+      className="ruvor-stack ruvor-stack--loose"
+      data-ready={ready ? "true" : undefined}
+    >
+      <AssetHeader load={asset} onRetry={data.reload.asset} />
+      <PriceSection load={prices} onRetry={data.reload.prices} />
+      <EventsSection
+        load={events}
+        referenceDate={eventsReference(asset)}
+        onRetry={data.reload.events}
+      />
+      <BehaviorSection load={metrics} ticker={ticker} onRetry={data.reload.metrics} />
+
+      {/* `id="risco"`: o destino do "Ir para o risco" do comportamento. */}
+      <div id="risco">
+        <RiskSection
+          ticker={ticker}
+          state={state}
+          risk={risk}
+          pricesCount={prices.state === "ok" ? prices.data.results.length : null}
+          rail={railElement}
+          onRetry={data.reload.risk}
+          onRisk={onRisk}
+          onInactive={onInactive}
+        />
+      </div>
+    </div>
+  );
+}

@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6-aplicacao-web` — M1.6a fechado e mesclado (PR #12); o M1.6b abre ramo próprio |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6b-as-telas` — M1.6b fechado; a PR de implementação é do dono; o M1.6c abre ramo próprio |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 | [frentes/fundamentos.md](frentes/fundamentos.md) | `fundamentos/M3.2-contexto` |
 
@@ -83,7 +83,7 @@ mudança passa pela revisão da frente que o consome.
 | Contrato | Produz | Consome | Estado |
 |---|---|---|---|
 | **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | ✅ existe. Decidido pela [D-86](decisoes/D-86-convencoes-da-api-http.md) e aplicado pelo M1.6a: `/api/v1/`, `REST_FRAMEWORK` com o tratador do formato de erro, permissão padrão `IsAuthenticated` e cada view declarando a sua. **O mecanismo de autenticação é do M2.1**; mudar o formato de erro ou a regra de permissão exige a revisão das duas frentes; o mecanismo de autenticação é do M2.1, sessão do Django ([D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)), e, desde o M4.2, a chave pessoal de leitura ([D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md)): **toda view nova declara `api_key_scope`** (`"read"` ou `None`) e `extend_schema` em cada método ([D-110](decisoes/D-110-a-descricao-da-api-e-o-esquema-openapi-gerado.md)); toda rota tem taxa ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
-| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `marco1` — as telas, inclusive as de login, são dela | 🟡 **o kit está entregue** (M1.6a): `brand/ruvor/tokens.css` e `tokens.json` nos dois temas, com a escala tipográfica e os estados; `components.css`; e `icons/`, o conjunto fechado do Phosphor ([D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md), [D-88](decisoes/D-88-o-kit-tem-dois-temas-pelos-mesmos-tokens.md), [D-93](decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md)), mostrado em `docs/mockups/M1.6a/kit.html`. **O casco — layout e navegação em tela — é do M1.6b**, e ainda não existe. A `identidade` não consome: não tem tela |
+| **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `marco1` — as telas, inclusive as de login, são dela | ✅ existe. O kit (M1.6a) e o casco (M1.6b): as rotas `/` e `/ativos/{ticker}`, a barra com a busca e a chave de tema, o rodapé com a ressalva e a proveniência, e a coluna lateral por `setRail` — em `frontend/src/components/Shell.tsx`. A `identidade` não consome: não tem tela |
 | **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | 🟡 combinado na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-com-outras-frentes): o código é do M2.1a (fase 2), a coluna de `core.compute_request` e a migration dela são da `marco1` |
 | **As rotas de conta**: `/api/v1/auth/*` e `/api/v1/organization/users` | `identidade` (M2.1a) | `marco1` (as telas de login e de gestão) | 🟡 descritas na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-externos); nascem na fase 2 |
 | **`silver.asset`**: o catálogo, por ticker | `marco1` | `fundamentos` liga fundamento a ativo | ✅ existe. **Só cresce**: coluna nova pode, mudar ou tirar coluna exige a revisão da `fundamentos` |
@@ -104,7 +104,7 @@ outras frentes.
 |---|---|---|
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
-| D-85 a D-99 | `marco1` | D-85 a D-93 |
+| D-85 a D-99 | `marco1` | D-85 a D-98 |
 | D-100 a D-119 | `identidade` | D-100 a D-107 |
 | D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 

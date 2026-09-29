@@ -8,8 +8,9 @@ merece confiança para aquele ativo.
 
 > ## ⚠️ Este repositório está em reconstrução
 >
-> A plataforma Ruvor **ainda não foi construída**: não existe tela de produto. A API de leitura
-> existe, em `/api/v1/`.
+> O Marco 1 está completo: a **busca** e a **tela do ativo** — preço, comportamento e o risco
+> pelos nove modelos, com o cálculo sob demanda — sobre a API de leitura em `/api/v1/`. Ainda não há
+> login nem carteira.
 >
 > O que já existe:
 >
@@ -17,8 +18,7 @@ merece confiança para aquele ativo.
 >   testes e linha de base numérica próprias
 > - o **casco da aplicação**: um projeto Django em [`backend/`](backend/), que responde
 >   `GET /health` e conecta no PostgreSQL, e um projeto React em TypeScript em
->   [`frontend/`](frontend/), que renderiza uma tela de verificação com a marca e o estado
->   do backend
+>   [`frontend/`](frontend/), com a busca e a tela do ativo
 > - o **ambiente local em contêiner**: `docker compose up` sobe Postgres, Redis, o Django, um
 >   worker Celery, o agendador Celery Beat e o servidor de desenvolvimento do frontend
 >

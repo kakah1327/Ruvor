@@ -1,37 +1,55 @@
-import { cleanup, render, screen } from "@testing-library/react";
+/**
+ * O `App` é o casco nas rotas (RF-01 a RF-04): a barra com a marca e a chave de tema, e o
+ * rodapé. Ele deixou de consultar `/health` — a tela de verificação saiu.
+ */
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "../src/App";
+import { RESSALVA } from "../src/content/ressalva";
+import { TEXTOS } from "../src/content/textos";
 
-function stubFetch(body: unknown, ok = true): void {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => ({ ok, json: async () => body })),
-  );
-}
+// A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
+// no import, e o jsdom não o tem. Aqui nenhum gráfico chega a ser desenhado.
+vi.mock("uplot", () => ({ default: class {} }));
 
 afterEach(() => {
   cleanup(); // sem globals: true no Vitest, a Testing Library nao limpa o DOM sozinha
   vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
 });
 
-describe("tela de verificação", () => {
-  it("renderiza a marca e o estado ok do backend", async () => {
-    stubFetch({ status: "ok" });
+describe("App", () => {
+  it("renderiza o casco: a marca que leva à busca, a chave de tema e o rodapé", () => {
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Ruvor" })).toBeDefined();
-    expect(screen.getByAltText("Símbolo Ruvor")).toBeDefined();
-    expect(await screen.findByText("Backend: ok")).toBeDefined();
+    const banner = screen.getByRole("banner");
+    const brand = within(banner).getByRole("link", {
+      name: TEXTOS["casco.marca.rotulo"],
+    });
+    expect(brand.getAttribute("href")).toBe("/");
+    expect(within(brand).getByText(TEXTOS["casco.marca"])).toBeDefined();
+    expect(brand.querySelector("img")?.getAttribute("alt")).toBe("");
+    expect(
+      within(banner).getByRole("group", { name: TEXTOS["casco.tema.rotulo"] }),
+    ).toBeDefined();
+    expect(within(screen.getByRole("contentinfo")).getByText(RESSALVA)).toBeDefined();
+    expect(screen.getByRole("main")).toBeDefined();
   });
 
-  it("mostra indisponível quando o backend não responde", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new Error("rede");
-      }),
-    );
+  it("não chama /health nem outra rota da rede", () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
     render(<App />);
-    expect(await screen.findByText("Backend: indisponível")).toBeDefined();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("endereço desconhecido mostra a página não encontrada dentro do casco", () => {
+    window.history.replaceState(null, "", "/qualquer-coisa");
+    render(<App />);
+    expect(
+      screen.getByRole("heading", { name: TEXTOS["casco.naoEncontrada.titulo"] }),
+    ).toBeDefined();
+    expect(screen.getByRole("banner")).toBeDefined();
+    expect(screen.getByRole("contentinfo")).toBeDefined();
   });
 });
