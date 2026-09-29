@@ -1158,3 +1158,64 @@ mutação pode "reprovar" pelo motivo errado, ou uma suíte verde passar por aca
 — ver [O worktree não é o que o contêiner monta](#o-worktree-não-é-o-que-o-contêiner-monta)).
 Trilhas paralelas dividem o frontend e o backend, não duas rodadas do backend. Na T13, as
 mutações rodam em série, e a suíte inteira duas vezes seguidas, depois delas.
+
+## O Vite recusa o `Host` de outro contêiner: a automação entra na rede do próprio `frontend`
+
+**Quando:** ao rodar um navegador automatizado (Playwright) ou qualquer cliente de fora contra o
+servidor de desenvolvimento do Vite, a partir de outro contêiner.
+
+**Problema:** `http://frontend:5173/` responde **403** "Blocked request. This host ("frontend") is not
+allowed" — o Vite só aceita `localhost` e IP sem configurar `server.allowedHosts`. Medido no M1.6b.
+
+**Faça:** rode o contêiner da automação **na rede do próprio `frontend`** e use `localhost:5173`:
+`MSYS_NO_PATHCONV=1 docker run --network "container:$(docker compose ps -q frontend)" … ` (o roteiro
+`frontend/e2e/capturas.mjs` roda assim). Não mude o `vite.config.ts` para isso.
+
+## O uPlot põe `uplot` e `u-hz` no mesmo elemento: seletor de descendente não casa
+
+**Quando:** ao sobrepor as cores fixas da folha do uPlot (`.u-select`, as linhas do cursor) com
+tokens.
+
+**Problema:** o raiz do gráfico tem as classes `uplot` **e** `u-hz`/`u-vt` juntas
+(`placeDiv(UPLOT)` + `addClass(root, ORI_HZ)`); `.uplot .u-hz .u-cursor-x` nunca casa, a regra fica
+morta e a linha sai `#607D8B` no tema escuro. Um teste que só confere se a regra **está escrita**
+aprova o seletor morto.
+
+**Faça:** seletor composto, `.uplot.u-hz .u-cursor-x`, e um teste que monte no jsdom a árvore do uPlot
+e confira com `element.matches` (`frontend/tests/graficos.test.tsx`).
+
+## Importar o uPlot no jsdom quebra: ele chama `matchMedia` no import
+
+**Quando:** um teste do frontend renderiza qualquer coisa que, direta ou indiretamente, importa o
+`uplot` — inclusive o `App`, que chega nele pela tela do ativo.
+
+**Problema:** o jsdom não tem `matchMedia` nem canvas; o import cai com `TypeError: matchMedia is not a
+function` antes de o teste começar, em suítes que nem falam de gráfico.
+
+**Faça:** `vi.mock("uplot", () => ({ default: class {} }))` nas suítes que importam a aplicação, e um
+duplo completo onde o gráfico é o assunto. O desenho de verdade se prova pelas capturas da execução
+real.
+
+## Supressão do Biome em JSX depende de onde fica
+
+**Quando:** ao suprimir uma regra do Biome num elemento JSX (`useSemanticElements`,
+`noNoninteractiveElementToInteractiveRole`).
+
+**Problema:** o comentário no lugar errado não tem efeito, e o lint segue reprovando — ou a supressão
+fica sobrando e o Biome avisa "suppression unnecessary". Medido no M1.6b: `useSemanticElements` pede
+`{/* biome-ignore … */}` **antes do elemento**; `noNoninteractiveElementToInteractiveRole` só vale **na
+linha do atributo `role`**.
+
+**Faça:** ponha a supressão, rode `npm run lint`, e confira que ela suprime algo; a varredura de texto em
+JSX (`jsx-texto.test.ts`) já ignora esses comentários.
+
+## `StrictMode` dobra as requisições em desenvolvimento
+
+**Quando:** ao medir quantas vezes, ou em quanto tempo, a tela pede a API no servidor de
+desenvolvimento.
+
+**Problema:** o `main.tsx` usa `<StrictMode>`, e em desenvolvimento o React roda cada efeito duas vezes:
+a tela do ativo faz dez pedidos a `/api/v1/`, não cinco. Quem lê o `PerformanceResourceTiming` sem saber
+disso conclui que o custo da API é o dobro.
+
+**Faça:** diga no relato que a medida é de desenvolvimento, ou meça sobre o `vite build` servido.

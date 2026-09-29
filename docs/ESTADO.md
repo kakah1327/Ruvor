@@ -4,19 +4,20 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-28
+**Última atualização:** 2026-09-29
 
 ---
 
 ## Onde estamos
 
-**Marco:** 🟡 **Marco 1** — a ação, e o risco dela; a Fundação fechou em 2026-09-08
-**Bloco:** na frente `marco1`, o **M1.6a fechou em 2026-09-28**, depois do M1.5b, e **o M1.6b é
-o próximo** — as telas; na frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1,
+**Marco:** ✅ **Marco 1 fechado em 2026-09-29** — a ação, e o risco dela; a Fundação fechou em
+2026-09-08
+**Bloco:** na frente `marco1`, o **M1.6b fechou em 2026-09-29** — as telas —, depois do M1.6a, e **o
+M1.6c é o próximo**: as camadas 4 e 5 na tela ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)); na frente `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1,
 e o próximo bloco dela não está definido; na frente `identidade`, o **M2.1a** está com a **fase 1
 implementada** (2026-09-27), e a fase 2 esperava o M1.6a, que entrou em 2026-09-28
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b, com o darkside171) e `identidade` (M2.1 → M4.2 →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c, com o darkside171) e `identidade` (M2.1 → M4.2 →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -71,8 +72,11 @@ mockup. **Desde a fase 1 do M2.1a há identidade:** sessão do Django no banco, 
 (banco 1), papel `admin`/`member` por organização, organização pessoal, e-mail único sem
 diferença de caixa, a regra de cada rota de conta como serviço de `apps/accounts`, o bloqueio de
 entrada por (e-mail, IP), `core.access_event` — a auditoria de acesso, que só cresce —,
-`manage.py create_organization`, e o `createsuperuser` funcionando. Trinta tabelas, em seis apps. Ainda não há tela de produto; as rotas de conta são a fase 2
-do M2.1a.
+`manage.py create_organization`, e o `createsuperuser` funcionando. Trinta tabelas, em seis apps. As rotas de conta são a fase 2
+do M2.1a. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
+identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
+não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
+ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1214,31 +1218,66 @@ execuções do mesmo ativo ao mesmo tempo) e
 [D-93](decisoes/D-93-os-icones-do-produto-vem-do-phosphor.md) (os ícones vêm do Phosphor, num
 conjunto fechado dentro do kit).
 
+### M1.6b — As telas
+
+Spec em [`specs/M1.6b-as-telas.md`](specs/M1.6b-as-telas.md) e plano em
+[`planos/M1.6b-as-telas.md`](planos/M1.6b-as-telas.md). Frente `marco1`, ramo `marco1/M1.6b-as-telas`.
+Treze tarefas, um commit cada que produz, de `aefddd8` a `236985c`; spec e plano com duas rodadas de
+revisão adversarial cada, e três portões de mockup aprovados pelo dono em 2026-09-28
+(`docs/mockups/M1.6b/busca.html`, `ativo.html`, `ativo-estados.html`). Cinco decisões:
+[D-94](decisoes/D-94-os-graficos-sao-do-uplot.md) a
+[D-98](decisoes/D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md).
+
+| Verificação | Resultado |
+|---|---|
+| Mockups aprovados antes do código (V-01) | ✅ os três, nos dois temas, com os textos de cada número |
+| Suítes | ✅ **731 no frontend** (eram 345) e **947 no backend** (os 943 mais os 4 do contrato dos motivos); lint, tipos e build limpos |
+| Mutações | ✅ **as 28 da T12 reprovaram**, e a revisão final aplicou mais 16, que também reprovaram |
+| Texto só dos mockups | ✅ `frontend/src/content/textos.ts` conferido contra os dois mockups por teste (2.000 argumentos por função); nenhum texto literal em `.tsx`, pela árvore sintática |
+| Sem recomendação (D-65) | ✅ varredura do vocabulário nas duas formas; a tabela em ordem fixa; sem zona de Basileia |
+| Execução real (V-18) | ✅ o roteiro `frontend/e2e/capturas.mjs`, na imagem do Playwright 1.63.0 e na rede do contêiner `frontend`, saiu com 0: 114 conferências, 21 capturas, nenhuma rolagem horizontal, o tema pela chave e pelo sistema |
+| Cálculo sob demanda pela tela | ✅ o `AALR3`, sem preço, foi de E8 a E5 em 150 ms e a **E1 em 100,8 s** — coleta, métricas e risco —, em linha com os 99,6 s do M1.6a |
+| A medida do RF-24 (V-19) | ✅ a segunda carga do `ITUB4` ficou pronta em **312 ms** (a primeira, que aquece o Vite, em 415 ms); as rotas do ativo em 33 a 132 ms, o `/prices` com **349.253 B** sem compressão; a busca em ~15 ms aquecida (56 ms a frio). **Sem cache neste bloco**: a decisão fica com a hospedagem |
+| API e backend intocados | ✅ `git diff main -- backend/` mostra só `backend/tests/api/test_motivos.py` |
+
+**O que a execução mostrou:**
+
+- **O primeiro tique do Beat num dia útil** (2026-09-28, 19h30) rodou a rotina inteira — preços →
+  métricas → risco — nos cinco ativos então cobertos, com os modelos caros reaproveitando os 9
+  retratos e treinando 0 (`9/0` no log do `worker`), em 1 a 3 s por modelo. **A taxa de invalidação
+  medida num dia útil foi zero**; a estimativa do V-13 do M1.5b (proventos invalidam a linhagem) segue
+  sem medida, porque nenhum dos cinco pagou provento no dia.
+- **As métricas do ITUB4 estavam em 18/09 e o risco em 25/09** antes do tique: o atraso vinha só do
+  Beat parado durante o M1.6a, e o tique de 28/09 alinhou as duas.
+- **O `AALR3` saiu com os nove modelos "não adequado" nos dois níveis**, e a faixa entre eles é larga
+  (2,9% a 8,5% a 95%, 4,5% a 13,1% a 99%): é o caso "nenhum adequado" da D-65, e a tela o diz como
+  informação.
+- **A medida é de desenvolvimento**: o `main.tsx` usa `StrictMode`, e o Vite em desenvolvimento pede
+  cada rota duas vezes por carga.
+- **O Vite recusa outro `Host`** (403 para `frontend:5173`): a execução real entra na rede do próprio
+  contêiner, por `--network container:…`, e usa `localhost`.
+- **Os três mockups aprovados divergiam entre si** em quatro pontos; a T5 os unificou no kit, e as
+  decisões estão no plano (T5, "Correções registradas na execução").
+
 ## Próximo passo
 
-**Na frente `marco1`, o M1.6b — As telas**: casco, busca e tela do ativo, **cada uma com mockup
-aprovado antes do código**, sobre o kit e a API do M1.6a. Antes dele, a PR de implementação do
-M1.6a, que o dono da frente abre e mescla com a CI verde. O que o M1.6b encontra pronto:
+**Na frente `marco1`, as PRs do M1.6b** — spec, plano e implementação —, que o dono abre e mescla com a
+CI verde, e depois **o M1.6c — Fundamentos e contexto na tela**: as camadas 4 e 5 na mesma tela do ativo,
+com as rotas escritas pela `marco1` em `apps/api` sobre as tabelas da `fundamentos`, que revisa a PR
+([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)). O que o M1.6c encontra pronto: o casco, o kit com o
+arranjo da tela, o módulo de textos, o invólucro dos gráficos e o roteiro da execução real. O que ele
+precisa decidir: a frase de cada indicador (D-97), e as tabelas e colunas que viram contrato entre
+frentes.
 
-- **o kit**: `brand/ruvor/tokens.css` nos dois temas, `components.css` e `icons/`, com a vitrine
-  aprovada em `docs/mockups/M1.6a/kit.html` — tela nova parte dos mockups de referência e da
-  folha ([D-87](decisoes/D-87-os-mockups-sao-a-referencia-visual-do-kit.md));
-- **a API**: as seis rotas de leitura em `/api/v1/`, e o `/risk` com `latest`, `in_progress` e
-  `request` — a tela sabe o que existe, o que está a caminho e por que um pedido não virou risco;
-- **o cálculo sob demanda**: um ativo novo custou **99,6 s** na execução real, quase todo nas três
-  redes. A tela precisa dizer isso antes de prometer resposta, e o teto de 3 pedidos abertos pode
-  responder 429.
-
-**Antes de expor a API fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
+**Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
 qualquer pedido bem-sucedido torna o ativo coberto para sempre
-([D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)).
+([D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)) — o `AALR3` já entrou assim
+—, e decidir o cache e a compressão do `/prices` (341 KiB sem compressão).
 
-**A primeira coisa a olhar, sem esforço, continua sendo o tique do Beat num dia útil** (segunda a
-sexta, 19h30). É o dia comum com um pregão novo de verdade, que o fecho do M1.5b não teve, e a
-primeira medida da taxa de invalidação — as linhas `risco …` do log do `worker` trazem o tempo e o
-`r/t` de cada tarefa. Se os pagadores de provento aparecerem com `trained_snapshots` 9, a
-estimativa do V-13 do M1.5b se confirmou. O Beat ficou parado durante todo o M1.6a e voltou depois
-da execução real; a rotina agora também calcula as métricas e inclui o `BBDC4`.
+**O tique do Beat num dia útil já foi visto** (2026-09-28, ver o M1.6b): a rotina inteira, sem
+treino. **O que falta medir** é um dia em que um ativo coberto pague provento — se ele aparecer com
+`trained_snapshots` 9, a estimativa do V-13 do M1.5b se confirma. A rotina agora inclui o `BBDC4` e o
+`AALR3`.
 
 **`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta uma
 `risk_run` por ativo coberto a cada dia útil — cinco, desde o `BBDC4` —, e `migrate risk zero`
@@ -1279,6 +1318,11 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **`django_session` cresce sem limpeza.** Sessão vencida fica na tabela até alguém rodar `manage.py clearsessions` | `public.django_session` | Uma entrada própria no Beat quando o volume justificar, ou na hospedagem |
 | **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
+| **A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento | `backend/apps/api/views.py`, a busca do RF-12 do M1.6a | Quando a busca for revista — é mudança de contrato da API (`unaccent` no Postgres ou normalização na conformação) |
+| **O setor da B3 vem com ponto no lugar da vírgula** ("Petróleo. Gás e Biocombustíveis"), e a tela mostra como chega | `silver.asset.sector`, a conformação do M1.1 | Na conformação do catálogo, com a regra escrita — é dado, não tela |
+| **A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista | `frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs` | Com um filtro por `has_prices` na busca da API (mudança de contrato) |
+| **O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda | `frontend/src/components/RiskSection.tsx` | Numa região só com o andamento, quando a acessibilidade for revista |
+| **O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir. Na execução do M1.6b a lista saiu vazia | `frontend/e2e/capturas.mjs` | Na próxima execução real que usar o roteiro (M1.6c) |
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 
 ## Aberto e aguardando decisão
@@ -1288,10 +1332,9 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **A política de retenção dos retratos** — nada apaga retrato: cada invalidação cria uma linhagem nova (~3,1 MiB por ativo) e a antiga fica. Apagar é `delete` em `gold`, que a [D-16](decisoes/D-16-resultado-e-imutavel.md) proíbe, e precisa de decisão própria, com a taxa de invalidação medida em dia útil — o fecho do M1.5b mediu zero numa coleta de domingo, e estimou que cada provento invalida a linhagem inteira | [spec M1.5b](specs/M1.5b-treino-separado-da-previsao.md#os-retratos-se-acumulam-e-nada-os-apaga), [D-77](decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) |
 | **A execução presa em `running`** — se o fecho não rodar (`worker` morto, Redis reiniciado), a linha fica `running` para sempre. Limpar por idade, reprocessar ou deixar para operação: a spec do M1.5 deixou aberto por falta de dado de produção | [spec M1.5](specs/M1.5-execucao-assincrona.md#a-execução-presa-em-running) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
-| Quais requisitos candidatos entram no Marco 1 | [PRODUTO.md](PRODUTO.md#5-requisitos-candidatos) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
-| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
+| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe. **A tela do M1.6b não a mostra** até a investigação | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
 
 ## Pendências que bloqueiam trabalho futuro
 

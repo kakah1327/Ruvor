@@ -109,7 +109,10 @@ o estado anterior.
 - Camada 3 (risco) no regime de produção — o de laboratório foi para o Marco 2
   ([D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
 - Execução assíncrona no modo A + pré-cálculo dos ativos cobertos
-- Aplicação web com a identidade Ruvor
+- Aplicação web com a identidade Ruvor: busca e tela do ativo
+- O risco em **1 dia** ([D-98](decisoes/D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md)),
+  com a discordância entre modelos e os não rejeitados por ativo (5.1 e 5.2,
+  [D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md))
 
 Resultado: digita ITUB4, recebe tudo sobre o comportamento da ação **e** a comparação de
 risco que ninguém mais faz. Sem login, sem carteira. Menor coisa que já justifica existir —
@@ -141,8 +144,11 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 
 ## 5. Requisitos candidatos
 
-Ideias levantadas, ainda **não promovidas a requisito**. As três primeiras saem quase de
-graça do que já vai existir no Marco 1.
+Ideias levantadas, ainda **não promovidas a requisito** — salvo onde marcado. As três primeiras
+saem quase de graça do que já vai existir no Marco 1. **A 5.1 e a 5.2 foram promovidas ao Marco 1**
+e entraram na tela do M1.6b ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)): a
+5.2 como a lista dos modelos não rejeitados, sem eleger nenhum
+([D-65](decisoes/D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md)).
 
 ### 5.1 Discordância entre modelos como sinal de risco
 
@@ -264,7 +270,7 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Tema | Situação |
 |---|---|
 | Carteira: caminho barato ou caro | Recomendação: barato. Não formalizado |
-| Quais requisitos candidatos entram no Marco 1 | Sugestão: 5.1, 5.2 e 5.3 |
+| Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3 segue candidata |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
 | Parecer sobre fronteira CVM | Pendente, antes do Marco 2 |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
