@@ -13,21 +13,25 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 ## Agora
 
-**Bloco:** M2.1a — Identidade e acesso
-**Etapa:** fase 1 na `main` (PR #11); **plano da fase 2 revisado** (T9 a T16; revisão 1 aprovou, tudo absorvido); **aprovado pelo dono** (2026-09-28); **T9 a T13 implementadas**, e a T14 espera a migration da `marco1`
-**Ramo:** `identidade/M2.1-identidade-e-acesso`, atualizado com a `main` em 2026-09-28, depois das PRs #11 e #12
-
-**Em paralelo:** M4.2 — API pública, no ramo `identidade/M4.2-api-publica` (nasce do da fase 2 do
-M2.1a). Spec aprovada (três revisões), plano aprovado (duas); **T0 a T5 executadas**, um commit
-cada. Faltam T6 a T10. PR em rascunho, empilhada sobre a da fase 2
+**Bloco:** M2.1a — Identidade e acesso (resto da fase 2) e M4.2 — API pública (fechado)
+**Etapa:** M2.1a: fase 1 (PR #11) e fase 2 sem a `requested_by` (PR #13) na `main`; a T14 espera a
+migration da `marco1`. **M4.2: T0 a T10 executadas** (2026-09-28), um commit por tarefa; as 19
+mutações reprovaram; execução real feita pelo proxy do Vite
+**Ramo:** `identidade/M4.2-api-publica`. A PR #14 levou T0 a T5 para o ramo da fase 2, e não para a
+`main`, porque foi mesclada depois da #13; o bloco inteiro entra na `main` por uma PR nova, deste
+ramo
 
 ## Próximo passo
 
-1. A migration de `core.compute_request.requested_by` (RF-26), pedida à `marco1` no contrato
-   literal do plano.
-2. Com ela na `main`: a T14, as mutações 32 e 33 e a T16 (o FECHA).
-3. Abrir a PR que fecha o bloco. A PR **passa pela `marco1`**: muda
-   `apps/api/errors.py`, o `REST_FRAMEWORK` e o `POST /risk`.
+1. Atualizar o ramo do M4.2 com a `main` e abrir a PR dele contra a `main`. A PR **passa pela
+   `marco1`**: toca `apps/api/views.py`, `apps/api/serializers.py`, `apps/api/errors.py`,
+   `tests/api/test_erros.py` e o `REST_FRAMEWORK`. A descrição leva o recado: a taxa anônima e a
+   variável; toda view nova declara `api_key_scope` e `extend_schema`; tabela privada nova usa o
+   gerente de `tenancy.py`; teste usa `force_login`, não `force_authenticate`.
+2. A migration de `core.compute_request.requested_by` (RF-26 do M2.1a), pedida à `marco1` no
+   contrato literal do plano da fase 2. Com ela na `main`: a T14, as mutações 32 e 33 e a T16 do
+   M2.1a.
+3. Depois: M4.1 — Relatórios.
 
 ## O que esta frente espera de outras
 
@@ -48,3 +52,4 @@ cada. Faltam T6 a T10. PR em rascunho, empilhada sobre a da fase 2
 | 2026-09-28 | PR #11 (spec, plano e fase 1) e PR #12 (M1.6a) na `main`; a fase 2 está desbloqueada. Ramo atualizado com a `main`. Plano da fase 2 escrito, em rascunho: T9 a T16, com três armadilhas do DRF 3.18.1 conferidas no código (import circular da classe de autenticação, `ScopedRateThrottle` conta por usuário, o tratador não põe cabeçalho) |
 | 2026-09-28 | Plano da fase 2 aprovado (revisão 1 aprovou, 5 médios e 11 leves absorvidos). **T9 a T13 implementadas**, um commit cada: o `banco_limpo`, o tratador com 401/400/429 e os cabeçalhos, a sessão com CSRF na API, `AccountReady`, o limite `auth` por IP, as rotas `auth/*` e `organization/users*`. Suíte com 1021 testes, verde; mypy e ruff limpos; 15 mutações reprovando; V-25 pelo proxy do Vite (9 eventos no `access_event`, IP do contêiner `frontend`). A T14 espera a migration da `marco1` |
 | 2026-09-28 | M4.2: spec e plano aprovados pelo dono, com duas decisões de direção (o filtro automático por organização nasce aqui, e a taxa anônima fica em 60 por minuto, ajustável) e uma errata (o `settings_test.py` no inventário). **T0 a T5 executadas:** drf-spectacular 0.30.0, que gera e valida no Django 6.1.1; o contexto da organização; `core.api_key` com o gerente que falha fechado; os serviços de chave; a autenticação por `Bearer`; o alcance da chave. Suíte com 1093 testes, verde. Uma rodada da T2 teve 1 falha por edição feita durante a suíte, não do estado da T2 |
+| 2026-09-28 | M4.2: **T6 a T10 executadas.** As rotas `api-keys*`; a taxa em toda rota (`ApiRateThrottle`, as três variáveis, `settings_test.py` fixando-as vazias); o esquema OpenAPI em `/api/v1/schema`, com `AutoSchema` próprio e `ENUM_NAME_OVERRIDES` para os dois `kind` e os dois `status`. Suíte com 1147 testes, verde; 19 mutações reprovando; V-16 pelo proxy do Vite. D-108 a D-112. A porta do PostgreSQL (`55432`) caiu numa faixa reservada do Windows depois de reiniciar: `.env` local com `15432` |

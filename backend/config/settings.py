@@ -112,9 +112,8 @@ ASGI_APPLICATION = "config.asgi.application"
 
 
 def _rate(name: str, default: str) -> str:
-    return (
-        os.environ.get(name) or default
-    )  # vazia vale o padrao: o compose a passa vazia
+    # vazia vale o padrao: o compose a passa vazia
+    return os.environ.get(name) or default
 
 
 # A taxa de toda rota (M4.2, RF-08): por chave, por usuario ou por IP. `auth` e a do limite de

@@ -1221,7 +1221,8 @@ acesso a um soquete de uma maneira que é proibida pelas permissões de acesso`.
 
 **Problema:** o Hyper-V e o WinNAT reservam faixas de porta dinâmicas, que mudam entre
 reinicializações. Em 2026-09-28 a faixa 56319–57018 estava reservada e engolia a porta do Redis
-do `.env.example` (`RUVOR_PORT_REDIS=56379`). Nada no repositório mudou; a máquina mudou.
+do `.env.example` (`RUVOR_PORT_REDIS=56379`). Nada no repositório mudou; a máquina mudou. Na mesma
+noite, depois de reiniciar, foi a vez da 55415–55514, com a do PostgreSQL (`55432`).
 
 **Faça:** `netsh interface ipv4 show excludedportrange protocol=tcp` mostra as faixas. Troque a
 porta publicada no `.env` local (as portas `RUVOR_PORT_*` existem para isso), para uma fora
@@ -1240,3 +1241,28 @@ linhas de `apps/api/`.
 
 **Faça:** `docker compose build web worker` e
 `docker compose up -d --wait --force-recreate web worker beat` antes da primeira verificação.
+
+
+## O `--fail-on-warn` do drf-spectacular reprova enum com o mesmo nome de campo
+
+**Quando:** ao gerar o esquema OpenAPI com `manage.py spectacular --validate --fail-on-warn` e
+aparecer `enum naming encountered a non-optimally resolvable collision for fields named "kind"`.
+
+**Problema:** o gerador nomeia o enum pelo nome do campo (`KindEnum`). Dois campos `kind` com
+escolhas diferentes — `Asset.Kind` e `CorporateEvent.Kind`, e o mesmo com `status` — colidem, e
+ele resolve com sufixo de hash (`KindF56Enum`) e um aviso. O aviso basta para o `--fail-on-warn`
+reprovar.
+
+**Faça:** dê nome a cada conjunto em `SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"]`, pelo caminho
+da classe de escolhas (`"AssetKindEnum": "apps.assets.models.Asset.Kind"`). Serializador novo
+com campo de escolha de nome repetido precisa de entrada nova.
+
+
+## A contagem de avisos do drf-spectacular é de classe e sobrevive entre testes
+
+**Quando:** ao testar o esquema com `call_command("spectacular", "--fail-on-warn")` na suíte.
+
+**Problema:** `GENERATOR_STATS` acumula avisos e erros no processo inteiro, e o comando não a
+zera antes de gerar. Um aviso emitido por outro teste no mesmo processo reprovaria este.
+
+**Faça:** `GENERATOR_STATS.reset()` logo antes do `call_command`.

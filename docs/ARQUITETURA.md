@@ -119,7 +119,7 @@ PostgreSQL**:
 
 | Esquema | Camada | Conteúdo | Quem consulta |
 |---|---|---|---|
-| `core` | nenhuma — é o dado operacional | organização, usuário, o pedido de cálculo sob demanda (`core.compute_request`), e depois carteiras, limites e chaves de API | a aplicação |
+| `core` | nenhuma — é o dado operacional | organização, usuário, o pedido de cálculo sob demanda (`core.compute_request`), as chaves de API (`core.api_key`, desde o M4.2), e depois carteiras e limites | a aplicação |
 | `bronze` | **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
 | `silver` | **Prata** | o catálogo de ativos — uma linha por ação negociada, mais o Ibovespa —, os preços diários limpos e conformados, com retorno logarítmico, e os eventos corporativos; as companhias abertas da CVM e os balanços trimestrais conformados delas, um por (companhia, data de referência); os comunicados à CVM (fatos relevantes, comunicados ao mercado e avisos aos acionistas), só na versão corrente; e depois validação | base de trabalho |
 | `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, indicadores fundamentalistas por ação e a comparação deles com os pares, agregados de carteira | é o que a plataforma serve |
@@ -170,13 +170,19 @@ conta individual ganha organização pessoal implícita, invisível na interface
 O risco do ITUB4 é o mesmo para todo mundo — não faz sentido calcular por cliente. A
 superfície de isolamento é pequena.
 
-**O que isola não é a coluna, é a consulta filtrar.** Uma classe base **vai aplicar** o filtro
-por organização por padrão, para que esquecer deixe de ser possível. Coluna sem filtro
+**O que isola não é a coluna, é a consulta filtrar.** O gerente padrão da tabela privada aplica
+o filtro por organização sozinho, para que esquecer deixe de ser possível. Coluna sem filtro
 automático é teatro: um dia alguém esquece e um cliente vê dado de outro.
 
-**Ela ainda não existe.** O F4 entregou a coluna — o `organization` obrigatório do usuário —,
-e o mecanismo é obrigação do bloco que criar a primeira tabela privada de domínio, a carteira
-no M2.2, onde há contra o que prová-lo. O `user` é exceção permanente: os backends de
+**O mecanismo existe desde o M4.2**, em `apps/accounts/tenancy.py`, aplicado à primeira tabela
+privada, `core.api_key` ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)).
+A organização vive num `ContextVar`; o `OrganizationScopedManager` filtra pelo
+`organization_field` do modelo e, **sem organização no contexto, levanta** — nunca devolve tudo. O
+contexto é posto pela autenticação do pedido (sessão e chave) e zerado pelo
+`OrganizationScopeMiddleware` no começo e no fim de cada pedido; dentro dos serviços, pelo próprio
+serviço, com `organization_scope(...)`. O gerente base do modelo é sem escopo, para o Django; a
+saída explícita sem escopo (`ApiKey.unscoped`) só em lugar nomeado, guardado por teste. A carteira
+do M2.2 só o aplica. O `user` é exceção permanente: os backends de
 autenticação do Django alcançam o modelo por `_default_manager`, e a busca no login é anterior
 a saber a que organização a pessoa pertence — então o M2.1 isola a listagem de usuário por outro
 meio, e não pelo ORM ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)): toda
