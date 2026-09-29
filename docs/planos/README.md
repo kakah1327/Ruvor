@@ -43,7 +43,7 @@ terminado.
 | [M3.2 — Contexto](M3.2-contexto.md) | [M3.2](../specs/M3.2-contexto.md) | ✅ executado e fechado |
 | [M1.6a — Fundação da aplicação](M1.6a-fundacao-da-aplicacao.md) | [M1.6a](../specs/M1.6a-fundacao-da-aplicacao.md) | ✅ executado e fechado |
 | [M1.6b — As telas](M1.6b-as-telas.md) | [M1.6b](../specs/M1.6b-as-telas.md) | ✅ executado e fechado |
-| [M1.6c — Fundamentos e contexto na tela](M1.6c-fundamentos-e-contexto.md) | [M1.6c](../specs/M1.6c-fundamentos-e-contexto.md) | 🟡 aprovado na revisão; aguardando o dono |
+| [M1.6c — Fundamentos e contexto na tela](M1.6c-fundamentos-e-contexto.md) | [M1.6c](../specs/M1.6c-fundamentos-e-contexto.md) | ✅ aprovado; espera o Docker |
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 executada; a fase 2 espera o M1.6a |
 | [M4.2 — API pública](M4.2-api-publica.md) | [M4.2](../specs/M4.2-api-publica.md) | ✅ executado (T0 a T10) em 2026-09-28 |
 
