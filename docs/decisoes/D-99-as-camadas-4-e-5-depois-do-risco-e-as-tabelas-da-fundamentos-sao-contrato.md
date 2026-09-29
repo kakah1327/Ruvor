@@ -19,7 +19,8 @@ do cálculo pode falhar e deixar o indicador mais recente sem comparação (RF-1
    `gold.fundamental_indicator`, `gold.peer_comparison`, `silver.disclosure`, `silver.company` e as três
    colunas de `silver.financial_statement` que a tela mostra: coluna nova pode; mudar o sentido,
    renomear ou tirar uma coluna lida exige a revisão da `marco1`. As listas fechadas de valores que a tela
-   traduz (`account_plan`, `per_share_missing`, `market_cap_missing`, `peer_level`, `category`) também.
+   traduz (`account_plan`, `per_share_missing`, `market_cap_missing`, `peer_level`, `category`) também — e
+   **valor novo numa delas é mudança de contrato**, não crescimento livre.
 3. **A posição entre os pares é a do próprio indicador** — a ligação um-para-um do M3.2 —, não a
    comparação mais recente: a posição fala dos mesmos números que a tela mostra. Indicador sem comparação
    mostra "sem comparação", e não a de outro cálculo.
@@ -27,7 +28,9 @@ do cálculo pode falhar e deixar o indicador mais recente sem comparação (RF-1
 ## Consequências
 
 - A tela passa a pedir sete rotas; a taxa do anônimo do M4.2 pesa mais, e a spec do M1.6c a mede.
-- A `fundamentos` passa a revisar a PR de quem mudar o que a tela lê, e a `marco1` a revisar a dela.
+- A PR da `fundamentos` que mudar o que a tela lê — coluna lida ou valor de lista fechada — passa pela
+  revisão da `marco1`, que atualiza a tradução e o teste na mesma PR; a PR da `marco1` que consome as
+  tabelas passa pela revisão da `fundamentos`.
 - Fecha a faixa D-85 a D-99 da `marco1`; a próxima, D-140 a D-159, é reservada em FRENTES.md.
 
 Origem: [spec M1.6c — Fundamentos e contexto na tela](../specs/M1.6c-fundamentos-e-contexto.md).
