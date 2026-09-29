@@ -10,7 +10,7 @@
 ## Agora
 
 **Bloco:** M1.6b — As telas
-**Etapa:** spec e plano aprovados pelo dono (2026-09-28), cada um depois de duas rodadas de revisão adversarial; implementação começa pela T1 e pelos mockups T2 e T3 ([`specs/M1.6b-as-telas.md`](../specs/M1.6b-as-telas.md)), com as
+**Etapa:** implementação até a T11 feita (T1 a T11, com os três portões de mockup aprovados em 2026-09-28); **pausada a pedido do dono antes da T12** (as mutações) e da T13 (a execução real e o FECHA) ([`specs/M1.6b-as-telas.md`](../specs/M1.6b-as-telas.md)), com as
 decisões D-94 a D-98; comparativo de gráficos em
 [`mockups/M1.6b/graficos-comparativo.html`](../mockups/M1.6b/graficos-comparativo.html)
 **Ramo:** `marco1/M1.6b-as-telas`, criado em 2026-09-28 a partir da `main` com o M1.6a (PR #12) e a

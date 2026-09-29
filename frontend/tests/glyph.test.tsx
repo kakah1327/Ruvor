@@ -27,13 +27,15 @@ const REGULAR: RegularGlyph[] = [
   "calendar-blank",
   "caret-right",
   "chart-line",
+  "check-circle",
   "database",
   "info",
   "magnifying-glass",
+  "scales",
   "spinner-gap",
   "x",
 ];
-const DUOTONE: DuotoneGlyph[] = ["info", "x-circle"];
+const DUOTONE: DuotoneGlyph[] = ["info", "warning", "x-circle"];
 
 /** Os `d` do arquivo, lidos à parte do componente. */
 function fileDrawing(path: string): string[] {

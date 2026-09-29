@@ -1,4 +1,4 @@
-import { useCallback, useId } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import { type Load, useResource } from "../api/resource";
 import type { AssetDetail, Events, Metrics, Prices, Risk } from "../api/types";
@@ -6,8 +6,16 @@ import { AssetHeader } from "../components/AssetHeader";
 import { BehaviorSection } from "../components/BehaviorSection";
 import { EventsSection } from "../components/EventsSection";
 import { PriceSection } from "../components/PriceSection";
+import {
+  RiskSection,
+  sectionPending,
+  sectionStateOf,
+  wantsRail,
+} from "../components/RiskSection";
 import { SearchBox } from "../components/SearchBox";
+import { useShellContext } from "../components/Shell";
 import { TEXTOS } from "../content/textos";
+import { usePolling } from "../risk/usePolling";
 
 /** As cinco rotas do ativo, cada uma com o seu estado e o seu "tentar de novo". */
 export type AssetData = {
@@ -109,23 +117,72 @@ function AssetNotFound({ ticker }: { ticker: string }) {
 }
 
 /**
- * A tela do ativo (RF-06 a RF-11): o cabeçalho, o preço, os proventos e o comportamento, e o
- * espaço da seção de risco.
+ * O que a resposta do pedido de cálculo (RF-19) põe no lugar do `/risk`: o corpo do 202 (ou o
+ * `details` do 409), ou o 422 `asset_inactive`. Vale só enquanto o `/risk` da rota for o
+ * mesmo de quando a resposta chegou (`base`): o próximo `/risk` recebido — o do
+ * acompanhamento — o substitui.
+ */
+type Posted =
+  | { base: Load<Risk>; kind: "risk"; risk: Risk }
+  | { base: Load<Risk>; kind: "inactive" };
+
+/**
+ * A tela do ativo (RF-06 a RF-20): o cabeçalho, o preço, os proventos, o comportamento e o
+ * risco, com a trilha na coluna lateral do casco e a proveniência no rodapé.
  *
- * `data-ready="true"` no raiz quando o cabeçalho **e** o risco terminaram, com sucesso ou erro
- * — é o que a execução real espera. O "risco terminou" é uma linha só, `riskDone`: hoje, o
- * `/risk` respondeu; a T11 a troca pelo que a seção de risco disser.
+ * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
+ * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
+ * carregando: o do `/risk` e o da identidade e da série que o estado pede.
  */
 export function AssetScreen({ ticker }: { ticker: string }) {
   const data = useAssetData(ticker);
   const { asset, prices, events, metrics } = data;
+  const { setProvenance, setRail, railElement } = useShellContext();
 
-  if (asset.state === "error" && asset.error.code === "asset_not_found") {
+  const [posted, setPosted] = useState<Posted | null>(null);
+  const current = posted !== null && posted.base === data.risk ? posted : null;
+  const riskLoad: Load<Risk> =
+    current?.kind === "risk" ? { state: "ok", data: current.risk } : data.risk;
+  const risk = riskLoad.state === "ok" ? riskLoad.data : null;
+  const state = sectionStateOf(riskLoad, asset, prices, current?.kind === "inactive");
+
+  usePolling(risk, data.reload.risk, data.reloadAll);
+
+  const notFound = asset.state === "error" && asset.error.code === "asset_not_found";
+
+  // A coluna lateral (a trilha) e a proveniência do rodapé (RF-04, RF-16): a do último
+  // cálculo fechado `ok` ou `partial`.
+  const railOn = !notFound && wantsRail(state, risk);
+  useEffect(() => {
+    setRail(railOn);
+  }, [setRail, railOn]);
+
+  const latest = risk?.latest ?? null;
+  const closed = latest !== null && latest.status !== "failed" ? latest : null;
+  const asOfDate = notFound ? null : (closed?.as_of_date ?? null);
+  const calculatedAt = notFound ? null : (closed?.calculated_at ?? null);
+  useEffect(() => {
+    setProvenance(
+      asOfDate === null || calculatedAt === null ? null : { asOfDate, calculatedAt },
+    );
+  }, [setProvenance, asOfDate, calculatedAt]);
+
+  const baseRisk = data.risk;
+  const onRisk = useCallback(
+    (next: Risk) => setPosted({ base: baseRisk, kind: "risk", risk: next }),
+    [baseRisk],
+  );
+  const onInactive = useCallback(
+    () => setPosted({ base: baseRisk, kind: "inactive" }),
+    [baseRisk],
+  );
+
+  if (notFound) {
     return <AssetNotFound ticker={ticker} />;
   }
 
   const headDone = asset.state !== "loading";
-  const riskDone = data.risk.state !== "loading";
+  const riskDone = !sectionPending(state);
   const ready = headDone && riskDone;
 
   return (
@@ -142,13 +199,19 @@ export function AssetScreen({ ticker }: { ticker: string }) {
       />
       <BehaviorSection load={metrics} ticker={ticker} onRetry={data.reload.metrics} />
 
-      {/*
-        A seção de risco (RF-12 a RF-20) é da T11 e entra aqui, no lugar deste espaço, com
-        `id="risco"` — o destino do "Ir para o risco" do comportamento. Ela recebe
-        `data.risk`, `data.reload.risk`, `data.reloadAll` (o fim do acompanhamento) e a
-        identidade e os preços, que `riskState` pede.
-      */}
-      <div id="risco" />
+      {/* `id="risco"`: o destino do "Ir para o risco" do comportamento. */}
+      <div id="risco">
+        <RiskSection
+          ticker={ticker}
+          state={state}
+          risk={risk}
+          pricesCount={prices.state === "ok" ? prices.data.results.length : null}
+          rail={railElement}
+          onRetry={data.reload.risk}
+          onRisk={onRisk}
+          onInactive={onInactive}
+        />
+      </div>
     </div>
   );
 }

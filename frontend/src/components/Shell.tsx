@@ -19,6 +19,14 @@ export type Provenance = {
 /** O que o casco passa às telas pelo `<Outlet>`. */
 export type ShellContext = {
   setProvenance: (provenance: Provenance | null) => void;
+  /**
+   * Liga ou desliga a coluna lateral (a trilha do cálculo, RF-16). Ligada, o casco desenha
+   * a área em duas colunas, como o `ativo.html`, com a coluna vazia; a tela põe o conteúdo
+   * nela por `createPortal`, em `railElement`.
+   */
+  setRail: (on: boolean) => void;
+  /** O `<aside>` da coluna lateral, quando ela está ligada e montada; senão, `null`. */
+  railElement: HTMLElement | null;
 };
 
 /** Para a tela, dentro do casco: `const { setProvenance } = useShellContext()`. */
@@ -33,7 +41,10 @@ const PROVENANCE_TIME_ZONE = "America/Sao_Paulo";
  * O casco (RF-01 a RF-04): a barra superior, a área da tela e o rodapé, em toda rota.
  *
  * A proveniência fica guardada junto do endereço em que a tela a deu: ao sair dele, o
- * rodapé deixa de mostrá-la sem depender de a tela limpar.
+ * rodapé deixa de mostrá-la sem depender de a tela limpar. A coluna lateral, também.
+ *
+ * O `<main>` fica sempre no mesmo lugar da árvore, com a coluna ligada ou não: trocar o
+ * pai dele desmontaria a tela.
  */
 export function Shell() {
   const { pathname } = useLocation();
@@ -51,7 +62,23 @@ export function Shell() {
 
   const provenance =
     stored !== null && stored.pathname === pathname ? stored.provenance : null;
-  const context: ShellContext = { setProvenance };
+
+  // O endereço em que a tela ligou a coluna lateral; em outro, ela está desligada.
+  const [railPathname, setRailPathname] = useState<string | null>(null);
+  const setRail = useCallback(
+    (on: boolean) => {
+      setRailPathname(on ? pathname : null);
+    },
+    [pathname],
+  );
+  const railOn = railPathname === pathname;
+  const [railElement, setRailElement] = useState<HTMLElement | null>(null);
+
+  const context: ShellContext = {
+    setProvenance,
+    setRail,
+    railElement: railOn ? railElement : null,
+  };
 
   return (
     <div className="ruvor-app">
@@ -72,9 +99,16 @@ export function Shell() {
       </header>
 
       <div className="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
-        <main className="ruvor-content">
-          <Outlet context={context} />
-        </main>
+        {/* Com a coluna lateral, a área em duas colunas (.ruvor-workspace), e o rodapé embaixo
+            das duas, como no ativo.html; sem ela, um invólucro neutro. */}
+        <div className={railOn ? "ruvor-workspace" : undefined}>
+          <main className="ruvor-content">
+            <Outlet context={context} />
+          </main>
+          {railOn && (
+            <aside className="ruvor-rail ruvor-rail--stack" ref={setRailElement} />
+          )}
+        </div>
 
         <footer className="ruvor-footer">
           <p>

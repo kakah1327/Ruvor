@@ -10,15 +10,18 @@
  */
 
 import infoDuotone from "@brand/icons/duotone/info.svg?raw";
+import warningDuotone from "@brand/icons/duotone/warning.svg?raw";
 import xCircleDuotone from "@brand/icons/duotone/x-circle.svg?raw";
 import arrowLeft from "@brand/icons/regular/arrow-left.svg?raw";
 import arrowsClockwise from "@brand/icons/regular/arrows-clockwise.svg?raw";
 import calendarBlank from "@brand/icons/regular/calendar-blank.svg?raw";
 import caretRight from "@brand/icons/regular/caret-right.svg?raw";
 import chartLine from "@brand/icons/regular/chart-line.svg?raw";
+import checkCircle from "@brand/icons/regular/check-circle.svg?raw";
 import database from "@brand/icons/regular/database.svg?raw";
 import info from "@brand/icons/regular/info.svg?raw";
 import magnifyingGlass from "@brand/icons/regular/magnifying-glass.svg?raw";
+import scales from "@brand/icons/regular/scales.svg?raw";
 import spinnerGap from "@brand/icons/regular/spinner-gap.svg?raw";
 import x from "@brand/icons/regular/x.svg?raw";
 
@@ -28,9 +31,11 @@ const REGULAR = {
   "calendar-blank": calendarBlank,
   "caret-right": caretRight,
   "chart-line": chartLine,
+  "check-circle": checkCircle,
   database,
   info,
   "magnifying-glass": magnifyingGlass,
+  scales,
   "spinner-gap": spinnerGap,
   x,
 } as const;
@@ -38,6 +43,7 @@ const REGULAR = {
 /** Os duotone só vão nos sinais (`.ruvor-icon`), pela D-93. */
 const DUOTONE = {
   info: infoDuotone,
+  warning: warningDuotone,
   "x-circle": xCircleDuotone,
 } as const;
 
