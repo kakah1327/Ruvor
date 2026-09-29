@@ -601,6 +601,47 @@ export const TEXTOS = {
     `Abaixo de todas as outras ${outras} companhias do grupo com este indicador calculado.`,
   "fundamentos.pares.mediana": (m: string) => `Mediana do grupo: ${m}.`,
   "fundamentos.pares.semComparacao": "Sem comparação para este indicador.",
+
+  // comunicados.* — a seção Comunicados (M1.6c, RF-11 a RF-14): do registro `TEXTOS` do
+  // `docs/mockups/M1.6c/ativo-fundamentos.html` aprovado. Nenhuma forma da palavra da imprensa
+  // (D-130). Os argumentos chegam formatados.
+  "comunicados.sobrancelha": "O que a companhia divulgou",
+  "comunicados.titulo": "Comunicados da companhia à CVM",
+  "comunicados.intro":
+    "Fatos relevantes, comunicados ao mercado e avisos aos acionistas: o que a companhia é obrigada a divulgar, do jeito que ela entregou à CVM. A lista vem da CVM uma vez por dia, não em tempo real.",
+  "comunicados.saida":
+    "Cada título abre o documento no site da CVM, fora do Ruvor, numa aba nova.",
+  "comunicados.linkSaida": "abre no site da CVM, fora do Ruvor, numa aba nova",
+  "comunicados.companhia": (nome: string, codigo: string) =>
+    `Entregues por ${nome}, código ${codigo} na CVM.`,
+  "comunicados.companhiaSemNome": (codigo: string) =>
+    `Entregues pela companhia de código ${codigo} na CVM.`,
+  "comunicados.filtro.rotulo": "Categoria dos comunicados",
+  "comunicados.filtro.todas": "Todas",
+  "comunicados.filtro.fato_relevante": "Fatos relevantes",
+  "comunicados.filtro.comunicado": "Comunicados ao mercado",
+  "comunicados.filtro.aviso_acionistas": "Avisos aos acionistas",
+  "comunicados.categoria.fato_relevante": "fato relevante",
+  "comunicados.categoria.comunicado": "comunicado ao mercado",
+  "comunicados.categoria.aviso_acionistas": "aviso aos acionistas",
+  "comunicados.entregueEm": "Entregue em",
+  "comunicados.referencia": (data: string) => `Referente a ${data}.`,
+  "comunicados.mostrando": (mostrados: string, total: string) =>
+    `Mostrando ${mostrados} de ${total}.`,
+  "comunicados.mostrarMais": "Mostrar mais",
+  "comunicados.carregandoMais": "Carregando mais comunicados…",
+  "comunicados.erroMais": "Não foi possível carregar mais comunicados.",
+  "comunicados.carregando": "Carregando os comunicados desta companhia.",
+  "comunicados.vazio":
+    "A companhia não entregou comunicados destas categorias desde 2016.",
+  // filtroVazio(categoria no singular, de comunicados.categoria.*)
+  "comunicados.filtroVazio": (categoria: string) =>
+    `Nenhum ${categoria} entregue pela companhia desde 2016.`,
+  "comunicados.verTodas": "Ver todas as categorias",
+  "comunicados.indice": "O Ibovespa não é uma companhia e não entrega comunicados.",
+  "comunicados.semCodigo":
+    "O catálogo não tem o código desta companhia na CVM, e os comunicados dela não puderam ser ligados.",
+  "comunicados.semLigacao": "Os comunicados desta companhia não puderam ser ligados.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

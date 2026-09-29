@@ -277,3 +277,33 @@ export type Fundamentals = {
   indicator: Indicator | null;
   peers: Peers | null;
 };
+
+/** As três categorias de comunicado (`Disclosure.Category`), na ordem do filtro. */
+export const DISCLOSURE_CATEGORIES = [
+  "fato_relevante",
+  "comunicado",
+  "aviso_acionistas",
+] as const;
+
+export type DisclosureCategory = (typeof DISCLOSURE_CATEGORIES)[number];
+
+/** Um documento de `silver.disclosure` (M1.6c, RF-03); `link` é a identidade (D-131). */
+export type DisclosureItem = {
+  delivered_on: string;
+  reference_date: string | null;
+  category: DisclosureCategory;
+  kind: string;
+  species: string;
+  title: string;
+  link: string;
+};
+
+/** `GET /api/v1/assets/{ticker}/disclosures`; `company` é nulo sem `code_cvm` no catálogo. */
+export type Disclosures = {
+  ticker: string;
+  company: { code_cvm: string; name: string | null } | null;
+  count: number;
+  limit: number;
+  offset: number;
+  results: DisclosureItem[];
+};

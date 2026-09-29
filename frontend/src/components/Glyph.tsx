@@ -13,6 +13,7 @@ import infoDuotone from "@brand/icons/duotone/info.svg?raw";
 import warningDuotone from "@brand/icons/duotone/warning.svg?raw";
 import xCircleDuotone from "@brand/icons/duotone/x-circle.svg?raw";
 import arrowLeft from "@brand/icons/regular/arrow-left.svg?raw";
+import arrowSquareOut from "@brand/icons/regular/arrow-square-out.svg?raw";
 import arrowsClockwise from "@brand/icons/regular/arrows-clockwise.svg?raw";
 import calendarBlank from "@brand/icons/regular/calendar-blank.svg?raw";
 import caretRight from "@brand/icons/regular/caret-right.svg?raw";
@@ -27,6 +28,7 @@ import x from "@brand/icons/regular/x.svg?raw";
 
 const REGULAR = {
   "arrow-left": arrowLeft,
+  "arrow-square-out": arrowSquareOut,
   "arrows-clockwise": arrowsClockwise,
   "calendar-blank": calendarBlank,
   "caret-right": caretRight,

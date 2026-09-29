@@ -193,6 +193,16 @@ const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>>> = {
   ],
   "fundamentos.pares.abaixoDeTodas": [["7"]],
   "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
+  // comunicados.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c).
+  "comunicados.companhia": [["PETROLEO BRASILEIRO S.A. PETROBRAS", "9512"]],
+  "comunicados.companhiaSemNome": [["9512"]],
+  "comunicados.referencia": [["11/09/2026"]],
+  "comunicados.mostrando": [["10", "2.765"]],
+  "comunicados.filtroVazio": [
+    ["fato relevante"],
+    ["comunicado ao mercado"],
+    ["aviso aos acionistas"],
+  ],
   "motivos.serieCurta": [["312", "503"]],
   "motivos.expirado": [["30"]],
   "motivos.desconhecido": [["qualquer outro texto"]],
@@ -308,5 +318,51 @@ describe("V-09 — (b) o resultado de cada entrada", () => {
   it("a isenção pela chave é só a da ressalva", () => {
     expect([...ISENTAS]).toEqual(["rodape.ressalva"]);
     expect(TEXTOS["rodape.ressalva"]).toBe(RESSALVA);
+  });
+});
+
+/**
+ * V-09 do M1.6c (RF-11, D-130): a seção Comunicados nunca chama o que a companhia entrega à CVM
+ * pela palavra da imprensa. O radical sem borda no fim pega a palavra no singular, no plural e
+ * sem acento; sem caixa.
+ */
+const RADICAL_IMPRENSA = /not[ií]cia/iu;
+
+describe("V-09 do M1.6c — o radical da imprensa nas entradas comunicados.*", () => {
+  it.each(["notícia", "Notícias da companhia", "NOTÍCIAS", "noticia", "noticias"])(
+    "pega %j",
+    (texto) => {
+      expect(RADICAL_IMPRENSA.test(texto)).toBe(true);
+    },
+  );
+
+  it.each(["comunicado", "notificação", "Notas"])("não pega %j", (texto) => {
+    expect(RADICAL_IMPRENSA.test(texto)).toBe(false);
+  });
+
+  const entradas = (Object.entries(TEXTOS) as Array<[string, unknown]>).filter(([k]) =>
+    k.startsWith("comunicados."),
+  );
+
+  it("as entradas comunicados.* existem", () => {
+    expect(entradas.length).toBeGreaterThan(0);
+    expect(entradas.map(([k]) => k)).toContain("comunicados.titulo");
+  });
+
+  it("nenhuma entrada comunicados.* contém o radical", () => {
+    const achados: string[] = [];
+    for (const [chave, valor] of entradas) {
+      const saidas =
+        typeof valor === "string"
+          ? [valor]
+          : (EXEMPLOS[chave] ?? []).map((args) =>
+              (valor as (...a: unknown[]) => string)(...args),
+            );
+      expect(saidas.length).toBeGreaterThan(0);
+      for (const saida of saidas) {
+        if (RADICAL_IMPRENSA.test(saida)) achados.push(`${chave}: ${saida}`);
+      }
+    }
+    expect(achados).toEqual([]);
   });
 });
