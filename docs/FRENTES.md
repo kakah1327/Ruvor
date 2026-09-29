@@ -104,7 +104,8 @@ outras frentes.
 |---|---|---|
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
-| D-85 a D-99 | `marco1` | D-85 a D-98 |
+| D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
+| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c | — |
 | D-100 a D-119 | `identidade` | D-100 a D-107 |
 | D-120 a D-139 | `fundamentos` | D-120 a D-129 |
 
