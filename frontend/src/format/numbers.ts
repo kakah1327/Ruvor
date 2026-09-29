@@ -38,6 +38,43 @@ export function formatCurrency(value: number): string {
   return currency.format(value);
 }
 
+const currencyWhole = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+/** Valor em reais sem centavos, para o rótulo de eixo: 1234.5 → "R$ 1.235". */
+export function formatCurrencyWhole(value: number): string {
+  return currencyWhole.format(value);
+}
+
+/**
+ * O sinal de menos tipográfico (U+2212) no lugar do hífen que o `Intl` põe à frente do
+ * número negativo, como nos mockups: "-0,5%" → "−0,5%".
+ */
+export function typographicMinus(text: string): string {
+  return text.replace(/^-/, "−");
+}
+
+const signedPercentFormats = new Map<number, Intl.NumberFormat>();
+
+/** Fração como percentual com sinal (o zero sem sinal), e o menos tipográfico: "+5%", "−5%". */
+export function formatSignedPercent(value: number, digits = 1): string {
+  let format = signedPercentFormats.get(digits);
+  if (format === undefined) {
+    format = new Intl.NumberFormat("pt-BR", {
+      style: "percent",
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+      signDisplay: "exceptZero",
+    });
+    signedPercentFormats.set(digits, format);
+  }
+  return typographicMinus(format.format(value));
+}
+
 const integer = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 
 /** Inteiro com separador de milhar: 1234567 → "1.234.567". */
