@@ -240,7 +240,7 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   casco (`components/Shell.tsx`); consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
   `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
   `src/content/`** (copiado dos mockups aprovados), e varreduras reprovam cor literal, texto literal
-  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 1091 testes.
+  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 1092 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,

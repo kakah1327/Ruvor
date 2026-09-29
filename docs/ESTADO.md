@@ -1319,10 +1319,10 @@ spec com duas rodadas de revisão, plano com uma, o mockup aprovado no portão e
 |---|---|
 | As rotas | ✅ `/fundamentals` (o último indicador com a comparação **do próprio cálculo**) e `/disclosures` (paginada, com filtro, pela ligação direta por `code_cvm`), no molde da D-86, com a chave de leitura do M4.2 e o esquema OpenAPI sem aviso |
 | O contrato com a `fundamentos` | ✅ as tabelas lidas em [FRENTES.md](FRENTES.md#contratos-entre-frentes); `test_valores_fundamentos.py` lê as listas de motivo **da fonte** — `REASON_NULLS` inteiro e os retornos de `market_cap()` por `ast` — e reprova motivo novo |
-| Suítes | ✅ **1215 no backend** (a suíte rodou desanexada no `worker`, com o Beat parado) e **1091 no frontend** |
+| Suítes | ✅ **1215 no backend** (a suíte rodou desanexada no `worker`, com o Beat parado) e **1092 no frontend** |
 | Mutações | ✅ todas as das T1 a T6 reprovaram, cada uma revertida |
 | Texto só do mockup | ✅ as 112 chaves `fundamentos.*` e `comunicados.*` conferidas contra o mockup; nenhuma forma de "notícia" |
-| Execução real | ✅ 240 conferências sem falha em ITUB4 (banco: os nulos do plano de contas), IBOV (as frases de índice) e PETR4 (a posição entre os pares em quatro indicadores); a tela do ITUB4 pronta em **369 ms** |
+| Execução real | ✅ 245 conferências sem falha (depois da correção da revisão final) em ITUB4 (banco: os nulos do plano de contas), IBOV (as frases de índice) e PETR4 (a posição entre os pares em quatro indicadores); a tela do ITUB4 pronta em **369 ms** |
 | **A taxa do anônimo** | com a taxa padrão (60/min), **5 cargas completas da tela do ativo e 84 pedidos até o primeiro 429** — em desenvolvimento, 14 pedidos por carga pelo `StrictMode` |
 
 **O que a execução mostrou:**

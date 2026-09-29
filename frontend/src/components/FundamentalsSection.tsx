@@ -415,6 +415,9 @@ export function FundamentalsSection({ load, asset, onRetry }: Props) {
       : null;
 
   let state: "loading" | "error" | "ready" | "empty";
+  // Por que a seção está vazia, para a execução real distinguir o índice da identidade que
+  // falhou: as duas frases genéricas saem iguais (`unlinked` e `not-calculated`).
+  let emptyReason: "index" | "unlinked" | "not-calculated" | undefined;
   let body: ReactNode;
   if (load.state === "loading") {
     state = "loading";
@@ -437,6 +440,11 @@ export function FundamentalsSection({ load, asset, onRetry }: Props) {
     body = <SectionError onRetry={onRetry} />;
   } else if (indicator === null || load.state !== "ok") {
     const isIndex = asset.state === "ok" && asset.data.kind === "index";
+    emptyReason = isIndex
+      ? "index"
+      : asset.state === "error"
+        ? "unlinked"
+        : "not-calculated";
     body = (
       <StatePanel
         title={TEXTOS["fundamentos.naoCalculado.titulo"]}
@@ -462,6 +470,7 @@ export function FundamentalsSection({ load, asset, onRetry }: Props) {
       className="ruvor-stack"
       data-section="fundamentals"
       data-state={state}
+      data-empty-reason={state === "empty" ? emptyReason : undefined}
       aria-labelledby={titleId}
     >
       <div className="ruvor-section-head">

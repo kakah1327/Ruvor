@@ -216,6 +216,7 @@ function sectionFacts(page) {
       if (el === null) return null;
       return {
         state: el.getAttribute("data-state"),
+        emptyReason: el.getAttribute("data-empty-reason"),
         company: el.getAttribute("data-company"),
         alerts: el.querySelectorAll('[role="alert"]').length,
         nullReasons: [...el.querySelectorAll("[data-null-reason]")].map((n) => n.getAttribute("data-null-reason")),
@@ -255,6 +256,9 @@ function checkSections(label, facts, expect) {
     check(`${label}: ao menos um comunicado com link`, d.links > 0, { links: d.links, company: d.company });
   } else if (expect === "index") {
     check(`${label}: Fundamentos vazia (índice)`, f.state === "empty", { state: f.state });
+    check(`${label}: Fundamentos vazia pelo índice (data-empty-reason index)`, f.emptyReason === "index", {
+      emptyReason: f.emptyReason,
+    });
     check(`${label}: Comunicados vazia (índice)`, d.state === "empty", { state: d.state });
     check(`${label}: Comunicados com data-company none-index`, d.company === "none-index", {
       company: d.company,

@@ -549,6 +549,21 @@ describe("V-07 — indicator: null, carregando e erro", () => {
     expect(s.textContent).not.toContain(TEXTOS["fundamentos.naoCalculado.indice"]);
   });
 
+  it("a marca data-empty-reason: index, unlinked e not-calculated", () => {
+    expect(mount(vazio, ok(IBOV)).getAttribute("data-empty-reason")).toBe("index");
+    cleanup();
+    expect(mount(vazio, ERROR).getAttribute("data-empty-reason")).toBe("unlinked");
+    cleanup();
+    expect(mount(vazio, ok(ASSET)).getAttribute("data-empty-reason")).toBe(
+      "not-calculated",
+    );
+    cleanup();
+    // Fora do vazio, a marca não sai.
+    expect(mount(vazio, LOADING).hasAttribute("data-empty-reason")).toBe(false);
+    cleanup();
+    expect(mount(ok(body({}))).hasAttribute("data-empty-reason")).toBe(false);
+  });
+
   it("carregando: o esqueleto e o texto só para leitor de tela", () => {
     const s = mount(LOADING);
     expect(s.getAttribute("data-state")).toBe("loading");
