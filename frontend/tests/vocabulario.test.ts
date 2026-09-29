@@ -145,6 +145,7 @@ const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>>> = {
   "risco.erroModelo": [["texto do erro do motor"]],
   "risco.trilha.pregoes": [["1.980"]],
   "risco.trilha.coleta": [["Yahoo Finance", "26/09/2026 às 18:40"]],
+  "risco.trilha.instante": [["26/09/2026", "18:40"]],
   "risco.trilha.status.partial": [[2]],
   "risco.estado.recalculando": [[12, 18]],
   "risco.estado.E4": [[3, 18]],

@@ -362,6 +362,8 @@ export const TEXTOS = {
   "risco.trilha.status": "Situação",
   "risco.trilha.pregoes": (n: string) => `${n} pregões`,
   "risco.trilha.coleta": (fonte: string, quando: string) => `${fonte}, ${quando}`,
+  // O instante da trilha, como o `fInstant` do `ativo.html`: "27/09/2026 às 02:50".
+  "risco.trilha.instante": (data: string, hora: string) => `${data} às ${hora}`,
   "risco.trilha.fonte.yahoo-chart": "Yahoo Finance",
   "risco.trilha.status.ok": "concluído, os nove modelos calcularam",
   "risco.trilha.status.partial": (n: number) => `parcial: ${n} de 9 modelos falharam`,

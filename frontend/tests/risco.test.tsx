@@ -754,9 +754,9 @@ describe("RF-16 — a trilha na coluna lateral, e a proveniência no rodapé", (
     );
     expect(value(TEXTOS["risco.trilha.engine"])).toBe("0.3.0");
     expect(value(TEXTOS["risco.trilha.seed"])).toBe("42");
-    expect(value(TEXTOS["risco.trilha.calculatedAt"])).toBe("28/09/2026 19:30");
+    expect(value(TEXTOS["risco.trilha.calculatedAt"])).toBe("28/09/2026 às 19:30");
     expect(value(TEXTOS["risco.trilha.priceRun"])).toBe(
-      TEXTOS["risco.trilha.coleta"]("Yahoo Finance", "28/09/2026 19:01"),
+      TEXTOS["risco.trilha.coleta"]("Yahoo Finance", "28/09/2026 às 19:01"),
     );
     expect(value(TEXTOS["risco.trilha.status"])).toBe(TEXTOS["risco.trilha.status.ok"]);
     // a trilha fica fora da seção

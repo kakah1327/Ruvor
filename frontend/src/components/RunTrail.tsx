@@ -8,7 +8,8 @@ import { formatDate, formatInstant, formatInteger } from "../format/numbers";
 const TRAIL_TIME_ZONE = "America/Sao_Paulo";
 
 function instant(value: string): string {
-  return formatInstant(value, TRAIL_TIME_ZONE);
+  const [data = "", hora = ""] = formatInstant(value, TRAIL_TIME_ZONE).split(" ");
+  return TEXTOS["risco.trilha.instante"](data, hora);
 }
 
 /** A fonte da coleta pelo nome legível do módulo de textos; a desconhecida, crua. */
