@@ -222,6 +222,8 @@
   .ruvor-chip.is-hover { background: var(--ruvor-control-hover); border-color: var(--ruvor-text-muted); }
   .ruvor-chip.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
   .ruvor-table__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
+  .ruvor-doc__link.is-hover { text-decoration-color: currentColor; }
+  .ruvor-doc__link.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
   .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
@@ -249,6 +251,7 @@
     <a class="ruvor-nav__link" href="#icones"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg>Ícones e sinais</a>
     <a class="ruvor-nav__link" href="#composicao"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg>Composição</a>
     <a class="ruvor-nav__link" href="#telas"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M1.6b</a>
+    <a class="ruvor-nav__link" href="#telas-m16c"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Telas M1.6c</a>
   </nav>
   <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
 </header>
@@ -805,6 +808,56 @@ garch      -3,61%    adequado</div>
     </div>
   </section>
 
+  <!-- ============================================================ TELAS (M1.6c) -->
+  <section class="kit-section" id="telas-m16c">
+    <h2 class="ruvor-h2 kit-h"><svg class="ruvor-glyph ruvor-glyph--lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Telas do M1.6c</h2>
+    <p class="kit-note">O que o mockup aprovado do M1.6c desenhou como estilo local (<code class="kit-token">docs/mockups/M1.6c/ativo-fundamentos.html</code>), nos dois temas: o claro em cima, o escuro embaixo — a mesma marcação. Os números e os títulos são de exemplo. * forçado só nesta página.</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m16c>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">Fundamentos: a posição entre os pares <code class="kit-token">.ruvor-peer</code> <code class="kit-token">.ruvor-divider--spaced</code></h3>
+          <section class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">Um bloco de indicadores</h3></div><div class="ruvor-panel__body">
+            <div class="ruvor-stats">
+              <div class="ruvor-stat"><span class="ruvor-stat__label">Um número sem pares</span><span class="ruvor-stat__value ruvor-num">R$ 38,72</span><p class="ruvor-note">Acima da linha: o número de que os de baixo dependem.</p></div>
+            </div>
+            <div class="ruvor-divider ruvor-divider--spaced"></div>
+            <div class="ruvor-stats">
+              <div class="ruvor-stat"><span class="ruvor-stat__label">Acima de todas</span><span class="ruvor-stat__value ruvor-num">24,1%</span><p class="ruvor-note">A frase do número.</p><div class="ruvor-peer"><span class="ruvor-peer__label">Entre os pares</span><span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: 100%"></span></span><p class="ruvor-note">Acima de 6 das outras 6 companhias do grupo com este indicador calculado. Mediana do grupo: 11,3%.</p></div></div>
+              <div class="ruvor-stat"><span class="ruvor-stat__label">No meio</span><span class="ruvor-stat__value ruvor-num">0,62 vezes</span><p class="ruvor-note">A frase do número.</p><div class="ruvor-peer"><span class="ruvor-peer__label">Entre os pares</span><span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: 50%"></span></span><p class="ruvor-note">Acima de 2 das outras 4 companhias do grupo com este indicador calculado. Mediana do grupo: 0,58 vezes.</p></div></div>
+              <div class="ruvor-stat"><span class="ruvor-stat__label">Abaixo de todas</span><span class="ruvor-stat__value ruvor-num">3,1%</span><p class="ruvor-note">A frase do número.</p><div class="ruvor-peer"><span class="ruvor-peer__label">Entre os pares</span><span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: 0%"></span></span><p class="ruvor-note">Abaixo de todas as outras 7 companhias do grupo com este indicador calculado. Mediana do grupo: 7,2%.</p></div></div>
+              <div class="ruvor-stat"><span class="ruvor-stat__label">Sem comparação</span><span class="ruvor-stat__value ruvor-num">—</span><p class="ruvor-note">A frase do nulo.</p><div class="ruvor-peer"><span class="ruvor-peer__label">Entre os pares</span><p class="ruvor-note">Sem comparação para este indicador.</p></div></div>
+            </div>
+          </div></section>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">Comunicados: a lista e o link para fora <code class="kit-token">.ruvor-docs</code> <code class="kit-token">.ruvor-doc</code> <code class="kit-token">.ruvor-doc__link</code> <code class="kit-token">.ruvor-docs__head</code> <code class="kit-token">.ruvor-docs__foot</code> <code class="kit-token">.ruvor-docs__state</code> <code class="kit-token">.ruvor-btn-group--wrap</code></h3>
+          <div class="ruvor-stack">
+            <div class="ruvor-panel">
+              <div class="ruvor-panel__head ruvor-docs__head"><div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="Categoria de exemplo"><button class="ruvor-btn" type="button" aria-pressed="true">Todas</button><button class="ruvor-btn" type="button" aria-pressed="false">Fatos relevantes</button><button class="ruvor-btn" type="button" aria-pressed="false">Comunicados ao mercado</button><button class="ruvor-btn" type="button" aria-pressed="false">Avisos aos acionistas</button></div></div>
+              <div class="ruvor-panel__body"><p class="ruvor-note">Cada título abre o documento no site da CVM, fora do Ruvor, numa aba nova.</p>
+                <ul class="ruvor-docs">
+                  <li class="ruvor-doc"><span class="ruvor-doc__date ruvor-num"><span class="ruvor-sr-only">Entregue em </span>28/09/2026</span><div class="ruvor-doc__main"><span class="ruvor-tag ruvor-tag--evidence">fato relevante</span><a class="ruvor-doc__link" href="#telas-m16c">Título de exemplo de um fato relevante<svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"/></svg><span class="ruvor-sr-only"> (abre no site da CVM, fora do Ruvor, numa aba nova)</span></a></div></li>
+                  <li class="ruvor-doc"><span class="ruvor-doc__date ruvor-num"><span class="ruvor-sr-only">Entregue em </span>25/09/2026</span><div class="ruvor-doc__main"><span class="ruvor-tag ruvor-tag--neutral">comunicado ao mercado</span><a class="ruvor-doc__link is-hover" href="#telas-m16c">O link no hover*<svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"/></svg><span class="ruvor-sr-only"> (abre no site da CVM, fora do Ruvor, numa aba nova)</span></a><p class="ruvor-note">Referente a 11/09/2026.</p></div></li>
+                  <li class="ruvor-doc"><span class="ruvor-doc__date ruvor-num"><span class="ruvor-sr-only">Entregue em </span>22/09/2026</span><div class="ruvor-doc__main"><span class="ruvor-tag ruvor-tag--neutral">aviso aos acionistas</span><a class="ruvor-doc__link is-focus" href="#telas-m16c">O link com o foco do teclado*<svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"/></svg><span class="ruvor-sr-only"> (abre no site da CVM, fora do Ruvor, numa aba nova)</span></a></div></li>
+                </ul>
+                <div class="ruvor-docs__foot"><span class="ruvor-muted">Mostrando 3 de 2.765.</span><button class="ruvor-btn" type="button">Mostrar mais</button></div>
+              </div>
+            </div>
+            <div class="ruvor-panel">
+              <div class="ruvor-panel__head ruvor-docs__head"><div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="Categoria de exemplo, trocando"><button class="ruvor-btn" type="button" aria-pressed="false">Todas</button><button class="ruvor-btn" type="button" aria-pressed="true">Fatos relevantes</button><button class="ruvor-btn" type="button" aria-pressed="false">Comunicados ao mercado</button><button class="ruvor-btn" type="button" aria-pressed="false">Avisos aos acionistas</button></div></div>
+              <div class="ruvor-panel__body"><p class="ruvor-note">No lugar da lista, enquanto o filtro carrega.</p><div class="ruvor-docs__state"><div class="ruvor-skeleton ruvor-skeleton--block ruvor-skeleton--short" role="status" aria-busy="true"><span class="ruvor-sr-only">Carregando.</span></div></div></div>
+            </div>
+          </div>
+          <p class="kit-note">Abaixo de 720 px, <code class="kit-token">.ruvor-doc</code> vai a uma coluna: a data em cima do título.</p>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m16c-copy></div>
+    </div>
+  </section>
+
 </main>
 
 <aside class="ruvor-rail">
@@ -842,6 +895,10 @@ garch      -3,61%    adequado</div>
   // M1.6b: o painel escuro das telas é a mesma marcação do claro.
   var m16b = document.querySelector("[data-m16b]");
   document.querySelector("[data-m16b-copy]").innerHTML = m16b.innerHTML;
+
+  // M1.6c: o painel escuro das telas é a mesma marcação do claro.
+  var m16c = document.querySelector("[data-m16c]");
+  document.querySelector("[data-m16c-copy]").innerHTML = m16c.innerHTML;
 
   // Os 48 tokens de cor, na ordem de tokens.css.
   var GROUPS = [

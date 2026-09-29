@@ -1729,6 +1729,122 @@
   color: var(--ruvor-text-muted);
 }
 
+/* --- A tela do ativo: fundamentos e comunicados (M1.6c) ------------------------------ */
+
+/* A linha divisória entre dois grupos de números, com o respiro deles (o preço usado, e
+   embaixo os quatro que dependem dele). */
+.ruvor-divider--spaced {
+  margin: var(--ruvor-space-4) 0;
+}
+
+/* A posição entre os pares, ao pé do número: o rótulo, a barra do kit e a frase. */
+.ruvor-peer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  margin-top: var(--ruvor-space-2);
+  padding-top: var(--ruvor-space-2);
+  border-top: 1px dashed var(--ruvor-border);
+}
+
+.ruvor-peer__label {
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-label-size);
+  font-weight: var(--ruvor-type-label-weight);
+  letter-spacing: var(--ruvor-type-label-tracking);
+  text-transform: uppercase;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-peer .ruvor-bar {
+  width: 100%;
+  max-width: 220px;
+}
+
+/* O grupo de botões que quebra linha quando não cabe (o filtro de categoria, em 360 px). */
+.ruvor-btn-group--wrap {
+  flex-wrap: wrap;
+}
+
+/* A lista de comunicados (ul): a data à esquerda; a categoria, o link para fora e a nota
+   à direita. Abaixo de 720 px, uma coluna só. */
+.ruvor-docs {
+  list-style: none;
+  margin: var(--ruvor-space-3) 0 0;
+  padding: 0;
+}
+
+/* O cabeçalho do painel da lista: o filtro quebra linha. */
+.ruvor-docs__head {
+  flex-wrap: wrap;
+}
+
+/* No lugar da lista: o carregando do filtro, ou o filtro sem resultado. */
+.ruvor-docs__state {
+  margin-top: var(--ruvor-space-3);
+}
+
+.ruvor-doc {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: var(--ruvor-space-1) var(--ruvor-space-4);
+  padding: var(--ruvor-space-3) 0;
+  border-bottom: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-doc:last-child {
+  border-bottom: 0;
+}
+
+.ruvor-doc__date {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+  padding-top: 2px;
+}
+
+.ruvor-doc__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ruvor-space-1);
+  min-width: 0;
+}
+
+/* O link para o documento na CVM, que abre fora: o sublinhado discreto, que acende no
+   hover. */
+.ruvor-doc__link {
+  color: var(--ruvor-ink);
+  font-weight: var(--ruvor-type-small-weight);
+  text-decoration: underline;
+  text-decoration-color: var(--ruvor-border);
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.ruvor-doc__link:hover {
+  text-decoration-color: currentColor;
+}
+
+.ruvor-doc__link:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.ruvor-doc__link .ruvor-glyph {
+  margin-left: var(--ruvor-space-1);
+  color: var(--ruvor-text-muted);
+}
+
+/* O pé da lista: quantos aparecem, e o "mostrar mais" (ou o erro dele). */
+.ruvor-docs__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-4);
+  margin-top: var(--ruvor-space-4);
+}
+
 /* O anel sobre fundo escuro: dentro da barra e do bloco de código. Em (0,2,0) e depois dos
    componentes, vence o anel claro de .ruvor-btn, .ruvor-input, .ruvor-select e .ruvor-choice
    (também (0,2,0)) quando eles estão nesses fundos; o link da barra tem regra própria em
@@ -1922,5 +2038,10 @@
 
   .ruvor-state {
     flex-direction: column;
+  }
+
+  /* M1.6c: a lista de comunicados em uma coluna — a data em cima do título. */
+  .ruvor-doc {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

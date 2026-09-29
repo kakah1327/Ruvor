@@ -15,36 +15,10 @@
    * backend/apps/api/serializers.py. Só var(--ruvor-*) e valores estruturais: nenhuma cor
    * literal.
    *
-   * Estilo local:
-   *   - fnd-: o que a T3 leva ao kit (a posição entre os pares, o filtro que quebra linha, a
-   *     lista de comunicados e o link para fora);
-   *   - mk-: a moldura do mockup, que não é tela.
+   * Estilo local: só mk-, a moldura do mockup, que não é tela. O estilo local fnd- que o
+   * portão aprovou (a posição entre os pares, o filtro que quebra linha, a lista de
+   * comunicados e o link para fora) foi para o kit na T3 (brand/ruvor/components.css).
    */
-
-  /* --- fnd-: a posição entre os pares, ao pé do número ---------------------------------- */
-  .fnd-peer { display: flex; flex-direction: column; gap: var(--ruvor-space-1); margin-top: var(--ruvor-space-2); padding-top: var(--ruvor-space-2); border-top: 1px dashed var(--ruvor-border); }
-  .fnd-peer__label { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-label-size); font-weight: var(--ruvor-type-label-weight); letter-spacing: var(--ruvor-type-label-tracking); text-transform: uppercase; color: var(--ruvor-text-muted); }
-  .fnd-peer .ruvor-bar { width: 100%; max-width: 220px; }
-
-  /* --- fnd-: o filtro de categoria, que quebra linha em 360 px -------------------------- */
-  .fnd-filter { flex-wrap: wrap; }
-
-  /* --- fnd-: a lista de comunicados ------------------------------------------------------ */
-  .fnd-docs { list-style: none; margin: var(--ruvor-space-3) 0 0; padding: 0; }
-  .fnd-doc { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: var(--ruvor-space-1) var(--ruvor-space-4); padding: var(--ruvor-space-3) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
-  .fnd-doc:last-child { border-bottom: 0; }
-  .fnd-doc__date { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); padding-top: 2px; }
-  .fnd-doc__main { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ruvor-space-1); min-width: 0; }
-  .fnd-doc__link { color: var(--ruvor-ink); font-weight: var(--ruvor-type-small-weight); text-decoration: underline; text-decoration-color: var(--ruvor-border); text-underline-offset: 3px; overflow-wrap: anywhere; }
-  .fnd-doc__link:hover { text-decoration-color: currentColor; }
-  .fnd-doc__link:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
-  .fnd-doc__link .ruvor-glyph { margin-left: var(--ruvor-space-1); color: var(--ruvor-text-muted); }
-  .fnd-docs__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-4); margin-top: var(--ruvor-space-4); }
-  .fnd-docs__head { flex-wrap: wrap; }
-
-  @media (max-width: 720px) {
-    .fnd-doc { grid-template-columns: minmax(0, 1fr); }
-  }
 
   /* --- Moldura do mockup: não é tela ------------------------------------------------ */
   .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
@@ -556,11 +530,11 @@ function fmtMedian(field, m) {
 function peerSlot(field, peers) {
   const p = peers[field];
   const ok = p && p.median != null && p.percentile != null && p.count != null && p.count >= 3;
-  const label = `<span class="fnd-peer__label">${esc(T("fundamentos.pares.rotulo"))}</span>`;
-  if (!ok) return `<div class="fnd-peer">${label}${why(T("fundamentos.pares.semComparacao"))}</div>`;
+  const label = `<span class="ruvor-peer__label">${esc(T("fundamentos.pares.rotulo"))}</span>`;
+  if (!ok) return `<div class="ruvor-peer">${label}${why(T("fundamentos.pares.semComparacao"))}</div>`;
   const n = p.count, pct = Number(p.percentile);
   const k = Math.round(pct * (n - 1));
-  return `<div class="fnd-peer" data-peer-k="${k}" data-peer-n="${n - 1}">${label}
+  return `<div class="ruvor-peer" data-peer-k="${k}" data-peer-n="${n - 1}">${label}
     <span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * pct).toFixed(1)}%"></span></span>
     ${why(`${k === 0 ? T("fundamentos.pares.abaixoDeTodas", fInt.format(n - 1)) : T("fundamentos.pares.posicao", fInt.format(k), fInt.format(n - 1))} ${T("fundamentos.pares.mediana", fmtMedian(field, p.median))}`)}
   </div>`;
@@ -608,7 +582,7 @@ function fundamentalsSection({ body = null, asset = null, state = null, only = n
       const note = TEXTOS[`fundamentos.nota.${k}`];
       // Por ação: o preço usado numa linha própria, acima dos quatro que dependem dele.
       const stats = k === "porAcao"
-        ? `<div class="ruvor-stats">${stat("close", ind, peers, asset)}</div><div class="ruvor-divider" style="margin: var(--ruvor-space-4) 0"></div><div class="ruvor-stats">${fields.slice(1).map((f) => stat(f, ind, peers, asset)).join("")}</div>`
+        ? `<div class="ruvor-stats">${stat("close", ind, peers, asset)}</div><div class="ruvor-divider ruvor-divider--spaced"></div><div class="ruvor-stats">${fields.slice(1).map((f) => stat(f, ind, peers, asset)).join("")}</div>`
         : `<div class="ruvor-stats">${fields.map((f) => stat(f, ind, peers, asset)).join("")}</div>`;
       return `<section class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(`fundamentos.bloco.${k}`))}</h3></div>
         <div class="ruvor-panel__body">${stats}
@@ -628,11 +602,11 @@ const CATEGORIES = ["fato_relevante", "comunicado", "aviso_acionistas"];
 const catTag = (c) => `<span class="ruvor-tag ${c === "fato_relevante" ? "ruvor-tag--evidence" : "ruvor-tag--neutral"}">${esc(T(`comunicados.categoria.${c}`))}</span>`;
 
 function docItem(d) {
-  return `<li class="fnd-doc">
-    <span class="fnd-doc__date ruvor-num"><span class="ruvor-sr-only">${esc(T("comunicados.entregueEm"))} </span>${esc(fDate(d.delivered_on))}</span>
-    <div class="fnd-doc__main">
+  return `<li class="ruvor-doc">
+    <span class="ruvor-doc__date ruvor-num"><span class="ruvor-sr-only">${esc(T("comunicados.entregueEm"))} </span>${esc(fDate(d.delivered_on))}</span>
+    <div class="ruvor-doc__main">
       ${catTag(d.category)}
-      <a class="fnd-doc__link" href="${esc(d.link)}" target="_blank" rel="noopener noreferrer" data-disclosure-link>${esc(d.title)}${glyph("i-arrow-square-out", "ruvor-glyph--sm")}<span class="ruvor-sr-only"> (${esc(T("comunicados.linkSaida"))})</span></a>
+      <a class="ruvor-doc__link" href="${esc(d.link)}" target="_blank" rel="noopener noreferrer" data-disclosure-link>${esc(d.title)}${glyph("i-arrow-square-out", "ruvor-glyph--sm")}<span class="ruvor-sr-only"> (${esc(T("comunicados.linkSaida"))})</span></a>
       ${d.reference_date && d.reference_date !== d.delivered_on ? why(T("comunicados.referencia", fDate(d.reference_date))) : ""}
     </div>
   </li>`;
@@ -659,13 +633,13 @@ function disclosuresSection(m) {
       inner = statePanel({ icon: "i-file-text", title: T("comunicados.vazio") });
     } else {
       const who = m.body.company.name ? T("comunicados.companhia", m.body.company.name, m.body.company.code_cvm) : T("comunicados.companhiaSemNome", m.body.company.code_cvm);
-      const filter = `<div class="ruvor-btn-group fnd-filter" role="group" aria-label="${esc(T("comunicados.filtro.rotulo"))}">
+      const filter = `<div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="${esc(T("comunicados.filtro.rotulo"))}">
         ${["", ...CATEGORIES].map((c) => `<button class="ruvor-btn" type="button" data-filter="${c}" aria-pressed="${m.filter === c}">${esc(T(`comunicados.filtro.${c || "todas"}`))}</button>`).join("")}</div>`;
       let list;
-      if (m.listLoading) { st = "loading"; list = `<div style="margin-top: var(--ruvor-space-3)">${skeleton("comunicados.carregando", true)}</div>`; }
+      if (m.listLoading) { st = "loading"; list = `<div class="ruvor-docs__state">${skeleton("comunicados.carregando", true)}</div>`; }
       else if (m.items.length === 0) {
         st = "empty";
-        list = `<div style="margin-top: var(--ruvor-space-3)">${statePanel({ notice: true, icon: "i-file-text", title: T("comunicados.filtroVazio", T(`comunicados.categoria.${m.filter}`)), actions: `<button class="ruvor-btn" type="button" data-filter="">${esc(T("comunicados.verTodas"))}</button>` })}</div>`;
+        list = `<div class="ruvor-docs__state">${statePanel({ notice: true, icon: "i-file-text", title: T("comunicados.filtroVazio", T(`comunicados.categoria.${m.filter}`)), actions: `<button class="ruvor-btn" type="button" data-filter="">${esc(T("comunicados.verTodas"))}</button>` })}</div>`;
       } else {
         st = "ready";
         const hasMore = m.offset + m.pageLength < m.body.count;
@@ -674,11 +648,11 @@ function disclosuresSection(m) {
           : m.more === "error"
             ? `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${esc(T("comunicados.erroMais"))}</span><button class="ruvor-btn" type="button" data-more>${glyph("i-arrows-clockwise")}<span>${esc(T("ativo.tentarDeNovo"))}</span></button></div>`
             : hasMore ? `<button class="ruvor-btn" type="button" data-more>${esc(T("comunicados.mostrarMais"))}</button>` : "";
-        list = `<ul class="fnd-docs">${m.items.map(docItem).join("")}</ul>
-          <div class="fnd-docs__foot"><span class="ruvor-muted" role="status">${esc(T("comunicados.mostrando", fInt.format(m.items.length), fInt.format(m.body.count)))}</span>${more}</div>`;
+        list = `<ul class="ruvor-docs">${m.items.map(docItem).join("")}</ul>
+          <div class="ruvor-docs__foot"><span class="ruvor-muted" role="status">${esc(T("comunicados.mostrando", fInt.format(m.items.length), fInt.format(m.body.count)))}</span>${more}</div>`;
       }
       inner = `<div class="ruvor-panel">
-        <div class="ruvor-panel__head fnd-docs__head">${filter}</div>
+        <div class="ruvor-panel__head ruvor-docs__head">${filter}</div>
         <div class="ruvor-panel__body">${why(`${who} ${T("comunicados.saida")}`)}${list}</div>
       </div>`;
     }

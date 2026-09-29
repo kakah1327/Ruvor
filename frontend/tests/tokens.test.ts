@@ -428,6 +428,8 @@ const INTERACTIVE = [
   ".ruvor-search__link",
   ".ruvor-chip",
   ".ruvor-table__toggle",
+  // M1.6c (T3): o link de comunicado, que abre o documento na CVM.
+  ".ruvor-doc__link",
 ];
 
 describe("V-05 — foco visível", () => {
