@@ -15,14 +15,15 @@
 **Bloco:** na frente `marco1`, o **M1.6c fechou em 2026-09-29** — as camadas 4 e 5 na tela do ativo
 ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md), [D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)) —,
 e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 2026-09-29** — a coluna
-`core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; seis blocos da
-`marco1` — M1.6d, M1.5c, M1.7, M3.3, M2.3 e M2.1b — têm spec e plano aprovados, a implementar; na frente
+`core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; o **M1.6d fechou em 2026-09-30** — o
+acabamento —, com a PR de implementação a abrir pelo dono; cinco blocos da `marco1` — M1.5c, M1.7, M3.3, M2.3 e
+M2.1b — têm spec e plano aprovados, a implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`
 (T14), que tem a coluna pronta no M2.1m e espera só o preenchimento
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)), e o **M4.2 fechou em
 2026-09-28** — o M4.1 é o próximo
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -1356,11 +1357,33 @@ tarefa de código, `4825389`, e o FECHA; spec com duas rodadas de revisão, plan
 **Nenhum código preenche a coluna**: isso é a T14 do M2.1a, da `identidade`, agora livre para começar. A dívida da
 `risk_run` sempre nula segue aberta até ela.
 
+### M1.6d — Acabamento
+
+Spec em [`specs/M1.6d-acabamento.md`](specs/M1.6d-acabamento.md) e plano em
+[`planos/M1.6d-acabamento.md`](planos/M1.6d-acabamento.md). Frente `marco1`, ramo `marco1/M1.6d-acabamento`. Quatro
+tarefas de código — `218e26a`, `90638cb`, `6c98a15`, `d999e94` —, a T5 (mutações e suítes, sem arquivo) e o FECHA.
+Nenhuma decisão nova. Paga quatro dívidas: três aqui e a do roteiro, já paga no M1.6c.
+
+| Verificação | Resultado |
+|---|---|
+| A região viva do risco | ✅ uma `ruvor-sr-only`, sempre montada, só com o andamento (E2 e E3 recalculando, E4, E5 na fila e `running`); vazia no E1; o embrulho do corpo sem `aria-live` |
+| Fundamentos e Comunicados | ✅ nenhum `aria-live` na seção; o carregando e a contagem seguem `role="status"` |
+| O Biome | ✅ `"preset": "recommended"`; o lint sai 0 sem `DEPRECATED`; o teste reprova o campo antigo |
+| A guarda de dependência | ✅ `tests/test_dependencias.py`, só biblioteca padrão; reprova `numpy>=2` e `Pandas[performance]` |
+| Suítes | ✅ **1099 no frontend** e **1299 no backend** (com os testes do M4.1), em 10 min 2 s, com o Beat parado; lint, typecheck, build e `mypy` limpos |
+| Mutações | ✅ as sete da spec reprovaram duas vezes — na tarefa dona e de novo na T5, sobre o código final |
+
+**O que a execução mostrou:** a região viva repete o texto do andamento que o painel visível mostra, e seis buscas
+antigas por texto em `risco.test.tsx` passaram a achar dois elementos. Elas agora exigem **exatamente um** fora de
+`[aria-live]` (o ajudante `inBody`), e o V-01 confere à parte o texto exato da região — ver
+[aprendizados](aprendizados.md). O Docker parou no meio do bloco, e a porta
+publicada do PostgreSQL caiu numa faixa reservada pelo Windows: o `.env` local passou a `56432`.
+
 ## Próximo passo
 
-**Na frente `marco1`, implementar o M1.6d — Acabamento**, pelo [plano](planos/M1.6d-acabamento.md), a partir da T1.
-Seis blocos têm spec e plano aprovados e na `main` (PRs #19 a #24, mescladas em 2026-09-30) e se implementam nesta
-ordem: **M1.6d → M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 depende do M1.6d; o M2.1b espera combinar com a
+**Na frente `marco1`, a PR do M1.6d**, que o dono abre e mescla com a CI verde; depois, **implementar o M1.5c —
+Execução presa**, pelo [plano](planos/M1.5c-execucao-presa.md). Os cinco blocos que faltam se implementam nesta
+ordem: **M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 dependia do M1.6d, agora fechado; o M2.1b espera combinar com a
 `identidade` a ordem com a T14 do M2.1a. Ramos, worktrees e a regra de onde cada comando roda estão em
 [frentes/marco1.md](frentes/marco1.md).
 
@@ -1410,19 +1433,19 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
 | ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)). O M1.6a acrescentou duas tarefas, limpas no `mypy`, e a guarda que o `mypy` não dá: `tests/test_tipos.py` reprova o override de `celery` de volta (V-19d) |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
-| **O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã — a imagem `web` cresceria e só alguém olhando notaria | `.github/workflows/ci.yml`, `backend/pyproject.toml` | Quando a CI ganhar uma verificação de dependência. **O M1.4 já respondeu a segunda metade:** o backend importa `pandas` em `apps/risk/provider.py` e **não o declara** — ele chega pelo motor, instalado só no `worker` —, então a `web` continua sem dependência numérica. O que segue sem guarda automática é o `pyproject.toml` |
+| ~~**O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã~~ | ~~`.github/workflows/ci.yml`, `backend/pyproject.toml`~~ | ✅ **quitada no M1.6d** — `backend/tests/test_dependencias.py` reprova qualquer das seis bibliotecas de `_BIBLIOTECAS` em `project.dependencies` ou num extra, com o nome normalizado (PEP 503), e confere a lista copiada contra a de `test_versoes_travadas.py`; roda no job `backend` da CI |
 | ~~**Não há filtro automático por organização.** O F4 entregou a coluna; o mecanismo que faz a consulta filtrar sozinha não existe — e sem ele, "coluna sem filtro é teatro"~~ | ~~`backend/apps/accounts/models.py` (`User.organization`)~~ | ✅ **quitada no M4.2** — `apps/accounts/tenancy.py`, aplicado à primeira tabela privada, `core.api_key` ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); o M2.2 só o aplica. `core.user` e `core.access_event` ficam fora, por nome ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md), [D-104](decisoes/D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md)) |
 | ~~`createsuperuser` não funciona.~~ | ~~`backend/apps/accounts/managers.py`~~ | ✅ **quitada na fase 1 do M2.1a** — sem organização, o superusuário vai para a `ruvor`, como `admin` ([D-105](decisoes/D-105-superusuario-mora-na-ruvor-restringe-a-d-39.md)); `--noinput` com as `DJANGO_SUPERUSER_*` funciona |
 | **Quem esquece a senha da organização pessoal fica sem saída.** Não há envio de e-mail: a redefinição é da administradora, e na organização pessoal ela é a própria pessoa. Até lá, o operador redefine por `shell` | `backend/apps/accounts/services.py` | O primeiro bloco que decidir envio de e-mail (hospedagem) — [spec M2.1a, Riscos](specs/M2.1a-identidade-e-acesso.md#riscos-e-questões-em-aberto) |
 | **`django_session` cresce sem limpeza.** Sessão vencida fica na tabela até alguém rodar `manage.py clearsessions` | `public.django_session` | Uma entrada própria no Beat quando o volume justificar, ou na hospedagem |
 | **A taxa anônima depende de `NUM_PROXIES`.** Sem ele certo, atrás de um proxy todo pedido chega com o IP do proxy, e os 60 por minuto por IP viram teto do site inteiro — o mesmo risco do limite `auth` do M2.1a, agora sobre a leitura | `backend/config/settings.py`, `REST_FRAMEWORK["NUM_PROXIES"]` | A hospedagem, antes de expor a API ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
-| **O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0, então não quebra hoje. Quebra no dia em que alguém subir a versão maior do Biome, e aí a CI reprova por configuração, não por código | `frontend/biome.json`, campo `linter.rules.recommended` | quando o Biome for atualizado — o pino é exato (`2.5.12`), então não acontece sozinho |
+| ~~**O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0~~ | ~~`frontend/biome.json`, campo `linter.rules.recommended`~~ | ✅ **quitada no M1.6d** — `"preset": "recommended"`, e `frontend/tests/biome.test.ts` reprova o campo antigo de volta |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
 | **A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento | `backend/apps/api/views.py`, a busca do RF-12 do M1.6a | Quando a busca for revista — é mudança de contrato da API (`unaccent` no Postgres ou normalização na conformação) |
 | **O setor da B3 vem com ponto no lugar da vírgula** ("Petróleo. Gás e Biocombustíveis"), e a tela mostra como chega | `silver.asset.sector`, a conformação do M1.1 | Na conformação do catálogo, com a regra escrita — é dado, não tela |
 | **A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista | `frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs` | Com um filtro por `has_prices` na busca da API (mudança de contrato) |
-| **O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda | `frontend/src/components/RiskSection.tsx` | Numa região só com o andamento, quando a acessibilidade for revista |
-| **O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir. Na execução do M1.6b a lista saiu vazia | `frontend/e2e/capturas.mjs` | Na próxima execução real que usar o roteiro (M1.6c) |
+| ~~**O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda~~ | ~~`frontend/src/components/RiskSection.tsx`~~ | ✅ **quitada no M1.6d** — uma região `ruvor-sr-only`, sempre montada, só com o andamento; Fundamentos e Comunicados perderam o `aria-live` do embrulho |
+| ~~**O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir~~ | ~~`frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.6c** (T8, `f00f3d2`) |
 | **A taxa do anônimo aceitou 81 pedidos com o limite em 60 por minuto** (execução real do M1.6c). Hipótese não provada: o `SimpleRateThrottle` do DRF conta sem atomicidade sob o `runserver` concorrente. E, com a taxa certa, a tela do ativo aguenta **5 cargas por minuto** a um anônimo em desenvolvimento | `backend/apps/accounts/throttling.py` (frente `identidade`), `RUVOR_THROTTLE_ANON` | Antes de expor a aplicação: a `identidade` confirma a contagem, e a hospedagem decide a taxa e se a tela junta rotas |
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 
