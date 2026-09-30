@@ -10,6 +10,7 @@ A chave primaria nao e declarada: o `DEFAULT_AUTO_FIELD` do Django 6.1 ja e
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, ClassVar
 
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -199,3 +200,90 @@ class ApiKey(models.Model):
 
     def __str__(self) -> str:
         return self.prefix
+
+
+class ReportQuerySet(models.QuerySet["Report"]):
+    """Recusa as escritas em massa: o relatorio so cresce (M4.1, RF-02)."""
+
+    def update(self, **kwargs: Any) -> int:
+        raise TypeError("report so cresce")
+
+    def delete(self) -> tuple[int, dict[str, int]]:
+        raise TypeError("report so cresce")
+
+
+class ReportManager(OrganizationScopedManager["Report"]):
+    """O gerente padrao de `Report`: filtra pela organizacao do contexto (RF-10) e, pelo
+    `_queryset_class`, devolve o queryset que recusa escrita em massa (RF-02) -- o
+    `get_queryset` do `OrganizationScopedManager` chama o do `Manager`, que instancia esta
+    classe."""
+
+    _queryset_class = ReportQuerySet
+
+
+class ReportBaseManager(models.Manager["Report"]):
+    """O gerente base de `Report`, sem escopo, com o mesmo queryset que recusa escrita."""
+
+    _queryset_class = ReportQuerySet
+
+
+class Report(models.Model):
+    """Um relatorio gerado, guardado para sempre (M4.1, RF-01, RF-02, RF-10).
+
+    `content` sao os bytes exatos do JSON entregue, e `sha256` o hash deles. A linha **nunca**
+    muda nem some: no Django, o `save` de linha existente, o `delete` da instancia e as
+    escritas em massa dos dois gerentes levantam; no banco, o gatilho `report_so_cresce` da
+    migration `0006_report` recusa `UPDATE` e `DELETE`. Os `PROTECT` sao a regra: execucao,
+    ativo, organizacao ou pessoa que um relatorio cita nao pode sumir.
+
+    `objects` filtra pela organizacao do contexto, como o de `ApiKey`; `unscoped` e o gerente
+    base, que o Django usa no `refresh_from_db`, na insercao e na coleta da exclusao.
+    """
+
+    organization_field = "organization_id"
+
+    class Kind(models.TextChoices):
+        ASSET_RISK = "asset_risk"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    organization = models.ForeignKey(
+        Organization, on_delete=models.PROTECT, related_name="+"
+    )
+    requested_by = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name="reports"
+    )
+    # sem default: o servico o fixa antes do conteudo, que leva o mesmo instante
+    created_at = models.DateTimeField()
+    kind = models.CharField(max_length=20, choices=Kind)
+    format_version = models.IntegerField()
+    asset = models.ForeignKey(
+        "assets.Asset", on_delete=models.PROTECT, related_name="+"
+    )
+    risk_run = models.ForeignKey(
+        "risk.RiskRun", on_delete=models.PROTECT, related_name="+"
+    )
+    content = models.BinaryField()
+    sha256 = models.CharField(max_length=64)
+    size_bytes = models.IntegerField()
+
+    objects = ReportManager()  # o primeiro declarado: o gerente padrao
+    unscoped = ReportBaseManager()
+
+    class Meta:
+        db_table = 'core"."report'
+        base_manager_name = "unscoped"
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["organization", "created_at"], name="report_org_created"
+            )
+        ]
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self._state.adding:
+            raise TypeError("report so cresce")
+        super().save(*args, **kwargs)
+
+    def delete(
+        self, using: Any = None, keep_parents: bool = False
+    ) -> tuple[int, dict[str, int]]:
+        raise TypeError("report so cresce")

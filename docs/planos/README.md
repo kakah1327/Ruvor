@@ -53,6 +53,8 @@ terminado.
 | [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | [M3.3](../specs/M3.3-estresse-historico.md) | ✅ aprovado em 2026-09-30 (PR #20); implementação a começar |
 | [M1.6d — Acabamento](M1.6d-acabamento.md) | [M1.6d](../specs/M1.6d-acabamento.md) | ✅ aprovado em 2026-09-30 (PR #19); implementação a começar |
 | [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | [M1.7](../specs/M1.7-busca-e-catalogo.md) | ✅ aprovado em 2026-09-30 (PR #21); implementação a começar |
+| [M4.1 — Relatórios](M4.1-relatorios.md) | [M4.1](../specs/M4.1-relatorios.md) | ✅ aprovado (2026-09-29); T0 a T3 executadas, T4 a T6 pendentes |
+
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa
 de arquivos, grafo de dependências, e as quatro tarefas em que conteúdo literal entra.
