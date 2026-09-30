@@ -45,6 +45,7 @@ terminado.
 | [M1.6b — As telas](M1.6b-as-telas.md) | [M1.6b](../specs/M1.6b-as-telas.md) | ✅ executado e fechado |
 | [M1.6c — Fundamentos e contexto na tela](M1.6c-fundamentos-e-contexto.md) | [M1.6c](../specs/M1.6c-fundamentos-e-contexto.md) | ✅ executado e fechado |
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 executada; a fase 2 espera o M1.6a |
+| [M2.1m — A coluna do autor do pedido](M2.1m-requested-by.md) | [M2.1m](../specs/M2.1m-requested-by.md) | ✅ executado e fechado |
 | [M4.2 — API pública](M4.2-api-publica.md) | [M4.2](../specs/M4.2-api-publica.md) | ✅ executado (T0 a T10) em 2026-09-28 |
 | [M1.6d — Acabamento](M1.6d-acabamento.md) | [M1.6d](../specs/M1.6d-acabamento.md) | 🟡 escrito; aguardando aprovação |
 
