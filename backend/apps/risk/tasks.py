@@ -16,7 +16,9 @@ Quem chama quem:
   e **nunca levanta** (RF-06): se uma tarefa do grupo levantasse, o corpo do `chord` nao
   rodaria e a execucao ficaria `running` para sempre;
 - `fechar_execucao` ignora o que o grupo devolveu e le o banco (RF-05), sob a mesma trava,
-  e fecha os pedidos sob demanda ligados a execucao;
+  e fecha os pedidos sob demanda ligados a execucao -- **so se `close_run` escreveu**: sobre
+  execucao ja fechada (pela varredura das presas, M1.5c) ele nao escreve e devolve `None`, e o
+  fecho registra e termina (D-150);
 - `recalcular_cobertos` e o leque: uma `abrir_execucao` por ativo ativo com preco, pelo
   mesmo `enqueue_compute` que o `compute_risk --async` usa.
 
@@ -434,6 +436,10 @@ def _fechar_execucao(_resultados: object, run_id: int) -> None:
     `close_run` e o `close_linked`, que fecha todo pedido aberto ligado a ela. Fora de
     transacao a trava `xact` se soltaria no fim da propria consulta, e uma abertura poderia
     ligar um pedido a esta execucao depois de o fecho passar sem ve-lo.
+
+    **O fecho respeita quem fechou antes** (RF-09 do M1.5c): se `close_run` devolve `None`, a
+    execucao ja estava fechada -- pela varredura das presas --, e o fecho registra e termina
+    sem `close_linked`; os pedidos dela, quem fechou ja fechou.
     """
     with transaction.atomic():
         run = RiskRun.objects.select_related("asset").get(pk=run_id)
@@ -441,7 +447,9 @@ def _fechar_execucao(_resultados: object, run_id: int) -> None:
         _after_close_lock()
         run.refresh_from_db()
         now = timezone.now()
-        close_run(run, now)
+        if close_run(run, now) is None:
+            logger.info("execucao %d ja fechada (%s)", run.id, run.status)
+            return
         close_linked(run, now)
 
 
