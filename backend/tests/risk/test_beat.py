@@ -89,10 +89,10 @@ def test_nenhuma_entrada_do_beat_aponta_para_o_risco() -> None:
     assert not [t for t in tasks if t.startswith("apps.risk.tasks.")], tasks
 
 
-# --- V-09 (e V-20 do M1.6a): preco, metricas e risco, encadeados -------------------------
+# --- V-09 (e V-20 do M1.6a; V-10 do M1.5c): presas, preco, metricas e risco, encadeados ----
 
 
-def test_rotina_diaria_enfileira_uma_corrente_precos_metricas_e_risco(
+def test_rotina_diaria_enfileira_uma_corrente_presas_precos_metricas_e_risco(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     recebidos: list[Any] = []
@@ -105,14 +105,17 @@ def test_rotina_diaria_enfileira_uma_corrente_precos_metricas_e_risco(
     assert corrente["subtask_type"] == "chain"
     elos = corrente.tasks
     assert [elo.task for elo in elos] == [
+        "apps.risk.tasks.fechar_presas",
         "apps.assets.tasks.importar_precos",
         "apps.analytics.tasks.calcular_metricas",
         "apps.risk.tasks.recalcular_cobertos",
     ]
-    # Imutaveis: com `.s()`, o texto do elo anterior chegaria como argumento posicional --
-    # o `calcular_metricas` nao recebe nenhum, e no recalculo viraria calculated_at_iso.
+    # Imutaveis: com `.s()`, o que o elo anterior devolveu chegaria como argumento
+    # posicional -- o `None` do `fechar_presas` no `importar_precos`, que nao recebe nenhum;
+    # o texto dele no `calcular_metricas`, idem; e no recalculo viraria calculated_at_iso.
     assert elos[1].immutable is True
     assert elos[2].immutable is True
+    assert elos[3].immutable is True
 
 
 # --- V-10: horario e configuracao ----------------------------------------------------------

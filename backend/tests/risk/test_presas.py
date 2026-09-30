@@ -1,4 +1,4 @@
-"""A execucao presa (M1.5c): V-01 a V-07 e V-15.
+"""A execucao presa (M1.5c): V-01 a V-07, V-11 e V-15.
 
 **O V-05 e o V-06 semeiam a execucao direto no banco**, sem o motor: o que eles medem e o
 `close_run` condicional (D-150) e o fecho que respeita quem fechou antes (RF-09) -- a regra do
@@ -28,6 +28,11 @@ cenario, porque `compute_request_one_open_per_asset` so deixa um pedido aberto p
 duplos entram em `apps.risk.stale.*`, o nome global que a varredura chama; o V-04b fecha a
 execucao entre a listagem e a trava, pelo `_after_stale_listing`, e e o caso que so a releitura
 depois da trava pega com `dry_run`.
+
+**O V-11 substitui `apps.risk.tasks.close_stale_runs`**, o nome global que a tarefa
+`_fechar_presas` chama, por um que levanta: a tarefa termina normalmente e so registra no log
+(RF-06), para que a corrente da `rotina_diaria` siga para a coleta. Nenhum teste enfileira a
+rotina de verdade -- a corrente e conferida em `tests/risk/test_beat.py` (V-10).
 """
 
 from __future__ import annotations
@@ -64,7 +69,7 @@ from apps.risk.compute import (
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.provider import SilverPriceProvider
 from apps.risk.stale import StaleReport, close_stale_runs
-from apps.risk.tasks import _compute_asset_model, _fechar_execucao
+from apps.risk.tasks import _compute_asset_model, _fechar_execucao, _fechar_presas
 
 # O diretorio de `backend/`, onde `config` e `apps` sao importaveis.
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -659,3 +664,39 @@ def test_dry_run_diz_o_que_escreveria_e_nao_escreve() -> None:
         f"CCC3         run={run.pk} 2026-09-30 05:00 2/4 fecharia partial",
         "total: 1 fechariam, 0 ja fechadas, 0 falharam",
     ]
+
+
+# --- V-11: a tarefa da varredura nunca levanta ----------------------------------------------
+
+
+def test_v11_fechar_presas_nao_levanta_quando_a_varredura_falha(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    def levanta(now: datetime, older_than: timedelta, **kwargs: Any) -> StaleReport:
+        raise RuntimeError("varredura injetada")
+
+    monkeypatch.setattr("apps.risk.tasks.close_stale_runs", levanta)
+
+    assert _fechar_presas() is None  # type: ignore[func-returns-value]
+    assert "varredura das execucoes presas falhou" in caplog.text
+
+
+def test_fechar_presas_usa_o_prazo_da_configuracao_e_registra_o_relatorio(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    settings: Settings,
+) -> None:
+    caplog.set_level(logging.INFO, logger="apps.risk.tasks")
+    settings.RUVOR_RISK_STALE_AFTER = timedelta(minutes=400)
+    prazos: list[timedelta] = []
+
+    def vazia(now: datetime, older_than: timedelta, **kwargs: Any) -> StaleReport:
+        prazos.append(older_than)
+        return StaleReport(runs=[], failed=[], dry_run=False)
+
+    monkeypatch.setattr("apps.risk.tasks.close_stale_runs", vazia)
+
+    _fechar_presas()
+
+    assert prazos == [timedelta(minutes=400)]
+    assert "presas: nenhuma execução presa" in caplog.text

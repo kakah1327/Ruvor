@@ -22,7 +22,11 @@ Quem chama quem:
   execucao ja fechada (pela varredura das presas, M1.5c) ele nao escreve e devolve `None`, e o
   fecho registra e termina (D-150);
 - `recalcular_cobertos` e o leque: uma `abrir_execucao` por ativo ativo com preco, pelo
-  mesmo `enqueue_compute` que o `compute_risk --async` usa.
+  mesmo `enqueue_compute` que o `compute_risk --async` usa;
+- `fechar_presas` e o primeiro elo da `rotina_diaria` (RF-05, RF-06 do M1.5c): fecha pela
+  regra as execucoes `running` alem de `RUVOR_RISK_STALE_AFTER`, pela varredura de
+  `apps.risk.stale`, e **nunca levanta** -- varredura falhando, registra e a corrente segue
+  para a coleta. Nao tem entrada propria no Beat (D-149).
 
 **Quem enfileira nao cria `risk_run`** (RF-03): `enqueue_compute` confere o registry,
 resolve os ativos e produz o `calculated_at` **uma vez**, que viaja em ISO a todas as
@@ -31,8 +35,8 @@ instantes diferentes.
 
 **O registry e carregado nas duas primeiras**, pelos nomes importados aqui: o filho do
 *prefork* nasce sem ele, e o `compute_risk` sincrono so o tinha porque passa por
-`run_compute_risk`. `run_models`, `open_run`, `write_results`, `write_failed`, `close_run`
-e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes os
+`run_compute_risk`. `run_models`, `open_run`, `write_results`, `write_failed`, `close_run`,
+`close_stale_runs` e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes os
 substituem. O motor e chamado por `compute.run_models`, o mesmo ponto de entrada do
 sincrono (M1.5b): quem quer substituir o `run_experiment` mira
 `apps.risk.compute.run_experiment`, que e o nome que `run_models` chama.
@@ -54,6 +58,7 @@ from datetime import datetime
 from typing import Any, Literal, TypedDict, overload
 
 from celery import chord
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
@@ -86,6 +91,7 @@ from apps.risk.compute import (
 )
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.snapshots import SnapshotKey, library_versions
+from apps.risk.stale import close_stale_runs
 from config.celery import app
 
 logger = logging.getLogger(__name__)
@@ -506,6 +512,18 @@ def _recalcular_cobertos(calculated_at_iso: str | None = None) -> None:
     logger.info("%s", report.render())
 
 
+def _fechar_presas() -> None:
+    """O primeiro elo da `rotina_diaria` (RF-05, RF-06, D-149): fecha as presas pela regra.
+    Nunca levanta: a corrente segue para a coleta mesmo com a varredura falhando."""
+    try:
+        report = close_stale_runs(timezone.now(), settings.RUVOR_RISK_STALE_AFTER)
+    except Exception:
+        logger.exception("varredura das execucoes presas falhou; a rotina segue")
+        return
+    for line in report.render().splitlines():
+        logger.info("presas: %s", line)
+
+
 # Registro sem a sintaxe de decorador, como em `config/tasks.py`.
 abrir_execucao = app.task(name="apps.risk.tasks.abrir_execucao")(_abrir_execucao)
 compute_asset_model = app.task(name="apps.risk.tasks.compute_asset_model")(
@@ -515,3 +533,4 @@ fechar_execucao = app.task(name="apps.risk.tasks.fechar_execucao")(_fechar_execu
 recalcular_cobertos = app.task(name="apps.risk.tasks.recalcular_cobertos")(
     _recalcular_cobertos
 )
+fechar_presas = app.task(name="apps.risk.tasks.fechar_presas")(_fechar_presas)
