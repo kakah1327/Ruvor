@@ -23,6 +23,12 @@ conversas e entre agentes.
 | [D-98](D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md) | O horizonte do Marco 1 é 1 dia; restringe a D-05 |
 | [D-99](D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md) | As camadas 4 e 5 entram depois do risco, e as tabelas da `fundamentos` que a tela lê são contrato |
 | [D-140](D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md) | O pedido de cálculo sob demanda exige conta pronta; restringe a D-90 e a D-100 |
+| [D-151](D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) | O texto das duas leituras mora no frontend; restringe a D-97 e a PRODUTO §2 |
+| [D-152](D-152-o-nivel-de-leitura-e-escolha-do-visitante.md) | O nível de leitura é escolha do visitante, global, lembrada no navegador; o padrão é iniciante |
+| [D-153](D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md) | O parecer da CVM não bloqueia o M2.3; restringe o pré-requisito do Marco 2 e a PRODUTO §6 e §8 |
+| [D-146](D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) | O estresse histórico vira o bloco M3.3: só do ativo, só com preço |
+| [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
+| [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
 
 ## Arquitetura
 
@@ -111,6 +117,8 @@ conversas e entre agentes.
 | [D-132](D-132-pares-sao-o-segmento-da-b3-pela-tupla.md) | Os pares são o segmento da B3, ou o subsetor, pela tupla; a posição é o percentil |
 | [D-133](D-133-coleta-de-comunicados-diaria-restringe-a-d-127.md) | A coleta de comunicados é diária, em entrada própria do Beat; restringe a D-127 |
 | [D-134](D-134-tarefas-celery-tipadas-por-celery-types.md) | As tarefas Celery são tipadas por `celery-types` |
+| [D-143](D-143-a-busca-ignora-acento-pelo-unaccent.md) | A busca ignora acento pela extensão `unaccent` do PostgreSQL |
+| [D-144](D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md) | A classificação da B3 se corrige na saída da API, por tabela fechada; estende a D-47 |
 | [D-100](D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) | A API autentica por sessão do Django, com CSRF; 401 com `WWW-Authenticate: Session` |
 | [D-101](D-101-cadastro-aberto-com-organizacao-pessoal.md) | Cadastro aberto, com organização pessoal; organização real só por comando |
 | [D-102](D-102-papeis-admin-e-member-por-organizacao.md) | Dois papéis por organização, `admin` e `member`; `is_staff` é da plataforma; toda view que exige conta declara `AccountReady` |
@@ -145,6 +153,8 @@ conversas e entre agentes.
 | [D-92](D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md) | Nunca duas execuções do mesmo ativo ao mesmo tempo: a abertura pula o ativo em cálculo |
 | [D-93](D-93-os-icones-do-produto-vem-do-phosphor.md) | Os ícones do produto vêm do Phosphor, num conjunto fechado dentro do kit |
 | [D-94](D-94-os-graficos-sao-do-uplot.md) | Os gráficos são do uPlot, com a cor dos tokens; a comparação dos modelos é tabela |
+| [D-149](D-149-a-execucao-presa-e-fechada-pela-regra-do-fecho.md) | A execução presa é fechada pela regra do fecho, na rotina diária e por comando |
+| [D-150](D-150-o-fecho-so-escreve-sobre-execucao-em-running.md) | O fecho só escreve sobre execução em `running`, e o que chega depois é descartado; estende a D-72 e restringe a D-70 |
 | [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes
