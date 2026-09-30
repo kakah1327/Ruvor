@@ -69,6 +69,9 @@ STATUS_BY_CODE: dict[str, int] = {
     "use_password_route": 409,
     "api_key_not_found": 404,  # M4.2
     "api_key_limit": 409,
+    "report_not_found": 404,  # M4.1
+    "risk_not_calculated": 409,
+    "asset_not_found": 404,
 }
 
 

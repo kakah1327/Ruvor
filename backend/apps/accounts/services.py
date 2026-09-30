@@ -14,6 +14,10 @@ transacoes -- nao e transacional.
 quem pede>)` -- funciona igual pela rota, pelo teste direto, por um comando ou numa thread nova,
 que nao herda o contexto.
 
+**Os relatorios (M4.1).** `core.report` tem o mesmo filtro: gerar, listar e ler se escopam
+sozinhos com `organization_scope(actor.organization_id)`, como os de chave. O relatorio e da
+organizacao, nao da pessoa: `admin` e `member` fazem tudo, e o servico nao confere papel.
+
 **Nada aqui importa `rest_framework`** (`test_fase1_sem_drf`).
 """
 
@@ -21,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
+import uuid
 from collections.abc import Mapping
 from typing import Any
 
@@ -36,13 +41,15 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.accounts import lockout
+from apps.accounts import lockout, reports
 from apps.accounts.audit import record
 from apps.accounts.errors import AccountError
 from apps.accounts.managers import UserManager
-from apps.accounts.models import AccessEvent, ApiKey, Organization, User
+from apps.accounts.models import AccessEvent, ApiKey, Organization, Report, User
 from apps.accounts.passwords import generate_temporary_password
 from apps.accounts.tenancy import organization_scope
+from apps.assets.models import Asset
+from apps.risk.models import RiskRun
 
 # As restricoes de unicidade do e-mail: a do `unique=True` da `0001` e a de `Lower(email)`
 # da `0003`. Outro `IntegrityError` -- o `slug` da organizacao pessoal, numa corrida
@@ -605,3 +612,133 @@ def _revoke_all(target: User, *, actor: User, via: str, ip: str | None) -> None:
                 ip=ip,
                 details={"prefix": key.prefix, "via": via},
             )
+
+
+# --- os relatorios (M4.1, RF-05 a RF-07, RF-10, RF-12) -----------------------------------
+
+
+def report_body(report: Report) -> dict[str, Any]:
+    """O corpo `report`, lista fechada (RF-05). `created_at` no fuso do projeto, `-03:00`, o
+    texto que o `DateTimeField` do DRF daria; `requested_by` e o da linha `core.user` atual."""
+    return {
+        "id": str(report.public_id),
+        "kind": report.kind,
+        "format_version": report.format_version,
+        "ticker": report.asset.ticker,
+        "as_of_date": report.risk_run.as_of_date.isoformat(),
+        "risk_run_id": report.risk_run_id,
+        "sha256": report.sha256,
+        "size_bytes": report.size_bytes,
+        "created_at": timezone.localtime(report.created_at).isoformat(),
+        "requested_by": {
+            "email": report.requested_by.email,
+            "name": report.requested_by.name,
+        },
+    }
+
+
+def generate_report(actor: User, ticker: object) -> Report:
+    """Gera o relatorio de risco do ativo, da ultima execucao fechada (RF-05).
+
+    `ticker` chega cru: o tipo e conferido aqui, e numero da `invalid_parameter`. Uma `running`
+    mais nova e ignorada; uma `failed` gera. Gerar duas vezes da dois relatorios.
+    """
+    if not isinstance(ticker, str) or not ticker.strip():
+        raise _invalid({"ticker": ["Informe o ticker do ativo."]})
+    wanted = ticker.strip().upper()
+    with organization_scope(actor.organization_id):
+        asset = Asset.objects.filter(ticker=wanted).first()
+        if asset is None:
+            raise AccountError(
+                "asset_not_found", f"Ativo {wanted} não existe.", {"ticker": wanted}
+            )
+        run = (
+            RiskRun.objects.filter(asset=asset, status__in=reports.CLOSED_RUN_STATUSES)
+            .select_related("price_run")
+            .order_by("-calculated_at")
+            .first()
+        )
+        if run is None:
+            raise AccountError(
+                "risk_not_calculated",
+                f"O risco de {wanted} ainda não foi calculado.",
+                {"ticker": wanted},
+            )
+        results = list(run.results.order_by("model_name", "-alpha"))
+        public_id = uuid.uuid4()
+        created_at = timezone.now()
+        content = reports.to_bytes(
+            reports.build_content(
+                report_id=public_id,
+                generated_at=created_at,
+                organization=actor.organization,
+                requester_name=actor.name,
+                asset=asset,
+                run=run,
+                results=results,
+            )
+        )
+        with transaction.atomic():
+            return Report.objects.create(
+                public_id=public_id,
+                organization_id=actor.organization_id,
+                requested_by=actor,
+                created_at=created_at,
+                kind=Report.Kind.ASSET_RISK,
+                format_version=reports.FORMAT_VERSION,
+                asset=asset,
+                risk_run=run,
+                content=content,
+                sha256=hashlib.sha256(content).hexdigest(),
+                size_bytes=len(content),
+            )
+
+
+def list_reports(
+    actor: User, *, limit: int = 50, offset: int = 0, ticker: str | None = None
+) -> tuple[int, list[Report]]:
+    """Os relatorios da organizacao de quem pede, do mais novo ao mais velho (RF-06).
+
+    `ticker` ausente nao filtra; presente, aparado e em maiusculas, por igualdade -- vazio
+    depois de aparado nao lista nada. O corpo `report` nao le o conteudo: fica fora da consulta.
+    """
+    if not 1 <= limit <= 100:
+        raise AccountError(
+            "invalid_parameter", "`limit` vai de 1 a 100.", {"parameter": "limit"}
+        )
+    if offset < 0:
+        raise AccountError(
+            "invalid_parameter",
+            "`offset` não pode ser negativo.",
+            {"parameter": "offset"},
+        )
+    with organization_scope(actor.organization_id):
+        relatorios = (
+            Report.objects.select_related("asset", "risk_run", "requested_by")
+            .defer("content")
+            .order_by("-created_at", "-id")
+        )
+        if ticker is not None:
+            relatorios = relatorios.filter(asset__ticker=ticker.strip().upper())
+        return relatorios.count(), list(relatorios[offset : offset + limit])
+
+
+def get_report(actor: User, report_id: str) -> Report:
+    """O relatorio pelo `public_id`, **so na forma canonica** (RF-09). Texto que nao e UUID
+    canonico, UUID inexistente e UUID de outra organizacao: o mesmo `report_not_found`."""
+    nao_achou = AccountError("report_not_found", "Relatório não encontrado.", {})
+    try:
+        public_id = uuid.UUID(report_id)
+    except ValueError:
+        raise nao_achou from None
+    if str(public_id) != report_id:
+        raise nao_achou
+    with organization_scope(actor.organization_id):
+        report = (
+            Report.objects.select_related("asset", "risk_run", "requested_by")
+            .filter(public_id=public_id)
+            .first()
+        )
+    if report is None:
+        raise nao_achou
+    return report
