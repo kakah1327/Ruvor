@@ -485,7 +485,7 @@ export function FundamentalsSection({ load, asset, onRetry }: Props) {
         )}
       </div>
       <p className="ruvor-sub">{TEXTOS["fundamentos.intro"]}</p>
-      <div aria-live="polite">{body}</div>
+      <div>{body}</div>
     </section>
   );
 }

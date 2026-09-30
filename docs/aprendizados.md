@@ -1361,3 +1361,14 @@ aborta parte delas, e esses abortados entram na conta. No M1.6c, 84 pedidos cont
 **Faça:** registre os dois números (o do cliente e as respostas 200 antes do 429) e diga que a medida é de
 desenvolvimento; para medir o servidor, conte no servidor ou meça sobre o `vite build`.
 
+## A região viva repete o texto do painel, e o `getByText` acha dois
+
+**Quando:** ao pôr uma região `aria-live` só com o andamento (fora da vista, `ruvor-sr-only`) numa seção que já mostra o
+mesmo texto num painel visível.
+
+**Problema:** `within(section()).getByText(t)` reprova com `Found multiple elements with the text`: o texto está no
+painel e na região. No M1.6d, seis testes antigos de `risco.test.tsx` quebraram assim.
+
+**Faça:** busque o texto fora da região — `getAllByText(t).filter((el) => el.closest("[aria-live]") === null)`, com
+exatamente um resultado (o ajudante `inBody` de `risco.test.tsx`) —, e confira a região à parte, pelo seletor
+`[aria-live]` e pelo `textContent` exato: sozinho, o filtro aceita cópias a mais dentro da região.

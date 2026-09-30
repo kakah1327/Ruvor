@@ -432,7 +432,7 @@ export function DisclosuresSection({ ticker, asset, reloadToken }: Props) {
         </div>
       </div>
       <p className="ruvor-sub">{TEXTOS["comunicados.intro"]}</p>
-      <div aria-live="polite">{body}</div>
+      <div>{body}</div>
     </section>
   );
 }

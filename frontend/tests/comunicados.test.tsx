@@ -681,3 +681,30 @@ describe("V-09 — os estados do RF-14", () => {
     expect(calls).toHaveLength(1);
   });
 });
+
+// ---------------------------------------------------------------- V-02 do M1.6d
+
+describe("V-02 do M1.6d — nenhuma região viva embrulha o corpo", () => {
+  // O que se anuncia é o carregando e a contagem, ambos `role="status"`; o corpo não fica
+  // dentro de `aria-live` (RF-02).
+  it("carregando: nenhum elemento com aria-live, e o carregando segue role=status", () => {
+    const { section } = mount();
+    expect(section().dataset.state).toBe("loading");
+    const vivas = section().querySelectorAll("[aria-live]");
+    expect(vivas).toHaveLength(0);
+    expect(within(section()).getByRole("status").textContent).toContain(
+      TEXTOS["comunicados.carregando"],
+    );
+  });
+
+  it("pronto: nenhum elemento com aria-live, e a contagem segue role=status", async () => {
+    const { section } = mount();
+    await respond(last(), page(docs(0, 10), 25));
+    expect(section().dataset.state).toBe("ready");
+    const vivas = section().querySelectorAll("[aria-live]");
+    expect(vivas).toHaveLength(0);
+    expect(within(section()).getByRole("status").textContent).toContain(
+      TEXTOS["comunicados.mostrando"]("10", "25"),
+    );
+  });
+});
