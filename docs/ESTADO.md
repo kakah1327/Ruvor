@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-29
+**Última atualização:** 2026-09-30
 
 ---
 
