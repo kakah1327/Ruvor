@@ -13,25 +13,17 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 ## Agora
 
-**Bloco:** M2.1a — Identidade e acesso (resto da fase 2) e M4.2 — API pública (fechado)
-**Etapa:** M2.1a: fase 1 (PR #11) e fase 2 sem a `requested_by` (PR #13) na `main`; a T14 espera a
-migration da `marco1`. **M4.2: T0 a T10 executadas** (2026-09-28), um commit por tarefa; as 19
-mutações reprovaram; execução real feita pelo proxy do Vite
-**Ramo:** `identidade/M4.2-api-publica`. A PR #14 levou T0 a T5 para o ramo da fase 2, e não para a
-`main`, porque foi mesclada depois da #13; o bloco inteiro entra na `main` por uma PR nova, deste
-ramo
+**Bloco:** M4.1 — Relatórios. O M4.2 fechou e entrou na `main` (PR #15, 2026-09-29); o M2.1a tem
+as duas fases na `main` menos a `requested_by`, que espera a migration da `marco1`
+**Etapa:** spec do M4.1 aprovada pelo dono; plano aprovado pelo dono; **T0 executada** (linha de base verde); próxima, a T1
+**Ramo:** `identidade/M4.1-relatorios`
 
 ## Próximo passo
 
-1. Atualizar o ramo do M4.2 com a `main` e abrir a PR dele contra a `main`. A PR **passa pela
-   `marco1`**: toca `apps/api/views.py`, `apps/api/serializers.py`, `apps/api/errors.py`,
-   `tests/api/test_erros.py` e o `REST_FRAMEWORK`. A descrição leva o recado: a taxa anônima e a
-   variável; toda view nova declara `api_key_scope` e `extend_schema`; tabela privada nova usa o
-   gerente de `tenancy.py`; teste usa `force_login`, não `force_authenticate`.
+1. Executar o M4.1, T0 a T6.
 2. A migration de `core.compute_request.requested_by` (RF-26 do M2.1a), pedida à `marco1` no
    contrato literal do plano da fase 2. Com ela na `main`: a T14, as mutações 32 e 33 e a T16 do
    M2.1a.
-3. Depois: M4.1 — Relatórios.
 
 ## O que esta frente espera de outras
 
@@ -53,3 +45,5 @@ ramo
 | 2026-09-28 | Plano da fase 2 aprovado (revisão 1 aprovou, 5 médios e 11 leves absorvidos). **T9 a T13 implementadas**, um commit cada: o `banco_limpo`, o tratador com 401/400/429 e os cabeçalhos, a sessão com CSRF na API, `AccountReady`, o limite `auth` por IP, as rotas `auth/*` e `organization/users*`. Suíte com 1021 testes, verde; mypy e ruff limpos; 15 mutações reprovando; V-25 pelo proxy do Vite (9 eventos no `access_event`, IP do contêiner `frontend`). A T14 espera a migration da `marco1` |
 | 2026-09-28 | M4.2: spec e plano aprovados pelo dono, com duas decisões de direção (o filtro automático por organização nasce aqui, e a taxa anônima fica em 60 por minuto, ajustável) e uma errata (o `settings_test.py` no inventário). **T0 a T5 executadas:** drf-spectacular 0.30.0, que gera e valida no Django 6.1.1; o contexto da organização; `core.api_key` com o gerente que falha fechado; os serviços de chave; a autenticação por `Bearer`; o alcance da chave. Suíte com 1093 testes, verde. Uma rodada da T2 teve 1 falha por edição feita durante a suíte, não do estado da T2 |
 | 2026-09-28 | M4.2: **T6 a T10 executadas.** As rotas `api-keys*`; a taxa em toda rota (`ApiRateThrottle`, as três variáveis, `settings_test.py` fixando-as vazias); o esquema OpenAPI em `/api/v1/schema`, com `AutoSchema` próprio e `ENUM_NAME_OVERRIDES` para os dois `kind` e os dois `status`. Suíte com 1147 testes, verde; 19 mutações reprovando; V-16 pelo proxy do Vite. D-108 a D-112. A porta do PostgreSQL (`55432`) caiu numa faixa reservada do Windows depois de reiniciar: `.env` local com `15432` |
+| 2026-09-29 | M4.2 mesclado na `main` (PR #15). M4.1 aberto, decidido com o dono: o relatório de risco do ativo (camada 3), JSON como original e CSV derivado, PDF fora; guardado e imutável em `core.report`, com o SHA-256 dos bytes; gerar pela sessão, listar e baixar pela sessão ou pela chave; o relatório é de toda a organização; no conteúdo, só o nome de quem pediu, e o e-mail na coluna. Spec escrita; revisão 1 reprovou (1 grave, 5 médios, 7 leves), a 2 aprovou; aprovada pelo dono. Plano escrito; revisão 1 reprovou (2 graves, 1 médio, 8 leves), a 2 aprovou; aprovado pelo dono |
+| 2026-09-29 | M4.1: plano escrito; revisão 1 reprovou (2 graves: o `operationId` de lista e item que colide, e a comparação de bytes cega à troca por `Response`), a 2 aprovou; aprovado pelo dono. **T0 executada**: ramo na `main` `ad86c04`; `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0, `mypy` sem erros em 211 arquivos, `ruff` limpo, suíte com `1215 passed` em 15 min 46 s |
