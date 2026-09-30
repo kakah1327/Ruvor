@@ -1,4 +1,4 @@
-"""A execucao presa (M1.5c): V-05, V-06, V-07 e V-15.
+"""A execucao presa (M1.5c): V-01 a V-07 e V-15.
 
 **O V-05 e o V-06 semeiam a execucao direto no banco**, sem o motor: o que eles medem e o
 `close_run` condicional (D-150) e o fecho que respeita quem fechou antes (RF-09) -- a regra do
@@ -15,6 +15,19 @@ depois da trava, em `_write_if_running`, a ve fechada (RF-10, D-150). A execucao
 `open_run` sobre uma serie de `MIN_SESSIONS` pregoes, para a tarefa passar da conferencia da
 janela (`SeriesChanged`) e chegar ao `run_models`. Os duplos entram em `apps.risk.tasks.*`, o
 nome global que a tarefa chama.
+
+**Os V-01 a V-04b chamam `close_stale_runs` com o relogio controlado**: `now` fixo (`AGORA`) e o
+prazo de seis horas passados a funcao, sem ler a configuracao. As execucoes sao abertas por
+`open_run` com os dois modelos baratos e `calculated_at` relativo a `AGORA`, e os resultados
+limpos sao os do motor de verdade, gravados por `write_results`, no molde de
+`tests/risk/test_compute.py` (`_abre`, `_calcula`). **A spec escreve 18 e 6 para os nove
+modelos; aqui sao 4 e 2**, porque a regra e relativa ao pedido -- o V-01b a prova com um modelo
+so. A unicidade `risk_run_asset_calculated_at` barra duas execucoes do mesmo ativo no mesmo
+instante: cada presa do mesmo ativo nasce a `AGORA - 7 h - i s`. O V-03 usa um ativo por
+cenario, porque `compute_request_one_open_per_asset` so deixa um pedido aberto por ativo. Os
+duplos entram em `apps.risk.stale.*`, o nome global que a varredura chama; o V-04b fecha a
+execucao entre a listagem e a trava, pelo `_after_stale_listing`, e e o caso que so a releitura
+depois da trava pega com `dry_run`.
 """
 
 from __future__ import annotations
@@ -33,11 +46,24 @@ from typing import Any, cast
 
 import pytest
 from django.utils import timezone
+from engine.backtesting import load_all_backtest_modules
+from engine.experiments.runner import ExperimentConfig, ExperimentResult, run_experiment
+from engine.models import load_all_model_modules
+from pytest_django import Settings
 
+from apps.api.models import ComputeRequest
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
-from apps.risk.compute import _bars, close_run, open_run
+from apps.risk.compute import (
+    _bars,
+    close_run,
+    open_run,
+    write_failed,
+    write_results,
+)
 from apps.risk.models import RiskResult, RiskRun
+from apps.risk.provider import SilverPriceProvider
+from apps.risk.stale import StaleReport, close_stale_runs
 from apps.risk.tasks import _compute_asset_model, _fechar_execucao
 
 # O diretorio de `backend/`, onde `config` e `apps` sao importaveis.
@@ -313,3 +339,323 @@ def test_v07_par_de_erro_de_execucao_fechada_durante_o_calculo_e_descartado(
     assert falhas == []
     assert RiskResult.objects.filter(run=run).count() == 0
     assert "modelo parametric descartado" in caplog.text
+
+
+# --- os dados de V-01 a V-04b: a varredura com o relogio controlado ------------------------
+
+AGORA = datetime(2026, 9, 30, 12, 0, tzinfo=UTC)
+PRAZO = timedelta(hours=6)
+
+
+@pytest.fixture
+def prazo_do_pedido(settings: Settings) -> None:
+    """O prazo do pedido sob demanda, fixo em 30 min: o V-03 depende dele para `expired`."""
+    settings.RUVOR_ON_DEMAND_TIMEOUT = timedelta(minutes=30)
+
+
+def _presa(
+    asset: Asset, calculated_at: datetime, models: Sequence[str] = BARATOS
+) -> RiskRun:
+    """Uma execucao `running` aberta por `open_run` em `calculated_at`, sem resultado."""
+    return open_run(asset, calculated_at, 42, _bars(asset), models, full=False)
+
+
+def _calcula(run: RiskRun, models: Sequence[str] = BARATOS) -> ExperimentResult:
+    """O motor de verdade, com os modelos pedidos, sobre a janela da execucao -- o molde
+    de `_calcula` em `tests/risk/test_compute.py`, com o registry carregado aqui."""
+    load_all_model_modules()
+    load_all_backtest_modules()
+    bars = _bars(run.asset)
+    result = run_experiment(
+        ExperimentConfig(
+            ticker=run.asset.ticker,
+            start=bars[0].date.isoformat(),
+            end=bars[-1].date.isoformat(),
+            model_names=list(models),
+            backtest_names=list(config.BACKTESTS),
+            alphas=list(config.ALPHAS),
+            train_window_days=config.TRAIN_WINDOW_DAYS,
+            seed=run.seed,
+        ),
+        SilverPriceProvider(),
+    )
+    assert all(r.error is None for r in result.runs), [r.error for r in result.runs]
+    return result
+
+
+def _so(result: ExperimentResult, model_name: str) -> ExperimentResult:
+    """O mesmo resultado, so com as linhas de um modelo."""
+    return ExperimentResult(
+        config=result.config,
+        runs=[r for r in result.runs if r.model_name == model_name],
+    )
+
+
+def _estado(run: RiskRun) -> tuple[str, datetime | None]:
+    relida = RiskRun.objects.get(pk=run.pk)
+    return str(relida.status), relida.finished_at
+
+
+def _resultados() -> list[Any]:
+    return list(RiskResult.objects.order_by("pk").values())
+
+
+def _linhas(report: StaleReport) -> list[str]:
+    return report.render().splitlines()
+
+
+# --- V-01: a presa fecha pela regra do fecho ----------------------------------------------
+
+
+@pytest.mark.django_db
+def test_v01_as_presas_fecham_pela_regra_sem_mexer_nos_resultados() -> None:
+    asset = _serie("CCC3")
+    cheia = _presa(asset, AGORA - timedelta(hours=7, seconds=1))
+    metade = _presa(asset, AGORA - timedelta(hours=7, seconds=2))
+    vazia = _presa(asset, AGORA - timedelta(hours=7, seconds=3))
+    result = _calcula(cheia)
+    write_results(cheia, result, {})
+    write_results(metade, _so(result, "parametric"), {})
+    antes = _resultados()
+    assert len(antes) == 6
+
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert _estado(cheia) == (RiskRun.Status.OK, AGORA)
+    assert _estado(metade) == (RiskRun.Status.PARTIAL, AGORA)
+    assert _estado(vazia) == (RiskRun.Status.FAILED, AGORA)
+    assert _resultados() == antes
+    assert report.failed == []
+    assert not report.dry_run
+    # a listagem ordena por `calculated_at`: a mais velha primeiro
+    assert [
+        (r.run_id, r.written, r.expected, r.status, r.already_closed)
+        for r in report.runs
+    ] == [
+        (vazia.pk, 0, 4, "failed", False),
+        (metade.pk, 2, 4, "partial", False),
+        (cheia.pk, 4, 4, "ok", False),
+    ]
+    assert _linhas(report) == [
+        f"CCC3         run={vazia.pk} 2026-09-30 04:59 0/4 failed",
+        f"CCC3         run={metade.pk} 2026-09-30 04:59 2/4 partial",
+        f"CCC3         run={cheia.pk} 2026-09-30 04:59 4/4 ok",
+        "total: 3 fechadas, 0 ja fechadas, 0 falharam",
+    ]
+
+
+@pytest.mark.django_db
+def test_v01_o_par_de_erro_conta_como_gravado_com_erro() -> None:
+    asset = _serie("CCC3")
+    run = _presa(asset, AGORA - timedelta(hours=7))
+    write_results(run, _so(_calcula(run), "parametric"), {})
+    write_failed(run, "historical", "RuntimeError: falhou")
+
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert _estado(run) == (RiskRun.Status.PARTIAL, AGORA)
+    assert [(r.written, r.expected, r.status) for r in report.runs] == [
+        (4, 4, "partial")
+    ]
+
+
+@pytest.mark.django_db
+def test_v01b_a_regra_e_relativa_ao_pedido_de_um_modelo_so() -> None:
+    asset = _serie("CCC3")
+    run = _presa(asset, AGORA - timedelta(hours=7), models=["garch_1_1"])
+    write_results(run, _calcula(run, ["garch_1_1"]), {})
+    assert RiskResult.objects.filter(run=run, error="").count() == 2
+
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert _estado(run) == (RiskRun.Status.OK, AGORA)
+    assert [(r.written, r.expected, r.status) for r in report.runs] == [(2, 2, "ok")]
+
+
+# --- V-02: presa e a `running` velha --------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_v02_so_a_running_alem_do_prazo_e_presa() -> None:
+    asset = _serie("CCC3")
+    recente = _presa(asset, AGORA - PRAZO + timedelta(seconds=1))
+    velha = _presa(asset, AGORA - PRAZO - timedelta(seconds=1))
+    fim_ok = AGORA - timedelta(days=3) + timedelta(minutes=40)
+    fim_failed = AGORA - timedelta(days=4) + timedelta(minutes=40)
+    ok = _presa(asset, AGORA - timedelta(days=3))
+    falhou = _presa(asset, AGORA - timedelta(days=4))
+    RiskRun.objects.filter(pk=ok.pk).update(
+        status=RiskRun.Status.OK, finished_at=fim_ok
+    )
+    RiskRun.objects.filter(pk=falhou.pk).update(
+        status=RiskRun.Status.FAILED, finished_at=fim_failed
+    )
+
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert [r.run_id for r in report.runs] == [velha.pk]
+    assert _estado(velha) == (RiskRun.Status.FAILED, AGORA)
+    assert _estado(recente) == (RiskRun.Status.RUNNING, None)
+    assert _estado(ok) == (RiskRun.Status.OK, fim_ok)
+    assert _estado(falhou) == (RiskRun.Status.FAILED, fim_failed)
+
+
+# --- V-03: os pedidos ligados fecham pelo status da presa -----------------------------------
+
+
+def _pedido(asset: Asset, run: RiskRun, requested_at: datetime) -> ComputeRequest:
+    return ComputeRequest.objects.create(
+        asset=asset,
+        status=ComputeRequest.Status.RUNNING,
+        requested_at=requested_at,
+        risk_run=run,
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazo_do_pedido")
+def test_v03_os_pedidos_ligados_fecham_com_a_presa() -> None:
+    calculado_asset = _serie("DDD3")
+    vencido_asset = _serie("EEE3")
+    falhou_asset = _serie("FFF3")
+    calculado_run = _presa(calculado_asset, AGORA - timedelta(hours=7))
+    vencido_run = _presa(vencido_asset, AGORA - timedelta(hours=7))
+    falhou_run = _presa(falhou_asset, AGORA - timedelta(hours=7))
+    result = _calcula(calculado_run)
+    write_results(calculado_run, result, {})
+    write_results(vencido_run, result, {})
+    calculado = _pedido(calculado_asset, calculado_run, AGORA - timedelta(minutes=10))
+    vencido = _pedido(vencido_asset, vencido_run, AGORA - timedelta(hours=2))
+    falhou = _pedido(falhou_asset, falhou_run, AGORA - timedelta(minutes=10))
+
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert report.failed == []
+    assert _estado(calculado_run) == (RiskRun.Status.OK, AGORA)
+    assert _estado(vencido_run) == (RiskRun.Status.OK, AGORA)
+    assert _estado(falhou_run) == (RiskRun.Status.FAILED, AGORA)
+    calculado.refresh_from_db()
+    vencido.refresh_from_db()
+    falhou.refresh_from_db()
+    assert (calculado.status, calculado.reason, calculado.finished_at) == (
+        ComputeRequest.Status.DONE,
+        "calculado",
+        AGORA,
+    )
+    assert (vencido.status, vencido.reason, vencido.finished_at) == (
+        ComputeRequest.Status.EXPIRED,
+        "expirado (30 min)",
+        AGORA,
+    )
+    assert (falhou.status, falhou.reason, falhou.finished_at) == (
+        ComputeRequest.Status.FAILED,
+        "a execucao falhou",
+        AGORA,
+    )
+
+
+# --- V-04: a falha de uma nao para as outras; a da listagem sobe --------------------------
+
+
+@pytest.mark.django_db
+def test_v04_a_falha_de_uma_presa_nao_para_a_seguinte(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    asset = _serie("CCC3")
+    primeira = _presa(asset, AGORA - timedelta(hours=8))
+    segunda = _presa(asset, AGORA - timedelta(hours=7))
+    chamadas: list[int] = []
+
+    def levanta_na_primeira(run: RiskRun, finished_at: datetime) -> str | None:
+        chamadas.append(run.pk)
+        if len(chamadas) == 1:
+            raise RuntimeError("fecho injetado")
+        return close_run(run, finished_at)
+
+    monkeypatch.setattr("apps.risk.stale.close_run", levanta_na_primeira)
+
+    report = close_stale_runs(AGORA, PRAZO)  # nao levanta
+
+    assert chamadas == [primeira.pk, segunda.pk]
+    assert report.failed == [(primeira.pk, "RuntimeError: fecho injetado")]
+    assert [(r.run_id, r.status) for r in report.runs] == [(segunda.pk, "failed")]
+    assert _estado(primeira) == (RiskRun.Status.RUNNING, None)
+    assert _estado(segunda) == (RiskRun.Status.FAILED, AGORA)
+    assert f"execucao {primeira.pk}" in caplog.text
+    assert _linhas(report) == [
+        f"CCC3         run={segunda.pk} 2026-09-30 05:00 0/4 failed",
+        f"FALHOU run={primeira.pk}: RuntimeError: fecho injetado",
+        "total: 1 fechadas, 0 ja fechadas, 1 falharam",
+    ]
+
+
+@pytest.mark.django_db
+def test_v04_a_falha_da_listagem_sobe(monkeypatch: pytest.MonkeyPatch) -> None:
+    def levanta(now: datetime, older_than: timedelta) -> list[RiskRun]:
+        raise RuntimeError("listagem injetada")
+
+    monkeypatch.setattr("apps.risk.stale._list_stale", levanta)
+
+    with pytest.raises(RuntimeError, match="listagem injetada"):
+        close_stale_runs(AGORA, PRAZO)
+
+
+# --- V-04b: fechada entre a listagem e a trava ----------------------------------------------
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_v04b_fechada_entre_a_listagem_e_a_trava_entra_como_ja_fechada(
+    monkeypatch: pytest.MonkeyPatch, dry_run: bool
+) -> None:
+    asset = _serie("CCC3")
+    run = _presa(asset, AGORA - timedelta(hours=7))
+    fim = AGORA - timedelta(minutes=5)
+
+    def fecha_ok() -> None:
+        RiskRun.objects.filter(pk=run.pk).update(
+            status=RiskRun.Status.OK, finished_at=fim
+        )
+
+    monkeypatch.setattr("apps.risk.stale._after_stale_listing", fecha_ok)
+
+    report = close_stale_runs(AGORA, PRAZO, dry_run=dry_run)
+
+    assert report.failed == []
+    assert [(r.run_id, r.status, r.already_closed) for r in report.runs] == [
+        (run.pk, "ok", True)
+    ]
+    assert _estado(run) == (RiskRun.Status.OK, fim)
+    verbo = "fechariam" if dry_run else "fechadas"
+    assert _linhas(report) == [
+        f"CCC3         run={run.pk} 2026-09-30 05:00 ja fechada (ok)",
+        f"total: 0 {verbo}, 1 ja fechadas, 0 falharam",
+    ]
+
+
+# --- o `render`: sem presa, e o `dry_run` que nao escreve ----------------------------------
+
+
+@pytest.mark.django_db
+def test_render_sem_presa_e_a_linha_unica() -> None:
+    report = close_stale_runs(AGORA, PRAZO)
+
+    assert report.render() == "nenhuma execução presa"
+
+
+@pytest.mark.django_db
+def test_dry_run_diz_o_que_escreveria_e_nao_escreve() -> None:
+    asset = _serie("CCC3")
+    run = _presa(asset, AGORA - timedelta(hours=7))
+    write_results(run, _so(_calcula(run), "parametric"), {})
+    antes = _resultados()
+
+    report = close_stale_runs(AGORA, PRAZO, dry_run=True)
+
+    assert report.dry_run
+    assert _estado(run) == (RiskRun.Status.RUNNING, None)
+    assert _resultados() == antes
+    assert _linhas(report) == [
+        f"CCC3         run={run.pk} 2026-09-30 05:00 2/4 fecharia partial",
+        "total: 1 fechariam, 0 ja fechadas, 0 falharam",
+    ]
