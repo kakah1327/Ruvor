@@ -37,8 +37,10 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 
 ## Próximo passo
 
-1. Implementar, bloco a bloco na ordem acima — o M1.6d primeiro —, cada ramo recebendo a `main` antes de começar,
-   com os portões de mockup de cada um.
+1. **Implementar o M1.6d — Acabamento**: [plano](../planos/M1.6d-acabamento.md), começando pela T1 (T1 a T4 podem
+   correr em paralelo), no ramo `marco1/M1.6d-acabamento`, worktree `E:/Temp/Trilobit/varlab-wt/M1.6d-acabamento`,
+   com os comandos como o plano manda em "Onde cada comando roda". Receber a `main` no ramo antes de começar.
+   Depois, na ordem acima: M1.5c, M1.7, M3.3, M2.3 e M2.1b, cada um com os seus portões de mockup.
 2. Combinar com a `identidade` a ordem entre o M2.1b e a T14 do M2.1a.
 3. Olhar a zona de Basileia a 5% (ver *Aberto* no [ESTADO](../ESTADO.md#aberto-e-aguardando-decisão)).
 
