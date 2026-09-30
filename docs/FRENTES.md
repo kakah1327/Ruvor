@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6c-fundamentos-e-contexto` — M1.6c fechado; a PR de implementação é do dono, revisada pela `fundamentos` |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; em spec e plano: M1.6d, M1.5c, M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | seis ramos, um por bloco, cada um no seu worktree — PRs de spec e plano #19 a #24 |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
@@ -50,7 +50,7 @@ revisa a PR.
 
 | Frente | Pastas |
 |---|---|
-| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6*/`; os serviços `worker` e `beat` no `compose.yaml` |
+| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/`; os serviços `worker` e `beat` no `compose.yaml` |
 | `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1 (`backend/tests/accounts/`). **Sem telas:** toda interface visual — telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login, que consomem as rotas do M2.1 |
 | `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
@@ -84,7 +84,7 @@ mudança passa pela revisão da frente que o consome.
 |---|---|---|---|
 | **Convenções da API HTTP**: prefixo de rota, versão, formato de erro, autenticação | `marco1` (M1.6) e `identidade` (M2.1) | as duas | ✅ existe. Decidido pela [D-86](decisoes/D-86-convencoes-da-api-http.md) e aplicado pelo M1.6a: `/api/v1/`, `REST_FRAMEWORK` com o tratador do formato de erro, permissão padrão `IsAuthenticated` e cada view declarando a sua. **O mecanismo de autenticação é do M2.1**; mudar o formato de erro ou a regra de permissão exige a revisão das duas frentes; o mecanismo de autenticação é do M2.1, sessão do Django ([D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md)), e, desde o M4.2, a chave pessoal de leitura ([D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md)): **toda view nova declara `api_key_scope`** (`"read"` ou `None`) e `extend_schema` em cada método ([D-110](decisoes/D-110-a-descricao-da-api-e-o-esquema-openapi-gerado.md)); toda rota tem taxa ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
 | **Casco do frontend e kit completo**: layout, navegação, escala tipográfica, estados de interação | `marco1` (M1.6) | `marco1` — as telas, inclusive as de login, são dela | ✅ existe. O kit (M1.6a) e o casco (M1.6b): as rotas `/` e `/ativos/{ticker}`, a barra com a busca e a chave de tema, o rodapé com a ressalva e a proveniência, e a coluna lateral por `setRail` — em `frontend/src/components/Shell.tsx`. A `identidade` não consome: não tem tela |
-| **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | 🟡 combinado na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-com-outras-frentes): o código é do M2.1a (fase 2), a coluna de `core.compute_request` e a migration dela são da `marco1` |
+| **`gold.risk_run.requested_by`**: a dívida é do M2.1, o arquivo é de `apps/risk/` | `identidade` define o usuário; `marco1` é dona do arquivo | — | 🟡 combinado na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-com-outras-frentes): o código é do M2.1a (fase 2), a coluna de `core.compute_request` e a migration dela são da `marco1`. A coluna de `core.compute_request` está na `main` (M2.1m); falta o preenchimento, na T14 do M2.1a |
 | **As rotas de conta**: `/api/v1/auth/*` e `/api/v1/organization/users` | `identidade` (M2.1a) | `marco1` (as telas de login e de gestão) | 🟡 descritas na [spec do M2.1a](specs/M2.1a-identidade-e-acesso.md#contratos-externos); nascem na fase 2 |
 | **`silver.asset`**: o catálogo, por ticker | `marco1` | `fundamentos` liga fundamento a ativo | ✅ existe. **Só cresce**: coluna nova pode, mudar ou tirar coluna exige a revisão da `fundamentos` |
 | **`silver.price`**: o preço diário, por ativo | `marco1` | `fundamentos` lê `asset`, `date` e `close` para os múltiplos | ✅ existe. **Só cresce**, como o catálogo: mudar o sentido dessas colunas exige a revisão da `fundamentos` |
@@ -110,7 +110,7 @@ outras frentes.
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
-| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c | — |
+| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 |
 | D-100 a D-119 | `identidade` | D-100 a D-112 |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |
 

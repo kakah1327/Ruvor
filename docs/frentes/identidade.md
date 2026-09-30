@@ -14,16 +14,23 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 ## Agora
 
 **Bloco:** M4.1 — Relatórios. O M4.2 fechou e entrou na `main` (PR #15, 2026-09-29); o M2.1a tem
-as duas fases na `main` menos a `requested_by`, que espera a migration da `marco1`
-**Etapa:** spec do M4.1 aprovada pelo dono; plano aprovado pelo dono; **T0 executada** (linha de base verde); próxima, a T1
+as duas fases na `main` menos a T14, que **está destravada**: a coluna `requested_by` entrou pelo
+M2.1m (PR #18, 2026-09-30)
+**Etapa:** spec e plano do M4.1 aprovados pelo dono; **T0 a T3 executadas**, um commit cada, com a
+suíte inteira verde depois de cada uma; próxima, a T4. PR em rascunho aberta com o ramo
 **Ramo:** `identidade/M4.1-relatorios`
 
 ## Próximo passo
 
-1. Executar o M4.1, T0 a T6.
-2. A migration de `core.compute_request.requested_by` (RF-26 do M2.1a), pedida à `marco1` no
-   contrato literal do plano da fase 2. Com ela na `main`: a T14, as mutações 32 e 33 e a T16 do
-   M2.1a.
+1. M4.1: a T4 (as rotas, a chave e o esquema), a T5 (as mutações; a 3 exige `pytest --create-db`)
+   e a T6 (a execução real, que precisa do `frontend`, e o FECHA, com D-113 a D-115 e os dois
+   verbetes de aprendizados). Na T6, mais um verbete: o `TRUNCATE` de `core.report` falha na
+   transação do teste com `pending trigger events` (as FKs adiadas do Django), e o teste da T1
+   usa `SET CONSTRAINTS ALL IMMEDIATE`.
+2. M2.1a: a T14 (o preenchimento de `core.compute_request.requested_by`, coluna na `main` desde o
+   M2.1m), as mutações 32 e 33 e a T16. **Combinar a ordem com o darkside171**: o M2.1b (PR #24)
+   faz o `POST /risk` exigir conta (D-140), e o teste de pedido anônimo da T14 passa a esperar
+   401; o M1.5c (PR #23) também cruza com a T14 e pediu revisão desta frente.
 
 ## O que esta frente espera de outras
 
@@ -31,7 +38,7 @@ as duas fases na `main` menos a `requested_by`, que espera a migration da `marco
 |---|---|---|
 | `marco1` | **convenções da API HTTP** | ✅ [D-86](../decisoes/D-86-convencoes-da-api-http.md) |
 | `marco1` | **a base da API** (`apps/api`, o tratador de erro, `REST_FRAMEWORK`) e o `POST /risk` — só a fase 2 espera: as rotas de conta e a permissão nas views de `apps/api` | ✅ M1.6a na `main` (PR #12, 2026-09-28) |
-| `marco1` | a migration de `core.compute_request.requested_by` | 🔴 a pedir — contrato no [plano da fase 2](../planos/M2.1a-identidade-e-acesso.md#pré-condição-externa--a-coluna-requested_by) |
+| `marco1` | a migration de `core.compute_request.requested_by` | ✅ M2.1m na `main` (PR #18, 2026-09-30); o preenchimento é a T14 do M2.1a |
 
 ## Registro
 
@@ -47,3 +54,4 @@ as duas fases na `main` menos a `requested_by`, que espera a migration da `marco
 | 2026-09-28 | M4.2: **T6 a T10 executadas.** As rotas `api-keys*`; a taxa em toda rota (`ApiRateThrottle`, as três variáveis, `settings_test.py` fixando-as vazias); o esquema OpenAPI em `/api/v1/schema`, com `AutoSchema` próprio e `ENUM_NAME_OVERRIDES` para os dois `kind` e os dois `status`. Suíte com 1147 testes, verde; 19 mutações reprovando; V-16 pelo proxy do Vite. D-108 a D-112. A porta do PostgreSQL (`55432`) caiu numa faixa reservada do Windows depois de reiniciar: `.env` local com `15432` |
 | 2026-09-29 | M4.2 mesclado na `main` (PR #15). M4.1 aberto, decidido com o dono: o relatório de risco do ativo (camada 3), JSON como original e CSV derivado, PDF fora; guardado e imutável em `core.report`, com o SHA-256 dos bytes; gerar pela sessão, listar e baixar pela sessão ou pela chave; o relatório é de toda a organização; no conteúdo, só o nome de quem pediu, e o e-mail na coluna. Spec escrita; revisão 1 reprovou (1 grave, 5 médios, 7 leves), a 2 aprovou; aprovada pelo dono. Plano escrito; revisão 1 reprovou (2 graves, 1 médio, 8 leves), a 2 aprovou; aprovado pelo dono |
 | 2026-09-29 | M4.1: plano escrito; revisão 1 reprovou (2 graves: o `operationId` de lista e item que colide, e a comparação de bytes cega à troca por `Response`), a 2 aprovou; aprovado pelo dono. **T0 executada**: ramo na `main` `ad86c04`; `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0, `mypy` sem erros em 211 arquivos, `ruff` limpo, suíte com `1215 passed` em 15 min 46 s |
+| 2026-09-30 | M4.1: **T1 a T3 executadas**, um commit cada: `core.report` com o gatilho (`f58b9c6`), `reports.py` com o conteúdo, os bytes e o CSV (`e62ac7e`), os serviços (`bc72bd9`). Suíte inteira verde depois de cada uma: 1236, 1259 e 1294 testes; `mypy` e `ruff` limpos; mutações 1, 2, 4 a 11, 18 e 19 reprovando. Uma rodada da suíte caiu por falta de memória no hospedeiro: `.wslconfig` com `memory=6GB` e `swap=4GB`, e `beat` e `frontend` parados durante as tarefas. A `main` (PRs #18 a #24 do darkside171) entrou no ramo; PR do M4.1 aberta em rascunho |
