@@ -47,6 +47,7 @@ terminado.
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | [M2.1a](../specs/M2.1a-identidade-e-acesso.md) | ✅ fase 1 executada; a fase 2 espera o M1.6a |
 | [M2.1m — A coluna do autor do pedido](M2.1m-requested-by.md) | [M2.1m](../specs/M2.1m-requested-by.md) | ✅ executado e fechado |
 | [M4.2 — API pública](M4.2-api-publica.md) | [M4.2](../specs/M4.2-api-publica.md) | ✅ executado (T0 a T10) em 2026-09-28 |
+| [M2.1b — Telas de acesso](M2.1b-telas-de-acesso.md) | [M2.1b](../specs/M2.1b-telas-de-acesso.md) | 🟡 escrito; aguardando revisão e aprovação humana |
 | [M1.5c — Execução presa](M1.5c-execucao-presa.md) | [M1.5c](../specs/M1.5c-execucao-presa.md) | 🟡 revisado; aguardando aprovação do dono da frente |
 | [M2.3 — Camada explicativa](M2.3-camada-explicativa.md) | [M2.3](../specs/M2.3-camada-explicativa.md) | 🟡 revisado; aguardando aprovação do dono da frente |
 | [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | [M3.3](../specs/M3.3-estresse-historico.md) | 🟡 escrito em 2026-09-29; aguardando aprovação |

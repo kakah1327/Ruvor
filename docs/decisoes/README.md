@@ -22,13 +22,13 @@ conversas e entre agentes.
 | [D-97](D-97-no-marco-1-cada-numero-tem-uma-frase-fixa.md) | No Marco 1, cada número tem uma frase fixa; as duas leituras continuam no M2.3 |
 | [D-98](D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md) | O horizonte do Marco 1 é 1 dia; restringe a D-05 |
 | [D-99](D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md) | As camadas 4 e 5 entram depois do risco, e as tabelas da `fundamentos` que a tela lê são contrato |
+| [D-140](D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md) | O pedido de cálculo sob demanda exige conta pronta; restringe a D-90 e a D-100 |
 | [D-151](D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) | O texto das duas leituras mora no frontend; restringe a D-97 e a PRODUTO §2 |
 | [D-152](D-152-o-nivel-de-leitura-e-escolha-do-visitante.md) | O nível de leitura é escolha do visitante, global, lembrada no navegador; o padrão é iniciante |
 | [D-153](D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md) | O parecer da CVM não bloqueia o M2.3; restringe o pré-requisito do Marco 2 e a PRODUTO §6 e §8 |
 | [D-146](D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) | O estresse histórico vira o bloco M3.3: só do ativo, só com preço |
 | [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
 | [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
-
 
 ## Arquitetura
 
