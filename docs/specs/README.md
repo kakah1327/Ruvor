@@ -47,3 +47,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M3.2 — Contexto](M3.2-contexto.md) | Marco 3 · M3.2 · frente `fundamentos` | ✅ implementada e fechada |
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ aprovada; fase 1 implementada, fase 2 espera o M1.6a |
 | [M4.2 — API pública](M4.2-api-publica.md) | Marco 4 · M4.2 · frente `identidade` | ✅ aprovada; implementada em 2026-09-28 |
+| [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | Marco 3 · M3.3 · frente `marco1` | ✅ aprovada em 2026-09-29; plano escrito, aguardando aprovação |
