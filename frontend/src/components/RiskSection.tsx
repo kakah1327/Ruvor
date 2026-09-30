@@ -158,6 +158,31 @@ function Loading() {
   );
 }
 
+/**
+ * O texto da região viva da seção (RF-01 do M1.6d): só o andamento, nunca o resultado. A
+ * ordem é a da tabela do RF-01; qualquer outro estado deixa a região vazia.
+ */
+export function liveText(state: SectionState, risk: Risk | null): string {
+  const progress = risk?.in_progress ?? null;
+  if (state === "E4") {
+    return progress === null
+      ? ""
+      : TEXTOS["risco.estado.E4"](progress.results_written, progress.results_expected);
+  }
+  if (state === "E5") {
+    return risk?.request?.status === "running"
+      ? TEXTOS["risco.estado.E5.coletando"]
+      : TEXTOS["risco.estado.E5.fila"];
+  }
+  if ((state === "E2" || state === "E3") && progress !== null) {
+    return TEXTOS["risco.estado.recalculando"](
+      progress.results_written,
+      progress.results_expected,
+    );
+  }
+  return "";
+}
+
 /** O conteúdo da coluna lateral: a trilha, ou o esqueleto dela enquanto o `/risk` carrega. */
 function Trail({ risk }: { risk: Risk | null }) {
   const titleId = useId();
@@ -359,10 +384,15 @@ export function RiskSection({
         </div>
       </div>
       <p className="ruvor-sub">{TEXTOS["risco.intro"]}</p>
-      {/* O andamento é anunciado pelo leitor de tela (RF-20), como no ativo-estados.html: o
-          texto do corpo só muda quando o estado, os resultados escritos ou o status do pedido
-          mudam — o /risk repetido a cada 5 s com o mesmo andamento não muda nada. */}
-      <div aria-live="polite">{body}</div>
+      {/* O andamento é anunciado pelo leitor de tela (RF-20 do M1.6b, RF-01 do M1.6d) por uma
+          região própria, sempre montada e vazia sem andamento — uma região criada junto com o
+          texto não é anunciada. O texto só muda quando o estado, os resultados escritos ou o
+          status do pedido mudam: o /risk repetido a cada 5 s com o mesmo andamento não muda
+          nada. Sem role: um segundo "status" na seção colidiria com o carregando. */}
+      <p className="ruvor-sr-only" aria-live="polite">
+        {liveText(state, risk)}
+      </p>
+      <div>{body}</div>
       {rail !== null &&
         wantsRail(state, risk) &&
         createPortal(<Trail risk={risk} />, rail)}

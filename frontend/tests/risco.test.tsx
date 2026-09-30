@@ -351,6 +351,17 @@ afterEach(() => {
 const section = () =>
   document.querySelector<HTMLElement>("[data-risk-state]") as HTMLElement;
 const riskState = () => section()?.getAttribute("data-risk-state");
+/**
+ * O texto no corpo da seção, fora da região viva: o andamento aparece nos dois lugares (RF-01
+ * do M1.6d), e o que se confere aqui é o painel visível — exatamente um elemento.
+ */
+const inBody = (text: string) => {
+  const found = within(section())
+    .getAllByText(text)
+    .filter((el) => el.closest("[aria-live]") === null);
+  expect(found).toHaveLength(1);
+  return found[0];
+};
 const level = (alpha: string) =>
   section().querySelector<HTMLElement>(`article[data-alpha="${alpha}"]`) as HTMLElement;
 const phrase = (host: HTMLElement, name: string) =>
@@ -849,12 +860,14 @@ type Case = {
   prices?: Reply | undefined;
   state: string;
   shows?: string[];
+  /** O texto da região viva (V-01 do M1.6d); sem ele, a região está vazia. */
+  live?: string;
 };
 
 const inactive: AssetDetail = { ...ASSET, status: "inactive" };
 
 const CASES: Case[] = [
-  { name: "1: latest ok, sem in_progress", state: "E1" },
+  { name: "1: latest ok, sem in_progress", state: "E1", live: "" },
   {
     name: "1: latest partial",
     risk: ok(risk({ latest: run(apiOrder(), { status: "partial" }) })),
@@ -868,6 +881,7 @@ const CASES: Case[] = [
       TEXTOS["risco.estado.recalculando"](12, 18),
       TEXTOS["risco.estado.recalculando.nota"],
     ],
+    live: TEXTOS["risco.estado.recalculando"](12, 18),
   },
   {
     name: "2: latest failed",
@@ -886,6 +900,7 @@ const CASES: Case[] = [
       TEXTOS["risco.estado.recalculando.notaFalha"],
       TEXTOS["risco.estado.E3.titulo"],
     ],
+    live: TEXTOS["risco.estado.recalculando"](3, 18),
   },
   {
     name: "3: in_progress sem latest",
@@ -894,12 +909,14 @@ const CASES: Case[] = [
     ),
     state: "E4",
     shows: [TEXTOS["risco.estado.E4"](7, 18), TEXTOS["risco.estado.E4.nota"]],
+    live: TEXTOS["risco.estado.E4"](7, 18),
   },
   {
     name: "4: pedido queued",
     risk: ok(risk({ request: request({ status: "queued" }) })),
     state: "E5",
     shows: [TEXTOS["risco.estado.E5.fila"], TEXTOS["risco.estado.E5.fila.nota"]],
+    live: TEXTOS["risco.estado.E5.fila"],
   },
   {
     name: "4: pedido running",
@@ -909,6 +926,7 @@ const CASES: Case[] = [
       TEXTOS["risco.estado.E5.coletando"],
       TEXTOS["risco.estado.E5.coletando.nota"],
     ],
+    live: TEXTOS["risco.estado.E5.coletando"],
   },
   {
     name: "5: done com série curta",
@@ -1016,7 +1034,7 @@ describe("V-11 — data-risk-state para cada linha da tabela de decisão", () =>
     expect(riskState()).toBe(c.state);
 
     for (const text of c.shows ?? []) {
-      expect(within(section()).getByText(text)).toBeDefined();
+      expect(inBody(text)).toBeDefined();
     }
     const label = BUTTON[c.state] ?? null;
     const buttons = within(section())
@@ -1043,6 +1061,16 @@ describe("V-11 — data-risk-state para cada linha da tabela de decisão", () =>
         TEXTOS["ativo.erroSecao"],
       );
     }
+
+    // V-01 do M1.6d: uma região viva só, invisível, com o andamento e sem o corpo; o embrulho
+    // do corpo não tem aria-live. Fora da tabela do RF-01, a região está vazia.
+    const esperado = c.live ?? "";
+    const vivas = section().querySelectorAll("[aria-live]");
+    expect(vivas).toHaveLength(1);
+    const viva = vivas[0];
+    expect(viva.classList.contains("ruvor-sr-only")).toBe(true);
+    expect(viva.querySelector("table, .ruvor-panel")).toBeNull();
+    expect(viva.textContent).toBe(esperado);
   });
 
   it("E4 com a barra de progresso", async () => {
@@ -1119,7 +1147,7 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
     await settled("E8");
     fireEvent.click(calcular());
     await settled("E5");
-    expect(within(section()).getByText(TEXTOS["risco.estado.E5.fila"])).toBeDefined();
+    expect(inBody(TEXTOS["risco.estado.E5.fila"])).toBeDefined();
   });
 
   it("409 asset_already_covered: o /risk do details, e o risco aparece", async () => {
