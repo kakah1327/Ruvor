@@ -1,4 +1,4 @@
-"""A execucao presa (M1.5c): V-01 a V-07, V-11 e V-15.
+"""A execucao presa (M1.5c): V-01 a V-07, V-11, V-14 e V-15.
 
 **O V-05 e o V-06 semeiam a execucao direto no banco**, sem o motor: o que eles medem e o
 `close_run` condicional (D-150) e o fecho que respeita quem fechou antes (RF-09) -- a regra do
@@ -33,6 +33,14 @@ depois da trava pega com `dry_run`.
 `_fechar_presas` chama, por um que levanta: a tarefa termina normalmente e so registra no log
 (RF-06), para que a corrente da `rotina_diaria` siga para a coleta. Nenhum teste enfileira a
 rotina de verdade -- a corrente e conferida em `tests/risk/test_beat.py` (V-10).
+
+**O V-14 roda o comando `close_stale_runs` pela casca**, com `call_command` e o `stdout`
+capturado, nunca chamando a varredura direto: e o que prova que o comando entrega o relatorio,
+passa `--dry-run` e `--older-than-min` adiante e converte as falhas em `CommandError`. O comando
+le o relogio de verdade, entao cada presa nasce a sete horas de `timezone.now()`, e as linhas
+esperadas saem do `calculated_at` gravado. Os dois prazos sao fixados pela fixture, porque o
+conteiner recebe as variaveis do compose. Os duplos entram em `apps.risk.stale.*`, como nos
+V-04 e V-04b.
 """
 
 from __future__ import annotations
@@ -46,10 +54,12 @@ import sys
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from io import StringIO
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
+from django.core.management import CommandError, call_command
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
 from engine.experiments.runner import ExperimentConfig, ExperimentResult, run_experiment
@@ -700,3 +710,145 @@ def test_fechar_presas_usa_o_prazo_da_configuracao_e_registra_o_relatorio(
 
     assert prazos == [timedelta(minutes=400)]
     assert "presas: nenhuma execução presa" in caplog.text
+
+
+# --- V-14: o comando `close_stale_runs` e a casca da varredura ------------------------------
+
+
+@pytest.fixture
+def prazos_do_comando(settings: Settings) -> None:
+    """Os dois prazos fixos: seis horas para a presa e 30 min para o pedido sob demanda. O
+    conteiner recebe as variaveis do compose; o teste nao depende delas."""
+    settings.RUVOR_RISK_STALE_AFTER = PRAZO
+    settings.RUVOR_ON_DEMAND_TIMEOUT = timedelta(minutes=30)
+
+
+def _presa_agora(ticker: str) -> RiskRun:
+    """Uma presa a sete horas do relogio de verdade, que e o que o comando le."""
+    return _presa(_serie(ticker), timezone.now() - timedelta(hours=7))
+
+
+def _comando(*args: str) -> str:
+    out = StringIO()
+    call_command("close_stale_runs", *args, stdout=out)
+    return out.getvalue()
+
+
+def _cabeca(run: RiskRun) -> str:
+    return f"{run.asset.ticker:<12} run={run.pk} {run.calculated_at:%Y-%m-%d %H:%M}"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_fecha_a_presa_e_imprime_o_relatorio() -> None:
+    run = _presa_agora("GGG3")
+    write_results(run, _so(_calcula(run), "parametric"), {})
+
+    saida = _comando()  # nao levanta: codigo 0
+
+    assert saida.splitlines() == [
+        f"{_cabeca(run)} 2/4 partial",
+        "total: 1 fechadas, 0 ja fechadas, 0 falharam",
+    ]
+    assert _estado(run)[0] == RiskRun.Status.PARTIAL
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_sem_presa_imprime_a_linha_unica() -> None:
+    assert _comando() == "nenhuma execução presa\n"
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_com_dry_run_nao_escreve() -> None:
+    run = _presa_agora("GGG3")
+    write_results(run, _so(_calcula(run), "parametric"), {})
+
+    saida = _comando("--dry-run")
+
+    assert saida.splitlines() == [
+        f"{_cabeca(run)} 2/4 fecharia partial",
+        "total: 1 fechariam, 0 ja fechadas, 0 falharam",
+    ]
+    assert _estado(run) == (RiskRun.Status.RUNNING, None)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_recusa_prazo_menor_que_o_do_pedido_sob_demanda() -> None:
+    run = _presa_agora("GGG3")
+
+    with pytest.raises(CommandError) as exc:
+        _comando("--older-than-min", "10")
+
+    assert "0:10:00" in str(exc.value)
+    assert "0:30:00" in str(exc.value)
+    assert _estado(run) == (RiskRun.Status.RUNNING, None)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_aceita_o_prazo_da_opcao() -> None:
+    run = _presa_agora("GGG3")
+
+    # sete horas atras nao e presa com prazo de oito
+    assert _comando("--older-than-min", "480") == "nenhuma execução presa\n"
+    assert _estado(run) == (RiskRun.Status.RUNNING, None)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_imprime_a_falha_e_sai_com_erro(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    run = _presa_agora("GGG3")
+
+    def levanta(execucao: RiskRun, finished_at: datetime) -> str | None:
+        raise RuntimeError("fecho injetado")
+
+    monkeypatch.setattr("apps.risk.stale.close_run", levanta)
+    out = StringIO()
+
+    with pytest.raises(CommandError, match="1 execucao"):
+        call_command("close_stale_runs", stdout=out)
+
+    assert out.getvalue().splitlines() == [
+        f"FALHOU run={run.pk}: RuntimeError: fecho injetado",
+        "total: 0 fechadas, 0 ja fechadas, 1 falharam",
+    ]
+    assert _estado(run) == (RiskRun.Status.RUNNING, None)
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_o_comando_relata_a_ja_fechada(monkeypatch: pytest.MonkeyPatch) -> None:
+    run = _presa_agora("GGG3")
+
+    def fecha_ok() -> None:
+        RiskRun.objects.filter(pk=run.pk).update(
+            status=RiskRun.Status.OK, finished_at=timezone.now()
+        )
+
+    monkeypatch.setattr("apps.risk.stale._after_stale_listing", fecha_ok)
+
+    saida = _comando()  # nao levanta: codigo 0
+
+    assert saida.splitlines() == [
+        f"{_cabeca(run)} ja fechada (ok)",
+        "total: 0 fechadas, 1 ja fechadas, 0 falharam",
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.usefixtures("prazos_do_comando")
+def test_v14_a_falha_da_listagem_vira_command_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def levanta(now: datetime, older_than: timedelta) -> list[RiskRun]:
+        raise RuntimeError("listagem injetada")
+
+    monkeypatch.setattr("apps.risk.stale._list_stale", levanta)
+
+    with pytest.raises(CommandError, match="listagem injetada"):
+        _comando()
