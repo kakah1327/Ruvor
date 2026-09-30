@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-29
+**Última atualização:** 2026-09-30
 
 ---
 
@@ -15,7 +15,8 @@
 **Bloco:** na frente `marco1`, o **M1.6c fechou em 2026-09-29** — as camadas 4 e 5 na tela do ativo
 ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md), [D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)) —,
 e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 2026-09-29** — a coluna
-`core.compute_request.requested_by`, a metade da `marco1` no M2.1a —, com a PR de implementação a abrir pelo dono; na frente
+`core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; seis blocos da
+`marco1` — M1.6d, M1.5c, M1.7, M3.3, M2.3 e M2.1b — têm spec e plano aprovados, a implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`
 (T14), que tem a coluna pronta no M2.1m e espera só o preenchimento
@@ -1357,8 +1358,11 @@ tarefa de código, `4825389`, e o FECHA; spec com duas rodadas de revisão, plan
 
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M2.1m**, que o dono abre e mescla com a CI verde e a revisão da `identidade`, que consome
-a coluna; depois, as **telas de acesso**, sobre o casco do M1.6b.
+**Na frente `marco1`, implementar o M1.6d — Acabamento**, pelo [plano](planos/M1.6d-acabamento.md), a partir da T1.
+Seis blocos têm spec e plano aprovados e na `main` (PRs #19 a #24, mescladas em 2026-09-30) e se implementam nesta
+ordem: **M1.6d → M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 depende do M1.6d; o M2.1b espera combinar com a
+`identidade` a ordem com a T14 do M2.1a. Ramos, worktrees e a regra de onde cada comando roda estão em
+[frentes/marco1.md](frentes/marco1.md).
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
 qualquer pedido bem-sucedido torna o ativo coberto para sempre
@@ -1375,7 +1379,7 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, o resto do M2.1a e o M4.1.** A `requested_by` (T14 da fase 2) fica **liberada quando a PR do M2.1m entrar na `main`**: a coluna
+**Na frente `identidade`, o resto do M2.1a e o M4.1.** A `requested_by` (T14 da fase 2) está **liberada desde que a PR do M2.1m entrou na `main`** (#18): a coluna
 `core.compute_request.requested_by`, pedida à `marco1` no contrato do
 [plano da fase 2](planos/M2.1a-identidade-e-acesso.md#pré-condição-externa--a-coluna-requested_by), entra com ela.
 `docs/frentes/identidade.md` ainda diz que a migration está "a pedir": é da `identidade` atualizá-lo.

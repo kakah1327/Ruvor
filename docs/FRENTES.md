@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; em spec e plano: M1.6d, M1.5c, M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | seis ramos, um por bloco, cada um no seu worktree — PRs de spec e plano #19 a #24 |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; spec e plano aprovados, implementação a começar: M1.6d, M1.5c, M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | seis ramos, um por bloco, cada um no seu worktree — spec e plano na `main` (PRs #19 a #24); a implementação começa pelo M1.6d |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 

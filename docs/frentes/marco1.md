@@ -1,7 +1,7 @@
 # Frente `marco1`
 
 **Dono:** darkside171
-**Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; em spec e plano, seis blocos em paralelo — M1.6d,
+**Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; com spec e plano aprovados e na `main`, seis blocos em paralelo — M1.6d,
 M1.5c, M1.7, M3.3, M2.3 e M2.1b. O M1.6b fechou o Marco 1: digita ITUB4, recebe o comportamento e o risco; o M1.6c
 completou a tela com as camadas 4 e 5.
 **Cerca:** ver [FRENTES.md](../FRENTES.md#cercas).
@@ -13,9 +13,9 @@ D-143 e D-144, D-146 a D-153 (ver [FRENTES.md](../FRENTES.md#numeração-de-deci
 
 ## Agora
 
-**Seis blocos com spec e plano prontos, em PR** (2026-09-29). Cada ramo tem o seu worktree em
-`E:/Temp/Trilobit/varlab-wt/<bloco>`; spec e plano entram juntos, num commit, e a PR mesclada pelo dono é o portão
-dos dois. Todas as specs passaram por revisão adversarial (a do M1.6d, inline) e foram aprovadas pelo dono; todos
+**Seis blocos com spec e plano aprovados e na `main`** (PRs #19 a #24, mescladas em 2026-09-30); a implementação começa. Cada ramo tem o seu worktree em
+`E:/Temp/Trilobit/varlab-wt/<bloco>`; spec e plano entram juntos, num commit, e a PR mesclada pelo dono foi o portão
+dos dois; a implementação de cada bloco sai do mesmo ramo, numa PR própria. Todas as specs passaram por revisão adversarial (a do M1.6d, inline) e foram aprovadas pelo dono; todos
 os planos passaram por revisão contra a spec, alguns em duas ou três rodadas.
 
 | Bloco | Ramo | PR | Tarefas | Portões de mockup | Revisão de outra frente |
@@ -37,8 +37,11 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 
 ## Próximo passo
 
-1. Mesclar as seis PRs de spec e plano, na ordem acima; cada uma, depois do merge da anterior, recebe a `main`.
-2. Implementar, bloco a bloco na mesma ordem, com os portões de mockup de cada um.
+1. **Implementar o M1.6d — Acabamento**: [plano](../planos/M1.6d-acabamento.md), começando pela T1 (T1 a T4 podem
+   correr em paralelo), no ramo `marco1/M1.6d-acabamento`, worktree `E:/Temp/Trilobit/varlab-wt/M1.6d-acabamento`,
+   com os comandos como o plano manda em "Onde cada comando roda". Receber a `main` no ramo antes de começar.
+   Depois, na ordem acima: M1.5c, M1.7, M3.3, M2.3 e M2.1b, cada um com os seus portões de mockup.
+2. Combinar com a `identidade` a ordem entre o M2.1b e a T14 do M2.1a.
 3. Olhar a zona de Basileia a 5% (ver *Aberto* no [ESTADO](../ESTADO.md#aberto-e-aguardando-decisão)).
 
 ## Depois
@@ -69,3 +72,4 @@ CVM; a política de retenção dos retratos espera a taxa de invalidação medid
 | 2026-09-29 | M1.6c mesclado (PR #17) pelo dono da `fundamentos`, a frente que consome o contrato (D-99). M2.1m aberto: a coluna `core.compute_request.requested_by`; spec com duas rodadas de revisão, aprovada pelo dono; plano com uma |
 | 2026-09-29 | M2.1m fechado: a T1 (`4825389`), 1218 testes no backend, as três mutações reprovando; a PR de implementação fica para o dono abrir |
 | 2026-09-29 | M2.1m mesclado (PR #18). Seis blocos abertos em paralelo, cada um no seu worktree: M1.6d, M1.5c, M1.7, M3.3, M2.3 e M2.1b; specs revisadas e aprovadas no portão, planos revisados contra a spec; D-140, D-143, D-144 e D-146 a D-153; spec e plano em PR (#19 a #24). A dispensa de portão do login (a antiga D-141) foi retirada: o login ganha mockup derivado do `01-login` |
+| 2026-09-30 | As seis PRs de spec e plano mescladas pelo dono (#19 a #24): os planos aprovados; a implementação começa pelo M1.6d |
