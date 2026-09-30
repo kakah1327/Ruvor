@@ -13,7 +13,7 @@
  *
  * A seção recebe os `Load` por prop: o teste a monta direto, sem rede.
  */
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, fireEvent, render, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../src/api/client";
@@ -777,5 +777,28 @@ describe("V-08 — os pares", () => {
       mount(ok({ ticker: "ITUB4", indicator: ITUB4, peers: PETR4_PEERS })),
     ];
     for (const s of casos) expect(s.textContent ?? "").not.toMatch(PROIBIDAS);
+  });
+});
+
+// ---------------------------------------------------------------- V-02 do M1.6d
+
+describe("V-02 do M1.6d — nenhuma região viva embrulha o corpo", () => {
+  // A seção não tem andamento: o carregando é `role="status"`, e o corpo não fica dentro de
+  // `aria-live`, que reanunciaria a seção inteira a cada troca de estado (RF-02).
+  it.each([
+    ["carregando", LOADING as Load<Fundamentals>, "loading"],
+    ["pronto", ok(body({})), "ready"],
+  ])("%s: nenhum elemento com aria-live", (_nome, load, estado) => {
+    const s = mount(load);
+    expect(s.getAttribute("data-state")).toBe(estado);
+    const vivas = s.querySelectorAll("[aria-live]");
+    expect(vivas).toHaveLength(0);
+  });
+
+  it("carregando: segue com role=status", () => {
+    const s = mount(LOADING);
+    expect(within(s).getByRole("status").textContent).toContain(
+      TEXTOS["fundamentos.carregando"],
+    );
   });
 });
