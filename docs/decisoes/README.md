@@ -153,6 +153,8 @@ conversas e entre agentes.
 | [D-92](D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md) | Nunca duas execuções do mesmo ativo ao mesmo tempo: a abertura pula o ativo em cálculo |
 | [D-93](D-93-os-icones-do-produto-vem-do-phosphor.md) | Os ícones do produto vêm do Phosphor, num conjunto fechado dentro do kit |
 | [D-94](D-94-os-graficos-sao-do-uplot.md) | Os gráficos são do uPlot, com a cor dos tokens; a comparação dos modelos é tabela |
+| [D-149](D-149-a-execucao-presa-e-fechada-pela-regra-do-fecho.md) | A execução presa é fechada pela regra do fecho, na rotina diária e por comando |
+| [D-150](D-150-o-fecho-so-escreve-sobre-execucao-em-running.md) | O fecho só escreve sobre execução em `running`, e o que chega depois é descartado; estende a D-72 e restringe a D-70 |
 | [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) | Os indicadores fundamentalistas moram em `gold`, na app da frente, e a cerca se amplia; restringe a D-84 |
 
 ## As três mais consequentes
