@@ -1326,8 +1326,13 @@ ele resolve com sufixo de hash (`KindF56Enum`) e um aviso. O aviso basta para o 
 reprovar.
 
 **Faça:** dê nome a cada conjunto em `SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"]`, pelo caminho
-da classe de escolhas (`"AssetKindEnum": "apps.assets.models.Asset.Kind"`). Serializador novo
-com campo de escolha de nome repetido precisa de entrada nova.
+da classe de escolhas (`"AssetKindEnum": "apps.assets.models.Asset.Kind"`).
+
+**Mas não suponha a colisão sem medir:** com os dois `kind` já nomeados, um terceiro campo `kind`
+(`ChoiceField` em `ReportOut`, M4.1) **não** avisou — o enum nasceu `ReportOutKindEnum` e o
+`--fail-on-warn` saiu com 0. A spec do M4.1 supôs o contrário e a mutação que dependia disso não
+reprovou (errata na T5). Rode o `spectacular --validate --fail-on-warn` com o campo novo antes de
+escrever que ele colide.
 
 
 ## A contagem de avisos do drf-spectacular é de classe e sobrevive entre testes

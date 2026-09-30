@@ -130,7 +130,7 @@ class ReportRequesterOut(serializers.Serializer[None]):
 
 
 class ReportOut(serializers.Serializer[None]):
-    """`report_body`. `kind` e `CharField`, nao `ChoiceField`: outro `KindEnum` colidiria."""
+    """`report_body`. `kind` e `CharField`, o que a spec fixou: descrito como texto."""
 
     id = serializers.UUIDField()
     kind = serializers.CharField()
