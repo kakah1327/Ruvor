@@ -25,6 +25,10 @@ conversas e entre agentes.
 | [D-151](D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) | O texto das duas leituras mora no frontend; restringe a D-97 e a PRODUTO §2 |
 | [D-152](D-152-o-nivel-de-leitura-e-escolha-do-visitante.md) | O nível de leitura é escolha do visitante, global, lembrada no navegador; o padrão é iniciante |
 | [D-153](D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md) | O parecer da CVM não bloqueia o M2.3; restringe o pré-requisito do Marco 2 e a PRODUTO §6 e §8 |
+| [D-146](D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) | O estresse histórico vira o bloco M3.3: só do ativo, só com preço |
+| [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
+| [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
+
 
 ## Arquitetura
 
