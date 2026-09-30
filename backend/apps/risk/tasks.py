@@ -11,7 +11,9 @@ Quem chama quem:
   ativo (RF-24 do M1.6a) -- e pula o ativo que ja tem `running` recente --, e entrega ao
   `_enqueue`, **depois do commit**, um `chord` de uma `compute_asset_model` por modelo com
   `fechar_execucao` de corpo. E a unica que pode levantar: sem linha, nao ha onde gravar
-  `error`;
+  `error`. Se o broker recusar o `chord`, `_enqueue_or_close` fecha a execucao pela regra
+  -- zero resultados, `failed` -- com os pedidos ligados, e levanta a excecao do broker
+  (RF-11 do M1.5c);
 - `compute_asset_model` grava os dois `risk_result` do modelo em transacao propria (RF-02)
   e **nunca levanta** (RF-06): se uma tarefa do grupo levantasse, o corpo do `chord` nao
   rodaria e a execucao ficaria `running` para sempre. A escrita -- os resultados ou o par de
@@ -108,6 +110,28 @@ class SeriesChanged(Exception):
 def _enqueue(signature: Any) -> None:
     """Enfileira. E o ponto que os testes substituem: nenhum deles fala com o Redis."""
     signature.apply_async()
+
+
+def _enqueue_or_close(group: Any, run_id: int, asset_id: int) -> None:
+    """O `on_commit` da abertura (RF-11, D-150): enfileira; se o broker recusar, fecha a
+    execucao pela regra -- zero resultados, `failed` -- com os pedidos ligados, e levanta."""
+    try:
+        _enqueue(group)
+    except Exception:
+        logger.exception(
+            "execucao %d: o chord nao foi enfileirado; fechada pela regra", run_id
+        )
+        try:
+            with transaction.atomic():
+                lock_asset(asset_id)
+                run = RiskRun.objects.get(pk=run_id)
+                now = timezone.now()
+                if close_run(run, now) is not None:
+                    close_linked(run, now)
+        except Exception:
+            # o fecho tambem falhou: a linha fica `running`, e a varredura a pega depois
+            logger.exception("execucao %d: nem o fecho pela regra foi gravado", run_id)
+        raise  # sempre a excecao original, a do broker
 
 
 @dataclass(frozen=True)
@@ -370,8 +394,9 @@ def _abrir_execucao(
             fechar_execucao.s(run.id),
         )
         # `_enqueue` e resolvido na hora do commit, pelo nome global: e onde os testes
-        # poem o duplo.
-        transaction.on_commit(lambda: _enqueue(group))
+        # poem o duplo. Se o broker recusar, `_enqueue_or_close` fecha a execucao pela
+        # regra (RF-11 do M1.5c) e levanta.
+        transaction.on_commit(lambda: _enqueue_or_close(group, run.id, asset.id))
     if request_id is None:
         return run.id
     return OpeningResult(outcome="opened", run_id=run.id, sessions=None)
