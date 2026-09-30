@@ -14,7 +14,9 @@ Quem chama quem:
   `error`;
 - `compute_asset_model` grava os dois `risk_result` do modelo em transacao propria (RF-02)
   e **nunca levanta** (RF-06): se uma tarefa do grupo levantasse, o corpo do `chord` nao
-  rodaria e a execucao ficaria `running` para sempre;
+  rodaria e a execucao ficaria `running` para sempre. A escrita -- os resultados ou o par de
+  erro -- passa por `_write_if_running`, sob a trava por ativo e **so em execucao `running`**
+  (RF-10 do M1.5c): fechada pela varredura durante o calculo, o modelo e descartado;
 - `fechar_execucao` ignora o que o grupo devolveu e le o banco (RF-05), sob a mesma trava,
   e fecha os pedidos sob demanda ligados a execucao -- **so se `close_run` escreveu**: sobre
   execucao ja fechada (pela varredura das presas, M1.5c) ele nao escreve e devolve `None`, e o
@@ -205,6 +207,30 @@ def _after_close_lock() -> None:
     faz nada; e chamado pelo nome global deste modulo."""
 
 
+def _before_write_lock() -> None:
+    """Ponto de desvio dos testes concorrentes, antes do bloco travado da escrita da tarefa
+    por modelo. Nao faz nada; e chamado pelo nome global deste modulo."""
+
+
+def _write_if_running(
+    run_id: int, asset_id: int, model_name: str, write: Callable[[RiskRun], None]
+) -> bool:
+    """Grava sob a trava por ativo so se a execucao ainda esta `running` (RF-10, D-150).
+
+    A releitura e **depois** da trava: e a trava dos dois lados -- aqui e no fecho -- que faz a
+    contagem do fecho valer no instante do `UPDATE`. Fechada, descarta e devolve `False`.
+    """
+    _before_write_lock()
+    with transaction.atomic():
+        lock_asset(asset_id)
+        run = RiskRun.objects.get(pk=run_id)
+        if run.status != RiskRun.Status.RUNNING:
+            logger.info("execucao %d fechada: modelo %s descartado", run_id, model_name)
+            return False
+        write(run)
+    return True
+
+
 def _short_series_reason(sessions: int) -> str:
     """O motivo do pedido que fechou por serie curta, da lista fechada de `ondemand`."""
     return f"serie curta ({sessions} pregoes, minimo {config.MIN_SESSIONS})"
@@ -350,6 +376,8 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
 
     Qualquer falha depois de achar a execucao vira o par de erro do modelo, pelo
     `write_failed` -- numeros nulos, `error` preenchido --, e a tarefa termina normalmente.
+    As duas escritas passam por `_write_if_running`: se a execucao foi fechada durante o
+    calculo, nada e gravado (RF-10 do M1.5c).
 
     `full` sai de `run.full_recompute`, e a identidade dos retratos, da linha. Cada tarefa
     que calcula -- ou grava o par de erro -- registra uma linha em `info` com os retratos
@@ -392,19 +420,31 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
             library_versions=library_versions(),
         )
         result, counts = run_models(key, bars, [model_name], full=run.full_recompute)
-        with transaction.atomic():  # os dois niveis do modelo entram juntos (RF-02)
-            write_results(run, result, counts)
-        # o que o log mostra e o que foi gravado: so os niveis caros sem erro
-        logged = {
-            (r.model_name, r.alpha): counts[(r.model_name, r.alpha)]
-            for r in result.runs
-            if not r.error and (r.model_name, r.alpha) in counts
-        }
+        # os dois niveis do modelo entram juntos (RF-02), e so em execucao `running` (RF-10)
+        if _write_if_running(
+            run.id,
+            run.asset_id,
+            model_name,
+            lambda r: write_results(r, result, counts),
+        ):
+            # o que o log mostra e o que foi gravado: so os niveis caros sem erro
+            logged = {
+                (r.model_name, r.alpha): counts[(r.model_name, r.alpha)]
+                for r in result.runs
+                if not r.error and (r.model_name, r.alpha) in counts
+            }
+        else:
+            logged = {}  # descartado: nada foi gravado, o log mostra `-/-`
     except Exception as exc:
         logged = {}
         try:
-            with transaction.atomic():
-                write_failed(run, model_name, f"{type(exc).__name__}: {exc}")
+            error = f"{type(exc).__name__}: {exc}"
+            _write_if_running(
+                run.id,
+                run.asset_id,
+                model_name,
+                lambda r: write_failed(r, model_name, error),
+            )
         except Exception:
             logger.exception(
                 "execucao %s, modelo %s: nem o erro pode ser gravado",
