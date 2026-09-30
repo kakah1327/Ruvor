@@ -14,7 +14,7 @@
 2026-09-08
 **Bloco:** na frente `marco1`, o **M1.6c fechou em 2026-09-29** — as camadas 4 e 5 na tela do ativo
 ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md), [D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)) —,
-depois do M1.6b, que entrou na `main` pela PR #16; na frente
+e entrou na `main` pela PR #17, como o M1.6b pela PR #16; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`,
 que espera a migration da `marco1`
@@ -1339,8 +1339,7 @@ spec com duas rodadas de revisão, plano com uma, o mockup aprovado no portão e
 
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M1.6c**, que o dono abre e mescla com a CI verde e a revisão da `fundamentos`
-(D-99); depois, **a migration de `core.compute_request.requested_by`**, que a `identidade` espera para a T14 do M2.1a,
+**Na frente `marco1`**, com o M1.6c na `main` (PR #17), **a migration de `core.compute_request.requested_by`**, que a `identidade` espera para a T14 do M2.1a,
 e as **telas de acesso**, sobre o casco do M1.6b.
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
