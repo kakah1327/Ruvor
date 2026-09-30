@@ -113,3 +113,43 @@ class ApiKeyListOut(serializers.Serializer[None]):
 class ApiKeyWithSecretOut(serializers.Serializer[None]):
     api_key = ApiKeyOut()
     secret = serializers.CharField()
+
+
+# --- os relatorios (M4.1) ---------------------------------------------------------------
+
+
+class ReportCreateIn(serializers.Serializer[None]):
+    """So a presenca: o tipo e do servico, que da `invalid_parameter` a numero (RF-05)."""
+
+    ticker = _text()
+
+
+class ReportRequesterOut(serializers.Serializer[None]):
+    email = serializers.EmailField()
+    name = serializers.CharField()
+
+
+class ReportOut(serializers.Serializer[None]):
+    """`report_body`. `kind` e `CharField`, nao `ChoiceField`: outro `KindEnum` colidiria."""
+
+    id = serializers.UUIDField()
+    kind = serializers.CharField()
+    format_version = serializers.IntegerField()
+    ticker = serializers.CharField()
+    as_of_date = serializers.DateField()
+    risk_run_id = serializers.IntegerField()
+    sha256 = serializers.CharField()
+    size_bytes = serializers.IntegerField()
+    created_at = serializers.DateTimeField()
+    requested_by = ReportRequesterOut()
+
+
+class ReportOneOut(serializers.Serializer[None]):
+    report = ReportOut()
+
+
+class ReportListOut(serializers.Serializer[None]):
+    count = serializers.IntegerField()
+    limit = serializers.IntegerField()
+    offset = serializers.IntegerField()
+    results = ReportOut(many=True)
