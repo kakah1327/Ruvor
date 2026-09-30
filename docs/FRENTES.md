@@ -50,7 +50,7 @@ revisa a PR.
 
 | Frente | Pastas |
 |---|---|
-| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/M1.6*/`; os serviços `worker` e `beat` no `compose.yaml` |
+| `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/`; os serviços `worker` e `beat` no `compose.yaml` |
 | `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1 (`backend/tests/accounts/`). **Sem telas:** toda interface visual — telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login, que consomem as rotas do M2.1 |
 | `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
