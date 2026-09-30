@@ -48,10 +48,10 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ aprovada; fase 1 implementada, fase 2 espera o M1.6a |
 | [M2.1m — A coluna do autor do pedido](M2.1m-requested-by.md) | Marco 2 · M2.1m · frente `marco1` | ✅ implementada e fechada |
 | [M4.2 — API pública](M4.2-api-publica.md) | Marco 4 · M4.2 · frente `identidade` | ✅ aprovada; implementada em 2026-09-28 |
-| [M2.1b — Telas de acesso](M2.1b-telas-de-acesso.md) | Marco 2 · M2.1b | ✅ aprovada em 2026-09-29 |
-| [M1.5c — Execução presa](M1.5c-execucao-presa.md) | Marco 1 · M1.5c | ✅ aprovada em 2026-09-29 |
-| [M2.3 — Camada explicativa](M2.3-camada-explicativa.md) | Marco 2 · M2.3 · frente `marco1` | ✅ aprovada em 2026-09-29 |
-| [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | Marco 3 · M3.3 · frente `marco1` | ✅ aprovada em 2026-09-29; plano escrito, aguardando aprovação |
-| [M1.6d — Acabamento](M1.6d-acabamento.md) | Marco 1 · M1.6d | ✅ aprovada em 2026-09-29; plano escrito |
-| [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | Marco 1 · M1.7 | ✅ aprovada em 2026-09-29 |
+| [M2.1b — Telas de acesso](M2.1b-telas-de-acesso.md) | Marco 2 · M2.1b | ✅ aprovada em 2026-09-29 (PR #24) |
+| [M1.5c — Execução presa](M1.5c-execucao-presa.md) | Marco 1 · M1.5c | ✅ aprovada em 2026-09-29 (PR #23) |
+| [M2.3 — Camada explicativa](M2.3-camada-explicativa.md) | Marco 2 · M2.3 · frente `marco1` | ✅ aprovada em 2026-09-29 (PR #22) |
+| [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | Marco 3 · M3.3 · frente `marco1` | ✅ aprovada em 2026-09-29 (PR #20) |
+| [M1.6d — Acabamento](M1.6d-acabamento.md) | Marco 1 · M1.6d | ✅ aprovada em 2026-09-29 (PR #19) |
+| [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | Marco 1 · M1.7 | ✅ aprovada em 2026-09-29 (PR #21) |
 
