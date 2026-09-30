@@ -113,6 +113,8 @@ conversas e entre agentes.
 | [D-132](D-132-pares-sao-o-segmento-da-b3-pela-tupla.md) | Os pares são o segmento da B3, ou o subsetor, pela tupla; a posição é o percentil |
 | [D-133](D-133-coleta-de-comunicados-diaria-restringe-a-d-127.md) | A coleta de comunicados é diária, em entrada própria do Beat; restringe a D-127 |
 | [D-134](D-134-tarefas-celery-tipadas-por-celery-types.md) | As tarefas Celery são tipadas por `celery-types` |
+| [D-143](D-143-a-busca-ignora-acento-pelo-unaccent.md) | A busca ignora acento pela extensão `unaccent` do PostgreSQL |
+| [D-144](D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md) | A classificação da B3 se corrige na saída da API, por tabela fechada; estende a D-47 |
 | [D-100](D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) | A API autentica por sessão do Django, com CSRF; 401 com `WWW-Authenticate: Session` |
 | [D-101](D-101-cadastro-aberto-com-organizacao-pessoal.md) | Cadastro aberto, com organização pessoal; organização real só por comando |
 | [D-102](D-102-papeis-admin-e-member-por-organizacao.md) | Dois papéis por organização, `admin` e `member`; `is_staff` é da plataforma; toda view que exige conta declara `AccountReady` |

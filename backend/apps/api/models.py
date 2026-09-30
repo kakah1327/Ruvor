@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from django.conf import settings
 from django.db import models
 
 
@@ -25,6 +26,9 @@ class ComputeRequest(models.Model):
     `reason` e o desfecho legivel, preenchido ao fechar, da lista fechada de
     `apps/api/ondemand.py`; `error`, so quando falhou. `risk_run` nao e unica: varios
     pedidos podem se ligar a mesma execucao em andamento (RF-24).
+
+    `requested_by` e quem pediu, nulo para o pedido anonimo e para todo pedido anterior ao
+    M2.1a; quem o preenche e a view do `POST` (T14 do M2.1a).
     """
 
     class Status(models.TextChoices):
@@ -46,6 +50,12 @@ class ComputeRequest(models.Model):
     error = models.TextField(default="")
     risk_run = models.ForeignKey(
         "risk.RiskRun",
+        on_delete=models.PROTECT,
+        related_name="compute_requests",
+        null=True,
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name="compute_requests",
         null=True,
