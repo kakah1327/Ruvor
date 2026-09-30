@@ -2,11 +2,14 @@
  * V-12 — o acompanhamento (RF-20), com relógio falso: o `/risk` é pedido de novo a cada 5 s
  * enquanto houver `in_progress` ou pedido aberto — inclusive no E3 com `in_progress`, e com
  * `in_progress` presente e pedido nulo; ao terminar, em E1 **e** em E7, a tela recarrega as
- * cinco rotas (o cabeçalho passa de "sem preço" ao último fechamento); para ao sair da tela; a
+ * rotas (o cabeçalho passa de "sem preço" ao último fechamento); para ao sair da tela; a
  * aba oculta não pede, e voltar a ficar visível pede na hora. E o `data-risk-state` estável
  * durante o `reloadAll()`.
+ *
+ * V-10 do M1.6c (RF-15): o fim do acompanhamento recarrega também as duas seções novas — os
+ * fundamentos, e os comunicados de volta à primeira página, com o filtro.
  */
-import { act, cleanup, render, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +17,10 @@ import { routes } from "../src/App";
 import {
   type AssetDetail,
   type ComputeRequest,
+  type DisclosureItem,
+  type Disclosures,
+  type Fundamentals,
+  type Indicator,
   type InProgress,
   MODEL_ORDER,
   type Risk,
@@ -145,25 +152,91 @@ const E3_RECALC = risk({ latest: run("failed"), in_progress: inProgress(2) });
 const E1 = risk({ covered: true, latest: run("ok") });
 const E7 = risk({ request: request({ status: "failed", reason: "falhou na coleta" }) });
 
+/** Um indicador calculado, só com o que a seção precisa para sair do vazio. */
+const INDICATOR: Indicator = {
+  calculated_at: "2026-09-29T20:00:00-03:00",
+  statement: { reference_date: "2026-06-30", source: "itr", scope: "consolidated" },
+  account_plan: "general",
+  scope: "consolidated",
+  revenue_ttm: null,
+  ebit_ttm: null,
+  net_income_ttm: null,
+  equity_parent: null,
+  total_assets: null,
+  gross_debt: null,
+  cash: null,
+  net_debt: null,
+  net_margin: null,
+  ebit_margin: null,
+  roe: null,
+  net_debt_to_equity: null,
+  price_date: null,
+  close: null,
+  shares_total: null,
+  eps: null,
+  bvps: null,
+  pe: null,
+  pb: null,
+  per_share_missing: null,
+  market_cap: null,
+  market_cap_missing: null,
+};
+
+/** A página de `/disclosures` que o pedido quer: 25 documentos, dez por página, por categoria. */
+function disclosuresPage(url: URL): Disclosures {
+  const offset = Number(url.searchParams.get("offset"));
+  const category = url.searchParams.get("category") ?? "comunicado";
+  const results: DisclosureItem[] = [];
+  for (let n = offset; n < Math.min(offset + 10, 25); n += 1) {
+    results.push({
+      delivered_on: "2026-09-25",
+      reference_date: "2026-09-25",
+      category: category as DisclosureItem["category"],
+      kind: "Outros",
+      species: "",
+      title: `Documento ${category} ${n}`,
+      link: `https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?c=${category}&n=${n}`,
+    });
+  }
+  return {
+    ticker: "AALR3",
+    company: { code_cvm: "25011", name: "ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A." },
+    count: 25,
+    limit: 10,
+    offset,
+    results,
+  };
+}
+
 // ---------------------------------------------------------------- o duplo do fetch
 
-type Route = "asset" | "prices" | "events" | "metrics" | "risk";
-type Call = { route: Route; resolve: (body: unknown) => void };
+type Route =
+  | "asset"
+  | "prices"
+  | "events"
+  | "metrics"
+  | "risk"
+  | "fundamentals"
+  | "disclosures";
+type Call = { route: Route; url: URL; resolve: (body: unknown) => void };
 
 let calls: Call[] = [];
 /** As respostas do `/risk`, em ordem; `null` deixa o pedido pendente. A última se repete. */
 let riskQueue: (Risk | null)[] = [];
 let assetBody: AssetDetail = NO_PRICE;
+let fundamentalsBody: Fundamentals = { ticker: "AALR3", indicator: null, peers: null };
 
+/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
 function routeOf(url: string): Route {
-  const match = /^\/api\/v1\/assets\/[^/]+(?:\/(prices|events|metrics|risk))?$/.exec(
-    url,
-  );
+  const match =
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+      url,
+    );
   if (match === null) throw new Error(`pedido inesperado: ${url}`);
-  return (match[1] as Route | undefined) ?? "asset";
+  return (match[1] ?? match[2] ?? "asset") as Route;
 }
 
-function bodyOf(route: Route): unknown | null {
+function bodyOf(route: Route, url: URL): unknown | null {
   switch (route) {
     case "asset":
       return assetBody;
@@ -175,6 +248,10 @@ function bodyOf(route: Route): unknown | null {
       return { ticker: "AALR3", metric: null };
     case "risk":
       return riskQueue.length > 1 ? riskQueue.shift() : riskQueue[0];
+    case "fundamentals":
+      return fundamentalsBody;
+    case "disclosures":
+      return disclosuresPage(url);
   }
 }
 
@@ -186,9 +263,11 @@ function stubFetch(): void {
       (url: string) =>
         new Promise<Response>((resolve) => {
           const route = routeOf(url);
+          const parsed = new URL(url, "http://localhost");
           // Como o `response.json()` de verdade, cada resposta é um objeto novo.
           const call: Call = {
             route,
+            url: parsed,
             resolve: (body) =>
               resolve({
                 ok: true,
@@ -197,7 +276,7 @@ function stubFetch(): void {
               } as Response),
           };
           calls.push(call);
-          const body = bodyOf(route);
+          const body = bodyOf(route, parsed);
           if (body !== null) call.resolve(body);
         }),
     ),
@@ -215,6 +294,10 @@ const count = (route: Route) => calls.filter((c) => c.route === route).length;
 const riskState = () =>
   document.querySelector("[data-risk-state]")?.getAttribute("data-risk-state");
 const header = () => document.querySelector(".ruvor-asset-head") as HTMLElement;
+const fundamentals = () =>
+  document.querySelector('[data-section="fundamentals"]') as HTMLElement;
+const disclosures = () =>
+  document.querySelector('[data-section="disclosures"]') as HTMLElement;
 
 /** Deixa as promessas e os efeitos correrem, e avança o relógio falso `ms`. */
 async function advance(ms: number): Promise<void> {
@@ -233,6 +316,7 @@ beforeEach(() => {
   visibility = "visible";
   vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility);
   assetBody = NO_PRICE;
+  fundamentalsBody = { ticker: "AALR3", indicator: null, peers: null };
   stubFetch();
 });
 
@@ -277,12 +361,12 @@ describe("V-12 — o /risk de novo a cada 5 s, enquanto há o que acompanhar", (
   });
 });
 
-describe("V-12 — ao terminar, recarrega as cinco rotas", () => {
+describe("V-12 — ao terminar, recarrega as rotas", () => {
   it.each([
     ["E1", E1],
     ["E7", E7],
   ])(
-    "chegando em %s: as cinco de novo, e o cabeçalho sai de 'sem preço'",
+    "chegando em %s: as rotas de novo, e o cabeçalho sai de 'sem preço'",
     async (state, end) => {
       riskQueue = [E4_NO_REQUEST, end];
       renderAsset();
@@ -293,7 +377,14 @@ describe("V-12 — ao terminar, recarrega as cinco rotas", () => {
       assetBody = WITH_PRICE; // a cadeia sob demanda coletou os preços
       await advance(5000);
       expect(riskState()).toBe(state);
-      for (const route of ["asset", "prices", "events", "metrics"] as const) {
+      for (const route of [
+        "asset",
+        "prices",
+        "events",
+        "metrics",
+        "fundamentals",
+        "disclosures",
+      ] as const) {
         expect(count(route)).toBe(2);
       }
       expect(count("risk")).toBe(3); // o do início, o do acompanhamento e o do reloadAll
@@ -325,6 +416,65 @@ describe("V-12 — ao terminar, recarrega as cinco rotas", () => {
     await act(async () => pending.resolve(E1));
     expect(riskState()).toBe("E1");
   });
+});
+
+describe("V-10 do M1.6c — o acompanhamento recarrega as duas seções", () => {
+  it.each([
+    ["E1", E1],
+    ["E7", E7],
+  ])(
+    "chegando em %s: os fundamentos de novo, e os comunicados na primeira página com o filtro",
+    async (state, end) => {
+      riskQueue = [E4_NO_REQUEST, end];
+      renderAsset();
+      await advance(0);
+      expect(riskState()).toBe("E4");
+      expect(fundamentals().getAttribute("data-state")).toBe("empty");
+      expect(disclosures().getAttribute("data-state")).toBe("ready");
+
+      // o filtro em "Fatos relevantes", e a segunda página somada
+      const factButton = () =>
+        within(
+          within(disclosures()).getByRole("group", {
+            name: TEXTOS["comunicados.filtro.rotulo"],
+          }),
+        ).getByRole("button", { name: TEXTOS["comunicados.filtro.fato_relevante"] });
+      await act(async () => fireEvent.click(factButton()));
+      await advance(0);
+      await act(async () =>
+        fireEvent.click(
+          within(disclosures()).getByRole("button", {
+            name: TEXTOS["comunicados.mostrarMais"],
+          }),
+        ),
+      );
+      await advance(0);
+      const links = () => disclosures().querySelectorAll("[data-disclosure-link]");
+      expect(links()).toHaveLength(20);
+      const before = count("disclosures");
+
+      // a rotina semanal calculou os fundamentos no meio do acompanhamento
+      fundamentalsBody = { ticker: "AALR3", indicator: INDICATOR, peers: null };
+      await advance(5000);
+      expect(riskState()).toBe(state);
+
+      expect(count("fundamentals")).toBe(2);
+      expect(fundamentals().getAttribute("data-state")).toBe("ready");
+
+      expect(count("disclosures")).toBe(before + 1);
+      const last = calls.filter((c) => c.route === "disclosures").at(-1) as Call;
+      expect(last.url.searchParams.get("offset")).toBe("0");
+      expect(last.url.searchParams.get("category")).toBe("fato_relevante");
+      expect(factButton().getAttribute("aria-pressed")).toBe("true");
+      expect(links()).toHaveLength(10);
+      expect(disclosures().getAttribute("data-state")).toBe("ready");
+
+      // terminou: não recarrega mais
+      await advance(30000);
+      expect(count("fundamentals")).toBe(2);
+      expect(count("disclosures")).toBe(before + 1);
+    },
+  );
 });
 
 describe("V-12 — para ao sair, e respeita a aba oculta", () => {

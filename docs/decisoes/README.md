@@ -21,6 +21,7 @@ conversas e entre agentes.
 | [D-96](D-96-discordancia-e-aprovados-entram-no-marco-1.md) | A discordância entre modelos e os não rejeitados por ativo entram no Marco 1 |
 | [D-97](D-97-no-marco-1-cada-numero-tem-uma-frase-fixa.md) | No Marco 1, cada número tem uma frase fixa; as duas leituras continuam no M2.3 |
 | [D-98](D-98-o-horizonte-do-marco-1-e-1-dia-restringe-a-d-05.md) | O horizonte do Marco 1 é 1 dia; restringe a D-05 |
+| [D-99](D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md) | As camadas 4 e 5 entram depois do risco, e as tabelas da `fundamentos` que a tela lê são contrato |
 
 ## Arquitetura
 

@@ -19,6 +19,12 @@ from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import effective_status, expired_reason, is_expired
 from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
+from apps.fundamentals.models import (
+    Disclosure,
+    FinancialStatement,
+    FundamentalIndicator,
+    PeerComparison,
+)
 from apps.risk.config import ALPHAS
 from apps.risk.models import RiskResult, RiskRun
 
@@ -274,6 +280,122 @@ class ComputeRequestSerializer(serializers.ModelSerializer[ComputeRequest]):
         return expired_reason() if is_expired(req, now) else req.reason
 
 
+# --- /fundamentals e /disclosures (M1.6c, RF-02 e RF-03) -----------------------------------
+
+# Os seis indicadores que a comparacao com os pares posiciona, na ordem de
+# `apps/fundamentals/models.py`: `{ind}_peer_median`, `{ind}_percentile`, `{ind}_peer_count`.
+PEER_INDICATORS = ("roe", "net_margin", "ebit_margin", "net_debt_to_equity", "pe", "pb")
+
+
+class StatementOut(serializers.ModelSerializer[FinancialStatement]):
+    """O balanco de onde o indicador saiu."""
+
+    class Meta:
+        model = FinancialStatement
+        fields = ("reference_date", "source", "scope")
+
+
+class IndicatorOut(serializers.ModelSerializer[FundamentalIndicator]):
+    """A linha de `gold.fundamental_indicator`, com os nomes das colunas (D-86), na ordem do
+    modelo; `statement` e o balanco, aninhado."""
+
+    statement = StatementOut(read_only=True)
+
+    class Meta:
+        model = FundamentalIndicator
+        fields = (
+            "calculated_at",
+            "statement",
+            "account_plan",
+            "scope",
+            "revenue_ttm",
+            "ebit_ttm",
+            "net_income_ttm",
+            "equity_parent",
+            "total_assets",
+            "gross_debt",
+            "cash",
+            "net_debt",
+            "net_margin",
+            "ebit_margin",
+            "roe",
+            "net_debt_to_equity",
+            "price_date",
+            "close",
+            "shares_total",
+            "eps",
+            "bvps",
+            "pe",
+            "pb",
+            "per_share_missing",
+            "market_cap",
+            "market_cap_missing",
+        )
+
+
+class PeerIndicatorOut(serializers.Serializer[PeerComparison]):
+    """A posicao de um indicador entre os pares: as tres colunas `{ind}_*` agrupadas.
+
+    Declarado com `source="*"` e o nome do indicador: le as tres colunas da comparacao.
+    Os decimais saem com as casas da coluna (`decimal_places=None` nao quantiza)."""
+
+    median = serializers.DecimalField(
+        max_digits=None, decimal_places=None, allow_null=True
+    )
+    percentile = serializers.DecimalField(
+        max_digits=None, decimal_places=None, allow_null=True
+    )
+    count = serializers.IntegerField(allow_null=True)
+
+    def __init__(self, *args: Any, indicator: str = "", **kwargs: Any) -> None:
+        self.indicator = indicator
+        super().__init__(*args, **kwargs)
+
+    def get_attribute(self, instance: PeerComparison) -> dict[str, Any]:
+        return {
+            "median": getattr(instance, f"{self.indicator}_peer_median"),
+            "percentile": getattr(instance, f"{self.indicator}_percentile"),
+            "count": getattr(instance, f"{self.indicator}_peer_count"),
+        }
+
+
+class PeersOut(serializers.ModelSerializer[PeerComparison]):
+    """A comparacao do proprio indicador com os pares (M3.2)."""
+
+    roe = PeerIndicatorOut(indicator="roe", source="*", read_only=True)
+    net_margin = PeerIndicatorOut(indicator="net_margin", source="*", read_only=True)
+    ebit_margin = PeerIndicatorOut(indicator="ebit_margin", source="*", read_only=True)
+    net_debt_to_equity = PeerIndicatorOut(
+        indicator="net_debt_to_equity", source="*", read_only=True
+    )
+    pe = PeerIndicatorOut(indicator="pe", source="*", read_only=True)
+    pb = PeerIndicatorOut(indicator="pb", source="*", read_only=True)
+
+    class Meta:
+        model = PeerComparison
+        fields = (
+            "peer_level",
+            "group_sector",
+            "group_subsector",
+            "group_segment",
+            *PEER_INDICATORS,
+        )
+
+
+class DisclosureItemOut(serializers.ModelSerializer[Disclosure]):
+    class Meta:
+        model = Disclosure
+        fields = (
+            "delivered_on",
+            "reference_date",
+            "category",
+            "kind",
+            "species",
+            "title",
+            "link",
+        )
+
+
 # --- os envelopes, so descricao, para o esquema OpenAPI (M4.2, RF-12) -----------------------
 # As views montam o corpo a mao; estes serializadores so o descrevem, reusando os de item.
 
@@ -319,3 +441,23 @@ class AssetRiskOut(serializers.Serializer[None]):
     latest = LatestRunSerializer(allow_null=True)
     in_progress = InProgressRunSerializer(allow_null=True)
     request = ComputeRequestSerializer(allow_null=True)
+
+
+class FundamentalsOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    indicator = IndicatorOut(allow_null=True)
+    peers = PeersOut(allow_null=True)
+
+
+class CompanyOut(serializers.Serializer[None]):
+    code_cvm = serializers.CharField()
+    name = serializers.CharField(allow_null=True)
+
+
+class DisclosuresOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    company = CompanyOut(allow_null=True)
+    count = serializers.IntegerField()
+    limit = serializers.IntegerField()
+    offset = serializers.IntegerField()
+    results = DisclosureItemOut(many=True)

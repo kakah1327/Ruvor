@@ -12,14 +12,15 @@
 
 **Marco:** ✅ **Marco 1 fechado em 2026-09-29** — a ação, e o risco dela; a Fundação fechou em
 2026-09-08
-**Bloco:** na frente `marco1`, o **M1.6b fechou em 2026-09-29** — as telas —, depois do M1.6a, e **o
-M1.6c é o próximo**: as camadas 4 e 5 na tela ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)); na frente
+**Bloco:** na frente `marco1`, o **M1.6c fechou em 2026-09-29** — as camadas 4 e 5 na tela do ativo
+([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md), [D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)) —,
+depois do M1.6b, que entrou na `main` pela PR #16; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`,
 que espera a migration da `marco1`
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)), e o **M4.2 fechou em
 2026-09-28** — o M4.1 é o próximo
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c, com o darkside171) e `identidade` (M2.1 → M4.2 →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -88,7 +89,10 @@ organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. Trint
 seis apps. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
 identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
 não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
-ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px.
+ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
+cinco camadas:** depois do risco, os fundamentos — os 17 indicadores do último balanço, com a frase de cada um, o
+porquê de cada nulo e a posição entre os pares do segmento em contagem exata — e os comunicados da companhia à CVM,
+com filtro por categoria, pelas rotas `/fundamentals` e `/disclosures`.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1303,15 +1307,41 @@ revisão adversarial cada, e três portões de mockup aprovados pelo dono em 202
 - **Os três mockups aprovados divergiam entre si** em quatro pontos; a T5 os unificou no kit, e as
   decisões estão no plano (T5, "Correções registradas na execução").
 
+### M1.6c — Fundamentos e contexto na tela
+
+Spec em [`specs/M1.6c-fundamentos-e-contexto.md`](specs/M1.6c-fundamentos-e-contexto.md) e plano em
+[`planos/M1.6c-fundamentos-e-contexto.md`](planos/M1.6c-fundamentos-e-contexto.md). Frente `marco1`, ramo
+`marco1/M1.6c-fundamentos-e-contexto`. Nove tarefas, de `f6f21d0` a `f00f3d2`, mais a correção da revisão final;
+spec com duas rodadas de revisão, plano com uma, o mockup aprovado no portão em 2026-09-29. Uma decisão:
+[D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md).
+
+| Verificação | Resultado |
+|---|---|
+| As rotas | ✅ `/fundamentals` (o último indicador com a comparação **do próprio cálculo**) e `/disclosures` (paginada, com filtro, pela ligação direta por `code_cvm`), no molde da D-86, com a chave de leitura do M4.2 e o esquema OpenAPI sem aviso |
+| O contrato com a `fundamentos` | ✅ as tabelas lidas em [FRENTES.md](FRENTES.md#contratos-entre-frentes); `test_valores_fundamentos.py` lê as listas de motivo **da fonte** — `REASON_NULLS` inteiro e os retornos de `market_cap()` por `ast` — e reprova motivo novo |
+| Suítes | ✅ **1215 no backend** (a suíte rodou desanexada no `worker`, com o Beat parado) e **1092 no frontend** |
+| Mutações | ✅ todas as das T1 a T6 reprovaram, cada uma revertida |
+| Texto só do mockup | ✅ as 112 chaves `fundamentos.*` e `comunicados.*` conferidas contra o mockup; nenhuma forma de "notícia" |
+| Execução real | ✅ 245 conferências sem falha (depois da correção da revisão final) em ITUB4 (banco: os nulos do plano de contas), IBOV (as frases de índice) e PETR4 (a posição entre os pares em quatro indicadores); a tela do ITUB4 pronta em **369 ms** |
+| **A taxa do anônimo** | com a taxa padrão (60/min), **5 cargas completas da tela do ativo e 84 pedidos até o primeiro 429** — em desenvolvimento, 14 pedidos por carga pelo `StrictMode` |
+
+**O que a execução mostrou:**
+
+- **O banco real não tem vários dos casos da spec** (medido na T0): P/L e P/VP **nunca** têm comparação com pares — só
+  quatro ações têm esses múltiplos, e nenhum grupo chega a três —; P/L negativo não ocorre (os 86 LPA negativos têm o
+  P/L nulo); não há ação com comunicados sem `silver.company`, ação sem `code_cvm` nem indicador sem comparação. Esses
+  ramos só os testes provam.
+- **A taxa aceitou 81 pedidos com o limite em 60 por minuto** antes de recusar. A hipótese — o `SimpleRateThrottle` do
+  DRF conta sem atomicidade quando o `runserver` atende em paralelo — **não foi provada**, e parte da diferença pode vir
+  dos pedidos que o `StrictMode` aborta. É da `identidade` e da hospedagem.
+- **O Docker travou e voltou** durante o bloco: depois de uma falta de memória, o motor parou de responder com os
+  contêineres ainda servindo; foi reiniciado pelo shell elevado, com o banco intacto (memória da máquina).
+
 ## Próximo passo
 
-**Na frente `marco1`, as PRs do M1.6b** — spec, plano e implementação —, que o dono abre e mescla com a
-CI verde, e depois **o M1.6c — Fundamentos e contexto na tela**: as camadas 4 e 5 na mesma tela do ativo,
-com as rotas escritas pela `marco1` em `apps/api` sobre as tabelas da `fundamentos`, que revisa a PR
-([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md)). O que o M1.6c encontra pronto: o casco, o kit com o
-arranjo da tela, o módulo de textos, o invólucro dos gráficos e o roteiro da execução real. O que ele
-precisa decidir: a frase de cada indicador (D-97), e as tabelas e colunas que viram contrato entre
-frentes.
+**Na frente `marco1`, a PR do M1.6c**, que o dono abre e mescla com a CI verde e a revisão da `fundamentos`
+(D-99); depois, **a migration de `core.compute_request.requested_by`**, que a `identidade` espera para a T14 do M2.1a,
+e as **telas de acesso**, sobre o casco do M1.6b.
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
 qualquer pedido bem-sucedido torna o ativo coberto para sempre
@@ -1371,6 +1401,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista | `frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs` | Com um filtro por `has_prices` na busca da API (mudança de contrato) |
 | **O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda | `frontend/src/components/RiskSection.tsx` | Numa região só com o andamento, quando a acessibilidade for revista |
 | **O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir. Na execução do M1.6b a lista saiu vazia | `frontend/e2e/capturas.mjs` | Na próxima execução real que usar o roteiro (M1.6c) |
+| **A taxa do anônimo aceitou 81 pedidos com o limite em 60 por minuto** (execução real do M1.6c). Hipótese não provada: o `SimpleRateThrottle` do DRF conta sem atomicidade sob o `runserver` concorrente. E, com a taxa certa, a tela do ativo aguenta **5 cargas por minuto** a um anônimo em desenvolvimento | `backend/apps/accounts/throttling.py` (frente `identidade`), `RUVOR_THROTTLE_ANON` | Antes de expor a aplicação: a `identidade` confirma a contagem, e a hospedagem decide a taxa e se a tela junta rotas |
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 
 ## Aberto e aguardando decisão

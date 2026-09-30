@@ -149,3 +149,35 @@ const currencyPrecise = new Intl.NumberFormat("pt-BR", {
 export function formatCurrencyPrecise(value: number): string {
   return currencyPrecise.format(value);
 }
+
+/** As unidades do valor abreviado, da menor para a maior. */
+const COMPACT_UNITS = [
+  [1e3, "mil"],
+  [1e6, "mi"],
+  [1e9, "bi"],
+  [1e12, "tri"],
+] as const;
+
+/**
+ * Valor em reais abreviado (M1.6c, "Os valores em reais"): abaixo de mil, inteiro ("R$ 950");
+ * depois "R$ 12,3 mil", "R$ 46,8 mi", "R$ 217,8 bi" e "R$ 2,7 tri", com uma casa; negativo
+ * com o menos tipográfico à frente ("−R$ 8,2 bi"), como o `fCompact` do mockup aprovado.
+ *
+ * A unidade é escolhida **depois do arredondamento**: 999.960.000 não sai "R$ 1.000,0 mi",
+ * sobe para "R$ 1,0 bi" — e 999,6 não sai "R$ 1.000", sobe para "R$ 1,0 mil". A forma
+ * inteira, para o `aria-label`, é a de `formatCurrency` com `typographicMinus`.
+ */
+export function formatCompactCurrency(value: number): string {
+  const sign = value < 0 ? "−" : "";
+  const abs = Math.abs(value);
+  if (Math.round(abs) < 1e3) {
+    return `${sign}${currencyWhole.format(abs)}`;
+  }
+  // A menor unidade em que o valor arredondado fica abaixo de mil; acima disso, "tri".
+  let chosen: { scaled: number; unit: string } = { scaled: 0, unit: "" };
+  for (const [base, unit] of COMPACT_UNITS) {
+    chosen = { scaled: Math.round((abs / base) * 10) / 10, unit };
+    if (chosen.scaled < 1e3) break;
+  }
+  return `${sign}R$ ${formatDecimal(chosen.scaled, 1)} ${chosen.unit}`;
+}

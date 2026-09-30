@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useId, useState } from "react";
 
 import { type Load, useResource } from "../api/resource";
-import type { AssetDetail, Events, Metrics, Prices, Risk } from "../api/types";
+import type {
+  AssetDetail,
+  Events,
+  Fundamentals,
+  Metrics,
+  Prices,
+  Risk,
+} from "../api/types";
 import { AssetHeader } from "../components/AssetHeader";
 import { BehaviorSection } from "../components/BehaviorSection";
+import { DisclosuresSection } from "../components/DisclosuresSection";
 import { EventsSection } from "../components/EventsSection";
+import { FundamentalsSection } from "../components/FundamentalsSection";
 import { PriceSection } from "../components/PriceSection";
 import {
   RiskSection,
@@ -17,30 +26,39 @@ import { useShellContext } from "../components/Shell";
 import { TEXTOS } from "../content/textos";
 import { usePolling } from "../risk/usePolling";
 
-/** As cinco rotas do ativo, cada uma com o seu estado e o seu "tentar de novo". */
+/**
+ * As seis rotas do ativo que a tela pede, cada uma com o seu estado e o seu "tentar de novo".
+ * A sétima, `/disclosures`, a seção Comunicados pede sozinha (M1.6c, "Quem carrega os
+ * comunicados").
+ */
 export type AssetData = {
   asset: Load<AssetDetail>;
   prices: Load<Prices>;
   events: Load<Events>;
   metrics: Load<Metrics>;
   risk: Load<Risk>;
+  fundamentals: Load<Fundamentals>;
   reload: {
     asset: () => void;
     prices: () => void;
     events: () => void;
     metrics: () => void;
     risk: () => void;
+    fundamentals: () => void;
   };
   /**
-   * Pede as cinco de novo (RF-20: o fim do acompanhamento). Não apaga o que está na tela: cada
-   * seção mostra o dado anterior até o novo chegar (`useResource`).
+   * Pede as seis de novo e incrementa `reloadToken` (RF-20 do M1.6b, RF-15 do M1.6c: o fim do
+   * acompanhamento). Não apaga o que está na tela: cada seção mostra o dado anterior até o novo
+   * chegar (`useResource`).
    */
   reloadAll: () => void;
+  /** Muda a cada `reloadAll()`: a seção Comunicados volta à primeira página, com o filtro. */
+  reloadToken: number;
 };
 
 /**
- * As cinco rotas do ativo em paralelo (RF-06): cada seção carrega sozinha, e a lenta não
- * segura a rápida.
+ * As seis rotas do ativo em paralelo (RF-06 do M1.6b, RF-15 do M1.6c): cada seção carrega
+ * sozinha, e a lenta não segura a rápida.
  */
 export function useAssetData(ticker: string): AssetData {
   const base = `/api/v1/assets/${encodeURIComponent(ticker)}`;
@@ -49,19 +67,31 @@ export function useAssetData(ticker: string): AssetData {
   const events = useResource<Events>(`${base}/events`);
   const metrics = useResource<Metrics>(`${base}/metrics`);
   const risk = useResource<Risk>(`${base}/risk`);
+  const fundamentals = useResource<Fundamentals>(`${base}/fundamentals`);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const reloadAsset = asset.reload;
   const reloadPrices = prices.reload;
   const reloadEvents = events.reload;
   const reloadMetrics = metrics.reload;
   const reloadRisk = risk.reload;
+  const reloadFundamentals = fundamentals.reload;
   const reloadAll = useCallback(() => {
     reloadAsset();
     reloadPrices();
     reloadEvents();
     reloadMetrics();
     reloadRisk();
-  }, [reloadAsset, reloadPrices, reloadEvents, reloadMetrics, reloadRisk]);
+    reloadFundamentals();
+    setReloadToken((n) => n + 1);
+  }, [
+    reloadAsset,
+    reloadPrices,
+    reloadEvents,
+    reloadMetrics,
+    reloadRisk,
+    reloadFundamentals,
+  ]);
 
   return {
     asset: asset.load,
@@ -69,14 +99,17 @@ export function useAssetData(ticker: string): AssetData {
     events: events.load,
     metrics: metrics.load,
     risk: risk.load,
+    fundamentals: fundamentals.load,
     reload: {
       asset: reloadAsset,
       prices: reloadPrices,
       events: reloadEvents,
       metrics: reloadMetrics,
       risk: reloadRisk,
+      fundamentals: reloadFundamentals,
     },
     reloadAll,
+    reloadToken,
   };
 }
 
@@ -127,12 +160,14 @@ type Posted =
   | { base: Load<Risk>; kind: "inactive" };
 
 /**
- * A tela do ativo (RF-06 a RF-20): o cabeçalho, o preço, os proventos, o comportamento e o
- * risco, com a trilha na coluna lateral do casco e a proveniência no rodapé.
+ * A tela do ativo (RF-06 a RF-20 do M1.6b, RF-15 do M1.6c): o cabeçalho, o preço, os
+ * proventos, o comportamento, o risco e, depois dele, os fundamentos e os comunicados, com a
+ * trilha na coluna lateral do casco e a proveniência no rodapé.
  *
  * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
  * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
- * carregando: o do `/risk` e o da identidade e da série que o estado pede.
+ * carregando: o do `/risk` e o da identidade e da série que o estado pede. As duas seções do
+ * M1.6c não entram nele.
  */
 export function AssetScreen({ ticker }: { ticker: string }) {
   const data = useAssetData(ticker);
@@ -212,6 +247,17 @@ export function AssetScreen({ ticker }: { ticker: string }) {
           onInactive={onInactive}
         />
       </div>
+
+      <FundamentalsSection
+        load={data.fundamentals}
+        asset={asset}
+        onRetry={data.reload.fundamentals}
+      />
+      <DisclosuresSection
+        ticker={ticker}
+        asset={asset}
+        reloadToken={data.reloadToken}
+      />
     </div>
   );
 }

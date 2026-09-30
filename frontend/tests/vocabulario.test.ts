@@ -150,6 +150,59 @@ const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>>> = {
   "risco.estado.recalculando": [[12, 18]],
   "risco.estado.E4": [[3, 18]],
   "risco.pedido.erro": [["Erro interno. Tente de novo mais tarde."]],
+  // fundamentos.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c), um por ramo.
+  "fundamentos.proveniencia": [["30/06/2026", "ITR", "28/09/2026 às 08:02"]],
+  "fundamentos.vezes": [["4,65"]],
+  "fundamentos.ebit_ttm": [[false], [true]],
+  "fundamentos.net_income_ttm": [[false], [true]],
+  "fundamentos.net_margin": [
+    ["R$ 24,32", false],
+    ["R$ 4,21", true],
+  ],
+  "fundamentos.ebit_margin": [
+    ["R$ 33,86", false],
+    ["R$ 2,10", true],
+  ],
+  "fundamentos.roe": [
+    ["R$ 27,73", false],
+    ["R$ 6,12", true],
+  ],
+  "fundamentos.net_debt": [[false], [true]],
+  "fundamentos.net_debt_to_equity": [
+    ["R$ 65,03", false],
+    [null, true],
+  ],
+  "fundamentos.close": [["25/09/2026"]],
+  "fundamentos.closeOutraData": [["25/09/2026", "28/09/2026"]],
+  "fundamentos.eps": [
+    ["12.888.732.761", false],
+    ["4.980.000.000", true],
+  ],
+  "fundamentos.bvps": [["12.888.732.761"]],
+  "fundamentos.pe": [
+    ["25/09/2026", "R$ 48,07", "4,6", false],
+    ["25/09/2026", "R$ 12,15", "−28,7", true],
+  ],
+  "fundamentos.pb": [["25/09/2026", "R$ 48,07", "1,29"]],
+  "fundamentos.equity_parent": [[false], [true]],
+  "fundamentos.pares.segmento": [["Exploração. Refino e Distribuição"]],
+  "fundamentos.pares.subsetor": [["Petróleo. Gás e Biocombustíveis"]],
+  "fundamentos.pares.posicao": [
+    ["6", "6"],
+    ["2", "3"],
+  ],
+  "fundamentos.pares.abaixoDeTodas": [["7"]],
+  "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
+  // comunicados.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c).
+  "comunicados.companhia": [["PETROLEO BRASILEIRO S.A. PETROBRAS", "9512"]],
+  "comunicados.companhiaSemNome": [["9512"]],
+  "comunicados.referencia": [["11/09/2026"]],
+  "comunicados.mostrando": [["10", "2.765"]],
+  "comunicados.filtroVazio": [
+    ["fato relevante"],
+    ["comunicado ao mercado"],
+    ["aviso aos acionistas"],
+  ],
   "motivos.serieCurta": [["312", "503"]],
   "motivos.expirado": [["30"]],
   "motivos.desconhecido": [["qualquer outro texto"]],
@@ -265,5 +318,51 @@ describe("V-09 — (b) o resultado de cada entrada", () => {
   it("a isenção pela chave é só a da ressalva", () => {
     expect([...ISENTAS]).toEqual(["rodape.ressalva"]);
     expect(TEXTOS["rodape.ressalva"]).toBe(RESSALVA);
+  });
+});
+
+/**
+ * V-09 do M1.6c (RF-11, D-130): a seção Comunicados nunca chama o que a companhia entrega à CVM
+ * pela palavra da imprensa. O radical sem borda no fim pega a palavra no singular, no plural e
+ * sem acento; sem caixa.
+ */
+const RADICAL_IMPRENSA = /not[ií]cia/iu;
+
+describe("V-09 do M1.6c — o radical da imprensa nas entradas comunicados.*", () => {
+  it.each(["notícia", "Notícias da companhia", "NOTÍCIAS", "noticia", "noticias"])(
+    "pega %j",
+    (texto) => {
+      expect(RADICAL_IMPRENSA.test(texto)).toBe(true);
+    },
+  );
+
+  it.each(["comunicado", "notificação", "Notas"])("não pega %j", (texto) => {
+    expect(RADICAL_IMPRENSA.test(texto)).toBe(false);
+  });
+
+  const entradas = (Object.entries(TEXTOS) as Array<[string, unknown]>).filter(([k]) =>
+    k.startsWith("comunicados."),
+  );
+
+  it("as entradas comunicados.* existem", () => {
+    expect(entradas.length).toBeGreaterThan(0);
+    expect(entradas.map(([k]) => k)).toContain("comunicados.titulo");
+  });
+
+  it("nenhuma entrada comunicados.* contém o radical", () => {
+    const achados: string[] = [];
+    for (const [chave, valor] of entradas) {
+      const saidas =
+        typeof valor === "string"
+          ? [valor]
+          : (EXEMPLOS[chave] ?? []).map((args) =>
+              (valor as (...a: unknown[]) => string)(...args),
+            );
+      expect(saidas.length).toBeGreaterThan(0);
+      for (const saida of saidas) {
+        if (RADICAL_IMPRENSA.test(saida)) achados.push(`${chave}: ${saida}`);
+      }
+    }
+    expect(achados).toEqual([]);
   });
 });

@@ -23,6 +23,7 @@ const SRC = resolve(HERE, "../src");
 
 const REGULAR: RegularGlyph[] = [
   "arrow-left",
+  "arrow-square-out",
   "arrows-clockwise",
   "calendar-blank",
   "caret-right",
