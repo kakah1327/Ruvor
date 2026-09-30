@@ -1,30 +1,50 @@
 # Frente `marco1`
 
 **Dono:** darkside171
-**Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅. O M1.6b fechou o Marco 1: digita ITUB4, recebe o comportamento e o risco; o M1.6c completou a tela com as camadas 4 e 5.
+**Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅; em spec e plano, seis blocos em paralelo — M1.6d,
+M1.5c, M1.7, M3.3, M2.3 e M2.1b. O M1.6b fechou o Marco 1: digita ITUB4, recebe o comportamento e o risco; o M1.6c
+completou a tela com as camadas 4 e 5.
 **Cerca:** ver [FRENTES.md](../FRENTES.md#cercas).
-**Faixa de decisões:** D-75 a D-81 (todas usadas pelo M1.5b), depois D-85 a D-99 (todas usadas; a D-99 é do M1.6c) e D-140 a D-159, reservadas pela spec do M1.6c — nenhuma usada.
+**Faixa de decisões:** D-75 a D-81 (todas usadas pelo M1.5b), depois D-85 a D-99 (todas usadas; a D-99 é do M1.6c) e
+D-140 a D-159, reservadas pela spec do M1.6c e divididas entre os seis blocos abertos em 2026-09-29 — usadas D-140,
+D-143 e D-144, D-146 a D-153 (ver [FRENTES.md](../FRENTES.md#numeração-de-decisão)).
 
 ---
 
 ## Agora
 
-**Bloco:** M2.1m — A coluna do autor do pedido ([spec](../specs/M2.1m-requested-by.md),
-[plano](../planos/M2.1m-requested-by.md)), **fechado em 2026-09-29**: `core.compute_request.requested_by`, que libera a
-T14 do M2.1a. Os blocos M1.5b a M1.6c estão fechados e na `main`
-**Etapa:** T1 e FECHA feitos no ramo; **PR de implementação a abrir pelo dono**, revisada pela `identidade`, que
-consome a coluna (D-85)
-**Ramo:** `marco1/M2.1m-requested-by`
+**Seis blocos com spec e plano prontos, em PR** (2026-09-29). Cada ramo tem o seu worktree em
+`E:/Temp/Trilobit/varlab-wt/<bloco>`; spec e plano entram juntos, num commit, e a PR mesclada pelo dono é o portão
+dos dois. Todas as specs passaram por revisão adversarial (a do M1.6d, inline) e foram aprovadas pelo dono; todos
+os planos passaram por revisão contra a spec, alguns em duas ou três rodadas.
+
+| Bloco | Ramo | PR | Tarefas | Portões de mockup | Revisão de outra frente |
+|---|---|---|---|---|---|
+| [M1.6d — Acabamento](../specs/M1.6d-acabamento.md) | `marco1/M1.6d-acabamento` | #19 | 6 | — | — |
+| [M1.5c — Execução presa](../specs/M1.5c-execucao-presa.md) | `marco1/M1.5c-execucao-presa` | #23 | 10 | — | `identidade` (cruza com a T14 do M2.1a) |
+| [M1.7 — Busca e catálogo](../specs/M1.7-busca-e-catalogo.md) | `marco1/M1.7-busca-e-catalogo` | #21 | 9 | 1 | `fundamentos` (o grupo de pares com vírgula) |
+| [M3.3 — Estresse histórico](../specs/M3.3-estresse-historico.md) | `marco1/M3.3-estresse-historico` | #20 | 9 | 1 | — |
+| [M2.3 — Camada explicativa](../specs/M2.3-camada-explicativa.md) | `marco1/M2.3-camada-explicativa` | #22 | 16 | 4 | — (estende a cerca de mockups da `marco1`) |
+| [M2.1b — Telas de acesso](../specs/M2.1b-telas-de-acesso.md) | `marco1/M2.1b-telas-de-acesso` | #24 | 16 | 5 | `identidade` (o `POST /risk` exige conta, D-140) |
+
+**Ordem de merge proposta:** #19 → #23 → #21 → #20 → #22 → #24. O M2.3 depende do M1.6d mesclado; o M2.1b espera
+combinar com a `identidade` a ordem com a T14 do M2.1a, cujo teste de pedido anônimo passa a esperar 401.
+
+**Como a implementação roda** (regra escrita em todos os planos): testes em contêiner avulso com o worktree montado,
+uma suíte de backend por vez na máquina (o banco de teste é um só); quando um bloco precisa do stack servindo o
+ramo — mockup com dado real, tela, execução real —, o orquestrador põe o checkout principal em
+`git switch --detach <HEAD do ramo>`, com ele livre, e o devolve no fim; parar e subir o Beat é do orquestrador.
 
 ## Próximo passo
 
-1. Abrir a PR do M2.1m — spec, plano e implementação — e mesclá-la com a CI verde, com a revisão da `identidade`.
-2. As **telas de acesso**, sobre o casco do M1.6b e as rotas de conta do M2.1a.
+1. Mesclar as seis PRs de spec e plano, na ordem acima; cada uma, depois do merge da anterior, recebe a `main`.
+2. Implementar, bloco a bloco na mesma ordem, com os portões de mockup de cada um.
 3. Olhar a zona de Basileia a 5% (ver *Aberto* no [ESTADO](../ESTADO.md#aberto-e-aguardando-decisão)).
 
 ## Depois
 
-As telas de acesso usam o casco do M1.6b e as rotas de conta do M2.1a.
+Os blocos que dependem de decisão externa: M2.2 (carteira) e M5.1 (retorno) esperam o parecer sobre a fronteira da
+CVM; a política de retenção dos retratos espera a taxa de invalidação medida em dia útil.
 
 ## O que esta frente deve a outras
 
@@ -48,3 +68,4 @@ As telas de acesso usam o casco do M1.6b e as rotas de conta do M2.1a.
 | 2026-09-29 | M1.6b mesclado (PR #16). M1.6c fechado: T0 a T8, o mockup aprovado, D-99; as tabelas da `fundamentos` viraram contrato; a taxa do anônimo medida; a PR de implementação fica para o dono abrir |
 | 2026-09-29 | M1.6c mesclado (PR #17) pelo dono da `fundamentos`, a frente que consome o contrato (D-99). M2.1m aberto: a coluna `core.compute_request.requested_by`; spec com duas rodadas de revisão, aprovada pelo dono; plano com uma |
 | 2026-09-29 | M2.1m fechado: a T1 (`4825389`), 1218 testes no backend, as três mutações reprovando; a PR de implementação fica para o dono abrir |
+| 2026-09-29 | M2.1m mesclado (PR #18). Seis blocos abertos em paralelo, cada um no seu worktree: M1.6d, M1.5c, M1.7, M3.3, M2.3 e M2.1b; specs revisadas e aprovadas no portão, planos revisados contra a spec; D-140, D-143, D-144 e D-146 a D-153; spec e plano em PR (#19 a #24). A dispensa de portão do login (a antiga D-141) foi retirada: o login ganha mockup derivado do `01-login` |
