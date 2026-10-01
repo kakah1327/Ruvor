@@ -16,15 +16,14 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 **Bloco:** M2.2a — Carteira (só o backend; as telas são o M2.2b, da `marco1`). Os três blocos
 anteriores fecharam: o M4.2 (PR #15), o M4.1 (PR #28) e o M2.1a (2026-09-30), este com a PR #29 aberta
-**Etapa:** spec do M2.2a em rascunho, a revisar; **a PR de implementação só entra na `main` com o
+**Etapa:** spec do M2.2a aprovada pela revisão 3, no portão do dono; **a PR de implementação só entra na `main` com o
 parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
 **Ramo:** `identidade/M2.2-carteira` (sobre o ramo da PR #29); `identidade/M2.1-identidade-e-acesso` (a PR #29)
 
 ## Próximo passo
 
-1. A PR #29 do M2.1a (T14 a T16), que o dono mescla com a CI verde. **Passa pela `marco1`**:
-   toca `apps/api/views.py` e `apps/risk/`. O recado vai na descrição.
-2. A spec do M2.2a: revisão adversarial, portão do dono e a PR da spec, que **passa pela `marco1`**
+1. ~~A PR #29 do M2.1a~~ — mesclada em 2026-10-01.
+2. A spec do M2.2a: portão do dono e a PR da spec, que **passa pela `marco1`**
    — a cerca nova, o que a carteira lê de `apps/risk/` e o M2.2b nascendo na `marco1`. Depois, o
    plano.
 3. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
@@ -57,3 +56,4 @@ parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec
 | 2026-09-30 | M4.1: **T4 a T6 executadas.** T4 (`4971b89`): as rotas `reports*`, a chave que lê relatório e o esquema; suíte com 1361 testes, verde. T5: as 19 mutações reprovaram, cada uma no teste previsto; a 17 (`ReportOut.kind` como `ChoiceField`) foi retirada por errata do dono — o gerador não avisa, e o `CharField` fica (`11fc3fa`). T6: D-113 a D-115 e o FECHA. V-18 pelo proxy do Vite: o relatório do `ITUB4` (`risk_run_id` 5) com `sha256` igual ao `sha256sum` do `/json`, 10 077 bytes de `content`, `/csv` com 19 linhas, a chave lista e baixa e recebe 403 no `POST`, e `UPDATE core.report` → `ERROR: report so cresce`. As suítes rodaram em contêiner avulso com `RUVOR_DB_NAME=ruvor_m41` (banco de teste próprio), ao lado da sessão do M2.1 |
 | 2026-09-30 | M2.1a: a ordem com o M2.1b foi decidida pelo dono: a T14 entra antes, porque o M2.1b (PR #24) só trouxe spec e plano, e o `POST /risk` segue `AllowAny`. Ramo atualizado com a `main`. **T14 executada** (`affc70c`): o autor no pedido novo e na `risk_run` que ele abre; 5 testes; suíte com 1304, verde; `mypy` e `ruff` limpos. Mutações 32 e 33 reprovando. **T16:** V-25 pelo proxy do Vite (9 eventos no `access_event`); o `POST /risk` logado do `ABCB4` abriu a `risk_run` 10 com o autor. A primeira tentativa (`ABEV3`, `risk_run` 9) saiu sem autor: o `worker` rodava o código de antes do commit (verbete novo em aprendizados). **M2.1a fechado.** Ramo atualizado com a `main` depois da PR #28 (M4.1): conflitos só de documento, resolvidos juntando os dois fechos |
 | 2026-09-30 | M2.2 aberto, decidido com o dono: o parecer da CVM segura só a PR de implementação, não a spec nem o plano; a frente é a `identidade`, só o backend (M2.2a), e as telas são o M2.2b, da `marco1`; o caminho barato (série única nos nove modelos, motor sem mudar); pesos em % que somam 100, fixos, e o valor aplicado em R$, opcional. Na spec, a confirmar no portão: a carteira é da organização, a composição é versionada, o risco é só sob demanda, com teto. Ramo `identidade/M2.2-carteira` sobre o da PR #29. Spec em rascunho, D-116 a D-119; a faixa D-160 a D-179 reservada |
+| 2026-10-01 | PR #29 (M2.1a) na `main`. Spec do M2.2a: revisão 2 reprovou (1 grave: `select_for_update(of=...)` gera `FOR UPDATE OF "gold"."…"`, que o PostgreSQL recusa — reproduzido no `ruvor-web-1`; trocado pela trava consultiva da execução, `pg_advisory_xact_lock(7104, run_id)`, com releitura; 2 médios, 11 leves), absorvidos; **revisão 3 aprovou** (1 médio: o V-16 concorrente nas duas ordens; 6 leves), absorvidos. Verbete novo em aprendizados. A spec vai ao portão do dono |

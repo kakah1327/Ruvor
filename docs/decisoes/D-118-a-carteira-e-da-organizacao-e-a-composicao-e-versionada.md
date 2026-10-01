@@ -1,6 +1,6 @@
 # D-118 — A carteira é da organização, a composição é versionada e imutável, e o valor aplicado fica fora do cálculo; a chave lê carteira — estende a D-115
 
-**Status:** aceita com a aprovação da [spec do M2.2a](../specs/M2.2a-carteira.md) · 2026-09-30 · frente `identidade`
+**Status:** aceita com a aprovação da [spec do M2.2a](../specs/M2.2a-carteira.md) · 2026-09-30 · frente `identidade` · restringe a [D-104](D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md) (a leitura de carteira não é auditada)
 
 ## Contexto
 

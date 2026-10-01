@@ -1485,3 +1485,21 @@ num processo novo.
 **Faça:** antes da execução real, rode `docker compose restart worker` (e `beat`, se a tarefa for
 agendada). Não reinicie com uma execução em andamento: o fecho não roda, e a `risk_run` fica
 `running`. Espere ela fechar.
+
+
+## `FOR UPDATE OF` não aceita o esquema que o `db_table` carrega
+
+**Quando:** ao travar linha com `select_for_update(of=...)` num modelo cujo `db_table` tem o esquema
+dentro (`'gold"."risk_run'`, `'core"."report'`) — toda tabela fora do `public` neste repositório.
+
+**Problema:** o Django monta o `OF` com o alias da tabela, que é o `db_table` inteiro, e gera
+`FOR UPDATE OF "gold"."risk_run"`. O PostgreSQL recusa com `ProgrammingError: FOR UPDATE must
+specify unqualified relation names` (reproduzido no `ruvor-web-1`, Django 6.1.1, na revisão 2 da spec
+do M2.2a; `of=("self",)` e `of=("asset",)` falham igual). `select_for_update()` sem `of` funciona,
+mas trava **todas** as tabelas da junção — e o gerente com escopo por organização junta as tabelas
+do caminho do `organization_field`.
+
+**Faça:** não use `of=`. Para serializar escritas sobre uma linha, use a trava consultiva na forma de
+dois inteiros, `pg_advisory_xact_lock(classe, id)` (o molde de `apps/api/ondemand.py`), e releia a
+linha depois de pegar a trava. Se precisar mesmo de trava de linha, `select_for_update()` sem `of`
+numa consulta **sem junção**.

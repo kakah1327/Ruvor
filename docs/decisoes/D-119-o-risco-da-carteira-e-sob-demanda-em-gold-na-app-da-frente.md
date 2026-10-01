@@ -24,8 +24,8 @@ de análise pesada.
 2. **A cerca da `identidade` ganha `backend/apps/portfolios/` e `backend/tests/portfolios/`**,
    inclusive as tabelas novas em `core` e em `gold`, da própria app, com nome próprio — como a
    [D-125](D-125-indicadores-em-gold-na-app-da-frente-restringe-a-d-84.md) fez para a `fundamentos`.
-   O que a carteira usa da `marco1` — as constantes de `apps/risk/config.py`, `status_for` e os
-   quantizadores de `apps/risk/compute.py`, `RiskRun.Status`, e, nos testes de paridade, `MODELS` e
+   O que a carteira usa da `marco1` — as constantes de `apps/risk/config.py`, `status_for`, os
+   quantizadores e `ModelsMissing` de `apps/risk/compute.py`, `RiskRun.Status`, e, nos testes de paridade, `MODELS` e
    `_row` — é **lido, nunca escrito**, e vira contrato "só cresce" em `FRENTES.md`.
 3. **Sob demanda, e só sob demanda.** Nenhuma rotina recalcula carteira. A mesma versão com a mesma
    série (mesmo `as_of_date`, mesmo SHA-256) não se recalcula: o pedido devolve 409 com a execução que
@@ -39,7 +39,10 @@ de análise pesada.
    ([D-112](D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)).
 6. **Pela fila, no molde do ativo**: uma tarefa de abertura, uma por modelo — os baratos primeiro —
    e o fecho, que só escreve sobre `running`
-   ([D-150](D-150-o-fecho-so-escreve-sobre-execucao-em-running.md)); a web cria a execução e
+   ([D-150](D-150-o-fecho-so-escreve-sobre-execucao-em-running.md)); toda escrita sobre a execução e os
+   resultados dela acontece sob a trava da execução, `pg_advisory_xact_lock(7104, run_id)`, com a linha
+   relida depois da trava — sem `select_for_update`, que o PostgreSQL recusa com `OF` sobre tabela com
+   esquema; a web cria a execução e
    enfileira pelo nome ([D-89](D-89-a-web-enfileira-pelo-nome-da-tarefa.md)), e não importa o motor.
 
 ## Consequências
