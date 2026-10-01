@@ -16,14 +16,15 @@
 ([D-95](decisoes/D-95-o-m1-6-em-tres-blocos.md), [D-99](decisoes/D-99-as-camadas-4-e-5-depois-do-risco-e-as-tabelas-da-fundamentos-sao-contrato.md)) —,
 e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 2026-09-29** — a coluna
 `core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; o **M1.6d fechou em 2026-09-30** — o
-acabamento —, com a PR de implementação a abrir pelo dono; cinco blocos da `marco1` — M1.5c, M1.7, M3.3, M2.3 e
+acabamento — e entrou na `main` pela PR #27; o **M1.5c fechou em 2026-09-30** — a execução presa em `running` é
+fechada pela varredura —, com a PR de implementação a abrir pelo dono; quatro blocos da `marco1` — M1.7, M3.3, M2.3 e
 M2.1b — têm spec e plano aprovados, a implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`
 (T14), que tem a coluna pronta no M2.1m e espera só o preenchimento
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)), e o **M4.2 fechou em
 2026-09-28** — o M4.1 é o próximo
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -58,11 +59,11 @@ há contexto:** `manage.py import_disclosures` guarda na `bronze` os zips do IPE
 em `silver.disclosure` os fatos relevantes, comunicados ao mercado e avisos aos acionistas das
 companhias do catálogo, só na versão corrente — 80.900 —, e o `compute_fundamentals`, depois dos
 indicadores, grava em `gold.peer_comparison` a posição de cada ação entre os pares do segmento da
-B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, treze tarefas de app, em
+B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, catorze tarefas de app, em
 `apps/risk/tasks.py`, `apps/assets/tasks.py`, `apps/analytics/tasks.py` e
 `apps/fundamentals/tasks.py`, tipadas pelo `celery-types`, e o Beat dispara quatro rotinas — o
 catálogo, às segundas, e os preços, de segunda a sexta, com as métricas e o recálculo do risco
-**encadeados** a eles (`preços → métricas → risco`, desde o M1.6a); os fundamentos, às segundas,
+**encadeados** a eles (`preços → métricas → risco`, desde o M1.6a, e com a varredura das execuções presas antes, desde o M1.5c); os fundamentos, às segundas,
 com o cálculo dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 20h.
 **Desde o M1.5b o recálculo do risco não refaz o treino:** os quatro modelos caros guardam um
 retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
@@ -1379,11 +1380,42 @@ antigas por texto em `risco.test.tsx` passaram a achar dois elementos. Elas agor
 [aprendizados](aprendizados.md). O Docker parou no meio do bloco, e a porta
 publicada do PostgreSQL caiu numa faixa reservada pelo Windows: o `.env` local passou a `56432`.
 
+### M1.5c — Execução presa
+
+Spec em [`specs/M1.5c-execucao-presa.md`](specs/M1.5c-execucao-presa.md) e plano em
+[`planos/M1.5c-execucao-presa.md`](planos/M1.5c-execucao-presa.md). Frente `marco1`, ramo `marco1/M1.5c-execucao-presa`.
+Oito tarefas de código, de `15df430` a `f0ae2d2`, a T9 (mutações, sem arquivo) e a T10 (execução real e FECHA). Duas
+decisões, aceitas com a spec: [D-149](decisoes/D-149-a-execucao-presa-e-fechada-pela-regra-do-fecho.md) e
+[D-150](decisoes/D-150-o-fecho-so-escreve-sobre-execucao-em-running.md).
+
+**O que passou a existir:** a `risk_run` `running` há mais de `RUVOR_RISK_STALE_AFTER_MIN` (360 por padrão, nunca menos
+que o prazo do pedido sob demanda) é fechada **pela regra do fecho** — `ok`, `partial` ou `failed` pelo que foi gravado
+—, junto com os pedidos ligados, por `apps/risk/stale.py`; a varredura é o **primeiro elo da `rotina_diaria`**
+(`fechar_presas`, que nunca levanta) e o comando `manage.py close_stale_runs [--dry-run] [--older-than-min N]`. O
+`close_run` só escreve sobre execução `running`; a tarefa por modelo grava sob a trava do ativo e só em execução aberta,
+e descarta o que chega depois do fecho; a abertura que não consegue enfileirar fecha a própria execução `failed`.
+
+| Verificação | Resultado |
+|---|---|
+| Suíte | ✅ **1330 no backend**, em 11 min 47 s, com o Beat parado; `mypy` e `ruff` limpos |
+| Concorrência | ✅ as três corridas novas (a varredura × o fecho, × a tarefa por modelo, e a abertura sem broker) verdes em três rodadas seguidas |
+| Mutações | ✅ as onze da tabela da T9 reprovaram |
+| O leque sem treino do ITUB4 | ✅ **7,9 s** e **8,5 s**, contra 8,66 s e 10,27 s no M1.5b: a trava nova não pesou |
+| A presa | o `--full` do ITUB4 (execução 75) derrubado por `kill worker` **6,8 s depois de a execução nascer** (00:46:20,7 → 00:46:27,4 UTC), com **10 de 18** resultados — os cinco modelos baratos; `lstm`, `gru`, `garchnet` e `caviar` sem gravar |
+| A varredura | `--dry-run`: `10/18 fecharia partial`; a tarefa `fechar_presas`, chamada no `worker`, fechou-a **`partial`**, com as linhas `presas:` no log; o `/risk` a mostrou como `latest`, `partial` |
+| O descarte | as reservadas voltaram **1 h depois** de entregues (o `visibility_timeout` do Redis): `lstm` e `gru` treinaram (51 s e 71 s) e **descartaram** — `execucao 75 fechada: modelo lstm descartado`; a contagem ficou em 10. As de `garchnet` e `caviar`, em execução no `kill`, já estavam confirmadas e se perderam |
+| A rotina real | ao voltar, o Beat disparou a `rotina_diaria` atrasada: o primeiro elo foi o `fechar_presas` (`nenhuma execução presa`), depois preços e métricas |
+
+**O que a execução mostrou:** sem `acks_late`, a tarefa que está rodando quando o `worker` morre se perde, e as
+reservadas só voltam depois do `visibility_timeout` — a execução nunca fecharia sozinha, e é a varredura que a fecha.
+Ver [aprendizados](aprendizados.md).
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M1.6d**, que o dono abre e mescla com a CI verde; depois, **implementar o M1.5c —
-Execução presa**, pelo [plano](planos/M1.5c-execucao-presa.md). Os cinco blocos que faltam se implementam nesta
-ordem: **M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 dependia do M1.6d, agora fechado; o M2.1b espera combinar com a
+**Na frente `marco1`, a PR do M1.5c**, que o dono abre e mescla com a CI verde e a revisão da `identidade` (o bloco
+cruza com a T14 do M2.1a, no texto de `apps/risk/tasks.py`); depois, **implementar o M1.7 — Busca e catálogo**, pelo
+[plano](planos/M1.7-busca-e-catalogo.md). Os quatro blocos que faltam se implementam nesta ordem: **M1.7 → M3.3 →
+M2.3 → M2.1b**; o M2.1b espera combinar com a
 `identidade` a ordem com a T14 do M2.1a. Ramos, worktrees e a regra de onde cada comando roda estão em
 [frentes/marco1.md](frentes/marco1.md).
 
@@ -1454,7 +1486,6 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | Tema | Onde |
 |---|---|
 | **A política de retenção dos retratos** — nada apaga retrato: cada invalidação cria uma linhagem nova (~3,1 MiB por ativo) e a antiga fica. Apagar é `delete` em `gold`, que a [D-16](decisoes/D-16-resultado-e-imutavel.md) proíbe, e precisa de decisão própria, com a taxa de invalidação medida em dia útil — o fecho do M1.5b mediu zero numa coleta de domingo, e estimou que cada provento invalida a linhagem inteira | [spec M1.5b](specs/M1.5b-treino-separado-da-previsao.md#os-retratos-se-acumulam-e-nada-os-apaga), [D-77](decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) |
-| **A execução presa em `running`** — se o fecho não rodar (`worker` morto, Redis reiniciado), a linha fica `running` para sempre. Limpar por idade, reprocessar ou deixar para operação: a spec do M1.5 deixou aberto por falta de dado de produção | [spec M1.5](specs/M1.5-execucao-assincrona.md#a-execução-presa-em-running) |
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |

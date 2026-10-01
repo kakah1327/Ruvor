@@ -1372,3 +1372,17 @@ painel e na região. No M1.6d, seis testes antigos de `risco.test.tsx` quebraram
 **Faça:** busque o texto fora da região — `getAllByText(t).filter((el) => el.closest("[aria-live]") === null)`, com
 exatamente um resultado (o ajudante `inBody` de `risco.test.tsx`) —, e confira a região à parte, pelo seletor
 `[aria-live]` e pelo `textContent` exato: sozinho, o filtro aceita cópias a mais dentro da região.
+
+## O `worker` morto: a tarefa em execução se perde, e as reservadas voltam só depois de uma hora
+
+**Quando:** ao derrubar o `worker` (`docker compose kill worker`, falta de memória) com um leque de risco em curso, ou ao
+esperar que as tarefas dele "voltem sozinhas".
+
+**Problema:** sem `acks_late`, o Celery confirma a tarefa ao começar a executá-la: a que estava rodando no `kill` se
+perde. As reservadas pelo pré-carregamento (até `concurrency × 4`) só voltam à fila depois do `visibility_timeout` do
+transporte Redis, ~3600 s. Na execução real do M1.5c, as de `garchnet` e `caviar` se perderam e as de `lstm` e `gru`
+voltaram 1 h depois; o `chord` nunca completou, e o fecho não rodou.
+
+**Faça:** não espere a execução fechar sozinha: a varredura (`close_stale_runs`, ou o primeiro elo da `rotina_diaria`)
+a fecha pela regra depois de `RUVOR_RISK_STALE_AFTER_MIN`. As que voltarem depois rodam sobre execução fechada e
+descartam (`modelo … descartado` no log). Para medir isso, reduza o prazo no `.env` e aplique com `docker compose up -d`.
