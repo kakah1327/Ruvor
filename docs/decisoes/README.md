@@ -26,6 +26,8 @@ conversas e entre agentes.
 | [D-151](D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) | O texto das duas leituras mora no frontend; restringe a D-97 e a PRODUTO §2 |
 | [D-152](D-152-o-nivel-de-leitura-e-escolha-do-visitante.md) | O nível de leitura é escolha do visitante, global, lembrada no navegador; o padrão é iniciante |
 | [D-153](D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md) | O parecer da CVM não bloqueia o M2.3; restringe o pré-requisito do Marco 2 e a PRODUTO §6 e §8 |
+| [D-116](D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) | O parecer da CVM não bloqueia a spec nem o plano da carteira; segura a PR de implementação, e o lado seguro é regra do desenho — restringe a D-153 |
+| [D-117](D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md) | A carteira é uma série única, de pesos fixos rebalanceados a cada pregão, sobre a interseção das datas, nos nove modelos sem mudar o motor — formaliza o caminho barato |
 | [D-146](D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) | O estresse histórico vira o bloco M3.3: só do ativo, só com preço |
 | [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
 | [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
@@ -135,6 +137,8 @@ conversas e entre agentes.
 | [D-113](D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) | O relatório é uma foto guardada: o JSON entregue, byte a byte, com o SHA-256 dele, em `core.report`; o CSV deriva dele, e um formato publicado nunca muda — estende a D-16 |
 | [D-114](D-114-tabela-que-so-cresce-e-guardada-tambem-no-banco-por-gatilho.md) | Tabela que só cresce é guardada também no banco, por gatilho; `core.report` é a primeira, e o `TRUNCATE` continua passando |
 | [D-115](D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md) | A chave de leitura lê o relatório da organização da dona, com o escopo `read`; gerar só pela sessão — estende a D-108 e substitui, para o relatório, a orientação do M4.2 de escopo novo |
+| [D-118](D-118-a-carteira-e-da-organizacao-e-a-composicao-e-versionada.md) | A carteira é da organização, a composição é versionada e imutável, e o valor aplicado fica fora do cálculo; a chave lê carteira — estende a D-115 |
+| [D-119](D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md) | O risco da carteira é sob demanda, em tabelas próprias de `gold` na app da `identidade`, sem retratos, com teto global e um por organização — restringe a D-84 |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |

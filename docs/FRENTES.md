@@ -29,10 +29,10 @@ a frente e crie o ramo pelo formato abaixo.
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
 | `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅; spec e plano aprovados, a implementar: M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5c-execucao-presa` — M1.5c fechado, a PR de implementação é do dono, revisada pela `identidade`; os outros quatro ramos, cada um no seu worktree, com spec e plano na `main` (PRs #20, #21, #22 e #24) |
-| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 → M4.2 → M4.1 | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.1-identidade-e-acesso` |
+| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a (spec e plano aprovados, PR #31) | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.2-carteira` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
-**Hoje são duas frentes ativas**, `marco1` e `identidade`. A `fundamentos` fechou o M3.2 e está
+**Hoje são duas frentes ativas**, `marco1` e `identidade` — esta com a carteira (M2.2a, só o backend; as telas, M2.2b, são da `marco1`). A `fundamentos` fechou o M3.2 e está
 parada, sem próximo bloco definido; o Kauã, dono dela, assumiu a `identidade` em 2026-09-27.
 
 **Ramo:** `<frente>/<bloco>-<assunto>`. Um ramo por bloco, com três PRs: spec, plano e
@@ -51,7 +51,7 @@ revisa a PR.
 | Frente | Pastas |
 |---|---|
 | `marco1` | `engine/`; `backend/apps/risk/`, `backend/apps/analytics/`, `backend/apps/assets/`, `backend/apps/api/` (a API, criada pelo M1.6a), e os testes delas em `backend/tests/`; `frontend/`; `brand/`; `docs/mockups/`; os serviços `worker` e `beat` no `compose.yaml` |
-| `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1 (`backend/tests/accounts/`). **Sem telas:** toda interface visual — telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login, que consomem as rotas do M2.1 |
+| `identidade` | `backend/apps/accounts/`; `backend/tests/test_usuario.py`, `test_organizacao.py` e os testes novos do M2.1 (`backend/tests/accounts/`); desde o M2.2a, `backend/apps/portfolios/` e `backend/tests/portfolios/`, inclusive as tabelas novas da app em `core` e em `gold`, com nome próprio ([D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)). **Sem telas:** toda interface visual — telas, mockups, kit — é da `marco1` (decisão do darkside171, 2026-09-27), inclusive as de login, que consomem as rotas do M2.1 |
 | `fundamentos` | a app nova do M3.1 em `backend/apps/` (`apps/fundamentals`, pela [spec do M3.1](specs/M3.1-fundamentos.md)) e os testes dela; as tabelas novas em `bronze`, `silver` e `gold`, da própria app, com nome próprio |
 
 **Migration:** cada app tem sequência própria, e ninguém cria migration em app de outra frente.
@@ -97,6 +97,8 @@ mudança passa pela revisão da frente que o consome.
 | **`silver.disclosure`**: os comunicados da companhia à CVM | `fundamentos` | `marco1` (a rota `/disclosures`) | ✅ "só cresce": as colunas do RF-03 do M1.6c, mais `code_cvm` e `company_name`; a ligação é direta por `silver.asset.code_cvm` |
 | **`silver.company`** e três colunas de **`silver.financial_statement`** | `fundamentos` | `marco1` | ✅ "só cresce": `company.code_cvm`, `company.name`; `reference_date`, `source`, `scope` do balanço do indicador |
 | **As listas de valores que a tela traduz**: `account_plan`, `per_share_missing` (com os campos que cada motivo anula, `REASON_NULLS`), `market_cap_missing` (os literais de `market_cap()`), `peer_level`, `category` | `fundamentos` | `marco1` | ✅ **valor novo é mudança de contrato**: a PR da `fundamentos` passa pela revisão da `marco1`, que atualiza a tradução e `backend/tests/api/test_valores_fundamentos.py` — o teste lê as listas da fonte e reprova a mudança |
+| **O que a carteira lê do risco**: `apps/risk/config.py` (`DEFAULT_SEED`, `TRAIN_WINDOW_DAYS`, `MIN_SESSIONS`, `ALPHAS`, `BACKTESTS`), de `apps/risk/compute.py` `status_for`, `Q4`, `Q6`, `Q10` e `ModelsMissing`, `RiskRun.Status`, e, só nos testes de paridade, `MODELS` e `_row`; `silver.asset` (`ticker`, `name`, `kind`, `status`), `silver.price` (`asset`, `date`, `adj_close`, `run`) e os `PROTECT` para `silver.asset` e `assets.CollectionRun` | `marco1` | `identidade` (M2.2a, `apps/portfolios`) | 🔴 a revisar pela `marco1` na PR da [spec do M2.2a](specs/M2.2a-carteira.md). Pede-se **"só cresce"**: renomear ou mudar o sentido de um deles quebra a carteira; o teste de paridade da conversão (RF-23) reprova na PR que mudar `_row` |
+| **As rotas de carteira**: `/api/v1/portfolios*` e os `reason` de `invalid_holdings` | `identidade` (M2.2a) | `marco1` (M2.2b, as telas) | 🟡 especificado na [spec do M2.2a](specs/M2.2a-carteira.md#contratos-externos); valor novo de `reason` é mudança de contrato |
 | **`CELERY_BEAT_SCHEDULE`** | cada frente, a própria entrada | — | ✅ arquivo comum. A `fundamentos` acrescenta a sua e não mexe no horário das outras |
 
 ---
@@ -113,7 +115,8 @@ outras frentes.
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
 | D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 (a D-149 e a D-150 com o M1.5c, fechado) |
-| D-100 a D-119 | `identidade` | D-100 a D-115 — a D-115 é a última do M4.1 |
+| D-100 a D-119 | `identidade` | todas — D-116 a D-119 são do M2.2a |
+| D-160 a D-179 | `identidade`, reservada pela spec do M2.2a | — |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da
