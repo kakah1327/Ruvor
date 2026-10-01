@@ -554,7 +554,8 @@ class AssetRiskView(APIView):
         with transaction.atomic():
             lock_on_demand()
             expire_stale(now)
-            # o anonimo nunca e `User`: o `isinstance` e o `is_authenticated` com o tipo
+            # o `isinstance` faz o papel do `is_authenticated` -- o anonimo e
+            # `AnonymousUser`, nunca `User` -- e estreita o tipo para a FK
             error = _decide(
                 asset, now, request.user if isinstance(request.user, User) else None
             )

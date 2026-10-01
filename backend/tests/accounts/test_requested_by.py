@@ -145,9 +145,7 @@ def test_v19_o_pedido_anonimo_grava_nulo_no_pedido_e_na_execucao() -> None:
     assert run.requested_by_id is None
 
 
-def test_v19_o_segundo_pedido_com_pedido_aberto_nao_muda_o_autor(
-    filas: list[Any],
-) -> None:
+def test_v19_o_segundo_pedido_com_pedido_aberto_nao_muda_o_autor() -> None:
     _serie()
     org = organizacao("acme")
     ana = usuario(org, "ana@acme.test")
