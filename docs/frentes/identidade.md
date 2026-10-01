@@ -16,7 +16,7 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 **Bloco:** M2.2a — Carteira (só o backend; as telas são o M2.2b, da `marco1`). Os três blocos
 anteriores fecharam: o M4.2 (PR #15), o M4.1 (PR #28) e o M2.1a (2026-09-30), este com a PR #29 aberta
-**Etapa:** spec do M2.2a aprovada pelo dono (2026-10-01); plano aprovado pela revisão 3, no portão do dono; **a PR de implementação só entra na `main` com o
+**Etapa:** spec do M2.2a aprovada pelo dono (2026-10-01); plano aprovado pelo dono (2026-10-01); PR de spec e plano aberta; **a PR de implementação só entra na `main` com o
 parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
 **Ramo:** `identidade/M2.2-carteira` (sobre o ramo da PR #29); `identidade/M2.1-identidade-e-acesso` (a PR #29)
 
