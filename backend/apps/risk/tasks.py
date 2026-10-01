@@ -319,6 +319,9 @@ def _abrir_execucao(
             bars,
             models,
             full=full,
+            # a execucao e de quem abriu o pedido; no `already_running` acima ela continua
+            # de quem chegou primeiro (M2.1a, RF-26)
+            requested_by_id=req.requested_by_id if req is not None else None,
         )
         if req is not None:
             req.risk_run = run
