@@ -55,4 +55,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | Marco 3 · M3.3 · frente `marco1` | ✅ aprovada em 2026-09-29 (PR #20) |
 | [M1.6d — Acabamento](M1.6d-acabamento.md) | Marco 1 · M1.6d | ✅ implementada e fechada |
 | [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | Marco 1 · M1.7 | ✅ aprovada em 2026-09-29 (PR #21) |
-| [M2.2a — Carteira](M2.2a-carteira.md) | Marco 2 · M2.2a · frente `identidade` | 🟡 rascunho (2026-09-30); a implementação só entra com o parecer da CVM (D-116) |
+| [M2.2a — Carteira](M2.2a-carteira.md) | Marco 2 · M2.2a · frente `identidade` | ✅ aprovada (2026-10-01); a implementação só entra com o parecer da CVM (D-116) |
