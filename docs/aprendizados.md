@@ -1158,10 +1158,12 @@ no mesmo Postgres. A segunda cria ou apaga o banco da primeira, e os testes `tra
 truncam as tabelas de todo mundo. O resultado são falhas que parecem defeito do código — e uma
 mutação pode "reprovar" pelo motivo errado, ou uma suíte verde passar por acaso.
 
-**Faça:** uma suíte do backend por vez, no `worker` ou em contêiner avulso (que usa o mesmo banco
-— ver [O worktree não é o que o contêiner monta](#o-worktree-não-é-o-que-o-contêiner-monta)).
-Trilhas paralelas dividem o frontend e o backend, não duas rodadas do backend. Na T13, as
-mutações rodam em série, e a suíte inteira duas vezes seguidas, depois delas.
+**Faça:** uma suíte do backend por vez **em cada banco de teste**: o `worker` e o contêiner avulso
+usam o mesmo `test_ruvor` se nada mudar (ver
+[O worktree não é o que o contêiner monta](#o-worktree-não-é-o-que-o-contêiner-monta)). Para rodar
+duas ao mesmo tempo, dê à segunda um banco de teste próprio pelo `RUVOR_DB_NAME` — ver
+[Duas suítes ao mesmo tempo](#duas-suítes-ao-mesmo-tempo-banco-de-teste-próprio-pelo-ruvor_db_name).
+Na T13, as mutações rodam em série, e a suíte inteira duas vezes seguidas, depois delas.
 
 ## O Vite recusa o `Host` de outro contêiner: a automação entra na rede do próprio `frontend`
 
@@ -1326,8 +1328,13 @@ ele resolve com sufixo de hash (`KindF56Enum`) e um aviso. O aviso basta para o 
 reprovar.
 
 **Faça:** dê nome a cada conjunto em `SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"]`, pelo caminho
-da classe de escolhas (`"AssetKindEnum": "apps.assets.models.Asset.Kind"`). Serializador novo
-com campo de escolha de nome repetido precisa de entrada nova.
+da classe de escolhas (`"AssetKindEnum": "apps.assets.models.Asset.Kind"`).
+
+**Mas não suponha a colisão sem medir:** com os dois `kind` já nomeados, um terceiro campo `kind`
+(`ChoiceField` em `ReportOut`, M4.1) **não** avisou — o enum nasceu `ReportOutKindEnum` e o
+`--fail-on-warn` saiu com 0. A spec do M4.1 supôs o contrário e a mutação que dependia disso não
+reprovou (errata na T5). Rode o `spectacular --validate --fail-on-warn` com o campo novo antes de
+escrever que ele colide.
 
 
 ## A contagem de avisos do drf-spectacular é de classe e sobrevive entre testes
@@ -1372,3 +1379,92 @@ painel e na região. No M1.6d, seis testes antigos de `risco.test.tsx` quebraram
 **Faça:** busque o texto fora da região — `getAllByText(t).filter((el) => el.closest("[aria-live]") === null)`, com
 exatamente um resultado (o ajudante `inBody` de `risco.test.tsx`) —, e confira a região à parte, pelo seletor
 `[aria-live]` e pelo `textContent` exato: sozinho, o filtro aceita cópias a mais dentro da região.
+
+## `operationId` de lista e item colide no drf-spectacular
+
+**Quando:** ao pôr no esquema duas `APIView` (não `ViewSet`) em `recurso` e `recurso/{id}`, as duas
+com `GET` — `assets` e `assets/{ticker}` no M4.2, `reports` e `reports/{id}` no M4.1.
+
+**Problema:** o `get_operation_id` do `AutoSchema` tira do caminho os parâmetros (`{id}`) e só chama a
+ação de `list` quando reconhece a view como lista; uma `APIView` comum sai como `retrieve` nas duas.
+Os dois `operationId` ficam iguais, o gerador avisa `operationId "…" has collisions` e resolve com
+sufixo numérico — e o aviso basta para o `--fail-on-warn` reprovar.
+
+**Faça:** fixe o `operation_id` da lista no `extend_schema` do `get` dela
+(`operation_id="v1_assets_search"`, `"v1_reports_list"`), com um comentário do porquê. A mutação
+que o tira é pega pelo teste que roda o `spectacular --validate --fail-on-warn`.
+
+
+## O `JSONRenderer` devolve os mesmos bytes, e a comparação de bytes fica cega à troca por `Response`
+
+**Quando:** ao testar que uma rota devolve bytes guardados sem transformação — um `HttpResponse` do
+Django, e não um `Response` do DRF —, comparando o corpo da resposta com os bytes guardados.
+
+**Problema:** se os bytes foram gerados com `json.dumps(..., ensure_ascii=False, separators=(",",
+":"))`, o `JSONRenderer` do DRF 3.18.1, sobre o `json.loads` deles, devolve **os mesmos bytes**: um
+`Response(json.loads(content))` passaria no teste. A única diferença é que o renderizador escapa
+U+2028 e U+2029 (`rest_framework/renderers.py:106`).
+
+**Faça:** ponha no dado do teste um U+2028 (no M4.1, o `name` da organização, que vai para o
+conteúdo) e confira que ele está nos bytes da resposta; confira também que a resposta não tem o
+atributo `data`, que só o `Response` tem.
+
+
+## Editor converte o escape `\u2028` no caractere, e o `ruff` recusa
+
+**Quando:** ao escrever, num teste Python, uma string com U+2028 ou U+2029 pelo escape `"\u2028"`.
+
+**Problema:** a ferramenta de edição gravou o caractere literal no lugar do escape; o arquivo parece
+certo na tela, e o `ruff check` reprova com `RUF001` (caractere ambíguo na string).
+
+**Faça:** escreva `chr(0x2028)` numa constante com nome (`U2028 = chr(0x2028)`, em
+`tests/accounts/test_report_rotas.py`), e não o escape dentro da string.
+
+
+## `TRUNCATE` na transação do teste falha com `pending trigger events`
+
+**Quando:** ao provar, num teste `django_db` comum, que um `TRUNCATE` passa por uma tabela — no
+M4.1, que o gatilho `report_so_cresce` de `core.report` não o barra —, depois de inserir linhas na
+mesma transação.
+
+**Problema:** as FKs que o Django cria são `DEFERRABLE INITIALLY DEFERRED`. A inserção deixa a
+checagem delas pendente até o fim da transação do teste, e o PostgreSQL recusa o `TRUNCATE` com
+`pending trigger events` — o erro não é do gatilho da
+tabela, e o teste reprova pelo motivo errado. O `banco_limpo` e o `psql` não veem isso: truncam em
+transação própria.
+
+**Faça:** `cursor.execute("SET CONSTRAINTS ALL IMMEDIATE")` antes do `TRUNCATE`, no mesmo cursor
+(o molde está em `tests/accounts/test_report_modelo.py`).
+
+
+## Data no corpo da API: pelo serializador sai em `-03:00`, crua no dict sai em `Z`
+
+**Quando:** ao montar um corpo de resposta com um instante, e comparar com outra rota da API.
+
+**Problema:** o `DateTimeField` do DRF converte para o `TIME_ZONE` do projeto
+(`America/Sao_Paulo`, `-03:00`); um `datetime` posto cru no dict passa pelo `JSONEncoder` do DRF
+(`rest_framework/utils/encoders.py`), que o escreve como veio do banco, em UTC, com `Z`. O
+`api_key_body` do M4.2 sai em `Z`; o `report_body` do M4.1, que o `/risk` e a spec tomaram por
+molde, sai em `-03:00` (`timezone.localtime(...).isoformat()`). As duas formas convivem na API.
+
+**Faça:** decida o fuso na spec e confira contra a rota que é o molde — nos testes, compare com o
+texto que o serializador daria (`_iso` de `tests/api/test_risco.py`), e não com `str(datetime)`.
+
+
+## Duas suítes ao mesmo tempo: banco de teste próprio pelo `RUVOR_DB_NAME`
+
+**Quando:** ao rodar a suíte do backend enquanto outra sessão roda a dela — duas frentes na mesma
+máquina, ou um worktree e o checkout principal.
+
+**Problema:** sem nada mudar, as duas usam o `test_ruvor` e se atropelam (ver
+[Duas suítes no mesmo `worker` usam o mesmo banco de teste](#duas-suítes-no-mesmo-worker-usam-o-mesmo-banco-de-teste)).
+O nome do banco de teste é `test_` mais o `NAME` do banco, que vem do `RUVOR_DB_NAME`. O cache não
+é problema: nos testes é `LocMemCache` (`config/settings_test.py:33`), um por processo. O custo é a
+memória: medido no M4.1, cada suíte usa uns 3,2 GiB, e o WSL tinha 5,8 GiB — duas ao mesmo tempo
+podem derrubar uma por falta de memória.
+
+**Faça:** rode a segunda num contêiner avulso com `-e RUVOR_DB_NAME=<outro>` — medido no M4.1:
+`docker compose run --rm --no-deps … -e RUVOR_DB_NAME=ruvor_m41 worker …` usa o
+`test_ruvor_m41`, separado do `test_ruvor` (conferido com `connection.creation._get_test_db_name()`
+e no `pg_database`). Rode do diretório que tem o `.env` e monte o worktree por `-v`; o
+`docker compose exec worker` monta o checkout principal.

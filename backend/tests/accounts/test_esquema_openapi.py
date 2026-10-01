@@ -15,9 +15,12 @@ import pytest
 from django.core.management import call_command
 from django.urls import URLPattern, get_resolver
 from drf_spectacular.drainage import GENERATOR_STATS
+from rest_framework.permissions import AllowAny
 from rest_framework.test import APIClient
 
 from apps.accounts import services
+from apps.accounts import views as conta
+from apps.accounts.permissions import AccountReady
 from apps.api.views import ApiNotFound
 from tests.accounts.conftest import organizacao, usuario
 from tests.accounts.test_api_key_alcance import _rotas
@@ -35,6 +38,19 @@ SEM_CORPO = {
     ("post", "/api/v1/auth/password"),
     ("delete", "/api/v1/api-keys/{prefix}"),
     ("get", SCHEMA),
+}
+# M4.1: as views de relatorio, `"read"` e `AccountReady` -- a lista fechada contra a que vire
+# `AllowAny`, que o teste da seguranca, sozinho, aprovaria
+RELATORIO = {
+    conta.ReportsView,
+    conta.ReportView,
+    conta.ReportJsonView,
+    conta.ReportCsvView,
+}
+# os downloads: binario no tipo de midia de cada um, e nao objeto com `$ref` (RF-13)
+BINARIO = {
+    ("get", "/api/v1/reports/{id}/json"): "application/json",
+    ("get", "/api/v1/reports/{id}/csv"): "text/csv",
 }
 
 
@@ -124,7 +140,11 @@ def test_v14_a_seguranca_segue_o_api_key_scope(esquema: dict[str, Any]) -> None:
         seguranca = operacoes[chave]["security"]
         nomes = [next(iter(s), "{}") for s in seguranca]
         if classe.__dict__["api_key_scope"] == "read":
-            assert nomes == ["sessionAuth", "apiKeyAuth", "{}"], chave
+            # o `{}` (anonimo) so quando a view e `AllowAny` (M4.1, RF-13)
+            if classe.__dict__["permission_classes"] == [AllowAny]:
+                assert nomes == ["sessionAuth", "apiKeyAuth", "{}"], chave
+            else:
+                assert nomes == ["sessionAuth", "apiKeyAuth"], chave
         else:
             assert "apiKeyAuth" not in nomes, chave
             assert "sessionAuth" in nomes, chave
@@ -146,5 +166,36 @@ def test_v14_todo_corpo_de_sucesso_e_descrito(esquema: dict[str, Any]) -> None:
         if chave in SEM_CORPO:
             assert codigo == "204" or chave == ("get", SCHEMA), chave
             continue
+        if chave in BINARIO:
+            continue  # conferidas em `test_m41_os_downloads_sao_binarios`
         esquema_do_corpo = resposta["content"]["application/json"]["schema"]
         assert "$ref" in esquema_do_corpo, (chave, esquema_do_corpo)
+
+
+# --- os relatorios (M4.1, RF-13) ------------------------------------------------------------
+
+
+def test_m41_relatorio_exige_conta_e_sai_sem_anonimo(esquema: dict[str, Any]) -> None:
+    for classe in RELATORIO:
+        assert classe.permission_classes == [AccountReady], classe.__name__
+    operacoes = _operacoes(esquema)
+    achadas = {c: k for c, k in _rotas_da_api().items() if k in RELATORIO}
+    assert set(achadas) == {  # contra a varredura inerte: as cinco, no esquema
+        ("get", "/api/v1/reports"),
+        ("post", "/api/v1/reports"),
+        ("get", "/api/v1/reports/{id}"),
+        ("get", "/api/v1/reports/{id}/json"),
+        ("get", "/api/v1/reports/{id}/csv"),
+    }
+    for chave in achadas:
+        assert {} not in operacoes[chave]["security"], chave
+
+
+def test_m41_os_downloads_sao_binarios(esquema: dict[str, Any]) -> None:
+    operacoes = _operacoes(esquema)
+    for chave, midia in BINARIO.items():
+        conteudo = operacoes[chave]["responses"]["200"]["content"]
+        assert set(conteudo) == {midia}, chave
+        assert conteudo[midia]["schema"] == {"type": "string", "format": "binary"}, (
+            chave
+        )

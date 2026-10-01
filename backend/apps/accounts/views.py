@@ -15,24 +15,29 @@ quem esta logado. Roda no `initial()` do DRF, antes da view -- falha de CSRF tam
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from typing import Any, ClassVar
 
+from django.http import HttpResponse
 from django.middleware.csrf import get_token
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from drf_spectacular.views import SpectacularJSONAPIView
 from rest_framework.exceptions import APIException, Throttled, ValidationError
+from rest_framework.negotiation import BaseContentNegotiation
+from rest_framework.parsers import BaseParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.renderers import BaseRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts import services
+from apps.accounts import reports, services
 from apps.accounts.authentication import SessionAuthentication
 from apps.accounts.errors import AccountError
-from apps.accounts.models import User
+from apps.accounts.models import Report, User
 from apps.accounts.permissions import AccountReady
 from apps.accounts.serializers import (
     ApiKeyCreateIn,
@@ -41,6 +46,9 @@ from apps.accounts.serializers import (
     LoginIn,
     MeOut,
     PasswordIn,
+    ReportCreateIn,
+    ReportListOut,
+    ReportOneOut,
     SignupIn,
     UserCreateIn,
     UserListOut,
@@ -341,6 +349,137 @@ class ApiKeyView(APIView):
         except AccountError as err:
             raise account_error_to_api(err) from err
         return Response(status=204)
+
+
+class IgnoreClientContentNegotiation(BaseContentNegotiation):
+    """O download nao depende do `Accept` (RF-08): o corpo e o `HttpResponse` da view, e o
+    renderizador escolhido so serve ao corpo de erro, que continua JSON."""
+
+    def select_parser(
+        self, request: Request, parsers: Iterable[BaseParser]
+    ) -> BaseParser | None:
+        return next(iter(parsers))
+
+    def select_renderer(
+        self,
+        request: Request,
+        renderers: Iterable[BaseRenderer],
+        format_suffix: str | None = None,
+    ) -> tuple[BaseRenderer, str]:
+        renderer = next(iter(renderers))
+        return (renderer, renderer.media_type)
+
+
+class ReportsView(APIView):
+    """`GET reports` lista os da organizacao e `POST` gera um (M4.1, RF-05, RF-06).
+
+    `"read"` com `POST`: a chave lista, e a regra do metodo seguro barra a geracao (RF-11).
+    """
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-11: a chave le relatorio
+
+    @extend_schema(
+        operation_id="v1_reports_list",  # sem ele, colide com o de `reports/{id}`
+        parameters=[
+            OpenApiParameter("limit", OpenApiTypes.INT, default=50),
+            OpenApiParameter("offset", OpenApiTypes.INT, default=0),
+            OpenApiParameter("ticker", OpenApiTypes.STR),
+        ],
+        responses={200: ReportListOut},
+    )
+    def get(self, request: Request) -> Response:
+        limit = _query_int(request, "limit", 50)
+        offset = _query_int(request, "offset", 0)
+        try:
+            count, found = services.list_reports(
+                _user(request),
+                limit=limit,
+                offset=offset,
+                ticker=request.query_params.get("ticker"),
+            )
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response(
+            {
+                "count": count,
+                "limit": limit,
+                "offset": offset,
+                "results": [services.report_body(r) for r in found],
+            }
+        )
+
+    @extend_schema(request=ReportCreateIn, responses={201: ReportOneOut})
+    def post(self, request: Request) -> Response:
+        _data(ReportCreateIn, request)  # so a presenca; o tipo e do servico
+        body = request.data
+        assert isinstance(body, Mapping)  # o serializador ja recusou o que nao e objeto
+        try:
+            report = services.generate_report(_user(request), body["ticker"])
+        except AccountError as err:
+            raise account_error_to_api(err) from err
+        return Response({"report": services.report_body(report)}, status=201)
+
+
+def _report(request: Request, report_id: str) -> Report:
+    try:
+        return services.get_report(_user(request), report_id)
+    except AccountError as err:
+        raise account_error_to_api(err) from err
+
+
+def _download(
+    report: Report, body: bytes, content_type: str, extension: str
+) -> HttpResponse:
+    """`HttpResponse`, e nao `Response`: o renderizador serializaria de novo (RF-08)."""
+    name = reports.filename(
+        report.asset.ticker,
+        report.risk_run.as_of_date.isoformat(),
+        str(report.public_id),
+        extension,
+    )
+    response = HttpResponse(body, content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{name}"'
+    return response
+
+
+class ReportView(APIView):
+    """`GET reports/{id}` (M4.1, RF-07)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-11
+
+    @extend_schema(responses={200: ReportOneOut})
+    def get(self, request: Request, id: str) -> Response:
+        return Response({"report": services.report_body(_report(request, id))})
+
+
+class ReportJsonView(APIView):
+    """`GET reports/{id}/json`: os bytes guardados, sem transformacao (M4.1, RF-08)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-11
+    content_negotiation_class = IgnoreClientContentNegotiation
+
+    @extend_schema(responses={(200, "application/json"): OpenApiTypes.BINARY})
+    def get(self, request: Request, id: str) -> HttpResponse:
+        report = _report(request, id)
+        return _download(report, bytes(report.content), "application/json", "json")
+
+
+class ReportCsvView(APIView):
+    """`GET reports/{id}/csv`: a tabela do conteudo **guardado** (M4.1, RF-09)."""
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-11
+    content_negotiation_class = IgnoreClientContentNegotiation
+
+    @extend_schema(responses={(200, "text/csv"): OpenApiTypes.BINARY})
+    def get(self, request: Request, id: str) -> HttpResponse:
+        report = _report(request, id)
+        return _download(
+            report, reports.to_csv(report.content), "text/csv; charset=utf-8", "csv"
+        )
 
 
 class SchemaView(SpectacularJSONAPIView):
