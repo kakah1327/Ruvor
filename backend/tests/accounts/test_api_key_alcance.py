@@ -36,8 +36,16 @@ LEITURA = {
     leitura.AssetDisclosuresView,
     leitura.ApiNotFound,
     conta.SchemaView,
+    conta.ReportsView,  # M4.1, RF-11: a chave le relatorio
+    conta.ReportView,
+    conta.ReportJsonView,
+    conta.ReportCsvView,
 }
-ESCRITA_PERMITIDA_COM_READ = {leitura.AssetRiskView, leitura.ApiNotFound}
+ESCRITA_PERMITIDA_COM_READ = {
+    leitura.AssetRiskView,
+    leitura.ApiNotFound,
+    conta.ReportsView,  # o `POST` gera; a regra do metodo seguro o barra
+}
 # as que a chave nao alcanca: conta, gestao e as proprias chaves
 SEM_CHAVE = {
     conta.CsrfView,
