@@ -11,14 +11,24 @@ Quem chama quem:
   ativo (RF-24 do M1.6a) -- e pula o ativo que ja tem `running` recente --, e entrega ao
   `_enqueue`, **depois do commit**, um `chord` de uma `compute_asset_model` por modelo com
   `fechar_execucao` de corpo. E a unica que pode levantar: sem linha, nao ha onde gravar
-  `error`;
+  `error`. Se o broker recusar o `chord`, `_enqueue_or_close` fecha a execucao pela regra
+  -- zero resultados, `failed` -- com os pedidos ligados, e levanta a excecao do broker
+  (RF-11 do M1.5c);
 - `compute_asset_model` grava os dois `risk_result` do modelo em transacao propria (RF-02)
   e **nunca levanta** (RF-06): se uma tarefa do grupo levantasse, o corpo do `chord` nao
-  rodaria e a execucao ficaria `running` para sempre;
+  rodaria e a execucao ficaria `running` para sempre. A escrita -- os resultados ou o par de
+  erro -- passa por `_write_if_running`, sob a trava por ativo e **so em execucao `running`**
+  (RF-10 do M1.5c): fechada pela varredura durante o calculo, o modelo e descartado;
 - `fechar_execucao` ignora o que o grupo devolveu e le o banco (RF-05), sob a mesma trava,
-  e fecha os pedidos sob demanda ligados a execucao;
+  e fecha os pedidos sob demanda ligados a execucao -- **so se `close_run` escreveu**: sobre
+  execucao ja fechada (pela varredura das presas, M1.5c) ele nao escreve e devolve `None`, e o
+  fecho registra e termina (D-150);
 - `recalcular_cobertos` e o leque: uma `abrir_execucao` por ativo ativo com preco, pelo
-  mesmo `enqueue_compute` que o `compute_risk --async` usa.
+  mesmo `enqueue_compute` que o `compute_risk --async` usa;
+- `fechar_presas` e o primeiro elo da `rotina_diaria` (RF-05, RF-06 do M1.5c): fecha pela
+  regra as execucoes `running` alem de `RUVOR_RISK_STALE_AFTER`, pela varredura de
+  `apps.risk.stale`, e **nunca levanta** -- varredura falhando, registra e a corrente segue
+  para a coleta. Nao tem entrada propria no Beat (D-149).
 
 **Quem enfileira nao cria `risk_run`** (RF-03): `enqueue_compute` confere o registry,
 resolve os ativos e produz o `calculated_at` **uma vez**, que viaja em ISO a todas as
@@ -27,8 +37,8 @@ instantes diferentes.
 
 **O registry e carregado nas duas primeiras**, pelos nomes importados aqui: o filho do
 *prefork* nasce sem ele, e o `compute_risk` sincrono so o tinha porque passa por
-`run_compute_risk`. `run_models`, `open_run`, `write_results`, `write_failed`, `close_run`
-e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes os
+`run_compute_risk`. `run_models`, `open_run`, `write_results`, `write_failed`, `close_run`,
+`close_stale_runs` e `_enqueue` sao chamados pelo nome global **deste** modulo -- e onde os testes os
 substituem. O motor e chamado por `compute.run_models`, o mesmo ponto de entrada do
 sincrono (M1.5b): quem quer substituir o `run_experiment` mira
 `apps.risk.compute.run_experiment`, que e o nome que `run_models` chama.
@@ -50,6 +60,7 @@ from datetime import datetime
 from typing import Any, Literal, TypedDict, overload
 
 from celery import chord
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
@@ -82,6 +93,7 @@ from apps.risk.compute import (
 )
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.snapshots import SnapshotKey, library_versions
+from apps.risk.stale import close_stale_runs
 from config.celery import app
 
 logger = logging.getLogger(__name__)
@@ -98,6 +110,28 @@ class SeriesChanged(Exception):
 def _enqueue(signature: Any) -> None:
     """Enfileira. E o ponto que os testes substituem: nenhum deles fala com o Redis."""
     signature.apply_async()
+
+
+def _enqueue_or_close(group: Any, run_id: int, asset_id: int) -> None:
+    """O `on_commit` da abertura (RF-11, D-150): enfileira; se o broker recusar, fecha a
+    execucao pela regra -- zero resultados, `failed` -- com os pedidos ligados, e levanta."""
+    try:
+        _enqueue(group)
+    except Exception:
+        logger.exception(
+            "execucao %d: o chord nao foi enfileirado; fechada pela regra", run_id
+        )
+        try:
+            with transaction.atomic():
+                lock_asset(asset_id)
+                run = RiskRun.objects.get(pk=run_id)
+                now = timezone.now()
+                if close_run(run, now) is not None:
+                    close_linked(run, now)
+        except Exception:
+            # o fecho tambem falhou: a linha fica `running`, e a varredura a pega depois
+            logger.exception("execucao %d: nem o fecho pela regra foi gravado", run_id)
+        raise  # sempre a excecao original, a do broker
 
 
 @dataclass(frozen=True)
@@ -201,6 +235,30 @@ def _after_read_running() -> None:
 def _after_close_lock() -> None:
     """Ponto de desvio dos testes concorrentes, entre a trava do fecho e o `close_run`. Nao
     faz nada; e chamado pelo nome global deste modulo."""
+
+
+def _before_write_lock() -> None:
+    """Ponto de desvio dos testes concorrentes, antes do bloco travado da escrita da tarefa
+    por modelo. Nao faz nada; e chamado pelo nome global deste modulo."""
+
+
+def _write_if_running(
+    run_id: int, asset_id: int, model_name: str, write: Callable[[RiskRun], None]
+) -> bool:
+    """Grava sob a trava por ativo so se a execucao ainda esta `running` (RF-10, D-150).
+
+    A releitura e **depois** da trava: e a trava dos dois lados -- aqui e no fecho -- que faz a
+    contagem do fecho valer no instante do `UPDATE`. Fechada, descarta e devolve `False`.
+    """
+    _before_write_lock()
+    with transaction.atomic():
+        lock_asset(asset_id)
+        run = RiskRun.objects.get(pk=run_id)
+        if run.status != RiskRun.Status.RUNNING:
+            logger.info("execucao %d fechada: modelo %s descartado", run_id, model_name)
+            return False
+        write(run)
+    return True
 
 
 def _short_series_reason(sessions: int) -> str:
@@ -339,8 +397,9 @@ def _abrir_execucao(
             fechar_execucao.s(run.id),
         )
         # `_enqueue` e resolvido na hora do commit, pelo nome global: e onde os testes
-        # poem o duplo.
-        transaction.on_commit(lambda: _enqueue(group))
+        # poem o duplo. Se o broker recusar, `_enqueue_or_close` fecha a execucao pela
+        # regra (RF-11 do M1.5c) e levanta.
+        transaction.on_commit(lambda: _enqueue_or_close(group, run.id, asset.id))
     if request_id is None:
         return run.id
     return OpeningResult(outcome="opened", run_id=run.id, sessions=None)
@@ -351,6 +410,8 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
 
     Qualquer falha depois de achar a execucao vira o par de erro do modelo, pelo
     `write_failed` -- numeros nulos, `error` preenchido --, e a tarefa termina normalmente.
+    As duas escritas passam por `_write_if_running`: se a execucao foi fechada durante o
+    calculo, nada e gravado (RF-10 do M1.5c).
 
     `full` sai de `run.full_recompute`, e a identidade dos retratos, da linha. Cada tarefa
     que calcula -- ou grava o par de erro -- registra uma linha em `info` com os retratos
@@ -393,19 +454,31 @@ def _compute_asset_model(run_id: int, model_name: str) -> None:
             library_versions=library_versions(),
         )
         result, counts = run_models(key, bars, [model_name], full=run.full_recompute)
-        with transaction.atomic():  # os dois niveis do modelo entram juntos (RF-02)
-            write_results(run, result, counts)
-        # o que o log mostra e o que foi gravado: so os niveis caros sem erro
-        logged = {
-            (r.model_name, r.alpha): counts[(r.model_name, r.alpha)]
-            for r in result.runs
-            if not r.error and (r.model_name, r.alpha) in counts
-        }
+        # os dois niveis do modelo entram juntos (RF-02), e so em execucao `running` (RF-10)
+        if _write_if_running(
+            run.id,
+            run.asset_id,
+            model_name,
+            lambda r: write_results(r, result, counts),
+        ):
+            # o que o log mostra e o que foi gravado: so os niveis caros sem erro
+            logged = {
+                (r.model_name, r.alpha): counts[(r.model_name, r.alpha)]
+                for r in result.runs
+                if not r.error and (r.model_name, r.alpha) in counts
+            }
+        else:
+            logged = {}  # descartado: nada foi gravado, o log mostra `-/-`
     except Exception as exc:
         logged = {}
         try:
-            with transaction.atomic():
-                write_failed(run, model_name, f"{type(exc).__name__}: {exc}")
+            error = f"{type(exc).__name__}: {exc}"
+            _write_if_running(
+                run.id,
+                run.asset_id,
+                model_name,
+                lambda r: write_failed(r, model_name, error),
+            )
         except Exception:
             logger.exception(
                 "execucao %s, modelo %s: nem o erro pode ser gravado",
@@ -437,6 +510,10 @@ def _fechar_execucao(_resultados: object, run_id: int) -> None:
     `close_run` e o `close_linked`, que fecha todo pedido aberto ligado a ela. Fora de
     transacao a trava `xact` se soltaria no fim da propria consulta, e uma abertura poderia
     ligar um pedido a esta execucao depois de o fecho passar sem ve-lo.
+
+    **O fecho respeita quem fechou antes** (RF-09 do M1.5c): se `close_run` devolve `None`, a
+    execucao ja estava fechada -- pela varredura das presas --, e o fecho registra e termina
+    sem `close_linked`; os pedidos dela, quem fechou ja fechou.
     """
     with transaction.atomic():
         run = RiskRun.objects.select_related("asset").get(pk=run_id)
@@ -444,7 +521,9 @@ def _fechar_execucao(_resultados: object, run_id: int) -> None:
         _after_close_lock()
         run.refresh_from_db()
         now = timezone.now()
-        close_run(run, now)
+        if close_run(run, now) is None:
+            logger.info("execucao %d ja fechada (%s)", run.id, run.status)
+            return
         close_linked(run, now)
 
 
@@ -461,6 +540,18 @@ def _recalcular_cobertos(calculated_at_iso: str | None = None) -> None:
     logger.info("%s", report.render())
 
 
+def _fechar_presas() -> None:
+    """O primeiro elo da `rotina_diaria` (RF-05, RF-06, D-149): fecha as presas pela regra.
+    Nunca levanta: a corrente segue para a coleta mesmo com a varredura falhando."""
+    try:
+        report = close_stale_runs(timezone.now(), settings.RUVOR_RISK_STALE_AFTER)
+    except Exception:
+        logger.exception("varredura das execucoes presas falhou; a rotina segue")
+        return
+    for line in report.render().splitlines():
+        logger.info("presas: %s", line)
+
+
 # Registro sem a sintaxe de decorador, como em `config/tasks.py`.
 abrir_execucao = app.task(name="apps.risk.tasks.abrir_execucao")(_abrir_execucao)
 compute_asset_model = app.task(name="apps.risk.tasks.compute_asset_model")(
@@ -470,3 +561,4 @@ fechar_execucao = app.task(name="apps.risk.tasks.fechar_execucao")(_fechar_execu
 recalcular_cobertos = app.task(name="apps.risk.tasks.recalcular_cobertos")(
     _recalcular_cobertos
 )
+fechar_presas = app.task(name="apps.risk.tasks.fechar_presas")(_fechar_presas)

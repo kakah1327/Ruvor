@@ -28,8 +28,8 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅; spec e plano aprovados, a implementar: M1.5c, M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.6d-acabamento` — M1.6d fechado, a PR de implementação é do dono; os outros cinco ramos, cada um no seu worktree, com spec e plano na `main` (PRs #19 a #24) |
-| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a (spec em rascunho) | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.2-carteira` (e `identidade/M2.1-identidade-e-acesso`, a PR do fecho do M2.1a) |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅; spec e plano aprovados, a implementar: M1.7, M3.3, M2.3, M2.1b | [frentes/marco1.md](frentes/marco1.md) | `marco1/M1.5c-execucao-presa` — M1.5c fechado, a PR de implementação é do dono, revisada pela `identidade`; os outros quatro ramos, cada um no seu worktree, com spec e plano na `main` (PRs #20, #21, #22 e #24) |
+| `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a (spec e plano aprovados, PR #31) | [frentes/identidade.md](frentes/identidade.md) | `identidade/M2.2-carteira` |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
 **Hoje são duas frentes ativas**, `marco1` e `identidade` — esta com a carteira (M2.2a, só o backend; as telas, M2.2b, são da `marco1`). A `fundamentos` fechou o M3.2 e está
@@ -114,7 +114,7 @@ outras frentes.
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
-| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 |
+| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 (a D-149 e a D-150 com o M1.5c, fechado) |
 | D-100 a D-119 | `identidade` | todas — D-116 a D-119 são do M2.2a |
 | D-160 a D-179 | `identidade`, reservada pela spec do M2.2a | — |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |

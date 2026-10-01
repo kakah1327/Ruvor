@@ -218,6 +218,17 @@ RUVOR_ON_DEMAND_MAX: int = int(os.environ.get("RUVOR_ON_DEMAND_MAX") or 3)
 RUVOR_ON_DEMAND_TIMEOUT: timedelta = timedelta(
     minutes=int(os.environ.get("RUVOR_ON_DEMAND_TIMEOUT_MIN") or 30)
 )
+# O prazo depois do qual uma `risk_run` `running` e fechada pela varredura (M1.5c, D-149).
+# Nao pode ser menor que o do pedido sob demanda: fechar antes de a abertura considerar a linha
+# presa fecharia execucao que a D-92 ainda protege.
+RUVOR_RISK_STALE_AFTER: timedelta = timedelta(
+    minutes=int(os.environ.get("RUVOR_RISK_STALE_AFTER_MIN") or 360)
+)
+if RUVOR_RISK_STALE_AFTER < RUVOR_ON_DEMAND_TIMEOUT:
+    raise ImproperlyConfigured(
+        "RUVOR_RISK_STALE_AFTER_MIN nao pode ser menor que RUVOR_ON_DEMAND_TIMEOUT_MIN "
+        f"({RUVOR_RISK_STALE_AFTER} < {RUVOR_ON_DEMAND_TIMEOUT})"
+    )
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"
