@@ -19,11 +19,11 @@ e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 
 acabamento —, com a PR de implementação a abrir pelo dono; cinco blocos da `marco1` — M1.5c, M1.7, M3.3, M2.3 e
 M2.1b — têm spec e plano aprovados, a implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
-definido; na frente `identidade`, o **M2.1a** tem as duas fases na `main` menos a `requested_by`
-(T14), que tem a coluna pronta no M2.1m e espera só o preenchimento
-([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)), e o **M4.2 fechou em
-2026-09-28** — o M4.1 é o próximo
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅, com o darkside171) e `identidade` (M2.1 → M4.2 →
+definido; na frente `identidade`, o **M2.1a fechou em 2026-09-30** — a T14 preenche o autor do
+pedido de cálculo, na coluna que o M2.1m criou ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —,
+com a PR da T14 a T16 a abrir pelo dono; o **M4.2 fechou em 2026-09-28**, e o M4.1 tem T0 a T5
+commitadas
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -78,8 +78,7 @@ mockup. **Desde a fase 1 do M2.1a há identidade:** sessão do Django no banco, 
 (banco 1), papel `admin`/`member` por organização, organização pessoal, e-mail único sem
 diferença de caixa, a regra de cada rota de conta como serviço de `apps/accounts`, o bloqueio de
 entrada por (e-mail, IP), `core.access_event` — a auditoria de acesso, que só cresce —,
-`manage.py create_organization`, e o `createsuperuser` funcionando. **Desde a fase 2 do M2.1a**
-(sem a `requested_by`, cuja coluna o M2.1m entrega e cujo preenchimento é a T14) há as rotas de
+`manage.py create_organization`, e o `createsuperuser` funcionando. **Desde a fase 2 do M2.1a** há as rotas de
 conta: `auth/*` e `organization/users*`, com sessão do Django e CSRF, 401 `not_authenticated`
 para quem não entrou, `AccountReady` em toda view que exige conta e o limite `auth` por IP.
 **Desde o M4.2 a API é pública:** a sessão cria chaves pessoais de leitura em `api-keys`, e a
@@ -1355,7 +1354,7 @@ tarefa de código, `4825389`, e o FECHA; spec com duas rodadas de revisão, plan
 | Mutações | ✅ as três reprovaram: sem o `null=True` no modelo e na migration, o V-01 e o V-02; `CASCADE`, o V-02; o autor no serializador, 6 testes de `test_risco.py` |
 
 **Nenhum código preenche a coluna**: isso é a T14 do M2.1a, da `identidade`, agora livre para começar. A dívida da
-`risk_run` sempre nula segue aberta até ela.
+`risk_run` sempre nula segue aberta até ela. *(Paga pela T14, em 2026-09-30: ver o fecho do M2.1a abaixo.)*
 
 ### M1.6d — Acabamento
 
@@ -1379,12 +1378,45 @@ antigas por texto em `risco.test.tsx` passaram a achar dois elementos. Elas agor
 [aprendizados](aprendizados.md). O Docker parou no meio do bloco, e a porta
 publicada do PostgreSQL caiu numa faixa reservada pelo Windows: o `.env` local passou a `56432`.
 
+### M2.1a — Identidade e acesso, fase 2 e fecho
+
+Mesma spec e mesmo plano da fase 1, na seção *Fase 2 — as rotas*. Frente `identidade`, ramo
+`identidade/M2.1-identidade-e-acesso`. As T9 a T13 entraram na `main` pela PR #13 (2026-09-28): o
+tratador com 401, 400 e 429 e os cabeçalhos, a sessão com CSRF na API, `AccountReady`, o limite
+`auth` por IP, e as rotas `auth/*` e `organization/users*`. A T14 esperou a coluna da `marco1` (M2.1m,
+PR #18) e entrou em 2026-09-30 (`affc70c`). A T15 (mutações) não tem commit, e a T16 é este fecho.
+
+| Verificação | Resultado |
+|---|---|
+| O autor do pedido (V-19, T14) | ✅ `tests/accounts/test_requested_by.py`, 5 casos: o `POST /risk` logado grava o usuário no pedido novo, e a abertura grava o mesmo na `risk_run`; o anônimo grava nulo nos dois; o segundo usuário com pedido aberto recebe 202, e o pedido continua do primeiro; a execução já em andamento continua de quem chegou primeiro; a abertura sem pedido (a rotina) grava nulo |
+| **Execução real (V-25)** | ✅ pelo proxy do Vite, com `curl` e o `X-CSRFToken` lido do arquivo de cookies a cada escrita: `csrf` 204 → `signup` 201 (organização pessoal, `admin`) → `me` 200 → `logout` 204 → `me` 401 `not_authenticated` → `login` 200 → `password` 204. `create_organization` pelo comando; a `admin` nova entra com a senha provisória, recebe 403 `password_change_required` em `organization/users`, troca a senha e então cria (201), lista (200, dois usuários) e desativa (200). No `psql`, 9 linhas em `core.access_event`: `signup`, `logout`, `login`, `password_changed`, `user_created` (`{"via": "create_organization"}`, sem IP), `login`, `password_changed`, `user_created` e `user_updated` (`is_active` de `true` para `false`), todas com o IP do contêiner `frontend` menos a do comando |
+| **Execução real do autor (T16)** | ✅ `POST /risk` logado do `ABCB4`, nunca calculado, com o `worker` reiniciado: o pedido 2 e a `risk_run` 10 com `requested_by_id` 12, o usuário do V-25. **A primeira tentativa, com o `ABEV3`, abriu a `risk_run` 9 com autor nulo**: o pedido tinha o autor, porque a `web` recarrega, mas o `worker` estava de pé desde antes do commit e rodava o código antigo. A execução 9 fechou `ok`, sem autor, e fica assim: é o registro do que o código antigo gravou |
+| Suíte, tipos, estilo | ✅ **1304 testes** no `worker` (1299 + 5), em 17 min 19 s, com o Beat e o `frontend` parados; `mypy` estrito limpo em 221 arquivos; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança; `spectacular --validate --fail-on-warn` limpo |
+
+**As dezesseis mutações da T15 reprovaram**: as quinze que não dependiam da T14 (19 a 31, com a
+29b) na fase 2, e a 32 (`_decide` sem gravar o usuário, 3 testes) e a 33 (a abertura sem repassar o
+autor, 2 testes) agora. O código voltou limpo depois de cada uma.
+
+**A ordem com a `marco1`:** a T14 entrou **antes** do M2.1b, que só tem spec e plano na `main` — o
+`POST /risk` segue `AllowAny`. O caso anônimo existe, e quando a
+[D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md) entrar, o teste dele passa a
+esperar 401, ajustado pela `identidade`. **Desvio do contrato do plano:** a view usa
+`isinstance(request.user, User)` no lugar do `is_authenticated`. O resultado é o mesmo, e o `mypy`
+recusa `AbstractBaseUser` na FK.
+
+**Uma armadilha nova, em [aprendizados](aprendizados.md):** o `worker` roda o código de quando subiu,
+mesmo com o arquivo novo montado; o `--max-tasks-per-child` não resolve, porque o filho nasce por
+`fork` do pai antigo.
+
+Nenhuma decisão nova: as oito, [D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) a
+[D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md), vieram com a spec.
+
 ## Próximo passo
 
 **Na frente `marco1`, a PR do M1.6d**, que o dono abre e mescla com a CI verde; depois, **implementar o M1.5c —
 Execução presa**, pelo [plano](planos/M1.5c-execucao-presa.md). Os cinco blocos que faltam se implementam nesta
-ordem: **M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 dependia do M1.6d, agora fechado; o M2.1b espera combinar com a
-`identidade` a ordem com a T14 do M2.1a. Ramos, worktrees e a regra de onde cada comando roda estão em
+ordem: **M1.5c → M1.7 → M3.3 → M2.3 → M2.1b** — o M2.3 dependia do M1.6d, agora fechado; a T14 do M2.1a entrou antes do M2.1b (ver o fecho do
+M2.1a), e o M2.1b ajusta a ordem por ela. Ramos, worktrees e a regra de onde cada comando roda estão em
 [frentes/marco1.md](frentes/marco1.md).
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
@@ -1402,11 +1434,9 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, o resto do M2.1a e o M4.1.** A `requested_by` (T14 da fase 2) está **liberada desde que a PR do M2.1m entrou na `main`** (#18): a coluna
-`core.compute_request.requested_by`, pedida à `marco1` no contrato do
-[plano da fase 2](planos/M2.1a-identidade-e-acesso.md#pré-condição-externa--a-coluna-requested_by), entra com ela.
-`docs/frentes/identidade.md` ainda diz que a migration está "a pedir": é da `identidade` atualizá-lo.
-Depois, o M4.1 — Relatórios. **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
+**Na frente `identidade`, a PR do M2.1a e o M4.1.** A PR da T14 a T16 passa pela `marco1`, porque
+toca `apps/api/views.py` e `apps/risk/`. Depois, a T6 do M4.1 — a execução real e o FECHA —, que está
+guardada num `git stash` do ramo dele ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
 `api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa
 `force_login`, não `force_authenticate`; em dev, suba `RUVOR_THROTTLE_ANON` no `.env` — a página
 de ativo são cinco `GET`, todos com o IP do contêiner `frontend`.
@@ -1430,7 +1460,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **`listing_segment` nulo em 192 das 473 ações.** O `market` da listagem da B3 vem vazio para a maioria das companhias; só NM/N1/N2 vêm preenchidos | `silver.asset.listing_segment` | Quando a tela precisar do segmento — a fonte alternativa é o `market` por extenso do detalhe (`"BOVESPA NIVEL 2"`), que a spec do M1.1 decidiu não usar |
 | `ignore_errors` do mypy em `engine.models.ml._quantile_nn` e `engine.models.garch._conditional` | `engine/pyproject.toml`, comentado no próprio arquivo | Depois da Etapa 6, quando a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) deixar de congelar o motor |
 | ~~`RUVOR_ALLOWED_HOSTS` não tolera espaço após a vírgula~~ | ~~`backend/config/settings.py`~~ | ✅ **quitada no F3** — virou a função `_split_hosts`, com cinco testes e mutação provada |
-| **`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche | `backend/apps/risk/models.py`, `RiskRun.requested_by` | **M2.1**, que constrói o fluxo de identidade. Não exige migration de dado: as execuções antigas legitimamente não têm autor |
+| ~~**`gold.risk_run.requested_by` é sempre nulo, e a [D-15](decisoes/D-15-manifesto-de-execucao.md) fica cumprida pela metade.** Ela exige "a pedido de quem", e não há usuário autenticado antes do M2.1. A coluna nasceu anulável e nenhum caminho do código a preenche~~ | ~~`backend/apps/risk/models.py`, `RiskRun.requested_by`~~ | ✅ **quitada no M2.1a** (T14, 2026-09-30) — o pedido sob demanda logado grava o autor, e a execução que ele abre também. A rotina e o caminho síncrono seguem nulos: não têm quem pediu. As execuções antigas ficam sem autor, sem migration de dado |
 | ~~Tarefa Celery é `Any` sob o mypy, porque o Celery não publica tipos. **O M1.5 criou sete e não pagou** ([RF-14](specs/M1.5-execucao-assincrona.md#rf-14)); **o M3.1 criou três e também não pagou**, por cerca: adotar `celery-types` muda o `backend/pyproject.toml` e o registro das **oito** tarefas que existiam antes dele (as sete de app e o `ping`), em arquivos da `marco1` — aceito pelo dono da frente em 2026-09-26. **São onze agora**, todas registradas sem decorador, e o `ignore_missing_imports` de `celery.*` segue~~ | ~~`backend/pyproject.toml`~~ | ✅ **quitada no M3.2** — `celery-types==0.26.0` no extra `dev`, o override saiu, e o `mypy` estrito segue limpo com as doze tarefas; a forma de registro ficou, pelo ponto de teste ([D-134](decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)). O M1.6a acrescentou duas tarefas, limpas no `mypy`, e a guarda que o `mypy` não dá: `tests/test_tipos.py` reprova o override de `celery` de volta (V-19d) |
 | ~~**RF-14 não tinha verificação permanente.** Apagar `backend/tests/conftest.py` deixava a suíte inteira verde: o teste que provava a guarda era descartável, medido e removido pela T2~~ | ~~`backend/tests/`~~ | ✅ **quitada no fecho do M1.3** — `tests/test_guarda_de_rede.py`, com a mutação medida: sem a guarda, reprova |
 | ~~**O V-15 só existe enquanto alguém digita o comando.** "Sem dependência numérica nova" (RF-13) é verificado por `git diff` no `pyproject.toml` e `grep` por `numpy\|pandas`, rodados à mão na T4 e na T8. Nada na suíte nem na CI reprova quem acrescentar `numpy` amanhã~~ | ~~`.github/workflows/ci.yml`, `backend/pyproject.toml`~~ | ✅ **quitada no M1.6d** — `backend/tests/test_dependencias.py` reprova qualquer das seis bibliotecas de `_BIBLIOTECAS` em `project.dependencies` ou num extra, com o nome normalizado (PEP 503), e confere a lista copiada contra a de `test_versoes_travadas.py`; roda no job `backend` da CI |
