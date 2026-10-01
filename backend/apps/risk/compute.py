@@ -526,6 +526,8 @@ def _manifest(
     calculated_at: datetime,
     seed: int,
     bars: Sequence[Price],
+    *,
+    requested_by_id: int | None = None,
 ) -> dict[str, Any]:
     """O manifesto de execucao (D-15), comum aos dois caminhos -- sem estado nem fim.
 
@@ -552,9 +554,9 @@ def _manifest(
         # `Price.run` so avanca quando a linha nasce ou muda de valor, e o que interessa a
         # auditoria e qual foi a coleta mais recente que tocou a janela.
         "price_run_id": max(bar.run_id for bar in bars),
-        # Sempre nula: nao ha usuario autenticado antes do M2.1, e a D-15 fica cumprida
-        # pela metade, declaradamente.
-        "requested_by": None,
+        # Quem pediu, so na abertura assincrona de um pedido logado (M2.1a, RF-26); o
+        # caminho sincrono e a rotina nao passam nada e gravam nulo.
+        "requested_by_id": requested_by_id,
     }
 
 
@@ -606,15 +608,17 @@ def open_run(
     models: Sequence[str],
     *,
     full: bool,
+    requested_by_id: int | None = None,
 ) -> RiskRun:
     """Abre a execucao assincrona: `running`, sem `finished_at`, com os modelos pedidos.
 
     O resto do manifesto e o mesmo do sincrono. Quem escreve o estado final e o
     `finished_at` e `close_run`. `full` viaja na linha (`full_recompute`): e de la que cada
-    tarefa por (ativo, modelo) o le (RF-08).
+    tarefa por (ativo, modelo) o le (RF-08). `requested_by_id` e o autor do pedido que
+    abriu a execucao (M2.1a, RF-26); sem pedido, nulo.
     """
     return RiskRun.objects.create(
-        **_manifest(asset, calculated_at, seed, bars),
+        **_manifest(asset, calculated_at, seed, bars, requested_by_id=requested_by_id),
         finished_at=None,
         status=RiskRun.Status.RUNNING,
         requested_models=list(models),

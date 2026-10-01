@@ -75,7 +75,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| 🟡 | **M2.1a — Identidade e acesso** | **fase 1 implementada em 2026-09-27**; o backend: sessão, cadastro, entrada, papéis `admin`/`member` por organização, gestão de usuários pela administradora, auditoria de acesso e `requested_by` — frente `identidade`, em duas fases ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)): a 1 sem nada do M1.6a, a 2 com as rotas, depois do M1.6a. As telas que consomem as rotas são da `marco1` |
+| ✅ | **M2.1a — Identidade e acesso** | **fechado em 2026-09-30** (fase 1 em 2026-09-27; fase 2 na `main` pela PR #13, e a T14 depois do M2.1m); o backend: sessão, cadastro, entrada, papéis `admin`/`member` por organização, gestão de usuários pela administradora, auditoria de acesso e `requested_by` — frente `identidade`, em duas fases ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)): a 1 sem nada do M1.6a, a 2 com as rotas, depois do M1.6a. As telas que consomem as rotas são da `marco1` |
 | ✅ | **M2.1m — A coluna do autor do pedido** | **fechado em 2026-09-29**; a metade da `marco1` no M2.1a: `core.compute_request.requested_by`, a coluna que a T14 do M2.1a preenche ([spec](specs/M2.1m-requested-by.md)) — frente `marco1` |
 | 🟡 | **M2.1b — Telas de acesso** | entrar, cadastro, troca de senha (inclusive a obrigatória), menu de conta e gestão de usuários, cada uma com mockup aprovado, sobre o casco e o kit do M1.6b e as rotas do M2.1a; o pedido de cálculo passa a exigir conta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)) — spec e plano aprovados (PR #24), **frente `marco1`** (toda interface visual é dela, decisão do darkside171, 2026-09-27) |
 | ⬜ | **M2.2 — Carteira** | composição pelo usuário e risco de carteira |
@@ -100,7 +100,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M4.1 — Relatórios** | exportáveis e auditáveis — frente `identidade`, depois do M4.2 |
+| ✅ | **M4.1 — Relatórios** | **fechado em 2026-09-30**: o relatório de risco de um ativo, exportável e auditável — gerado pela sessão em `POST /api/v1/reports`, guardado para sempre em `core.report` com os bytes exatos do JSON e o SHA-256 deles, imutável no Django e no banco (o primeiro gatilho), baixado em JSON (o original) ou CSV (derivado), e lido também pela chave de leitura ([D-113](decisoes/D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) a [D-115](decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md)) — frente `identidade` |
 | ✅ | **M4.2 — API pública** | **fechado em 2026-09-28**: chave pessoal de leitura (`/api/v1/api-keys`), taxa em toda rota — por chave, por usuário e por IP —, o filtro automático por organização em `core.api_key` e o esquema OpenAPI em `/api/v1/schema`, gerado pelo drf-spectacular sem aviso nem erro ([D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md) a [D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)) — frente `identidade` |
 
 ---
