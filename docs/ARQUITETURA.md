@@ -119,7 +119,7 @@ PostgreSQL**:
 
 | Esquema | Camada | Conteúdo | Quem consulta |
 |---|---|---|---|
-| `core` | nenhuma — é o dado operacional | organização, usuário, o pedido de cálculo sob demanda (`core.compute_request`), as chaves de API (`core.api_key`, desde o M4.2), e depois carteiras e limites | a aplicação |
+| `core` | nenhuma — é o dado operacional | organização, usuário, o pedido de cálculo sob demanda (`core.compute_request`), as chaves de API (`core.api_key`, desde o M4.2), os relatórios entregues (`core.report`, desde o M4.1), e depois carteiras e limites | a aplicação |
 | `bronze` | **Bronze** | o que o provedor devolveu, cru, imutável, com data e hora da coleta | ninguém na tela; existe para provar e reprocessar |
 | `silver` | **Prata** | o catálogo de ativos — uma linha por ação negociada, mais o Ibovespa —, os preços diários limpos e conformados, com retorno logarítmico, e os eventos corporativos; as companhias abertas da CVM e os balanços trimestrais conformados delas, um por (companhia, data de referência); os comunicados à CVM (fatos relevantes, comunicados ao mercado e avisos aos acionistas), só na versão corrente; e depois validação | base de trabalho |
 | `gold` | **Ouro** | métricas de comportamento, séries de VaR, backtests, indicadores fundamentalistas por ação e a comparação deles com os pares, agregados de carteira | é o que a plataforma serve |
@@ -175,7 +175,8 @@ o filtro por organização sozinho, para que esquecer deixe de ser possível. Co
 automático é teatro: um dia alguém esquece e um cliente vê dado de outro.
 
 **O mecanismo existe desde o M4.2**, em `apps/accounts/tenancy.py`, aplicado à primeira tabela
-privada, `core.api_key` ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)).
+privada, `core.api_key` ([D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)), e desde o
+M4.1 também a `core.report`, cujos dois gerentes recusam ainda a escrita em massa.
 A organização vive num `ContextVar`; o `OrganizationScopedManager` filtra pelo
 `organization_field` do modelo e, **sem organização no contexto, levanta** — nunca devolve tudo. O
 contexto é posto pela autenticação do pedido (sessão e chave) e zerado pelo
@@ -264,8 +265,9 @@ auditoria — "quem alterou este número?" — porque ninguém altera nada.
 | **Dado** — de onde veio, quando foi coletado | camada bronze |
 | **Cálculo** — o que produziu cada número | manifesto de execução, imutável |
 | **Acesso e alteração** — quem viu o quê, quem mudou permissão | registro no nível da API + histórico nas tabelas sensíveis |
+| **Entrega** — o que foi entregue, a quem e quando | `core.report`, desde o M4.1: os bytes exatos do relatório entregue e o SHA-256 deles, com quem pediu e quando; só cresce, no Django e no banco, por gatilho ([D-113](decisoes/D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md), [D-114](decisoes/D-114-tabela-que-so-cresce-e-guardada-tambem-no-banco-por-gatilho.md)) |
 
-Só o terceiro precisa de mecanismo dedicado.
+Só o terceiro e o quarto precisam de mecanismo dedicado.
 
 Ver [D-15](decisoes/D-15-manifesto-de-execucao.md),
 [D-16](decisoes/D-16-resultado-e-imutavel.md).

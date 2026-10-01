@@ -13,24 +13,18 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 ## Agora
 
-**Bloco:** M4.1 — Relatórios, de volta depois do fecho do M2.1a (2026-09-30). O M2.1a fechou com a
-T14 (`requested_by`), as mutações 32 e 33 e a T16, no ramo `identidade/M2.1-identidade-e-acesso`,
-com PR a abrir pelo dono
-**Etapa:** M4.1 com T0 a T5 commitadas; a T6 (a execução real e o FECHA) começou e está guardada
-num `git stash` do ramo do M4.1 (D-113 a D-115 e o índice das decisões)
-**Ramo:** `identidade/M4.1-relatorios`
+**Bloco:** nenhum em andamento. Os três blocos da frente fecharam: o M4.2 (PR #15, 2026-09-29), o
+M4.1 (PR #28, 2026-09-30) e o M2.1a (2026-09-30), este com a PR da T14 a T16 a abrir pelo dono
+**Etapa:** a PR do M2.1a; o próximo bloco é escolha do dono
+**Ramo:** `identidade/M2.1-identidade-e-acesso` (a PR do M2.1a)
 
 ## Próximo passo
 
 1. A PR do M2.1a (T14 a T16), que o dono abre e mescla com a CI verde. **Passa pela `marco1`**:
    toca `apps/api/views.py` e `apps/risk/`. O recado vai na descrição.
-2. M4.1: voltar ao ramo, `git stash pop`, e terminar a T6. A execução real (V-18) precisa do
-   `frontend` e de `docker compose restart worker` antes (ver [aprendizados](../aprendizados.md)).
-   No FECHA, os verbetes já medidos: o `operationId` de lista e item que colide, o `JSONRenderer`
-   que deixa a comparação de bytes cega, e o `TRUNCATE` de `core.report` com `pending trigger
-   events` (o teste da T1 usa `SET CONSTRAINTS ALL IMMEDIATE`).
-3. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
+2. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
    para 401, na mesma rodada de revisão da PR dele.
+3. Definir o próximo bloco da frente com o dono ([ROADMAP](../ROADMAP.md)).
 
 ## O que esta frente espera de outras
 
@@ -55,4 +49,5 @@ num `git stash` do ramo do M4.1 (D-113 a D-115 e o índice das decisões)
 | 2026-09-29 | M4.2 mesclado na `main` (PR #15). M4.1 aberto, decidido com o dono: o relatório de risco do ativo (camada 3), JSON como original e CSV derivado, PDF fora; guardado e imutável em `core.report`, com o SHA-256 dos bytes; gerar pela sessão, listar e baixar pela sessão ou pela chave; o relatório é de toda a organização; no conteúdo, só o nome de quem pediu, e o e-mail na coluna. Spec escrita; revisão 1 reprovou (1 grave, 5 médios, 7 leves), a 2 aprovou; aprovada pelo dono. Plano escrito; revisão 1 reprovou (2 graves, 1 médio, 8 leves), a 2 aprovou; aprovado pelo dono |
 | 2026-09-29 | M4.1: plano escrito; revisão 1 reprovou (2 graves: o `operationId` de lista e item que colide, e a comparação de bytes cega à troca por `Response`), a 2 aprovou; aprovado pelo dono. **T0 executada**: ramo na `main` `ad86c04`; `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0, `mypy` sem erros em 211 arquivos, `ruff` limpo, suíte com `1215 passed` em 15 min 46 s |
 | 2026-09-30 | M4.1: **T1 a T3 executadas**, um commit cada: `core.report` com o gatilho (`f58b9c6`), `reports.py` com o conteúdo, os bytes e o CSV (`e62ac7e`), os serviços (`bc72bd9`). Suíte inteira verde depois de cada uma: 1236, 1259 e 1294 testes; `mypy` e `ruff` limpos; mutações 1, 2, 4 a 11, 18 e 19 reprovando. Uma rodada da suíte caiu por falta de memória no hospedeiro: `.wslconfig` com `memory=6GB` e `swap=4GB`, e `beat` e `frontend` parados durante as tarefas. A `main` (PRs #18 a #24 do darkside171) entrou no ramo; PR do M4.1 aberta em rascunho |
-| 2026-09-30 | M2.1a: a ordem com o M2.1b foi decidida pelo dono: a T14 entra antes, porque o M2.1b (PR #24) só trouxe spec e plano, e o `POST /risk` segue `AllowAny`. Ramo atualizado com a `main`. **T14 executada** (`affc70c`): o autor no pedido novo e na `risk_run` que ele abre; 5 testes; suíte com 1304, verde; `mypy` e `ruff` limpos. Mutações 32 e 33 reprovando. **T16:** V-25 pelo proxy do Vite (9 eventos no `access_event`); o `POST /risk` logado do `ABCB4` abriu a `risk_run` 10 com o autor. A primeira tentativa (`ABEV3`, `risk_run` 9) saiu sem autor: o `worker` rodava o código de antes do commit (verbete novo em aprendizados). **M2.1a fechado.** O M4.1 volta com a T6 guardada em `git stash` |
+| 2026-09-30 | M4.1: **T4 a T6 executadas.** T4 (`4971b89`): as rotas `reports*`, a chave que lê relatório e o esquema; suíte com 1361 testes, verde. T5: as 19 mutações reprovaram, cada uma no teste previsto; a 17 (`ReportOut.kind` como `ChoiceField`) foi retirada por errata do dono — o gerador não avisa, e o `CharField` fica (`11fc3fa`). T6: D-113 a D-115 e o FECHA. V-18 pelo proxy do Vite: o relatório do `ITUB4` (`risk_run_id` 5) com `sha256` igual ao `sha256sum` do `/json`, 10 077 bytes de `content`, `/csv` com 19 linhas, a chave lista e baixa e recebe 403 no `POST`, e `UPDATE core.report` → `ERROR: report so cresce`. As suítes rodaram em contêiner avulso com `RUVOR_DB_NAME=ruvor_m41` (banco de teste próprio), ao lado da sessão do M2.1 |
+| 2026-09-30 | M2.1a: a ordem com o M2.1b foi decidida pelo dono: a T14 entra antes, porque o M2.1b (PR #24) só trouxe spec e plano, e o `POST /risk` segue `AllowAny`. Ramo atualizado com a `main`. **T14 executada** (`affc70c`): o autor no pedido novo e na `risk_run` que ele abre; 5 testes; suíte com 1304, verde; `mypy` e `ruff` limpos. Mutações 32 e 33 reprovando. **T16:** V-25 pelo proxy do Vite (9 eventos no `access_event`); o `POST /risk` logado do `ABCB4` abriu a `risk_run` 10 com o autor. A primeira tentativa (`ABEV3`, `risk_run` 9) saiu sem autor: o `worker` rodava o código de antes do commit (verbete novo em aprendizados). **M2.1a fechado.** Ramo atualizado com a `main` depois da PR #28 (M4.1): conflitos só de documento, resolvidos juntando os dois fechos |

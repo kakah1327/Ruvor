@@ -19,10 +19,11 @@ e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 
 acabamento —, com a PR de implementação a abrir pelo dono; cinco blocos da `marco1` — M1.5c, M1.7, M3.3, M2.3 e
 M2.1b — têm spec e plano aprovados, a implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
-definido; na frente `identidade`, o **M2.1a fechou em 2026-09-30** — a T14 preenche o autor do
-pedido de cálculo, na coluna que o M2.1m criou ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —,
-com a PR da T14 a T16 a abrir pelo dono; o **M4.2 fechou em 2026-09-28**, e o M4.1 tem T0 a T5
-commitadas
+definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
+exportável e auditável — e entrou na `main` pela PR #28, e o **M2.1a fechou em 2026-09-30** — a T14
+preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
+([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —, com a PR da T14 a T16 a abrir
+pelo dono; o **M4.2 fechou em 2026-09-28**
 **Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
@@ -83,12 +84,16 @@ conta: `auth/*` e `organization/users*`, com sessão do Django e CSRF, 401 `not_
 para quem não entrou, `AccountReady` em toda view que exige conta e o limite `auth` por IP.
 **Desde o M4.2 a API é pública:** a sessão cria chaves pessoais de leitura em `api-keys`, e a
 chave (`Authorization: Bearer rvr_…`) lê as rotas que declaram `api_key_scope = "read"`, só por
-método seguro — conta, gestão e as próprias chaves, não. **Toda rota tem taxa**: por chave, por
+método seguro — conta, gestão e as próprias chaves, não; desde o M4.1, isso inclui o relatório da
+organização, que é dado privado ([D-115](decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md)). **Toda rota tem taxa**: por chave, por
 usuário e, para anônimo, por IP — as rotas de leitura continuam `AllowAny`, agora com 60 pedidos
 por minuto por IP, ajustável por `RUVOR_THROTTLE_ANON`. `GET /api/v1/schema` devolve o esquema
 OpenAPI, gerado pelo drf-spectacular sem aviso nem erro. E há o **filtro automático por
-organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. Trinta e uma tabelas, em
-seis apps. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
+organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. **Desde o M4.1 há
+relatórios:** a sessão gera em `POST /api/v1/reports` o relatório de risco de um ativo, guardado
+para sempre em `core.report` com os bytes exatos do JSON e o SHA-256 deles, imutável no Django e no
+banco — o primeiro gatilho, `report_so_cresce` —, e baixado em JSON (o original) ou CSV (derivado);
+`core.report` também usa o filtro por organização. Trinta e duas tabelas, em seis apps. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
 identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
 não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
@@ -1378,6 +1383,38 @@ antigas por texto em `risco.test.tsx` passaram a achar dois elementos. Elas agor
 [aprendizados](aprendizados.md). O Docker parou no meio do bloco, e a porta
 publicada do PostgreSQL caiu numa faixa reservada pelo Windows: o `.env` local passou a `56432`.
 
+### M4.1 — Relatórios
+
+Spec em [`specs/M4.1-relatorios.md`](specs/M4.1-relatorios.md) e plano em
+[`planos/M4.1-relatorios.md`](planos/M4.1-relatorios.md). Frente `identidade`, ramo
+`identidade/M4.1-relatorios`. Spec: duas revisões adversariais (a 1 reprovou, 1 grave; a 2 aprovou).
+Plano: duas (a 1 reprovou, 2 graves; a 2 aprovou). Cinco commits de tarefa — T0 a T3 (`038273b`,
+`f58b9c6`, `e62ac7e`, `bc72bd9`), já na `main` pela PR #25, e a T4 (`4971b89`) —, a errata da T5
+(`11fc3fa`) e o do fecho. **Fechou em 2026-09-30** e entrou na `main` pela PR #28.
+
+| Verificação | Resultado |
+|---|---|
+| `core.report` (T1) | ✅ imutável no Django (o `save` de linha existente e o `delete` levantam, e os dois gerentes recusam `update` e `delete` em massa) e no banco, pelo gatilho `report_so_cresce`, que deixa o `TRUNCATE` passar; `PROTECT` para `gold.risk_run` e `silver.asset`; filtrada por organização |
+| O conteúdo, os bytes e o CSV (T2) | ✅ o JSON com o manifesto, os 18 resultados e o resumo por nível, em bytes canônicos, com o SHA-256 deles; o CSV derivado do JSON guardado |
+| Os serviços e as rotas (T3, T4) | ✅ gerar pela sessão em `POST /api/v1/reports`; listar, ler e baixar `/json` (os bytes guardados, sem passar pelo renderizador do DRF) e `/csv` pela sessão ou pela chave; o esquema limpo no `--fail-on-warn` |
+| **Execução real (V-18)** | ✅ pelo proxy do Vite, com `curl` e cookie, com usuário criado pelo `auth/signup`: `POST reports` do `ITUB4` → 201, `risk_run_id` 5, `as_of_date` 2026-09-29; o `sha256sum` do `/json` igual ao `sha256` do relatório (`6c991b3e…0a085`); o `/csv` com 19 linhas e 15 colunas; a chave lista e baixa, e recebe 403 `api_key_not_allowed` no `POST`; anônimo, 401. No `psql`, `UPDATE core.report SET size_bytes = 0` → `ERROR: report so cresce` |
+| O tamanho do relatório | **10 077 bytes** de `content` no `ITUB4` — a spec estimava "dezenas de KB" |
+| Suíte, tipos, estilo | ✅ **1361 testes** no `worker`, em 21 min 3 s, num contêiner avulso com banco de teste próprio (`RUVOR_DB_NAME=ruvor_m41`), ao lado do `worker` da sessão do M2.1; `mypy` estrito limpo em 221 arquivos; `ruff check` e `ruff format --check` limpos (222 arquivos) |
+| Mutações (T5) | ✅ as 19 reprovaram, cada uma no teste previsto. A 17 — `ReportOut.kind` como `ChoiceField` — foi **retirada por errata do dono**: o gerador não avisa, e o `CharField` fica pelo motivo certo, corrigido na spec |
+
+**O relatório é lido sem registro de leitura.** A [D-104](decisoes/D-104-auditoria-de-acesso-em-core-access-event-restringe-a-d-41.md)
+previa que o dado privado nascesse no M2.2 com registro de leitura; o relatório é o primeiro dado
+privado e nasceu antes, sem esse registro, como a spec declara em *Riscos* e a
+[D-115](decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md) anota.
+
+**Seis armadilhas novas, em [aprendizados](aprendizados.md):** o `operationId` de lista e item que
+colide; o `JSONRenderer` que devolve os mesmos bytes, salvo o U+2028; o editor que converte o escape
+do U+2028 no caractere; o `TRUNCATE` com `pending trigger events`; a data em `-03:00` contra `Z`; e o
+banco de teste próprio pelo `RUVOR_DB_NAME`, para duas suítes ao mesmo tempo.
+
+Três decisões: [D-113](decisoes/D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) a
+[D-115](decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md).
+
 ### M2.1a — Identidade e acesso, fase 2 e fecho
 
 Mesma spec e mesmo plano da fase 1, na seção *Fase 2 — as rotas*. Frente `identidade`, ramo
@@ -1391,7 +1428,7 @@ PR #18) e entrou em 2026-09-30 (`affc70c`). A T15 (mutações) não tem commit, 
 | O autor do pedido (V-19, T14) | ✅ `tests/accounts/test_requested_by.py`, 5 casos: o `POST /risk` logado grava o usuário no pedido novo, e a abertura grava o mesmo na `risk_run`; o anônimo grava nulo nos dois; o segundo usuário com pedido aberto recebe 202, e o pedido continua do primeiro; a execução já em andamento continua de quem chegou primeiro; a abertura sem pedido (a rotina) grava nulo |
 | **Execução real (V-25)** | ✅ pelo proxy do Vite, com `curl` e o `X-CSRFToken` lido do arquivo de cookies a cada escrita: `csrf` 204 → `signup` 201 (organização pessoal, `admin`) → `me` 200 → `logout` 204 → `me` 401 `not_authenticated` → `login` 200 → `password` 204. `create_organization` pelo comando; a `admin` nova entra com a senha provisória, recebe 403 `password_change_required` em `organization/users`, troca a senha e então cria (201), lista (200, dois usuários) e desativa (200). No `psql`, 9 linhas em `core.access_event`: `signup`, `logout`, `login`, `password_changed`, `user_created` (`{"via": "create_organization"}`, sem IP), `login`, `password_changed`, `user_created` e `user_updated` (`is_active` de `true` para `false`), todas com o IP do contêiner `frontend` menos a do comando |
 | **Execução real do autor (T16)** | ✅ `POST /risk` logado do `ABCB4`, nunca calculado, com o `worker` reiniciado: o pedido 2 e a `risk_run` 10 com `requested_by_id` 12, o usuário do V-25. **A primeira tentativa, com o `ABEV3`, abriu a `risk_run` 9 com autor nulo**: o pedido tinha o autor, porque a `web` recarrega, mas o `worker` estava de pé desde antes do commit e rodava o código antigo. A execução 9 fechou `ok`, sem autor, e fica assim: é o registro do que o código antigo gravou |
-| Suíte, tipos, estilo | ✅ **1304 testes** no `worker` (1299 + 5), em 17 min 19 s, com o Beat e o `frontend` parados; `mypy` estrito limpo em 221 arquivos; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança; `spectacular --validate --fail-on-warn` limpo |
+| Suíte, tipos, estilo | ✅ **1304 testes** no `worker` (1299 + 5), em 17 min 19 s, antes de a `main` trazer o M4.1 — depois do merge dela, **1366** (os 1361 do M4.1 e os 5), com o Beat e o `frontend` parados; `mypy` estrito limpo em 221 arquivos; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança; `spectacular --validate --fail-on-warn` limpo |
 
 **As dezesseis mutações da T15 reprovaram**: as quinze que não dependiam da T14 (19 a 31, com a
 29b) na fase 2, e a 32 (`_decide` sem gravar o usuário, 3 testes) e a 33 (a abertura sem repassar o
@@ -1434,9 +1471,9 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, a PR do M2.1a e o M4.1.** A PR da T14 a T16 passa pela `marco1`, porque
-toca `apps/api/views.py` e `apps/risk/`. Depois, a T6 do M4.1 — a execução real e o FECHA —, que está
-guardada num `git stash` do ramo dele ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
+**Na frente `identidade`, a PR do M2.1a.** A PR da T14 a T16 passa pela `marco1`, porque toca
+`apps/api/views.py` e `apps/risk/`. Com ela, os três blocos da frente — M2.1a, M4.2 e M4.1 — estão
+fechados, e o próximo não está definido: a escolha é do dono ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
 `api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa
 `force_login`, não `force_authenticate`; em dev, suba `RUVOR_THROTTLE_ANON` no `.env` — a página
 de ativo são cinco `GET`, todos com o IP do contêiner `frontend`.

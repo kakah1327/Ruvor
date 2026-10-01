@@ -100,7 +100,7 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M4.1 — Relatórios** | exportáveis e auditáveis — frente `identidade`, depois do M4.2 |
+| ✅ | **M4.1 — Relatórios** | **fechado em 2026-09-30**: o relatório de risco de um ativo, exportável e auditável — gerado pela sessão em `POST /api/v1/reports`, guardado para sempre em `core.report` com os bytes exatos do JSON e o SHA-256 deles, imutável no Django e no banco (o primeiro gatilho), baixado em JSON (o original) ou CSV (derivado), e lido também pela chave de leitura ([D-113](decisoes/D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) a [D-115](decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md)) — frente `identidade` |
 | ✅ | **M4.2 — API pública** | **fechado em 2026-09-28**: chave pessoal de leitura (`/api/v1/api-keys`), taxa em toda rota — por chave, por usuário e por IP —, o filtro automático por organização em `core.api_key` e o esquema OpenAPI em `/api/v1/schema`, gerado pelo drf-spectacular sem aviso nem erro ([D-108](decisoes/D-108-a-api-aceita-chave-pessoal-de-leitura.md) a [D-112](decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)) — frente `identidade` |
 
 ---

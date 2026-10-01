@@ -132,6 +132,9 @@ conversas e entre agentes.
 | [D-110](D-110-a-descricao-da-api-e-o-esquema-openapi-gerado.md) | A descrição da API é o esquema OpenAPI gerado pelo drf-spectacular, sem aviso nem erro — substitui a documentação manual que a D-11 previa |
 | [D-111](D-111-a-chave-guarda-so-o-hash-e-a-conta-mudada-revoga.md) | A chave guarda só o SHA-256 do segredo, mostrado uma vez; desativar e redefinir a senha revogam as chaves |
 | [D-112](D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md) | O filtro automático por organização nasce no M4.2, em `core.api_key`: gerente que falha fechado, contexto posto pela autenticação e pelo serviço — cumpre a D-41 |
+| [D-113](D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) | O relatório é uma foto guardada: o JSON entregue, byte a byte, com o SHA-256 dele, em `core.report`; o CSV deriva dele, e um formato publicado nunca muda — estende a D-16 |
+| [D-114](D-114-tabela-que-so-cresce-e-guardada-tambem-no-banco-por-gatilho.md) | Tabela que só cresce é guardada também no banco, por gatilho; `core.report` é a primeira, e o `TRUNCATE` continua passando |
+| [D-115](D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md) | A chave de leitura lê o relatório da organização da dona, com o escopo `read`; gerar só pela sessão — estende a D-108 e substitui, para o relatório, a orientação do M4.2 de escopo novo |
 | [D-23](D-23-trabalho-dividido-por-bloco.md) | Trabalho dos devs dividido por bloco do sistema |
 | [D-25](D-25-rebrand-ruvor.md) | Rebrand para Ruvor em toda a superfície |
 | [D-26](D-26-processo-de-desenvolvimento.md) | Processo de desenvolvimento definido em PROCESSO.md |
