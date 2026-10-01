@@ -1468,3 +1468,20 @@ podem derrubar uma por falta de memória.
 `test_ruvor_m41`, separado do `test_ruvor` (conferido com `connection.creation._get_test_db_name()`
 e no `pg_database`). Rode do diretório que tem o `.env` e monte o worktree por `-v`; o
 `docker compose exec worker` monta o checkout principal.
+
+
+## O `worker` roda o código de quando subiu, mesmo com o arquivo novo montado
+
+**Quando:** na execução real de uma tarefa que mudou código de `apps/*/tasks.py` ou de algo que a
+tarefa importa, com o `worker` de pé desde antes do commit.
+
+**Problema:** o código está montado no contêiner, mas o Celery não recarrega. O processo pai
+importa os módulos das tarefas na partida, e os filhos do prefork nascem por `fork` dele. O
+`--max-tasks-per-child=5` troca o filho, mas o filho novo herda o mesmo código antigo. Na T16 do
+M2.1a, o `POST /risk` logado gravou o autor no pedido, porque a `web` recarrega sozinha. A
+`risk_run` aberta pelo `worker` nasceu com `requested_by_id` nulo. A suíte não pega isso: ela roda
+num processo novo.
+
+**Faça:** antes da execução real, rode `docker compose restart worker` (e `beat`, se a tarefa for
+agendada). Não reinicie com uma execução em andamento: o fecho não roda, e a `risk_run` fica
+`running`. Espere ela fechar.

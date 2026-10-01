@@ -30,8 +30,9 @@ class RiskRun(models.Model):
     execucao. `price_run` e a coleta mais recente que tocou algum preco da janela usada —
     nao a coleta da linha de maior data, que e outro numero.
 
-    `requested_by` nasce anulavel e sempre nula: nao ha usuario autenticado antes do M2.1,
-    e a D-15 fica cumprida pela metade, declaradamente.
+    `requested_by` e o autor do pedido sob demanda que abriu a execucao (M2.1a, RF-26).
+    Fica nula na rotina, no caminho sincrono, no pedido anonimo e em toda execucao anterior
+    ao M2.1a; o pedido que se liga a uma execucao ja em andamento nao a muda.
 
     `status` e `requested_models` **nao tem `default`** (RF-08): com `default=running`, o
     caminho que esquecesse de escrever o estado deixaria a linha `running` para sempre, em

@@ -45,7 +45,7 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.6b — As telas](M1.6b-as-telas.md) | Marco 1 · M1.6b | ✅ implementada e fechada |
 | [M1.6c — Fundamentos e contexto na tela](M1.6c-fundamentos-e-contexto.md) | Marco 1 · M1.6c | ✅ implementada e fechada |
 | [M3.2 — Contexto](M3.2-contexto.md) | Marco 3 · M3.2 · frente `fundamentos` | ✅ implementada e fechada |
-| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ aprovada; fase 1 implementada, fase 2 espera o M1.6a |
+| [M2.1a — Identidade e acesso](M2.1a-identidade-e-acesso.md) | Marco 2 · M2.1a · frente `identidade` | ✅ implementada — as duas fases; bloco fechado em 2026-09-30 |
 | [M4.1 — Relatórios](M4.1-relatorios.md) | Marco 4 · M4.1 · frente `identidade` | ✅ aprovada (2026-09-29); implementada em 2026-09-30 |
 | [M2.1m — A coluna do autor do pedido](M2.1m-requested-by.md) | Marco 2 · M2.1m · frente `marco1` | ✅ implementada e fechada |
 | [M4.2 — API pública](M4.2-api-publica.md) | Marco 4 · M4.2 · frente `identidade` | ✅ aprovada; implementada em 2026-09-28 |

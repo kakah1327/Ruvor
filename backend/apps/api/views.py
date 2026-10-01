@@ -37,6 +37,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.models import User
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.errors import ApiError
 from apps.api.models import ComputeRequest
@@ -553,16 +554,21 @@ class AssetRiskView(APIView):
         with transaction.atomic():
             lock_on_demand()
             expire_stale(now)
-            error = _decide(asset, now)
+            # o `isinstance` faz o papel do `is_authenticated` -- o anonimo e
+            # `AnonymousUser`, nunca `User` -- e estreita o tipo para a FK
+            error = _decide(
+                asset, now, request.user if isinstance(request.user, User) else None
+            )
         if error is not None:
             raise error
         return Response(risk_body(asset, now), status=202)
 
 
-def _decide(asset: Asset, now: datetime) -> ApiError | None:
+def _decide(asset: Asset, now: datetime, requested_by: User | None) -> ApiError | None:
     """Os passos 4 a 6 do RF-17, sob a trava e depois do `expire_stale`: devolve o 409 ou o
     429 -- para o `POST` levantar fora do `atomic` --, ou `None` para o 202, inserindo o
-    pedido novo quando e o caso."""
+    pedido novo quando e o caso. `requested_by` e quem pediu, nulo no anonimo (M2.1a,
+    RF-26): so o pedido novo o grava; os dois 202 sem pedido novo nao mudam nada."""
     if ComputeRequest.objects.filter(asset=asset, status__in=OPEN_STATUSES).exists():
         return None  # 202: o pedido aberto do ativo
     last_closed = (
@@ -596,7 +602,10 @@ def _decide(asset: Asset, now: datetime) -> ApiError | None:
         )
     _before_insert()
     req = ComputeRequest.objects.create(
-        asset=asset, status=ComputeRequest.Status.QUEUED, requested_at=now
+        asset=asset,
+        status=ComputeRequest.Status.QUEUED,
+        requested_at=now,
+        requested_by=requested_by,
     )
     request_id = req.pk
     # o nome global, que os testes substituem em `apps.api.views.enqueue_chain`

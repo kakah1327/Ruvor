@@ -123,7 +123,8 @@ comportamento** e o **risco** em `gold`: nove modelos de VaR, quatro backtests e
 de adequação por ativo —, calculado **pela fila**, **agendado** pelo Celery Beat e, desde o
 M1.5b, **sem refazer o treino**: os modelos caros reaproveitam retratos. Desde a fase 1 do M2.1a
 há **identidade**: sessão, papel por organização, a regra das rotas de conta como serviço e a
-auditoria de acesso. Desde o M1.6a existem a **API de leitura** em `/api/v1/`, o **cálculo sob
+auditoria de acesso; desde a fase 2, as rotas de conta e, desde a T14, o **autor do pedido** de
+cálculo, gravado no pedido e na execução que ele abre. Desde o M1.6a existem a **API de leitura** em `/api/v1/`, o **cálculo sob
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
 M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
 **filtro automático por organização**, e desde o M4.1, **relatórios** de risco guardados para sempre,
@@ -182,7 +183,7 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1361 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1366 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
