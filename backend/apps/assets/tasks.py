@@ -11,10 +11,12 @@ sao contrato: sao eles que vao no `CELERY_BEAT_SCHEDULE`.
   ticker ruim cancelaria o recalculo diario inteiro. Qualquer outra excecao propaga -- a
   corrente so nao segue se a ingestao nao chegou a rodar;
 - `rotina_diaria` e o elo: o `beat_schedule` nao aceita `chain`, so nome de tarefa, entao
-  a corrente preco -> metricas -> risco e montada aqui (D-69, RF-21 do M1.6a). O segundo e
-  o terceiro elos sao **imutaveis** (`.si()`): com `.s()`, o texto devolvido pelo elo
-  anterior chegaria como argumento posicional -- o `calcular_metricas` nao recebe nenhum, e
-  no recalculo viraria `calculated_at_iso`, que o `datetime.fromisoformat` estouraria.
+  a corrente presas -> preco -> metricas -> risco e montada aqui (D-69, RF-21 do M1.6a; o
+  primeiro elo, `fechar_presas`, e do M1.5c, D-149). Todo elo depois do primeiro e
+  **imutavel** (`.si()`): com `.s()`, o que o elo anterior devolveu chegaria como argumento
+  posicional -- o `None` do `fechar_presas` no `importar_precos`, que nao recebe nenhum; o
+  texto dele no `calcular_metricas`, idem; e no recalculo viraria `calculated_at_iso`, que o
+  `datetime.fromisoformat` estouraria.
 
 - `calcular_sob_demanda` e a cadeia de um pedido (RF-20 do M1.6a): o prazo, a coleta, as
   metricas e a abertura do risco, **chamadas como funcao, na mesma tarefa**, para que a
@@ -58,7 +60,12 @@ from apps.assets.prices import run_import_prices
 from apps.assets.yahoo import YahooClient
 from apps.risk.compute import MODELS, ModelsMissing
 from apps.risk.config import DEFAULT_SEED
-from apps.risk.tasks import _abrir_execucao, _missing_models, recalcular_cobertos
+from apps.risk.tasks import (
+    _abrir_execucao,
+    _missing_models,
+    fechar_presas,
+    recalcular_cobertos,
+)
 from config.celery import app
 
 logger = logging.getLogger(__name__)
@@ -87,9 +94,14 @@ def _importar_precos() -> str:
 
 
 def _rotina_diaria() -> None:
-    """Enfileira a corrente: os precos, as metricas e o recalculo dos ativos cobertos."""
+    """Enfileira a corrente: as presas, os precos, as metricas e o recalculo dos cobertos."""
     _enqueue(
-        chain(importar_precos.s(), calcular_metricas.si(), recalcular_cobertos.si())
+        chain(
+            fechar_presas.si(),
+            importar_precos.si(),
+            calcular_metricas.si(),
+            recalcular_cobertos.si(),
+        )
     )
 
 

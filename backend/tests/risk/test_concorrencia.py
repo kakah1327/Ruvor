@@ -24,6 +24,27 @@ libera o outro sao os da tabela das esperas do plano:
   outra execucao; sem ela, a trava `xact` se soltou no fim da propria consulta, a abertura le
   a `running`, o fecho a fecha, e a abertura liga o pedido a execucao fechada.
 
+**As corridas do M1.5c**, pelos pontos de desvio `_after_close_count` de `apps/risk/compute.py`
+e `_before_write_lock` de `apps/risk/tasks.py`. A execucao semeada tem `calculated_at` de 7 h
+atras, e a varredura e chamada com `older_than` de 6 h. O que um desvio precisa reprovar e
+gravado numa lista e conferido depois do `_junta`: um `assert` dentro do desvio seria engolido
+pelo `try` da tarefa ou da varredura.
+
+- **a varredura x o fecho (V-08)**: parte a varredura; ela para dentro da trava, entre a
+  contagem e o `UPDATE`, esperando um evento que nao chega (2 s); o fecho so parte depois e
+  bloqueia na trava. A espera estoura, a varredura escreve e solta; o fecho rele e chama o
+  `close_run`, que acha a linha fechada e nao escreve. Sem o filtro `status=running` do
+  `close_run`, o fecho reescreve `status` e `finished_at` e fecha os pedidos;
+- **a varredura x a tarefa por modelo (V-08b)**: parte a tarefa; ela para antes do bloco
+  travado da escrita; a varredura so parte depois, toma a trava, conta e, antes do `UPDATE`,
+  libera a tarefa e espera (2 s) o evento que a tarefa marca depois de gravar. Com as duas
+  travas, a tarefa para na trava, a espera estoura, a varredura escreve e solta, e a tarefa
+  rele, acha fechada e descarta; sem uma delas, a tarefa grava no meio, o evento chega e as
+  linhas passam das contadas;
+- **a abertura que nao enfileira (V-09)**: sem thread. O broker recusa o `chord` no
+  `on_commit`, que roda de verdade na saida do `atomic`; a abertura fecha a propria execucao
+  `failed`, sem resultado, e o pedido ligado a ela.
+
 **As pre-condicoes**, sem as quais a mutacao sobrevive em silencio: o registry e carregado
 **antes** das threads (a primeira importacao do TensorFlow num processo frio passaria da
 espera de 2 s); as esperas de partida sao `assert`; as do lado que a mutacao precisa sao de
@@ -67,8 +88,10 @@ from apps.api.models import ComputeRequest
 from apps.api.ondemand import OPEN_STATUSES
 from apps.assets.models import Asset, CollectionRun, Price
 from apps.risk import config
-from apps.risk.models import RiskRun
-from apps.risk.tasks import _abrir_execucao, _fechar_execucao
+from apps.risk.compute import status_for, write_failed
+from apps.risk.models import RiskResult, RiskRun
+from apps.risk.stale import StaleReport, close_stale_runs
+from apps.risk.tasks import _abrir_execucao, _compute_asset_model, _fechar_execucao
 from tests.api.migracao import (  # noqa: F401 -- fixture, achada pelo pytest no modulo
     TRANSACIONAL,
     banco_limpo,
@@ -436,6 +459,162 @@ def test_a_abertura_nao_le_enquanto_o_fecho_segura_a_trava(
     gravado = ComputeRequest.objects.get(pk=req.pk)
     assert (gravado.status, gravado.risk_run_id) == (Status.RUNNING, nova.pk)
     assert len(fila) == 1
+    _invariante()
+
+
+# --- M1.5c: a varredura, o fecho e a tarefa por modelo (V-08, V-08b, V-09) ---------------
+
+VELHA = timedelta(hours=7)
+PRAZO_DA_VARREDURA = timedelta(hours=6)
+
+
+def test_varredura_e_fecho_concorrentes_um_so_escreve(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """V-08 -- guarda do filtro `status=running` do `close_run`. A varredura parte primeiro e
+    para dentro da trava, entre a contagem e o UPDATE, esperando 2 s (`ESPERA_QUE_ESTOURA`)
+    por um evento que nao chega; o fecho do `chord` parte e bloqueia na trava; a varredura
+    escreve e solta; o fecho rele e chama `close_run`, que acha a linha fechada e nao escreve.
+    Sem o filtro, o fecho reescreve `status` e `finished_at` e fecha os pedidos."""
+    asset = _serie("AAA3")
+    run = _running(asset, timezone.now() - VELHA)
+    agora_da_varredura = timezone.now()
+    varredura_contou = threading.Event()
+    nunca = threading.Event()
+    esperas: list[bool] = []
+    fechou_pedidos: list[int] = []
+
+    def varredura_para() -> None:
+        # o `close_run` do fecho passa pelo mesmo desvio: so a varredura para
+        if threading.current_thread().name != "varredura":
+            return
+        varredura_contou.set()
+        esperas.append(nunca.wait(ESPERA_QUE_ESTOURA))
+
+    def espiao_close_linked(run_: RiskRun, now: datetime) -> int:
+        fechou_pedidos.append(run_.pk)
+        return 0
+
+    monkeypatch.setattr("apps.risk.compute._after_close_count", varredura_para)
+    monkeypatch.setattr("apps.risk.tasks.close_linked", espiao_close_linked)
+
+    saida: list[tuple[str, object]] = []
+    varredura = _parte(
+        "varredura",
+        lambda: close_stale_runs(agora_da_varredura, PRAZO_DA_VARREDURA),
+        saida,
+    )
+    assert varredura_contou.wait(ESPERA_DO_LADO_DA_MUTACAO)
+    fecho = _parte("fecho", lambda: _fechar_execucao([], run.pk), saida)
+    _junta(varredura, fecho)
+
+    resultados = _resultados(saida)
+    assert esperas == [False]  # ninguem marcou: a espera estourou
+    relatorio = resultados["varredura"]
+    assert isinstance(relatorio, StaleReport)
+    [fechada] = relatorio.runs
+    assert (fechada.run_id, fechada.already_closed) == (run.pk, False)
+    run.refresh_from_db()
+    # o que ficou gravado e o da varredura, nao o do fecho
+    assert (run.status, run.finished_at) == (fechada.status, agora_da_varredura)
+    assert fechou_pedidos == []  # o fecho nao fechou pedido nenhum
+
+
+def test_a_contagem_da_varredura_vale_no_update_com_a_tarefa_gravando_no_meio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """V-08b -- guarda das duas travas. Ordem fixa: (1) a tarefa parte e para antes do bloco
+    travado; (2) a varredura parte, toma a trava, conta e para antes do UPDATE; (3) a tarefa e
+    liberada; (4) a varredura espera, por 2 s (`ESPERA_QUE_ESTOURA`), o evento que a tarefa marca
+    depois de confirmar a gravacao. A serie do `_serie` esta na janela do `_running`, entao a
+    tarefa passa da conferencia da janela e cai no `RuntimeError` do duplo -- o par de erro. Correto: a tarefa esta parada na trava, o evento nao chega, a espera
+    estoura, a varredura escreve e solta; a tarefa rele, acha fechada e descarta. Sem uma das
+    travas, a tarefa grava no meio e o evento chega: as linhas passam das contadas."""
+    asset = _serie("AAA3")
+    run = _running(asset, timezone.now() - VELHA)  # BARATOS: 4 esperados
+    write_failed(run, "historical", "RuntimeError: semeado")  # 2 gravados antes
+
+    tarefa_no_desvio = threading.Event()
+    libera_tarefa = threading.Event()
+    tarefa_gravou = threading.Event()
+    esperas_da_tarefa: list[bool] = []
+    esperas_da_varredura: list[bool] = []
+
+    def tarefa_para() -> None:
+        tarefa_no_desvio.set()
+        esperas_da_tarefa.append(libera_tarefa.wait(ESPERA_DO_LADO_DA_MUTACAO))
+
+    def varredura_para() -> None:
+        libera_tarefa.set()
+        # estoura no caso correto; no mutante, a tarefa grava e marca antes
+        esperas_da_varredura.append(tarefa_gravou.wait(ESPERA_QUE_ESTOURA))
+
+    def instantaneo(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError(
+            "calculo instantaneo do teste"
+        )  # cai no par de erro, sem motor
+
+    monkeypatch.setattr("apps.risk.tasks._before_write_lock", tarefa_para)
+    monkeypatch.setattr("apps.risk.compute._after_close_count", varredura_para)
+    monkeypatch.setattr("apps.risk.tasks.run_models", instantaneo)
+
+    def tarefa() -> None:
+        _compute_asset_model(
+            run.pk, "parametric"
+        )  # nunca levanta; devolve depois do commit
+        tarefa_gravou.set()
+
+    saida: list[tuple[str, object]] = []
+    t_tarefa = _parte("tarefa", tarefa, saida)
+    assert tarefa_no_desvio.wait(ESPERA_DO_LADO_DA_MUTACAO)
+    t_varredura = _parte(
+        "varredura",
+        lambda: close_stale_runs(timezone.now(), PRAZO_DA_VARREDURA),
+        saida,
+    )
+    _junta(t_tarefa, t_varredura)
+
+    resultados = _resultados(saida)
+    assert esperas_da_tarefa == [True]
+    relatorio = resultados["varredura"]
+    assert isinstance(relatorio, StaleReport)
+    assert relatorio.failed == []
+    [fechada] = relatorio.runs
+    gravadas = RiskResult.objects.filter(run_id=run.pk)
+    # o coracao: o que foi contado e o que ficou gravado
+    assert gravadas.count() == fechada.written == 2
+    run.refresh_from_db()
+    assert run.status == status_for(
+        4, gravadas.count(), gravadas.exclude(error="").count()
+    )
+    assert esperas_da_varredura == [False]  # a tarefa nao gravou no meio
+
+
+def test_a_abertura_que_nao_enfileira_fecha_a_execucao_failed_e_o_pedido(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """V-09 -- RF-11. Transacional: o `on_commit` roda de verdade na saida do `atomic`."""
+    asset = _serie("AAA3")
+    req = _pedido(asset)
+
+    def broker_recusa(group: Any) -> None:
+        raise ConnectionError("broker fora do ar")
+
+    monkeypatch.setattr("apps.risk.tasks._enqueue", broker_recusa)
+
+    with pytest.raises(ConnectionError):
+        _abrir_execucao("AAA3", _antes(5).isoformat(), 42, BARATOS, request_id=req.pk)
+
+    [run] = RiskRun.objects.filter(asset=asset)
+    assert run.status == RiskRun.Status.FAILED
+    assert run.finished_at is not None
+    assert run.results.count() == 0
+    gravado = ComputeRequest.objects.get(pk=req.pk)
+    assert (gravado.status, gravado.reason, gravado.risk_run_id) == (
+        Status.FAILED,
+        "a execucao falhou",
+        run.pk,
+    )
     _invariante()
 
 

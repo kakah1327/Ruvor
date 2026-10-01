@@ -8,9 +8,11 @@ declarada: o `DEFAULT_AUTO_FIELD` ja e `BigAutoField`.
 instalado, continuar subindo com `apps.risk` em `INSTALLED_APPS`.
 
 Nenhum `risk_result` e alterado nem apagado (D-16): recalcular insere execucao nova. A
-`risk_run` recebe `status` e `finished_at` no fecho da execucao assincrona -- metadado de
-execucao, nao resultado, e e a restricao a D-16 que a spec do M1.5 descreve. Nenhum caminho
-do codigo faz `delete`. Os resultados pendem da execucao que os originou, e por
+`risk_run` recebe `status` e `finished_at` de `close_run` -- metadado de execucao, nao
+resultado, e e a restricao a D-16 que a spec do M1.5 descreve. `close_run` so escreve sobre
+execucao em `running` (D-150), e dois caminhos o chamam -- o fecho da execucao assincrona e a
+varredura das execucoes presas (M1.5c, D-149) --, mais a abertura que nao consegue enfileirar.
+Nenhum caminho do codigo faz `delete`. Os resultados pendem da execucao que os originou, e por
 isso — e so por isso — a FK deles e `CASCADE`, nao `PROTECT`: o resultado nao tem vida
 propria fora da execucao que o gerou.
 """

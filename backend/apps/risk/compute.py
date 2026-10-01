@@ -37,9 +37,12 @@ nao os leva junto. `run_experiment`, `load_valid` e `save` sao chamados pelo nom
 **deste** modulo, e e aqui que os testes os substituem.
 
 Nenhum `risk_result` e alterado nem apagado (D-16, RF-11): recalcular insere execucao nova.
-A `risk_run` recebe `status` e `finished_at` no fecho assincrono (`close_run`) -- metadado
-de execucao, nao resultado, e e a restricao a D-16 que a spec do M1.5 descreve. Nenhum
-caminho daqui faz `delete`.
+A `risk_run` recebe `status` e `finished_at` de `close_run` -- metadado de execucao, nao
+resultado, e e a restricao a D-16 que a spec do M1.5 descreve. **`close_run` so escreve sobre
+execucao em `running`** (D-150): o `UPDATE` e filtrado pelo estado, e sobre linha ja fechada
+nao escreve nada e devolve `None`. Dois caminhos o chamam -- o fecho do `chord` e a varredura
+das execucoes presas (M1.5c, D-149) --, mais a abertura que nao consegue enfileirar, que fecha
+a propria execucao. Nenhum caminho daqui faz `delete`.
 """
 
 from __future__ import annotations
@@ -657,19 +660,29 @@ def write_failed(run: RiskRun, model_name: str, error: str) -> None:
     )
 
 
-def close_run(run: RiskRun, finished_at: datetime) -> str:
-    """O fecho (RF-05): conta no **banco**, aplica a regra e escreve estado e fim.
-
-    E o unico `update` sobre `gold` -- metadado de execucao na `risk_run`; nenhum
-    `risk_result` e tocado. Devolve o estado escrito.
-    """
+def count_results(run: RiskRun) -> tuple[int, int, int]:
+    """(esperados, gravados, com erro) da execucao, lidos do banco."""
     results = RiskResult.objects.filter(run=run)
-    written = results.count()
-    with_error = results.exclude(error="").count()
-    status = status_for(
-        len(run.requested_models) * len(config.ALPHAS), written, with_error
+    return (
+        len(run.requested_models) * len(config.ALPHAS),
+        results.count(),
+        results.exclude(error="").count(),
     )
-    run.status = status
-    run.finished_at = finished_at
-    run.save(update_fields=["status", "finished_at"])
-    return status
+
+
+def _after_close_count() -> None:
+    """Ponto de desvio dos testes concorrentes, entre a contagem do fecho e o `UPDATE`. Nao
+    faz nada; e chamado pelo nome global deste modulo."""
+
+
+def close_run(run: RiskRun, finished_at: datetime) -> str | None:
+    """O fecho (RF-05 do M1.5; RF-08 do M1.5c): conta no banco, aplica a regra e escreve
+    estado e fim **so se a linha ainda esta `running`** (D-150). Devolve o status escrito, ou
+    `None` se a linha ja estava fechada; nos dois casos, o objeto fica com o que esta gravado."""
+    status = status_for(*count_results(run))
+    _after_close_count()
+    updated = RiskRun.objects.filter(pk=run.pk, status=RiskRun.Status.RUNNING).update(
+        status=status, finished_at=finished_at
+    )
+    run.refresh_from_db(fields=["status", "finished_at"])
+    return status if updated else None

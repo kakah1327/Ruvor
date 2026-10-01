@@ -168,11 +168,12 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   privada nova usa o gerente de `apps/accounts/tenancy.py`, que filtra pela organização do
   contexto e levanta sem ela ([D-112](docs/decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); a
   `apps/api` não importa o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as treze tarefas de
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as catorze tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
-  cálculo, uma por (ativo, modelo), o fecho e o leque `recalcular_cobertos`),
-  `apps/assets/tasks.py` (catálogo, preços, a `rotina_diaria`, que encadeia preços → métricas →
-  risco, e a cadeia sob demanda `calcular_sob_demanda`), `apps/analytics/tasks.py` (as métricas
+  cálculo, uma por (ativo, modelo), o fecho, o leque `recalcular_cobertos` e a varredura
+  `fechar_presas`, que fecha pela regra a execução presa em `running`, em `apps/risk/stale.py`),
+  `apps/assets/tasks.py` (catálogo, preços, a `rotina_diaria`, que encadeia presas → preços →
+  métricas → risco, e a cadeia sob demanda `calcular_sob_demanda`), `apps/analytics/tasks.py` (as métricas
   da rotina) e `apps/fundamentals/tasks.py` (a coleta da
   CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois, e a `importar_comunicados`). O
   `CELERY_BEAT_SCHEDULE` tem quatro entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`,
@@ -183,7 +184,7 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1366 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1397 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
@@ -223,7 +224,8 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   [D-66](docs/decisoes/D-66-registry-incompleto-e-erro-restringe-o-silencio-do-motor.md));
   com `--async`, enfileira uma abertura por ativo e devolve — a `risk_run` nasce no `worker`
   como `running`, cada modelo grava os seus dois resultados em transação própria, e o fecho
-  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at`. Os quatro modelos caros
+  escreve `status` (`ok`, `partial` ou `failed`) e `finished_at` — só sobre execução `running`; a presa há mais de
+  `RUVOR_RISK_STALE_AFTER_MIN` é fechada pela mesma regra, pela rotina ou por `manage.py close_stale_runs`. Os quatro modelos caros
   (`lstm`, `gru`, `garchnet`, `caviar`) guardam um retrato por ponto de retreino em
   `gold.model_snapshot`, e o cálculo reaproveita os válidos, treina só o que falta e reconstitui
   a série inteira por previsão — igual ao do zero, que `--full` faz
