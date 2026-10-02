@@ -2,6 +2,7 @@ import type { ModelName, RiskResult } from "../api/types";
 import { MODEL_ORDER } from "../api/types";
 import { TEXTOS } from "../content/textos";
 import { formatPercent } from "../format/numbers";
+import { textFor, useReading } from "../reading";
 import { type Alpha, discordancia, naoRejeitados } from "../risk/summary";
 import { Glyph } from "./Glyph";
 
@@ -22,6 +23,8 @@ function formatConvertedLoss(loss: number): string {
 /**
  * Um nível (RF-13, RF-14): a faixa entre os modelos que calcularam, com o horizonte "em 1
  * dia", a frase da perda e a da discordância; e os não rejeitados, na ordem fixa, com a frase.
+ * As três frases são as do nível de leitura (RF-05 do M2.3); o painel fica aberto nos dois
+ * níveis, fora de qualquer recolhível (RF-06).
  */
 function LevelPanel({
   results,
@@ -30,6 +33,7 @@ function LevelPanel({
   results: readonly RiskResult[];
   alpha: Alpha;
 }) {
+  const reading = useReading();
   const range = discordancia(results, alpha);
   const accepted = naoRejeitados(results, alpha);
   const min = range === null ? null : formatConvertedLoss(range.min);
@@ -49,10 +53,12 @@ function LevelPanel({
           <small>{TEXTOS["risco.horizonte"]}</small>
         </p>
         <p className="ruvor-note" data-phrase="perda">
-          {alpha === "0.0500" ? TEXTOS["risco.perda95"] : TEXTOS["risco.perda99"]}
+          {alpha === "0.0500"
+            ? textFor("risco.perda95", reading)
+            : textFor("risco.perda99", reading)}
         </p>
         <p className="ruvor-note" data-phrase="discordancia">
-          {TEXTOS["risco.discordancia"](
+          {textFor("risco.discordancia", reading)(
             min,
             max,
             range?.n ?? 0,
@@ -76,7 +82,7 @@ function LevelPanel({
           </ul>
         )}
         <p className="ruvor-note" data-phrase="naoRejeitados">
-          {TEXTOS["risco.naoRejeitados"](
+          {textFor("risco.naoRejeitados", reading)(
             accepted.adequados.length,
             accepted.julgados,
             MODEL_ORDER.length,

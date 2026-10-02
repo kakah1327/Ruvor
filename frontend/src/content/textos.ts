@@ -296,7 +296,9 @@ export const TEXTOS = {
     return `${quem} entre ${min} e ${max} o limite que a perda de um dia só deve passar em 1 dia a cada ${cadaN}. A distância entre eles também é informação: modelos próximos indicam uma leitura mais sólida; distantes, um momento mais incerto, em que o número depende mais do método.`;
   },
   "risco.naoRejeitados.titulo": "Não rejeitados pelos testes",
-  // A lista dos adequate = true, sem eleger nenhum (RF-14).
+  // A lista dos adequate = true, sem eleger nenhum (RF-14). Os ramos k = 0 e k ≥ 1 levam a
+  // expressão da D-64 aprovada no portão do `risco.html` (T9 do M2.3), "não do número de
+  // hoje" — a exceção ao "Fora" da spec; os ramos julgados = 0 e o dos que faltam, intactos.
   "risco.naoRejeitados": (k: number, julgados: number, total: number): string => {
     const faltam = total - julgados;
     const semJulgar =
@@ -306,12 +308,12 @@ export const TEXTOS = {
     if (julgados === 0)
       return "Não foi possível julgar nenhum modelo neste nível: o cálculo falhou em todos, e isso não conta como reprovação.";
     if (k === 0)
-      return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste.${semJulgar}`;
+      return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste. O veredito fala desse período, não do número de hoje.${semJulgar}`;
     const quem =
       k === 1
         ? `1 dos ${julgados} modelos julgados passou`
         : `${k} dos ${julgados} modelos julgados passaram`;
-    return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste — não garante o número de hoje —, e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
+    return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste, não do número de hoje; e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
   },
   "risco.tabela.titulo": "Os nove modelos",
   "risco.tabela.intro":
@@ -335,8 +337,9 @@ export const TEXTOS = {
   "risco.tag.adequado": "adequado",
   "risco.tag.naoAdequado": "não adequado",
   "risco.tag.naoJulgado": "não julgado",
+  // A expressão da D-64 aprovada no portão do `risco.html` (T9 do M2.3): exceção ao "Fora".
   "risco.veredito":
-    "O veredito junta dois testes feitos no período de teste: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou no passado, não de quanto o número de hoje está certo.",
+    "O veredito junta dois testes feitos no período de teste: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou no período de teste, não do número de hoje.",
   "risco.teste.passou": "passou",
   "risco.teste.naoPassou": "não passou",
   "risco.rotulo.violacoes": "Violações × esperadas",
@@ -376,6 +379,10 @@ export const TEXTOS = {
   "risco.trilha.status.ok": "concluído, os nove modelos calcularam",
   "risco.trilha.status.partial": (n: number) => `parcial: ${n} de 9 modelos falharam`,
   "risco.trilha.status.failed": "o cálculo falhou inteiro",
+  // Os controles de recolher da tabela dos nove e da trilha (RF-06, RF-07 do M2.3): do
+  // `risco.html` aprovado — um rótulo só, nos dois estados e nos dois níveis.
+  "risco.modelos.abrir": "Ver os nove modelos",
+  "risco.trilha.abrir": "Ver o que entrou no cálculo",
 
   // risco.estado.* — os estados da seção (RF-17). `risco.carregando` é só para leitor de
   // tela.

@@ -8,6 +8,9 @@
  *
  * V-10 do M1.6c (RF-15): o fim do acompanhamento recarrega também as duas seções novas — os
  * fundamentos, e os comunicados de volta à primeira página, com o filtro.
+ *
+ * M2.3 (T10): a tabela dos nove nasce recolhida na iniciante; o teste que confere a tabela à
+ * vista durante o `reloadAll()` declara a leitura avançada, em que ela nasce aberta.
  */
 import { act, cleanup, fireEvent, render, within } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -29,6 +32,7 @@ import {
 } from "../src/api/types";
 import { TEXTOS } from "../src/content/textos";
 import { formatCurrency } from "../src/format/numbers";
+import { comNivel, limparNivel } from "./nivel";
 
 vi.mock("uplot", () => {
   class FakeUPlot {
@@ -325,6 +329,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  limparNivel();
 });
 
 // ---------------------------------------------------------------- V-12
@@ -402,6 +407,8 @@ describe("V-12 — ao terminar, recarrega as rotas", () => {
 
   it("o data-risk-state fica no último /risk recebido enquanto o reloadAll recarrega", async () => {
     riskQueue = [E4_NO_REQUEST, E1, null];
+    // A tabela à vista no E1: na leitura avançada, ela nasce aberta (M2.3).
+    comNivel("advanced");
     renderAsset();
     await advance(0);
     await advance(5000);

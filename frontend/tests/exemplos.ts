@@ -225,4 +225,50 @@ export const EXEMPLOS_AVANCADOS: Readonly<
     ["0,00", 0],
   ],
   "comportamento.dividend_yield_12m": [["01/10/2026", "R$ 7,06"]],
+  // O risco (T10): o `EXEMPLOS_AVANCADOS` do `risco.html`, cobrindo os ramos da avançada; os
+  // marcados ITUB4 são os da execução 85, de 01/10/2026, e os outros, fictícios. As chaves de
+  // texto não entram. Em `risco.naoRejeitados`, os ramos k ≥ 1 e k = 0 — os da D-64, que o
+  // `d64.test.ts` confere — e o julgados = 0, isento.
+  "risco.discordancia": [
+    // n = total (ITUB4, 95%); n ≥ 2 com 2 sem VaR; n ≥ 2 com 1 sem VaR; n = 1; n = 0.
+    ["2,2%", "3,1%", 9, 9, 20, "2,2%"],
+    ["2,6%", "3,1%", 7, 9, 20, "2,6%"],
+    ["3,7%", "5,6%", 8, 9, 100, "3,7%"],
+    ["4,1%", "4,1%", 1, 9, 100, "4,1%"],
+    [null, null, 0, 9, 20, null],
+  ],
+  "risco.naoRejeitados": [
+    // k ≥ 1 (ITUB4, 95% e 99%); k = 1 com 1 sem veredito; k = 0; k = 0 com 2 sem veredito;
+    // k = 0 com um só julgado; julgados = 0 (isento da D-64).
+    [6, 9, 9],
+    [2, 9, 9],
+    [1, 8, 9],
+    [0, 9, 9],
+    [0, 7, 9],
+    [0, 1, 9],
+    [0, 0, 9],
+  ],
+  "risco.violacoes": [
+    // kupiecOk (CAViaR 95%, ITUB4); acima, rejeitado (CAViaR 99%, ITUB4); abaixo, rejeitado
+    // (EGARCH 99%, ITUB4); singular.
+    ["111", "112,3", 20, true],
+    ["50", "22,5", 100, false],
+    ["7", "22,5", 100, false],
+    ["1", "4,0", 100, false],
+  ],
+  "risco.kupiec": [
+    // ok (CAViaR 95%, ITUB4); rejeitado (CAViaR 99%, ITUB4).
+    ["0,903", true],
+    ["< 0,001", false],
+  ],
+  "risco.christoffersen": [
+    // ok (CAViaR 95%, ITUB4); rejeitado (GARCH(1,1) 99%, ITUB4).
+    ["0,225", true],
+    ["0,042", false],
+  ],
+  "risco.dq": [
+    // ok (CAViaR 95%, ITUB4); rejeitado (CAViaR 99%, ITUB4).
+    ["0,082", true],
+    ["< 0,001", false],
+  ],
 };

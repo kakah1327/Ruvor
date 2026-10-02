@@ -11,7 +11,10 @@
  *
  * `ativo.*`: do `casco-e-preco.html` (T3), literais; as afirmações são as de
  * `conferencia-casco.md`. `comportamento.*`: do `comportamento.html` (T6), literais; as
- * afirmações são as de `conferencia-comportamento.md`.
+ * afirmações são as de `conferencia-comportamento.md`. `risco.*`: do `risco.html` (T9),
+ * literais — com a alternativa da D-64 aprovada no portão, a expressão única "não do número de
+ * hoje" em `risco.veredito` e nos ramos k ≥ 1 e k = 0 de `risco.naoRejeitados` (as constantes
+ * da vista `d64`); as afirmações são as de `conferencia-risco.md`.
  */
 import type { TEXTOS, TextoKey } from "./textos";
 
@@ -46,6 +49,16 @@ export const LEITURA_KEYS = [
   "comportamento.dividend_yield_12m",
   "comportamento.avg_volume_21d",
   "comportamento.avg_volume_252d",
+  // O risco (T10).
+  "risco.perda95",
+  "risco.perda99",
+  "risco.discordancia",
+  "risco.veredito",
+  "risco.naoRejeitados",
+  "risco.violacoes",
+  "risco.kupiec",
+  "risco.christoffersen",
+  "risco.dq",
 ] as const satisfies readonly TextoKey[];
 
 export type LeituraKey = (typeof LEITURA_KEYS)[number];
@@ -109,4 +122,66 @@ export const TEXTOS_AVANCADOS: {
     "Média aritmética do volume dos últimos 21 pregões da série — contagem de pregões, não de meses —, com o volume de cada pregão como vem do Yahoo Finance. Com menos de 21 pregões, o número é nulo, nunca uma média parcial.",
   "comportamento.avg_volume_252d":
     "A mesma média aritmética do volume, sobre os últimos 252 pregões da série. Com menos de 252 pregões, nula — nunca uma média parcial.",
+  // O risco (T10): do `risco.html` aprovado, literais; as afirmações são as de
+  // `conferencia-risco.md`. `risco.veredito` e os ramos k ≥ 1 e k = 0 de `risco.naoRejeitados`
+  // são os da alternativa da D-64 (a vista `d64`: `altAvVeredito`, `altAvK1`, `altAvK0`).
+  "risco.perda95":
+    "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito; o número mostrado é, nos três tradicionais — histórico, paramétrico e Monte Carlo —, o quantil estimado uma vez sobre os 252 primeiros retornos da série e repetido no teste inteiro; nos outros seis, o do último pregão. Vai à tela como perda percentual simples, 1 − e^(−VaR).",
+  "risco.perda99":
+    "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, com a mesma janela por família e mostrado da mesma forma.",
+  "risco.discordancia": (
+    min: string | null,
+    max: string | null,
+    n: number,
+    total: number,
+    _cadaN: number,
+    unico: string | null,
+  ): string => {
+    if (n === 0)
+      return "Nenhum dos nove produziu VaR neste nível: o cálculo falhou em todos, e não há faixa.";
+    if (n === 1)
+      return `Só um modelo produziu VaR neste nível: ${unico} é o dele, tomado e convertido como na perda acima. Sem um segundo, não há faixa.`;
+    const quem =
+      n === total
+        ? "Os nove modelos produziram VaR neste nível"
+        : `${n} de ${total} modelos produziram VaR neste nível; ${total - n === 1 ? "o outro não: o cálculo dele falhou ou ele ficou" : `os outros ${total - n} não: o cálculo falhou ou eles ficaram`} sem resultado nesta execução`;
+    return `${quem}. A faixa vai da menor perda entre eles, ${min}, à maior, ${max}, cada uma tomada e convertida como na perda acima. A largura mede o quanto os números mostrados pelos métodos diferem entre si; não diz qual extremo está certo.`;
+  },
+  "risco.veredito":
+    "Veredito por modelo e por nível: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ fica fora. Os testes avaliam a série de VaR do período de teste: falam do passado do modelo, não do número de hoje.",
+  "risco.naoRejeitados": (k: number, julgados: number, total: number): string => {
+    const faltam = total - julgados;
+    const semVeredito =
+      faltam > 0
+        ? ` ${faltam} ${faltam === 1 ? "modelo ficou sem veredito porque o cálculo falhou: conta" : "modelos ficaram sem veredito porque o cálculo falhou: contam"} à parte, não como reprovação.`
+        : "";
+    if (julgados === 0)
+      return "Nenhum modelo pôde ser julgado neste nível: o cálculo falhou em todos, e falha não é reprovação.";
+    if (k === 0)
+      return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.${semVeredito}`;
+    const quem =
+      k === 1
+        ? `1 dos ${julgados} modelos julgados tem`
+        : `${k} dos ${julgados} modelos julgados têm`;
+    return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
+  },
+  "risco.violacoes": (v: string, e: string, cadaN: number, kupiecOk: boolean) =>
+    `${v === "1" ? "1 violação — dia" : `${v} violações — dias`} do período de teste em que o retorno logarítmico ficou abaixo de −VaR do dia — para ${e} esperadas, os dias de teste divididos por ${cadaN}.${kupiecOk ? "" : " Longe o bastante do esperado para o Kupiec rejeitar: acima, o VaR subestimou a cauda; abaixo, superestimou."}`,
+  "risco.kupiec": (p: string, ok: boolean) =>
+    `Teste de proporção de falhas de Kupiec: razão de verossimilhança entre a taxa de violações observada e a esperada, contra uma qui-quadrado com 1 grau de liberdade; testa a cobertura incondicional. Aqui, ${p}: a cobertura correta ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+  "risco.christoffersen": (p: string, ok: boolean) =>
+    `Teste de independência de Christoffersen: numa cadeia de Markov de 1ª ordem, compara a chance de violar no dia seguinte a uma violação com a de violar no dia seguinte a um dia sem violação, contra uma qui-quadrado com 1 grau de liberdade; o p-valor é o da independência. Aqui, ${p}: a independência ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+  "risco.dq": (p: string, ok: boolean) =>
+    `Teste de quantil dinâmico: regride a violação de cada dia (1 ou 0), menos a taxa esperada, sobre uma constante, as violações dos quatro dias anteriores e o VaR do dia, e testa se todos os coeficientes são zero, contra uma qui-quadrado com 6 graus de liberdade. Pega ao mesmo tempo taxa errada e violações previsíveis. Passa com p-valor acima de 0,05 e fica fora do veredito. Aqui, ${p}: coeficientes nulos ${ok ? "não rejeitados" : "rejeitados"}.`,
 };
+
+/**
+ * Os textos de bloco da leitura avançada, **fora da contagem das 55** do RF-04 (o RF-06 da spec,
+ * "O texto que manda abrir"): não são frase de número, e por isso não entram em `LEITURA_KEYS`
+ * nem em `TEXTOS_AVANCADOS`. `risco.tabela.intro`: a entrada avançada que o portão do
+ * `risco.html` (T9) aprovou — na avançada, as linhas de teste já nascem abertas.
+ */
+export const BLOCOS_AVANCADOS = {
+  "risco.tabela.intro":
+    "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam uma escala só nas duas colunas; a escala é a da maior perda da tabela. Os testes de cada modelo, nos dois níveis, vêm abertos abaixo da linha dele.",
+} as const satisfies { readonly [K in TextoKey]?: string };

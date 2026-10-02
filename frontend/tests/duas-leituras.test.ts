@@ -82,15 +82,6 @@ const AS_55 = [
 
 // As chaves de AS_55 ainda sem frase avançada. Nasce com as 55; cada seção tira as suas.
 const PENDENTES = [
-  "risco.perda95",
-  "risco.perda99",
-  "risco.discordancia",
-  "risco.veredito",
-  "risco.naoRejeitados",
-  "risco.violacoes",
-  "risco.kupiec",
-  "risco.christoffersen",
-  "risco.dq",
   "fundamentos.revenue_ttm",
   "fundamentos.ebit_ttm",
   "fundamentos.net_income_ttm",
