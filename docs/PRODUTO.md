@@ -127,8 +127,8 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 ### Marco 2 — vira plataforma
 
 - Usuários, autenticação, papéis, permissões
-- Carteira composta pelo usuário, com risco de carteira — o backend é o M2.2a, pronto no ramo e
-  esperando o parecer da CVM para entrar ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)); as telas são o M2.2b
+- Carteira composta pelo usuário, com risco de carteira — o backend é o M2.2a, na `main` desde
+  2026-10-02, sem esperar o parecer da CVM ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)); as telas são o M2.2b
 - Camada explicativa iniciante/avançado como sistema
 - Camada 3 no regime de laboratório ([D-04](decisoes/D-04-dois-regimes-de-operacao.md),
   [D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
@@ -259,11 +259,11 @@ de valores mobiliários exigem autorização. A fronteira costuma ficar entre:
 - **recomendar** — o sistema diz o que comprar ou sugere composição de carteira
 
 "Montar carteira" atravessa essa linha com facilidade se a plataforma sugerir pesos.
-Desenhar do lado seguro agora custa nada. **Buscar parecer antes dos blocos que tocam composição ou peso de carteira**
-— o M2.2 e o que dele derivar —, não antes do Marco 2 inteiro: explicar o que já se mostra é informar
-([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)). Na carteira, o parecer segura o merge da
-implementação, não a spec nem o plano
-([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)).
+Desenhar do lado seguro agora custa nada, e é regra: a pessoa escolhe ativos e pesos, e a plataforma não
+sugere ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md), item 3). **Buscar parecer antes de
+comercializar** — cobrar, ou abrir a plataforma a terceiros como serviço. Enquanto não houver comercialização, o
+parecer não segura bloco nenhum, nem a carteira
+([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)).
 
 ---
 
@@ -288,7 +288,7 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Carteira: caminho barato ou caro | ✅ barato ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)) |
 | Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3 segue candidata |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
-| Parecer sobre fronteira CVM | Pendente, antes do merge da carteira — o M2.2 e o que dele derivar ([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md), [D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
+| Parecer sobre fronteira CVM | Pendente, só antes de comercializar ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)) |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
 
 **Resolvidos no M1.6a** (2026-09-28): o tema — o kit tem claro e escuro, pelos mesmos tokens

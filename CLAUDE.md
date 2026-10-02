@@ -128,9 +128,9 @@ cálculo, gravado no pedido e na execução que ele abre. Desde o M1.6a existem 
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
 M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
 **filtro automático por organização**, e desde o M4.1, **relatórios** de risco guardados para sempre,
-com SHA-256. O M2.2a, a **carteira** — composição versionada e o risco dela nos nove modelos —, está
-pronto no ramo `identidade/M2.2-carteira` e só entra com o parecer da CVM
-([D-116](docs/decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). Desde o
+com SHA-256. O M2.2a, a **carteira** — composição versionada e o risco dela nos nove modelos —, entrou na
+`main` pela PR #34; o parecer da CVM não a segura enquanto não houver comercialização
+([D-160](docs/decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)). Desde o
 M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechado —, e desde o M1.6c a tela tem as
 cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M1.7
 a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão da página inicial vem da API
