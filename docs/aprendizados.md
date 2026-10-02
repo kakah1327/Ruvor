@@ -1518,3 +1518,30 @@ do caminho do `organization_field`.
 dois inteiros, `pg_advisory_xact_lock(classe, id)` (o molde de `apps/api/ondemand.py`), e releia a
 linha depois de pegar a trava. Se precisar mesmo de trava de linha, `select_for_update()` sem `of`
 numa consulta **sem junção**.
+
+
+## Filtrar por campo de `annotate` atrás de uma função tipada `QuerySet[Modelo]` reprova no `mypy`
+
+**Quando:** uma função auxiliar anota o queryset (`_with_has_risk`, `_with_has_prices` em `apps/api/views.py`) e
+devolve `QuerySet[Asset]`, e quem a chama filtra pelo campo anotado (`found.filter(has_risk=...)`).
+
+**Problema:** o plugin dos `django-stubs` só conhece os campos do modelo. A anotação existe em tempo de execução, mas o
+tipo de retorno `QuerySet[Asset]` a apaga, e o `mypy` estrito acusa o `filter` com um erro `misc` sobre o campo. Na T2
+do M1.7 a assinatura era literal do plano, e não dava para mudá-la.
+
+**Faça:** ponha `# type: ignore[misc]` **só nessa linha**, com um comentário dizendo que o campo vem da anotação (o
+molde está em `AssetListView.get`, `backend/apps/api/views.py`). Não alargue para `ignore_errors` no módulo, nem tire o tipo de retorno da função. Se a
+assinatura não for contrato, prefira anotar e filtrar na mesma função.
+
+
+## O efeito de montagem pode correr depois de o título aparecer
+
+**Quando:** num teste do Vitest com a Testing Library, ao contar pedidos (`vi.mocked(fetch).mock.calls`) logo depois
+de um `findBy…` de algo que a montagem desenha, como o título da tela "ativo não encontrado".
+
+**Problema:** o `findBy…` volta assim que o elemento aparece, e o pedido que sai do efeito de montagem do componente de
+dentro (a sugestão da caixa de página, no M1.7) pode não ter saído ainda. Contar nesse ponto vê 0 pedidos e reprova, ou
+passa por acaso, conforme a ordem dos efeitos. Na T6 do M1.7, o teste do 404 de `ativo.test.tsx` contava cedo demais.
+
+**Faça:** espere pelo efeito **visível** do pedido (`waitFor` dos atalhos da sugestão na tela) antes de contar, e
+confira a contagem exata de novo no `afterEach`, com tudo assentado.

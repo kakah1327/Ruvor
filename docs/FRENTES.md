@@ -114,7 +114,7 @@ outras frentes.
 | D-75 a D-81 | `marco1`, reservadas pela spec do M1.5b | todas — as sete decisões do M1.5b |
 | D-82 a D-84 | a divisão em frentes | todas |
 | D-85 a D-99 | `marco1` | todas — a D-99 é do M1.6c |
-| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 (a D-149 e a D-150 com o M1.5c, fechado) |
+| D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156 | D-140, D-143, D-144, D-146 a D-153 (a D-143 e a D-144 com o M1.7, fechado, que deixa a D-145 sem uso; a D-149 e a D-150 com o M1.5c, fechado) |
 | D-100 a D-119 | `identidade` | todas — D-116 a D-119 são do M2.2a |
 | D-160 a D-179 | `identidade`, reservada pela spec do M2.2a | — |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |
