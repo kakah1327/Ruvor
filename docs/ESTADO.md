@@ -31,9 +31,9 @@ exportável e auditável — e entrou na `main` pela PR #28, e o **M2.1a fechou 
 preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
-nove modelos —, com a PR de implementação aberta e **segurada até o parecer da CVM** ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
+nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
 **Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
-M4.1 ✅ → M2.2a, pronto no ramo, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
+M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
@@ -102,9 +102,8 @@ organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. **Des
 relatórios:** a sessão gera em `POST /api/v1/reports` o relatório de risco de um ativo, guardado
 para sempre em `core.report` com os bytes exatos do JSON e o SHA-256 deles, imutável no Django e no
 banco — o primeiro gatilho, `report_so_cresce` —, e baixado em JSON (o original) ou CSV (derivado);
-`core.report` também usa o filtro por organização. Trinta e duas tabelas, em seis apps, na `main`; **o M2.2a,
-no ramo `identidade/M2.2-carteira`, traz a carteira** — `apps/portfolios`, a sétima app, e cinco
-tabelas, trinta e sete ao todo — e entra quando o parecer da CVM chegar ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
+`core.report` também usa o filtro por organização. **Desde o M2.2a há carteira** — `apps/portfolios`, a sétima app, e cinco
+tabelas, trinta e sete ao todo —, na `main` pela PR #34, sem esperar o parecer da CVM ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)). **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
 identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
 não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
@@ -1586,8 +1585,8 @@ Spec em [`specs/M2.2a-carteira.md`](specs/M2.2a-carteira.md) e plano em
 `identidade`, ramo `identidade/M2.2-carteira`, no worktree `.claude/worktrees/identidade+M2.2-carteira`.
 Spec: três revisões (a 2 reprovou por um grave, o `FOR UPDATE OF` com esquema; a 3 aprovou). Plano:
 três (a 3 aprovou). Sete commits de tarefa — T0 (`01d2e63`), T1 (`1c25905`), T2 (`5cc26da`), T3
-(`69a403a`), T4 (`c88495b`), T5 (`06830fe`), T6 (`0127446`) —, a T7 sem commit e o do fecho. **Fechou no
-ramo em 2026-10-02**; a PR de implementação **fica aberta até o parecer da CVM** ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)).
+(`69a403a`), T4 (`c88495b`), T5 (`06830fe`), T6 (`0127446`) —, a T7 sem commit e o do fecho. **Fechou em
+2026-10-02** e entrou na `main` pela PR #34; o parecer da CVM deixou de segurá-la, porque a plataforma não vai ser comercializada por enquanto ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)).
 
 | Verificação | Resultado |
 |---|---|
@@ -1649,9 +1648,8 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, a PR de implementação do M2.2a**, aberta e segurada até o parecer da CVM
-([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). Ela passa pela `marco1` — o que a carteira lê de `apps/risk/`, os `PROTECT` e as três
-tarefas novas no `worker`. Enquanto o parecer não chega, o ramo recebe a `main` quando ela mudar. O
+**Na frente `identidade`, o M2.2a está na `main`** (PR #34), sem o parecer da CVM
+([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)). O M2.2b, as telas da carteira, é da `marco1` e não espera o parecer. O
 próximo bloco da frente é escolha do dono ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
 `api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa
 `force_login`, não `force_authenticate`; em dev, suba `RUVOR_THROTTLE_ANON` no `.env` — a página
@@ -1712,7 +1710,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 
 | Pendência | Bloqueia |
 |---|---|
-| **Parecer sobre fronteira CVM** | O merge da carteira — a implementação do M2.2a, o M2.2b e o que deles derivar. Não bloqueia o resto do Marco 2: o M2.3 fechou sem ele ([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)), e a spec e o plano da carteira seguem sem ele ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
+| **Parecer sobre fronteira CVM** | Só a comercialização — cobrar, ou abrir a plataforma a terceiros como serviço. Não segura a carteira nem bloco nenhum do roadmap ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)) |
 | **Verificação de marca e domínio "Ruvor"** | Nada agora; risco se descoberto tarde |
 | **Medir o gargalo do treino** | Decisão sobre GPU vs paralelização — ver [D-20](decisoes/D-20-experimentos-em-cpu.md) |
 
