@@ -18,6 +18,7 @@ from typing import Any, ClassVar, NoReturn
 from django.conf import settings
 from django.db import transaction
 from django.db.models import (
+    BooleanField,
     Case,
     Exists,
     IntegerField,
@@ -25,6 +26,7 @@ from django.db.models import (
     Prefetch,
     Q,
     QuerySet,
+    Subquery,
     Value,
     When,
 )
@@ -49,6 +51,7 @@ from apps.api.ondemand import (
     timeout,
 )
 from apps.api.serializers import (
+    HAS_RISK_DESCRIPTION,
     AssetDetailSerializer,
     AssetEventsOut,
     AssetItemSerializer,
@@ -157,9 +160,43 @@ def _date_param(request: Request, name: str) -> date | None:
         ) from None
 
 
+def _bool_param(request: Request, name: str) -> bool | None:
+    raw = request.query_params.get(name)
+    if raw is None:
+        return None
+    if raw == "true":
+        return True
+    if raw == "false":
+        return False
+    raise _invalid(name, f"O parâmetro {name} aceita só true ou false.")
+
+
 def _with_has_prices(assets: QuerySet[Asset]) -> QuerySet[Asset]:
     return assets.annotate(
         has_prices=Exists(Price.objects.filter(asset=OuterRef("pk")))
+    )
+
+
+# As execucoes fechadas: as que o `latest` considera (RF-13).
+CLOSED_RUN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL, RiskRun.Status.FAILED)
+
+
+def _with_has_risk(assets: QuerySet[Asset]) -> QuerySet[Asset]:
+    """RF-03 do M1.7: a execucao fechada mais recente (o `latest` do `/risk`) e `ok` ou `partial`."""
+    latest_closed_status = Subquery(
+        RiskRun.objects.filter(asset=OuterRef("pk"), status__in=CLOSED_RUN_STATUSES)
+        .order_by("-calculated_at")
+        .values("status")[:1]
+    )
+    return assets.annotate(latest_closed_status=latest_closed_status).annotate(
+        has_risk=Case(
+            When(
+                latest_closed_status__in=(RiskRun.Status.OK, RiskRun.Status.PARTIAL),
+                then=Value(True),
+            ),
+            default=Value(False),
+            output_field=BooleanField(),
+        )
     )
 
 
@@ -203,7 +240,9 @@ def search_assets(q: str) -> QuerySet[Asset]:
 
 
 class AssetListView(APIView):
-    """`GET /api/v1/assets?q=&limit=&offset=`: a busca no catalogo, paginada (RF-12)."""
+    """`GET /api/v1/assets?q=&has_risk=&limit=&offset=`: a busca no catalogo, paginada
+    (RF-12), com o filtro `has_risk` do M1.7 (RF-04).
+    """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
     api_key_scope: ClassVar[str | None] = (
@@ -214,6 +253,15 @@ class AssetListView(APIView):
         operation_id="v1_assets_search",  # M4.2: sem ele, colide com `/assets/{ticker}`
         parameters=[
             OpenApiParameter("q", OpenApiTypes.STR),
+            OpenApiParameter(
+                "has_risk",
+                OpenApiTypes.BOOL,
+                description=(
+                    "Filtra pelo has_risk do item: true, só os ativos com ele "
+                    "verdadeiro; false, só os com ele falso; ausente, todos. Só true "
+                    "ou false, em minúsculas. " + HAS_RISK_DESCRIPTION
+                ),
+            ),
             OpenApiParameter("limit", OpenApiTypes.INT, default=DEFAULT_LIMIT),
             OpenApiParameter("offset", OpenApiTypes.INT, default=0),
         ],
@@ -222,7 +270,12 @@ class AssetListView(APIView):
     def get(self, request: Request) -> Response:
         limit = _int_param(request, "limit", DEFAULT_LIMIT, 1, MAX_LIMIT)
         offset = _int_param(request, "offset", 0, 0, 2**63 - 1)
-        found = search_assets(request.query_params.get("q", ""))
+        has_risk = _bool_param(request, "has_risk")
+        found = _with_has_risk(search_assets(request.query_params.get("q", "")))
+        if has_risk is not None:
+            # o plugin dos stubs nao enxerga a anotacao atras do `QuerySet[Asset]` que
+            # `_with_has_risk` devolve, e acusa o campo; ele existe em tempo de execucao
+            found = found.filter(has_risk=has_risk)  # type: ignore[misc]
         page = _with_has_prices(found)[offset : offset + limit]
         return Response(
             {
@@ -450,10 +503,6 @@ class AssetDisclosuresView(APIView):
                 ).data,
             }
         )
-
-
-# As execucoes fechadas: as que o `latest` considera (RF-13).
-CLOSED_RUN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL, RiskRun.Status.FAILED)
 
 
 def risk_body(asset: Asset, now: datetime) -> dict[str, Any]:

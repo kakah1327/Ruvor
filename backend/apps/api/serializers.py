@@ -60,10 +60,22 @@ METRIC_COLUMNS = (
 )
 
 
+# A regra do `has_risk` (M1.7, RF-03), na descricao do parametro da busca e do campo do item
+# (RF-06): o esquema OpenAPI a diz nos dois lugares.
+HAS_RISK_DESCRIPTION = (
+    "Verdadeiro quando o último cálculo fechado terminou `ok` ou `partial`: a execução "
+    "de risco mais recente com status `ok`, `partial` ou `failed` — a mesma que o `/risk` "
+    "devolve como `latest`. Uma execução `running` não conta."
+)
+
+
 class AssetItemSerializer(serializers.ModelSerializer[Asset]):
-    """O item da busca. `has_prices` vem da anotacao que a view poe no `queryset`."""
+    """O item da busca. `has_prices` e `has_risk` vem das anotacoes que a view poe no
+    `queryset`.
+    """
 
     has_prices = serializers.BooleanField(read_only=True)
+    has_risk = serializers.BooleanField(read_only=True, help_text=HAS_RISK_DESCRIPTION)
 
     class Meta:
         model = Asset
@@ -75,6 +87,7 @@ class AssetItemSerializer(serializers.ModelSerializer[Asset]):
             "sector",
             "status",
             "has_prices",
+            "has_risk",
         )
 
 
