@@ -91,8 +91,9 @@ class ConditionalVolatilityVaR(VaRModel):
         return self
 
     def _sigma_path(self, returns: pd.Series, horizon: int = 1) -> pd.Series:
-        """Serie de sigma (desvio-padrao condicional) walk-forward, sem look-ahead: cada
-        ponto so usa parametros e retornos conhecidos ate a data anterior. Reaproveitada
+        """Série de sigma (desvio-padrão condicional) walk-forward: a sigma do dia t é a
+        previsão de um passo feita com os retornos até t - 1 e os parâmetros do último reajuste
+        anterior a t (reajuste a cada `REFIT_FREQUENCY_DAYS`, janela expansiva). Reaproveitada
         por `estimate_var` e por modelos hibridos (ex: GARCHNet, Etapa 3) que precisam da
         volatilidade do GARCH como feature, sem precisar de um VaREstimate completo.
         """
@@ -105,14 +106,17 @@ class ConditionalVolatilityVaR(VaRModel):
         while pos < len(returns):
             chunk_end = min(pos + self.REFIT_FREQUENCY_DAYS, len(returns))
 
+            # A sigma do dia `pos` e a previsao de um passo feita no fim de `pos - 1`: o modelo
+            # vai ate `chunk_end - 1` e o forecast comeca em `pos - 1` (a linha k do arch e a
+            # variancia de k + 1, calculada com o retorno de k).
             model = arch_model(
-                full_returns.iloc[: n_train + chunk_end],
+                full_returns.iloc[: n_train + chunk_end - 1],
                 mean="Zero",
                 dist=self.dist,
                 **self._arch_kwargs(),
             )
             fixed = model.fix(params)
-            forecast = fixed.forecast(start=n_train + pos, horizon=1, reindex=False)
+            forecast = fixed.forecast(start=n_train + pos - 1, horizon=1, reindex=False)
             sigma_1d[pos:chunk_end] = np.maximum(
                 np.sqrt(forecast.variance.values[:, 0]) / SCALE, self.sigma_floor_
             )
