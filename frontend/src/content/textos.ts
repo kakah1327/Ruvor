@@ -241,6 +241,62 @@ export const TEXTOS = {
     `A maior queda do preço ajustado desde ${desde}: de ${topo} a ${fundo}, caiu ${queda}. ${volta ? `Voltou ao topo anterior em ${volta}.` : "Ainda não voltou ao topo anterior."}`,
   "comportamento.max_drawdown_recovery_sessions": (anos: string) =>
     `Pregões entre o fundo e a volta ao topo anterior — cerca de ${anos} anos de bolsa.`,
+  // Os momentos de estresse (M3.3): do `ativo-estresse.html` aprovado (T4), literais. As
+  // funções recebem os valores já formatados; `inteira` é o ramo da queda que começa no topo
+  // (o primeiro pregão da janela) e termina no fundo (o último).
+  "comportamento.bloco.estresse": "Em momentos de estresse",
+  "comportamento.nota.estresse":
+    "Quatro momentos em que o mercado brasileiro inteiro caiu forte, os mesmos para toda ação, em ordem de data. Cada número usa o preço ajustado, com proventos e desdobramentos, e o Ibovespa é medido no mesmo recorte de datas. Os pregões até recuperar contam também o que veio depois do fim do episódio: o que hoje ainda não recuperou pode ganhar número num cálculo futuro.",
+  "comportamento.estresse.episodio.jbs_2017": "A delação da JBS",
+  "comportamento.estresse.episodio.truckers_2018": "A greve dos caminhoneiros",
+  "comportamento.estresse.episodio.covid_2020": "A chegada da covid",
+  "comportamento.estresse.episodio.rates_2021": "A alta dos juros",
+  "comportamento.estresse.recorte": (inicio: string, fim: string) =>
+    `de ${inicio} a ${fim}`,
+  "comportamento.estresse.janela": (p0: string, pn: string) =>
+    `pregões de ${p0} a ${pn}`,
+  "comportamento.estresse.rotulo.period_return": "Do início ao fim",
+  "comportamento.estresse.rotulo.benchmark_period_return": "Ibovespa, do início ao fim",
+  "comportamento.estresse.rotulo.drawdown": "Maior queda no episódio",
+  "comportamento.estresse.rotulo.benchmark_drawdown":
+    "Ibovespa, maior queda no episódio",
+  "comportamento.estresse.rotulo.recovery_sessions": "Pregões até recuperar",
+  "comportamento.estresse.rotulo.benchmark_recovery_sessions":
+    "Ibovespa, pregões até recuperar",
+  "comportamento.estresse.period_return": (x: string, inicio: string, fim: string) =>
+    `Do primeiro ao último pregão do episódio, de ${inicio} a ${fim}, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.estresse.benchmark_period_return": (x: string) =>
+    `O Ibovespa no mesmo recorte de datas: R$ 100 viraram ${x}.`,
+  "comportamento.estresse.drawdown": (
+    queda: string,
+    topo: string,
+    fundo: string,
+    inteira: boolean,
+  ) =>
+    `Dentro do episódio, o preço ajustado caiu ${queda}, de ${topo} a ${fundo}.${inteira ? " Começou o episódio no topo e terminou no fundo: por isso a queda é igual ao resultado do início ao fim." : ""}`,
+  "comportamento.estresse.benchmark_drawdown": (queda: string, inteira: boolean) =>
+    `A maior queda do Ibovespa dentro do mesmo recorte: ${queda}.${inteira ? " O índice começou o recorte no topo e terminou no fundo: por isso a queda é igual ao resultado do início ao fim." : ""}`,
+  "comportamento.estresse.recovery_sessions": (volta: string) =>
+    `Pregões entre o fundo dessa queda e a volta ao topo dela, em ${volta} — contando também depois do fim do episódio.`,
+  "comportamento.estresse.benchmark_recovery_sessions": (volta: string) =>
+    `O mesmo para o Ibovespa: do fundo da queda dele à volta ao topo dela, ${volta}.`,
+  // A contagem que entra na frase do índice (o mockup monta "N pregões").
+  "comportamento.estresse.pregoes": (n: string) => `${n} pregões`,
+  "comportamento.estresse.semDado.rotulo": "Sem dado",
+  "comportamento.estresse.semDado.starts_after":
+    "O ativo ainda não tinha preço no início deste episódio.",
+  "comportamento.estresse.semDado.stale_start":
+    "O último preço do ativo antes deste episódio é de mais de 10 dias antes dele.",
+  "comportamento.estresse.semDado.ends_before":
+    "A série do ativo termina antes do fim deste episódio.",
+  "comportamento.estresse.semDado.no_trading":
+    "O ativo não negociou durante este episódio.",
+  "comportamento.estresse.semQueda":
+    "Dentro do episódio, o preço nunca ficou abaixo do maior preço alcançado até ali.",
+  "comportamento.estresse.nadaARecuperar": "sem queda no episódio, nada a recuperar",
+  "comportamento.estresse.semIbov": "sem o Ibovespa neste recorte",
+  "comportamento.estresse.naoCalculado":
+    "Os momentos de estresse ainda não foram calculados para estes números. Entram no próximo cálculo do comportamento, no dia útil seguinte.",
   "comportamento.beta_60m": (b: string, oposta: boolean) =>
     `Nos últimos 5 anos, quando o Ibovespa subiu ou caiu 1%, a ação se moveu em média ${b} ${oposta ? "na direção oposta" : "na mesma direção"}.`,
   "comportamento.correlation_60m": (c: string) =>

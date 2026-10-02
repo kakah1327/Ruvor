@@ -53,6 +53,13 @@ const LISTA_FECHADA = [
   "risco.dq",
   "ativo.ultimoFechamento",
   "ativo.precoAjustado",
+  // As seis frases de medida dos momentos de estresse (M3.3, D-97).
+  "comportamento.estresse.period_return",
+  "comportamento.estresse.benchmark_period_return",
+  "comportamento.estresse.drawdown",
+  "comportamento.estresse.benchmark_drawdown",
+  "comportamento.estresse.recovery_sessions",
+  "comportamento.estresse.benchmark_recovery_sessions",
 ];
 
 // Os campos do RF-10 que não têm frase própria: entram na frase ou na nota do bloco.
@@ -65,8 +72,8 @@ const SEM_FRASE = [
 ];
 
 describe("V-14 — a lista fechada do RF-21 no módulo de textos", () => {
-  it("a lista tem as 33 chaves", () => {
-    expect(new Set(LISTA_FECHADA).size).toBe(33);
+  it("a lista tem as 39 chaves", () => {
+    expect(new Set(LISTA_FECHADA).size).toBe(39);
   });
 
   it.each(LISTA_FECHADA)("%s existe e não é vazia", (chave) => {

@@ -18,6 +18,7 @@ import { Collapsible } from "./Collapsible";
 import { Glyph } from "./Glyph";
 import { ReturnsHistogram } from "./ReturnsHistogram";
 import { SectionError, SectionSkeleton } from "./SectionStatus";
+import { StressBlock } from "./StressBlock";
 
 /**
  * O índice de referência do beta e da correlação — `IBOV_TICKER` em
@@ -250,6 +251,9 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
           />
         </div>
       </Block>
+
+      {/* Os momentos de estresse (M3.3), logo depois da maior queda da série inteira. */}
+      <StressBlock stress={metric.stress} isBenchmark={isBenchmark} />
 
       <Block
         title={TEXTOS["comportamento.bloco.ibov"]}

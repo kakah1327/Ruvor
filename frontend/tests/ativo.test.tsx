@@ -200,6 +200,8 @@ const METRIC: Metric = {
   avg_volume_21d: "25432100.00",
   avg_volume_252d: "21000000.00",
   histogram: bins((i) => (i === 20 ? 300 : i % 5)),
+  // Os momentos de estresse (M3.3) são de `estresse.test.tsx`; aqui, a linha sem episódios.
+  stress: [],
 };
 
 /** A série curta: as janelas longas nulas, a queda sem volta, a distribuição sem dado. */
