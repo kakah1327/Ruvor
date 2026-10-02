@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.risk",
     "apps.fundamentals",
     "apps.api",
+    "apps.portfolios",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -218,6 +219,14 @@ CELERY_BEAT_SCHEDULE = {
 RUVOR_ON_DEMAND_MAX: int = int(os.environ.get("RUVOR_ON_DEMAND_MAX") or 3)
 RUVOR_ON_DEMAND_TIMEOUT: timedelta = timedelta(
     minutes=int(os.environ.get("RUVOR_ON_DEMAND_TIMEOUT_MIN") or 30)
+)
+# O pedido de risco de carteira (M2.2a, RF-13): o teto global de execucoes `running` nao
+# vencidas, de todas as organizacoes, e o prazo depois do qual uma `running` vence.
+RUVOR_PORTFOLIO_COMPUTE_MAX: int = int(
+    os.environ.get("RUVOR_PORTFOLIO_COMPUTE_MAX") or 2
+)
+RUVOR_PORTFOLIO_TIMEOUT: timedelta = timedelta(
+    minutes=int(os.environ.get("RUVOR_PORTFOLIO_TIMEOUT_MIN") or 60)
 )
 # O prazo depois do qual uma `risk_run` `running` e fechada pela varredura (M1.5c, D-149).
 # Nao pode ser menor que o do pedido sob demanda: fechar antes de a abertura considerar a linha

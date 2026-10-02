@@ -29,10 +29,11 @@ frente
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
 exportável e auditável — e entrou na `main` pela PR #28, e o **M2.1a fechou em 2026-09-30** — a T14
 preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
-([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —, com a PR da T14 a T16 a abrir
-pelo dono; o **M4.2 fechou em 2026-09-28**
+([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
+e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
+nove modelos —, com a PR de implementação aberta e **segurada até o parecer da CVM** ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
 **Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
-M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
+M4.1 ✅ → M2.2a, pronto no ramo, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
 ([D-84](decisoes/D-84-frentes-com-cerca-de-pastas.md)).
@@ -66,9 +67,10 @@ há contexto:** `manage.py import_disclosures` guarda na `bronze` os zips do IPE
 em `silver.disclosure` os fatos relevantes, comunicados ao mercado e avisos aos acionistas das
 companhias do catálogo, só na versão corrente — 80.900 —, e o `compute_fundamentals`, depois dos
 indicadores, grava em `gold.peer_comparison` a posição de cada ação entre os pares do segmento da
-B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, catorze tarefas de app, em
+B3, ou do subsetor. Há, além da tarefa de fumaça `config.tasks.ping`, catorze tarefas de app na `main`, em
 `apps/risk/tasks.py`, `apps/assets/tasks.py`, `apps/analytics/tasks.py` e
-`apps/fundamentals/tasks.py`, tipadas pelo `celery-types`, e o Beat dispara quatro rotinas — o
+`apps/fundamentals/tasks.py` — dezessete com as três da carteira, em `apps/portfolios/tasks.py`, no
+ramo do M2.2a —, tipadas pelo `celery-types`, e o Beat dispara quatro rotinas — o
 catálogo, às segundas, e os preços, de segunda a sexta, com as métricas e o recálculo do risco
 **encadeados** a eles (`preços → métricas → risco`, desde o M1.6a, e com a varredura das execuções presas antes, desde o M1.5c); os fundamentos, às segundas,
 com o cálculo dos indicadores encadeado à coleta; e os comunicados, de segunda a sexta, às 20h.
@@ -100,7 +102,9 @@ organização**, em `apps/accounts/tenancy.py`, aplicado a `core.api_key`. **Des
 relatórios:** a sessão gera em `POST /api/v1/reports` o relatório de risco de um ativo, guardado
 para sempre em `core.report` com os bytes exatos do JSON e o SHA-256 deles, imutável no Django e no
 banco — o primeiro gatilho, `report_so_cresce` —, e baixado em JSON (o original) ou CSV (derivado);
-`core.report` também usa o filtro por organização. Trinta e duas tabelas, em seis apps. **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
+`core.report` também usa o filtro por organização. Trinta e duas tabelas, em seis apps, na `main`; **o M2.2a,
+no ramo `identidade/M2.2-carteira`, traz a carteira** — `apps/portfolios`, a sétima app, e cinco
+tabelas, trinta e sete ao todo — e entra quando o parecer da CVM chegar ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). **Desde o M1.6b há telas:** a busca (`/`) e a tela do ativo (`/ativos/{ticker}`), com a
 identidade, o preço, os proventos, o comportamento e o risco — a discordância entre os nove modelos, os
 não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o pedido de cálculo de um
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
@@ -1575,6 +1579,46 @@ que devolviam união de literais e travavam o `Leitura<T>`; e os mockups que con
 emendas (o `comportamento.html` e o `fundamentos.html`, e a vista `itub4` do `risco.html`) — ver
 [aprendizados](aprendizados.md) e o [índice dos mockups](mockups/README.md).
 
+### M2.2a — Carteira
+
+Spec em [`specs/M2.2a-carteira.md`](specs/M2.2a-carteira.md) e plano em
+[`planos/M2.2a-carteira.md`](planos/M2.2a-carteira.md), aprovados e na `main` pela PR #31. Frente
+`identidade`, ramo `identidade/M2.2-carteira`, no worktree `.claude/worktrees/identidade+M2.2-carteira`.
+Spec: três revisões (a 2 reprovou por um grave, o `FOR UPDATE OF` com esquema; a 3 aprovou). Plano:
+três (a 3 aprovou). Sete commits de tarefa — T0 (`01d2e63`), T1 (`1c25905`), T2 (`5cc26da`), T3
+(`69a403a`), T4 (`c88495b`), T5 (`06830fe`), T6 (`0127446`) —, a T7 sem commit e o do fecho. **Fechou no
+ramo em 2026-10-02**; a PR de implementação **fica aberta até o parecer da CVM** ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)).
+
+| Verificação | Resultado |
+|---|---|
+| As cinco tabelas (V-01, V-02, T1) | ✅ `core.portfolio`, `core.portfolio_version`, `core.portfolio_holding`, `gold.portfolio_risk_run` e `gold.portfolio_risk_result`, com os únicos e as checagens; versão e posição só crescem no Django e no banco (`portfolio_version_so_cresce`, `portfolio_holding_so_cresce`), e o `TRUNCATE` passa; `migrate portfolios zero` e de volta: 0 e 2 gatilhos |
+| O filtro (V-10) | ✅ as cinco no `OrganizationScopedManager`, com o `unscoped` de gerente base; a varredura do M4.2 pega também `_base_manager`, e a única saída nova é `count_running_everywhere` |
+| A série (V-03, V-04) | ✅ interseção das datas, retorno simples ponderado, índice em `float` na ordem do ticker, conferidos contra valores escritos à mão e o hash literal; o provedor dá ao motor o mesmo quadro que um montado à mão |
+| A composição (V-05 a V-09) | ✅ pelo serviço, sem contexto posto, e pela rota: os sete `reason` do `invalid_holdings`, o peso gravado como veio, versão nova só quando a composição muda, duas trocas ao mesmo tempo dão as versões 2 e 3, o mesmo 404 para o que não é da organização |
+| O risco (V-11 a V-18) | ✅ cada saída do pedido, a trava dos pedidos (7103) com duas threads, o corretor que recusa, a abertura, a tarefa por modelo nos três caminhos, o fecho, as duas corridas da trava da execução (7104), a leitura com o resumo e a perda em reais escritos à mão |
+| A chave, o CSRF, o esquema, a web sem o motor (V-19 a V-23) | ✅ a chave lista e lê, recebe 403 na escrita; o esquema limpo no `--fail-on-warn`, **sem** entrada nova no `ENUM_NAME_OVERRIDES`; o lado da web não carrega o motor (subprocesso e `ast`); a conversão igual à `_row` do ativo nos cinco casos |
+| **Execução real (V-25)** | ✅ pelo proxy do Vite, com `curl` e cookie, com o principal no HEAD do ramo (`0127446`), `web` e `worker` de pé nele e o Beat parado: `PETR4 40` / `VALE3 30` / `ITUB4 30`, `notional` `100000.00` → 201; `POST .../risk` → 202; **`ok` em 143 s** (`calculated_at` → `finished_at`; 147 s pelo relógio do `curl`), 18 resultados, nenhum erro; 2 493 datas (2016-09-27 a 2026-09-29), `price_run` 18; o `loss_brl` dos 18 conferido à parte, e o índice reconstruído do `psql` com a fórmula do RF-06 deu o mesmo `series_sha256` (`83f1f684…5db60d`); a 5%, de R$ 1 749,50 (`caviar`) a R$ 2 891,41 (`monte_carlo`), não rejeitados `caviar`, `garchnet` e `lstm`; a 1%, de R$ 2 508,92 a R$ 4 712,76, não rejeitado só o `caviar`. Pedir de novo → 409 `portfolio_risk_up_to_date` com `run_id` 1; a chave lê (200) e recebe 403 no `POST`; trocar os pesos → versão 2, `latest` nulo, pedir → 202, `ok` em 148 s. No `psql`, `UPDATE core.portfolio_holding SET weight = 1` → `ERROR: portfolio_holding so cresce` |
+| O atraso na rotina | **não medido**: o Beat ficou parado, como o plano manda quando a rotina não roda junto. O que se sabe: uma carteira ocupa o `worker` por ~2,5 min, da ordem do cálculo completo de um ativo |
+| Suíte, tipos, estilo | ✅ **1652 testes** no `worker` (1397 + 255), em 16 min 56 s — **1711** depois de receber a `main` com o M1.7 e o M2.3 (os 1456 dela e os 255), em 16 min 43 s —, num contêiner avulso com o worktree montado e banco de teste próprio (`RUVOR_DB_NAME=ruvor_m22`); `mypy` estrito limpo em 261 arquivos; `ruff check` e `ruff format --check` limpos; `makemigrations --check` sem mudança; `spectacular --validate --fail-on-warn` limpo |
+| Mutações (T7) | ✅ as 25 reprovaram, cada uma no teste da coluna do plano; `git status` limpo depois |
+
+**O que a execução contrariou.**
+
+- **A pré-condição da mutação 5, como o plano a escreveu, não bastava.** A soma em ordem inversa
+  diferir bit a bit da soma na ordem do ticker é necessário e não suficiente: a diferença de um ulp
+  some no `1 + R` do índice, e a mutação sobreviveu na primeira medição. Os preços do teste foram
+  trocados para que o próprio índice mude, e a pré-condição passou a ser afirmada sobre o índice.
+- **As tarefas de app são dezessete, não dezesseis**: a spec contou antes de o M1.5c trazer a
+  `fechar_presas`.
+- **O tempo bateu com a estimativa** do RF-15 (141 a 175 s): 143 e 148 s, com as quatro redes
+  treinadas do zero em cada pedido.
+
+**Uma armadilha nova, em [aprendizados](aprendizados.md):** a pré-condição que prova que a ordem da
+soma em `float` importa precisa ser afirmada sobre o número que o teste compara, não sobre um
+intermediário.
+
+Quatro decisões, que vieram com a spec: [D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) a [D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md).
+
 ## Próximo passo
 
 **Na frente `marco1`, a PR do M2.3**, que o dono abre e mescla com a CI verde. O M1.7 entrou na `main` pela PR #32, em
@@ -1605,9 +1649,10 @@ treino. **O que falta medir** é um dia em que um ativo coberto pague provento �
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, a PR do M2.1a.** A PR da T14 a T16 passa pela `marco1`, porque toca
-`apps/api/views.py` e `apps/risk/`. Com ela, os três blocos da frente — M2.1a, M4.2 e M4.1 — estão
-fechados, e o próximo não está definido: a escolha é do dono ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
+**Na frente `identidade`, a PR de implementação do M2.2a**, aberta e segurada até o parecer da CVM
+([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). Ela passa pela `marco1` — o que a carteira lê de `apps/risk/`, os `PROTECT` e as três
+tarefas novas no `worker`. Enquanto o parecer não chega, o ramo recebe a `main` quando ela mudar. O
+próximo bloco da frente é escolha do dono ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
 `api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa
 `force_login`, não `force_authenticate`; em dev, suba `RUVOR_THROTTLE_ANON` no `.env` — a página
 de ativo são cinco `GET`, todos com o IP do contêiner `frontend`.

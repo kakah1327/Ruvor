@@ -128,7 +128,9 @@ cálculo, gravado no pedido e na execução que ele abre. Desde o M1.6a existem 
 demanda** de um ativo nunca calculado e o **kit de marca completo**, nos dois temas. Desde o
 M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema OpenAPI** e o
 **filtro automático por organização**, e desde o M4.1, **relatórios** de risco guardados para sempre,
-com SHA-256. Desde o
+com SHA-256. O M2.2a, a **carteira** — composição versionada e o risco dela nos nove modelos —, está
+pronto no ramo `identidade/M2.2-carteira` e só entra com o parecer da CVM
+([D-116](docs/decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). Desde o
 M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechado —, e desde o M1.6c a tela tem as
 cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M1.7
 a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão da página inicial vem da API
@@ -145,8 +147,8 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   modelos caros expõem e aceitam **retratos** do estado treinado, no formato de
   `engine/src/engine/snapshots.py` ([D-76](docs/decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md));
   e o `py.typed` deixa o `mypy` do backend enxergar os tipos dele.
-- `backend/` — projeto Django com seis apps, `apps/accounts`, `apps/assets`,
-  `apps/analytics`, `apps/risk`, `apps/fundamentals` e `apps/api`. `GET /health` e a API em
+- `backend/` — projeto Django com sete apps, `apps/accounts`, `apps/assets`,
+  `apps/analytics`, `apps/risk`, `apps/fundamentals`, `apps/api` e `apps/portfolios`. `GET /health` e a API em
   `/api/v1/`, no formato da [D-86](docs/decisoes/D-86-convencoes-da-api-http.md): seis rotas de
   leitura — a busca no catálogo, sem diferença de caixa nem de acento no nome e no nome de pregão,
   pelo lookup `unaccent` ([D-143](docs/decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)), com
@@ -171,16 +173,25 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   ([D-113](docs/decisoes/D-113-o-relatorio-e-uma-foto-guardada-com-sha-256.md) a
   [D-115](docs/decisoes/D-115-a-chave-de-leitura-le-o-relatorio-da-organizacao-estende-a-d-108.md)); tabela
   privada nova usa o gerente de `apps/accounts/tenancy.py`, que filtra pela organização do
-  contexto e levanta sem ela ([D-112](docs/decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); a
-  `apps/api` não importa o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as catorze tarefas de
+  contexto e levanta sem ela ([D-112](docs/decisoes/D-112-o-filtro-automatico-por-organizacao-nasce-no-m4-2.md)); desde o
+  M2.2a, as rotas da **carteira**, `portfolios*`: criar, listar, ler, mudar, arquivar e trocar a
+  composição — pesos em %, exatamente os enviados, versão nova a cada troca, `core.portfolio_version`
+  e `core.portfolio_holding` só crescem, com gatilho — e pedir (`POST .../risk`, só sessão) e ler o
+  risco da versão corrente, com a perda em reais calculada na leitura; a série única da carteira
+  (`apps/portfolios/series.py`, só biblioteca padrão) vai aos nove modelos pelas três tarefas da
+  carteira, sob a trava consultiva da execução (7104), com um cálculo por organização e teto global
+  (`RUVOR_PORTFOLIO_*`) ([D-116](docs/decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) a
+  [D-119](docs/decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)); a
+  `apps/api` e o lado da web de `apps/portfolios` não importam o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as dezessete tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
   cálculo, uma por (ativo, modelo), o fecho, o leque `recalcular_cobertos` e a varredura
   `fechar_presas`, que fecha pela regra a execução presa em `running`, em `apps/risk/stale.py`),
   `apps/assets/tasks.py` (catálogo, preços, a `rotina_diaria`, que encadeia presas → preços →
   métricas → risco, e a cadeia sob demanda `calcular_sob_demanda`), `apps/analytics/tasks.py` (as métricas
   da rotina) e `apps/fundamentals/tasks.py` (a coleta da
-  CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois, e a `importar_comunicados`). O
+  CVM, o cálculo e a `rotina_fundamentos`, que encadeia os dois, e a `importar_comunicados`) e
+  `apps/portfolios/tasks.py` (a abertura, uma por modelo e o fecho do risco da carteira). O
   `CELERY_BEAT_SCHEDULE` tem quatro entradas, com horário em `RUVOR_BEAT_ASSETS_CRON`,
   `RUVOR_BEAT_PRICES_CRON`, `RUVOR_BEAT_FUNDAMENTALS_CRON` e `RUVOR_BEAT_DISCLOSURES_CRON`
   ([D-67](docs/decisoes/D-67-uma-tarefa-por-ativo-e-modelo-restringe-o-rf-12-do-m1-4.md) a
@@ -189,18 +200,20 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1456 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1711 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` — e a
   extensão `unaccent` (`apps/assets/migrations/0004_unaccent.py`; o banco de produção precisa dela),
-  as tabelas `core.organization`, `core.user`, `core.compute_request`, `core.api_key` e `core.report`, a organização fixa do Marco 1 (`slug`
+  as tabelas `core.organization`, `core.user`, `core.compute_request`, `core.api_key`, `core.report`,
+  `core.portfolio`, `core.portfolio_version` e `core.portfolio_holding`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
-  `silver.disclosure`, e as sete tabelas da `gold`, `gold.behavior_metric`,
+  `silver.disclosure`, e as nove tabelas da `gold`, `gold.behavior_metric`,
   `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
-  `gold.fundamental_indicator` e `gold.peer_comparison`, mais `core.compute_request`,
-  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — trinta e duas ao todo. O `AUTH_USER_MODEL`
+  `gold.fundamental_indicator`, `gold.peer_comparison`, `gold.portfolio_risk_run` e
+  `gold.portfolio_risk_result`, mais `core.compute_request`,
+  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — trinta e sete ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail, **sem diferença de caixa**
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
   [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem

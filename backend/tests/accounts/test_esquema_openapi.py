@@ -22,6 +22,7 @@ from apps.accounts import services
 from apps.accounts import views as conta
 from apps.accounts.permissions import AccountReady
 from apps.api.views import ApiNotFound
+from apps.portfolios import views as carteira
 from tests.accounts.conftest import organizacao, usuario
 from tests.accounts.test_api_key_alcance import _rotas
 
@@ -38,6 +39,7 @@ SEM_CORPO = {
     ("post", "/api/v1/auth/password"),
     ("delete", "/api/v1/api-keys/{prefix}"),
     ("get", SCHEMA),
+    ("delete", "/api/v1/portfolios/{id}"),
 }
 # M4.1: as views de relatorio, `"read"` e `AccountReady` -- a lista fechada contra a que vire
 # `AllowAny`, que o teste da seguranca, sozinho, aprovaria
@@ -46,6 +48,13 @@ RELATORIO = {
     conta.ReportView,
     conta.ReportJsonView,
     conta.ReportCsvView,
+}
+# M2.2a: as views da carteira, `AccountReady` -- a mesma lista fechada contra a que vire `AllowAny`
+CARTEIRA = {
+    carteira.PortfoliosView,
+    carteira.PortfolioView,
+    carteira.PortfolioHoldingsView,
+    carteira.PortfolioRiskView,
 }
 # os downloads: binario no tipo de midia de cada um, e nao objeto com `$ref` (RF-13)
 BINARIO = {
@@ -199,3 +208,25 @@ def test_m41_os_downloads_sao_binarios(esquema: dict[str, Any]) -> None:
         assert conteudo[midia]["schema"] == {"type": "string", "format": "binary"}, (
             chave
         )
+
+
+# --- a carteira (M2.2a, RF-19, RF-21) -------------------------------------------------------
+
+
+def test_m22_carteira_exige_conta_e_sai_sem_anonimo(esquema: dict[str, Any]) -> None:
+    for classe in CARTEIRA:
+        assert classe.permission_classes == [AccountReady], classe.__name__
+    operacoes = _operacoes(esquema)
+    achadas = {c: k for c, k in _rotas_da_api().items() if k in CARTEIRA}
+    assert set(achadas) == {  # contra a varredura inerte: as oito, no esquema
+        ("get", "/api/v1/portfolios"),
+        ("post", "/api/v1/portfolios"),
+        ("get", "/api/v1/portfolios/{id}"),
+        ("patch", "/api/v1/portfolios/{id}"),
+        ("delete", "/api/v1/portfolios/{id}"),
+        ("put", "/api/v1/portfolios/{id}/holdings"),
+        ("get", "/api/v1/portfolios/{id}/risk"),
+        ("post", "/api/v1/portfolios/{id}/risk"),
+    }
+    for chave in achadas:
+        assert {} not in operacoes[chave]["security"], chave
