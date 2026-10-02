@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-30
+**Última atualização:** 2026-10-02
 
 ---
 
@@ -17,15 +17,20 @@
 e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 2026-09-29** — a coluna
 `core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; o **M1.6d fechou em 2026-09-30** — o
 acabamento — e entrou na `main` pela PR #27; o **M1.5c fechou em 2026-09-30** — a execução presa em `running` é
-fechada pela varredura —, com a PR de implementação a abrir pelo dono; quatro blocos da `marco1` — M1.7, M3.3, M2.3 e
-M2.1b — têm spec e plano aprovados, a implementar; na frente
+fechada pela varredura — e entrou na `main` pela PR #30; o **M2.3 fechou em 2026-10-02** — a camada explicativa:
+o alternador Iniciante/Avançada no casco, a frase avançada de cada uma das 55 chaves e os detalhes técnicos recolhidos
+na iniciante ([D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) a
+[D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)) —, com a PR de implementação a abrir pelo dono; o
+**M1.7 também fechou em 2026-10-02**, no ramo próprio (`marco1/M1.7-busca-e-catalogo`), cujo fecho não está neste
+ramo — os dois se juntam no merge; dois blocos da `marco1` — M3.3 e M2.1b — têm spec e plano aprovados, a
+implementar; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
 exportável e auditável — e entrou na `main` pela PR #28, e o **M2.1a fechou em 2026-09-30** — a T14
 preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —, com a PR da T14 a T16 a abrir
 pelo dono; o **M4.2 fechou em 2026-09-28**
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M2.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -100,7 +105,11 @@ não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
 cinco camadas:** depois do risco, os fundamentos — os 17 indicadores do último balanço, com a frase de cada um, o
 porquê de cada nulo e a posição entre os pares do segmento em contagem exata — e os comunicados da companhia à CVM,
-com filtro por categoria, pelas rotas `/fundamentals` e `/disclosures`.
+com filtro por categoria, pelas rotas `/fundamentals` e `/disclosures`. **Desde o M2.3 há duas leituras:** o alternador
+Iniciante/Avançada no casco, lembrado no navegador (`ruvor-reading`), troca a frase de cada um dos 55 números da lista
+fechada pela técnica — o que é, como se calcula, sobre que janela — e abre, na avançada, o que a iniciante recolhe: a
+assimetria e a curtose, a tabela dos nove modelos com os testes de cada um e a trilha do cálculo. O número é o mesmo nos
+dois níveis, e a troca não pede nada à API.
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1479,13 +1488,62 @@ mesmo com o arquivo novo montado; o `--max-tasks-per-child` não resolve, porque
 Nenhuma decisão nova: as oito, [D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) a
 [D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md), vieram com a spec.
 
+### M2.3 — Camada explicativa
+
+Spec em [`specs/M2.3-camada-explicativa.md`](specs/M2.3-camada-explicativa.md) e plano em
+[`planos/M2.3-camada-explicativa.md`](planos/M2.3-camada-explicativa.md). Frente `marco1`, ramo
+`marco1/M2.3-camada-explicativa`. Dezesseis tarefas: as quatro conferências técnicas (T2, T5, T8, T11), os quatro
+mockups (T3, T6, T9, T12), cada um com revisão e portão, aprovados pelo dono em 2026-10-02; o código em `18d4d4b` (T1),
+`b7b5ac8` (T4), `ff43fbd` (T7), `077da3a` (T10), `d317be3` (T13) e `b5c13e9` (o roteiro, T15); a T0 e a T14 sem
+arquivo de código. Três decisões, com a spec: [D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md)
+(o texto mora no frontend), [D-152](decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md) (o nível é do
+visitante, global, padrão iniciante) e [D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md) (o parecer da
+CVM não bloqueia o bloco). A D-154 ficou sem uso.
+
+**O que passou a existir:** `frontend/src/reading.ts` (`getReading`, `setReading`, `onReadingChange`, `useReading`,
+`textFor`), lido de forma síncrona no primeiro desenho; o `ReadingSwitch` no casco, ao lado do tema; `TEXTOS_AVANCADOS`
+em `frontend/src/content/avancado.ts`, com a mesma chave e a mesma assinatura da iniciante para cada uma das 55 chaves,
+e a `risco.tabela.intro` avançada em `BLOCOS_AVANCADOS`, fora das 55; o `Collapsible` (e `.ruvor-collapsible` no kit)
+para a assimetria e a curtose, a tabela dos nove e a trilha, e as linhas de teste da tabela abertas pelo nível; as
+marcas `data-reading`, `data-collapsible` e `data-open` para a execução real.
+
+**Três iniciantes emendadas, por exceção ao "Fora" da spec, aprovadas pelo dono nos portões:**
+
+- `comportamento.return_ytd` (portão da T6): dizia "Desde o primeiro pregão do ano", e o cálculo parte do fechamento do
+  último pregão do ano anterior — passa a "Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100
+  viraram ${x}.";
+- `fundamentos.pares.abaixoDeTodas` (portão da T12): "abaixo de todas" era falso com empate no menor valor — passa a
+  "Nenhuma das outras ${outras} companhias do grupo com este indicador calculado tem número menor.";
+- a D-64 pela **expressão única** "não do número de hoje" (portão da T9, a alternativa da conferência), em
+  `risco.veredito` e nos ramos `k ≥ 1` e `k = 0` de `risco.naoRejeitados`, nas duas leituras — muda as três iniciantes,
+  como o RF-08 previa.
+
+| Verificação | Resultado |
+|---|---|
+| A lista fechada (V-02) | ✅ `LEITURA_KEYS` igual às 55 do RF-04, cada uma nas duas entradas com a mesma aridade; `PENDENTES` apagada na T13 |
+| O alternador (V-03) | ✅ o primeiro desenho já sai no nível lembrado (`renderToString`); valor desconhecido e armazenamento que lança dão iniciante |
+| As frases, o recolhimento, a D-64, o vocabulário (V-04 a V-07) | ✅ por seção, nos dois níveis; nenhum recolhível dentro de `aria-live`; a expressão da D-64 em cada ramo exigido; `avancado.ts` na varredura, e a regra `pior` dos Fundamentos também na avançada |
+| Suíte, lint, tipos, build (V-09, V-11) | ✅ **1206 testes no frontend** (29 arquivos), contra a linha de base de 1099; `npm run lint`, `typecheck` e `build` limpos; `backend/` e `engine/` sem diferença da `main` |
+| Mutações (T14) | ✅ as 39 das T1, T4, T7, T10 e T13 reprovaram sobre o código final, cada uma revertida |
+| **Execução real (V-10)** | ✅ **631 conferências, 0 falhas**, 52 capturas, com o Beat parado e a taxa do anônimo subida. O ITUB4 (execução 85) e o PETR4 (86) conferidos em E1 pela API antes do navegador. Nos dois ativos, nos dois níveis, nos dois temas, em 360 e 1440 px (16 combinações): `data-reading` certo; na iniciante, `moments`, `models` e `trail` em `data-open="false"`, a tabela fora da árvore, e, aberta pelo botão, as nove `tests` em `false`; na avançada, tudo em `true`; **zero pedido** `/api/v1/` nos 2 s depois de cada troca pelo alternador (16 de 16); em 360 px, o casco sem rolagem horizontal; nenhum erro de página. A segunda carga do ITUB4 em **389 ms** |
+
+**O que a execução mostrou:** nada que os testes não tivessem pego — a execução real saiu verde na primeira rodada.
+O que custou tempo foi antes dela, nos testes e nos mockups: o `getByText` que não acha frase com "R$ "; as iniciantes
+que devolviam união de literais e travavam o `Leitura<T>`; e os mockups que continuam mostrando as frases anteriores às
+emendas (o `comportamento.html` e o `fundamentos.html`, e a vista `itub4` do `risco.html`) — ver
+[aprendizados](aprendizados.md) e o [índice dos mockups](mockups/README.md).
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M1.5c**, que o dono abre e mescla com a CI verde e a revisão da `identidade` (o bloco
-cruza com a T14 do M2.1a, no texto de `apps/risk/tasks.py`, e já recebeu a `main` com ela); depois, **implementar o
-M1.7 — Busca e catálogo**, pelo [plano](planos/M1.7-busca-e-catalogo.md). Os quatro blocos que faltam se implementam
-nesta ordem: **M1.7 → M3.3 → M2.3 → M2.1b** — a T14 do M2.1a entrou antes do M2.1b (ver o fecho do M2.1a), e o M2.1b
-ajusta a ordem por ela. Ramos, worktrees e a regra de onde cada comando roda estão em
+**Na frente `marco1`, as PRs do M1.7 e do M2.3**, que o dono abre e mescla com a CI verde — os dois fecharam em
+2026-10-02, cada um no seu ramo, e tocam os mesmos arquivos (`RiskSection.tsx`, `textos.ts`, `capturas.mjs` e os
+documentos do fecho): quem mesclar por último recebe a `main` e resolve os conflitos — o M1.7 não acrescentou número com
+frase (só os textos `busca.sugestao*`), então a lista das 55 não muda no merge. Depois, **implementar o M3.3 e o
+M2.1b**, nesta ordem — a T14 do M2.1a entrou antes do M2.1b (ver o fecho do M2.1a), e o M2.1b ajusta a ordem por ela.
+**O M3.3 nasce com as duas entradas** de cada número novo com frase, pela
+[D-152](decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md), e entra na lista fechada do V-02; **o menu de
+conta do M2.1b**, se entrar em `.ruvor-topbar__prefs`, refaz os seletores por posição (`:first-child` o alternador,
+`:last-child` o tema) que a T4 do M2.3 escreveu. Ramos, worktrees e a regra de onde cada comando roda estão em
 [frentes/marco1.md](frentes/marco1.md).
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
@@ -1545,6 +1603,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista | `frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs` | Com um filtro por `has_prices` na busca da API (mudança de contrato) |
 | ~~**O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda~~ | ~~`frontend/src/components/RiskSection.tsx`~~ | ✅ **quitada no M1.6d** — uma região `ruvor-sr-only`, sempre montada, só com o andamento; Fundamentos e Comunicados perderam o `aria-live` do embrulho |
 | ~~**O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir~~ | ~~`frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.6c** (T8, `f00f3d2`) |
+| **`comportamento.nota.retornos` afirma o que o código não ancora**: diz que o preço ajustado "já inclui proventos e desdobramentos", e o ajuste vem pronto da fonte, sem regra própria no código. Achado na conferência técnica do M2.3 (T5) e deixado fora pelo dono no portão da T6, porque a frase não é das 55 nem das três emendas | `frontend/src/content/textos.ts`, `comportamento.nota.retornos` | Num bloco que corrija o texto da iniciante, ou quando a conformação do preço documentar o ajuste |
 | **A taxa do anônimo aceitou 81 pedidos com o limite em 60 por minuto** (execução real do M1.6c). Hipótese não provada: o `SimpleRateThrottle` do DRF conta sem atomicidade sob o `runserver` concorrente. E, com a taxa certa, a tela do ativo aguenta **5 cargas por minuto** a um anônimo em desenvolvimento | `backend/apps/accounts/throttling.py` (frente `identidade`), `RUVOR_THROTTLE_ANON` | Antes de expor a aplicação: a `identidade` confirma a contagem, e a hospedagem decide a taxa e se a tela junta rotas |
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 
@@ -1562,7 +1621,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 
 | Pendência | Bloqueia |
 |---|---|
-| **Parecer sobre fronteira CVM** | Marco 2 (carteira) |
+| **Parecer sobre fronteira CVM** | O merge da carteira — a implementação do M2.2a, o M2.2b e o que deles derivar. Não bloqueia o resto do Marco 2: o M2.3 fechou sem ele ([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)), e a spec e o plano da carteira seguem sem ele ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
 | **Verificação de marca e domínio "Ruvor"** | Nada agora; risco se descoberto tarde |
 | **Medir o gargalo do treino** | Decisão sobre GPU vs paralelização — ver [D-20](decisoes/D-20-experimentos-em-cpu.md) |
 

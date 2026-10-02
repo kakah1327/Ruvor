@@ -49,7 +49,7 @@ terminado.
 | [M4.2 — API pública](M4.2-api-publica.md) | [M4.2](../specs/M4.2-api-publica.md) | ✅ executado (T0 a T10) em 2026-09-28 |
 | [M2.1b — Telas de acesso](M2.1b-telas-de-acesso.md) | [M2.1b](../specs/M2.1b-telas-de-acesso.md) | ✅ aprovado em 2026-09-30 (PR #24); implementação a começar |
 | [M1.5c — Execução presa](M1.5c-execucao-presa.md) | [M1.5c](../specs/M1.5c-execucao-presa.md) | ✅ executado e fechado |
-| [M2.3 — Camada explicativa](M2.3-camada-explicativa.md) | [M2.3](../specs/M2.3-camada-explicativa.md) | ✅ aprovado em 2026-09-30 (PR #22); implementação a começar |
+| [M2.3 — Camada explicativa](M2.3-camada-explicativa.md) | [M2.3](../specs/M2.3-camada-explicativa.md) | ✅ executado e fechado |
 | [M3.3 — Estresse histórico](M3.3-estresse-historico.md) | [M3.3](../specs/M3.3-estresse-historico.md) | ✅ aprovado em 2026-09-30 (PR #20); implementação a começar |
 | [M1.6d — Acabamento](M1.6d-acabamento.md) | [M1.6d](../specs/M1.6d-acabamento.md) | ✅ executado e fechado |
 | [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | [M1.7](../specs/M1.7-busca-e-catalogo.md) | ✅ aprovado em 2026-09-30 (PR #21); implementação a começar |
