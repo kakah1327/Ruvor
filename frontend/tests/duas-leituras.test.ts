@@ -113,8 +113,6 @@ const PENDENTES = [
   "risco.kupiec",
   "risco.christoffersen",
   "risco.dq",
-  "ativo.ultimoFechamento",
-  "ativo.precoAjustado",
   "fundamentos.revenue_ttm",
   "fundamentos.ebit_ttm",
   "fundamentos.net_income_ttm",

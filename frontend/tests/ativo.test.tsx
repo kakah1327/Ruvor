@@ -11,6 +11,9 @@
  * - `data-ready` e o `reloadAll()` que a T11 usa; as duas seções do M1.6c depois do risco, fora
  *   do `data-ready`.
  *
+ * - M2.3 (T4): o cabeçalho e o preço nos dois níveis — a prova por seção no avançado (V-04), o
+ *   valor igual nos dois, e a troca pelo alternador sem pedido à API com o risco em E1 (V-08).
+ *
  * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
  * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
  */
@@ -28,22 +31,27 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routes } from "../src/App";
-import type {
-  AssetDetail,
-  Disclosures,
-  EventRow,
-  Events,
-  Fundamentals,
-  HistogramBin,
-  Metric,
-  Metrics,
-  PriceRow,
-  Prices,
-  Risk,
+import {
+  type AssetDetail,
+  type Disclosures,
+  type EventRow,
+  type Events,
+  type Fundamentals,
+  type HistogramBin,
+  type Metric,
+  type Metrics,
+  MODEL_ORDER,
+  type PriceRow,
+  type Prices,
+  type Risk,
+  type RiskResult,
+  type RiskRun,
 } from "../src/api/types";
+import { TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { TEXTOS } from "../src/content/textos";
 import { formatCurrency, formatCurrencyPrecise } from "../src/format/numbers";
 import { useAssetData } from "../src/screens/AssetScreen";
+import { comNivel, limparNivel } from "./nivel";
 
 // ---------------------------------------------------------------- o duplo do uPlot
 
@@ -322,6 +330,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  limparNivel();
 });
 
 // ---------------------------------------------------------------- as partes da tela
@@ -739,6 +748,194 @@ describe("RF-08 — o preço", () => {
     expect(within(p).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
     expect(within(p).getByText(TEXTOS["ativo.preco.vazio"])).toBeDefined();
     expect(within(p).queryByRole("img")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- M2.3: os dois níveis
+
+/** Um resultado de modelo, o mínimo para a seção de risco sair em E1. */
+function riskResult(
+  model: RiskResult["model_name"],
+  alpha: RiskResult["alpha"],
+): RiskResult {
+  return {
+    model_name: model,
+    model_category: "traditional",
+    alpha,
+    hyperparameters: {},
+    var_latest: "0.0300000000",
+    var_mean: "0.0300000000",
+    violations: 10,
+    expected_violations: "11.000000",
+    kupiec_passed: true,
+    kupiec_p_value: "0.5000000000",
+    christoffersen_passed: true,
+    christoffersen_p_value: "0.5000000000",
+    dq_passed: true,
+    dq_p_value: "0.5000000000",
+    basel_zone: null,
+    adequate: true,
+    error: "",
+    reused_snapshots: null,
+    trained_snapshots: null,
+  };
+}
+
+const RUN_OK: RiskRun = {
+  id: 70,
+  calculated_at: "2026-09-28T19:40:00-03:00",
+  finished_at: "2026-09-28T19:45:00-03:00",
+  status: "ok",
+  engine_version: "0.3.0",
+  seed: 42,
+  train_window_days: 252,
+  as_of_date: "2026-09-28",
+  first_price_date: "2016-09-22",
+  price_count: 2487,
+  train_count: 252,
+  test_count: 2235,
+  price_run: {
+    id: 9,
+    source: "yahoo-chart",
+    started_at: "2026-09-28T19:00:00-03:00",
+    finished_at: "2026-09-28T19:00:30-03:00",
+  },
+  requested_models: [...MODEL_ORDER],
+  full_recompute: false,
+  results: MODEL_ORDER.flatMap((m) => [
+    riskResult(m, "0.0500"),
+    riskResult(m, "0.0100"),
+  ]),
+};
+
+/** E1: resultado pronto, sem cálculo em curso nem pedido — o acompanhamento não consulta. */
+const RISK_E1: Risk = {
+  ticker: "ITUB4",
+  covered: true,
+  latest: RUN_OK,
+  in_progress: null,
+  request: null,
+};
+
+const lastBox = () => header().querySelector(".ruvor-asset-head__last") as HTMLElement;
+const readingGroup = () =>
+  screen.getByRole("group", { name: TEXTOS["casco.leitura.rotulo"] });
+
+describe("M2.3 — o cabeçalho e o preço nos dois níveis (V-04)", () => {
+  // A data do último fechamento da fixture, como a tela a formata.
+  const DATA = "28/09/2026";
+
+  it("no iniciante: as iniciantes, e nenhuma avançada", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    expect(
+      within(lastBox()).getByText(TEXTOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect(
+      within(lastBox()).queryByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeNull();
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
+    expect(
+      within(pricePanel()).queryByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeNull();
+  });
+
+  it("a prova por seção no avançado: cada chave do cabeçalho e do preço na avançada, nunca na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    // Chave de função: a saída da avançada com os argumentos da fixture, e não a da iniciante.
+    expect(
+      within(lastBox()).getByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect(
+      within(main()).queryByText(TEXTOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeNull();
+    // Chave de texto: a avançada presente, a iniciante ausente.
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+    expect(within(main()).queryByText(TEXTOS["ativo.precoAjustado"])).toBeNull();
+  });
+
+  it("a prova por seção no avançado, sem preço: a frase do preço ajustado na avançada, junto da área vazia", async () => {
+    // Sem série, só a frase do preço ajustado muda; o último fechamento é do caso acima.
+    allOk({ prices: ok({ ...PRICES, results: [] }) });
+    stubFetch();
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+    expect(within(pricePanel()).queryByText(TEXTOS["ativo.precoAjustado"])).toBeNull();
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.preco.vazio"])).toBeDefined();
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis: o fechamento e o resumo do gráfico", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    const valor = () =>
+      lastBox().querySelector("[data-value='last-close']")?.textContent;
+    const resumo = () =>
+      within(pricePanel()).getByRole("img").getAttribute("aria-label");
+    const antes = { valor: valor(), resumo: resumo() };
+    expect(antes.valor).toBe(formatCurrency(38.5));
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.avancada"],
+      }),
+    );
+    expect(
+      within(lastBox()).getByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect({ valor: valor(), resumo: resumo() }).toEqual(antes);
+  });
+});
+
+describe("M2.3 — V-08: trocar o nível não pede nada à API", () => {
+  it("com o risco em E1, a troca pelo alternador não chama o fetch, nos dois sentidos", async () => {
+    allOk({ risk: ok(RISK_E1) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    // E1: a seção de risco mostra o resultado pronto, sem acompanhamento.
+    expect(
+      main().querySelector("[data-risk-state]")?.getAttribute("data-risk-state"),
+    ).toBe("E1");
+    await waitFor(() =>
+      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
+    );
+    const fetchSpy = vi.mocked(fetch);
+    const antes = fetchSpy.mock.calls.length;
+    // Um respiro depois da troca, para qualquer efeito disparado por ela chegar ao fetch.
+    const respiro = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+    const group = readingGroup();
+    expect(group.closest("[aria-live]")).toBeNull();
+    fireEvent.click(
+      within(group).getByRole("button", { name: TEXTOS["casco.leitura.avancada"] }),
+    );
+    await respiro();
+    expect(fetchSpy.mock.calls.length).toBe(antes);
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.iniciante"],
+      }),
+    );
+    await respiro();
+    expect(fetchSpy.mock.calls.length).toBe(antes);
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
   });
 });
 

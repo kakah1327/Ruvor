@@ -2,6 +2,7 @@ import type { Load } from "../api/resource";
 import type { AssetDetail } from "../api/types";
 import { TEXTOS } from "../content/textos";
 import { formatCurrency, formatDate } from "../format/numbers";
+import { textFor, useReading } from "../reading";
 import { SectionError, SectionSkeleton } from "./SectionStatus";
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
  * "ativo não encontrado".
  */
 export function AssetHeader({ load, onRetry }: Props) {
+  // O nível muda só a frase do último fechamento, nunca o valor (D-152, V-04).
+  const reading = useReading();
   if (load.state !== "ok") {
     return (
       <section
@@ -87,7 +90,7 @@ export function AssetHeader({ load, onRetry }: Props) {
               {formatCurrency(Number(last.close))}
             </p>
             <p className="ruvor-note">
-              {TEXTOS["ativo.ultimoFechamento"](formatDate(last.date))}
+              {textFor("ativo.ultimoFechamento", reading)(formatDate(last.date))}
             </p>
           </>
         ) : (

@@ -139,8 +139,25 @@ describe("o nível de leitura", () => {
 
   it("textFor devolve a iniciante no nível iniciante", async () => {
     const reading = await freshReading();
-    // LEITURA_KEYS nasce vazia (T1): a chave vai por `never` até a seção dela ganhar avançada.
-    expect(reading.textFor("ativo.precoAjustado" as never, "beginner")).toBe(
+    expect(reading.textFor("ativo.precoAjustado", "beginner")).toBe(
+      TEXTOS["ativo.precoAjustado"],
+    );
+    // Função: compara a saída (o `vi.resetModules` deu a `reading` outra instância de textos).
+    expect(reading.textFor("ativo.ultimoFechamento", "beginner")("26/09/2026")).toBe(
+      TEXTOS["ativo.ultimoFechamento"]("26/09/2026"),
+    );
+  });
+
+  it("textFor devolve a avançada no nível avançado", async () => {
+    const reading = await freshReading();
+    const { TEXTOS_AVANCADOS } = await import("../src/content/avancado");
+    expect(reading.textFor("ativo.precoAjustado", "advanced")).toBe(
+      TEXTOS_AVANCADOS["ativo.precoAjustado"],
+    );
+    expect(reading.textFor("ativo.ultimoFechamento", "advanced")("26/09/2026")).toBe(
+      TEXTOS_AVANCADOS["ativo.ultimoFechamento"]("26/09/2026"),
+    );
+    expect(reading.textFor("ativo.precoAjustado", "advanced")).not.toBe(
       TEXTOS["ativo.precoAjustado"],
     );
   });

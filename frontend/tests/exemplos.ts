@@ -185,4 +185,7 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.
 export const EXEMPLOS_AVANCADOS: Readonly<
   Record<string, ReadonlyArray<readonly unknown[]>>
-> = {};
+> = {
+  // O cabeçalho (T4): a linha do `casco-e-preco.html`. `ativo.precoAjustado` é texto.
+  "ativo.ultimoFechamento": [["26/09/2026"]],
+};

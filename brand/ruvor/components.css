@@ -707,6 +707,15 @@
   outline-offset: 2px;
 }
 
+/* M2.3: as chaves da barra juntas no terceiro lugar da grade — o alternador de leitura
+   primeiro, a chave de tema depois. Até 720 px, ver o fim da folha. */
+.ruvor-topbar__prefs {
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+  justify-self: end;
+}
+
 /* A chave de tema: três botões com rótulo, sobre a barra escura (só na barra). */
 .ruvor-segmented {
   display: inline-flex;
@@ -2043,5 +2052,28 @@
   /* M1.6c: a lista de comunicados em uma coluna — a data em cima do título. */
   .ruvor-doc {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* M2.3: com as duas chaves, a barra em três linhas, na ordem do DOM — a marca e o
+     alternador de leitura na primeira, a chave de tema na segunda, à direita, e a busca
+     (quando há) na terceira. */
+  .ruvor-topbar__prefs {
+    display: contents;
+  }
+
+  .ruvor-topbar__prefs > :first-child {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .ruvor-topbar__prefs > :last-child {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .ruvor-topbar:has(> .ruvor-topbar__prefs) .ruvor-topbar__search {
+    grid-row: 3;
   }
 }

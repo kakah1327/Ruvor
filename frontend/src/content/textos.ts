@@ -29,6 +29,10 @@ export const TEXTOS = {
   "casco.tema.claro": "Claro",
   "casco.tema.escuro": "Escuro",
   "casco.tema.sistema": "Sistema",
+  // O alternador do nível de leitura (RF-01 do M2.3): do `casco-e-preco.html` aprovado.
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
 
   // A página não encontrada. O endereço digitado vai entre `antes` e `depois`, citado.
   "casco.naoEncontrada.eyebrow": "Endereço desconhecido",
