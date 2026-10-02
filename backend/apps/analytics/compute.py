@@ -40,7 +40,8 @@ from apps.analytics.metrics import (
     Metrics,
     compute,
 )
-from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
+from apps.analytics.stress import EpisodeResult, compute_stress
 from apps.assets.models import Asset, CorporateEvent, Price
 
 # As colunas anulaveis que entram em `null_columns` quando saem nulas, na ordem da tabela
@@ -270,8 +271,13 @@ def _compute_asset(
     benchmark = None if asset.ticker == IBOV_TICKER else benchmark_bars
     try:
         metrics = compute(bars, _dividends(asset), benchmark)
-        with transaction.atomic():  # a linha e os 42 baldes entram juntos (RF-04)
-            write_metrics(asset, calculated_at, metrics)
+        # O estresse (M3.3, RF-08) e calculado aqui dentro, junto das metricas: a falha
+        # dele vira ativo falho no relatorio, nunca a execucao inteira. O calendario e a
+        # serie do IBOV ja lida, tambem quando o ativo e o proprio IBOV.
+        stress = compute_stress(bars, benchmark, benchmark_bars)
+        # a linha, os 42 baldes e os episodios entram juntos (RF-04; RF-08 do M3.3)
+        with transaction.atomic():
+            write_metrics(asset, calculated_at, metrics, stress)
     except Exception as exc:
         return AssetResult(
             asset.ticker,
@@ -335,9 +341,15 @@ def _null_columns(values: dict[str, object], *, with_benchmark: bool) -> list[st
 
 
 def write_metrics(
-    asset: Asset, calculated_at: datetime, metrics: Metrics
+    asset: Asset,
+    calculated_at: datetime,
+    metrics: Metrics,
+    stress: list[EpisodeResult],
 ) -> BehaviorMetric:
-    """A linha de metrica e os 42 baldes dela. Sempre `create`, nunca `update` (RF-02)."""
+    """A linha de metrica, os 42 baldes e os episodios de estresse dela (M3.3, RF-07).
+
+    Sempre `create`, nunca `update` (RF-02).
+    """
     metric = BehaviorMetric.objects.create(
         asset=asset,
         calculated_at=calculated_at,
@@ -356,6 +368,29 @@ def write_metrics(
                 count=b.count,
             )
             for b in metrics.histogram
+        ]
+    )
+    StressEpisode.objects.bulk_create(
+        [
+            StressEpisode(
+                metric=metric,
+                episode=r.episode,
+                start_date=r.start_date,
+                end_date=r.end_date,
+                missing=r.missing,
+                window_start_date=r.window_start_date,
+                window_end_date=r.window_end_date,
+                period_return=r.period_return,
+                drawdown=r.drawdown,
+                drawdown_peak_date=r.drawdown_peak_date,
+                drawdown_trough_date=r.drawdown_trough_date,
+                recovery_date=r.recovery_date,
+                recovery_sessions=r.recovery_sessions,
+                benchmark_period_return=r.benchmark_period_return,
+                benchmark_drawdown=r.benchmark_drawdown,
+                benchmark_recovery_sessions=r.benchmark_recovery_sessions,
+            )
+            for r in stress
         ]
     )
     return metric

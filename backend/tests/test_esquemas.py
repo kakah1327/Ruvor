@@ -64,6 +64,7 @@ TABELAS = {
     "gold.return_histogram_bin",
     "gold.risk_result",
     "gold.risk_run",
+    "gold.stress_episode",
     "public.auth_group",
     "public.auth_group_permissions",
     "public.auth_permission",
