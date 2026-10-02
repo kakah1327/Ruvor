@@ -56,7 +56,7 @@ consolidado quando o documento o tem, senão o individual (`backend/apps/fundame
 | `fundamentos.net_debt_to_equity` | `negativo = true` | Negativa porque a dívida líquida é negativa (o patrimônio é sempre positivo quando há razão). | backend/apps/fundamentals/indicators.py:270, frontend/src/components/FundamentalsSection.tsx:115 | módulo na frase |
 | `fundamentos.close` | `price_date` não anterior ao último pregão da identidade | O `close` do pregão (o fechamento da cotação do Yahoo, não o `adj_close`), o último com data entre 10 dias corridos antes da data local do cálculo e ela; é o preço que entra no P/L e no P/VP. | backend/apps/fundamentals/compute.py:60, backend/apps/fundamentals/compute.py:264, backend/apps/assets/conform_prices.py:93, backend/apps/fundamentals/indicators.py:288, frontend/src/components/FundamentalsSection.tsx:152 | janela de 10 dias corridos; data local de `calculated_at` (`backend/apps/fundamentals/compute.py:196`, fuso `backend/config/settings.py:234`); 6 casas |
 | `fundamentos.closeOutraData` | `price_date` anterior ao último pregão da identidade | O mesmo `close` da janela de 10 dias, de um pregão anterior ao último coletado, porque o cálculo roda por agenda semanal (padrão: segunda, 8h, configurável) e não a cada pregão. No PETR4: 25/09/2026 contra 01/10/2026. | frontend/src/components/FundamentalsSection.tsx:152, frontend/src/components/FundamentalsSection.tsx:412, backend/apps/fundamentals/compute.py:264, backend/config/settings.py:206 | janela de 10 dias; agenda `RUVOR_BEAT_FUNDAMENTALS_CRON`, padrão `0 8 * * 1` |
-| `fundamentos.eps` | `negativo = false` | O lucro de 12 meses da controladora dividido pela soma das ações ON e PN do balanço mais recente, cada classe já descontadas as em tesouraria, na escala inferida pelo LPA que a própria companhia informa (unidades ou milhares, aceita só dentro de um fator 2, D-124); a CVM só informa a quantidade de 2020 em diante. | backend/apps/fundamentals/indicators.py:275, backend/apps/fundamentals/indicators.py:278, backend/apps/fundamentals/conform.py:617, backend/apps/fundamentals/conform.py:632, backend/apps/fundamentals/conform.py:514 | numerador 12 meses, ações na data; 6 casas (`backend/apps/fundamentals/indicators.py:38`) |
+| `fundamentos.eps` | `negativo = false` | O lucro de 12 meses da controladora dividido pela soma das ações ON e PN do balanço mais recente, cada classe já descontadas as em tesouraria. A escala (unidades ou milhares) é a que deixa o lucro acumulado no exercício desse balanço (o valor de menor início de exercício: 6 meses num ITR de 30/06), dividido pelas ações, mais perto do LPA básico que a companhia declara para o mesmo período; aceita só a menos de um fator 2 (D-124). | backend/apps/fundamentals/indicators.py:275, backend/apps/fundamentals/indicators.py:278, backend/apps/fundamentals/conform.py:617, backend/apps/fundamentals/conform.py:629, backend/apps/fundamentals/conform.py:632, backend/apps/fundamentals/conform.py:637, backend/apps/fundamentals/conform.py:643, backend/apps/fundamentals/conform.py:514 | numerador 12 meses, ações na data; 6 casas (`backend/apps/fundamentals/indicators.py:38`) |
 | `fundamentos.eps` | `negativo = true` | O mesmo quociente, negativo porque o lucro de 12 meses é prejuízo. | backend/apps/fundamentals/indicators.py:278, frontend/src/components/FundamentalsSection.tsx:158 | ramo pelo sinal |
 | `fundamentos.bvps` | texto-função (sem ramo) | O patrimônio da controladora na data do balanço dividido pela mesma soma de ações ON e PN, líquidas de tesouraria. | backend/apps/fundamentals/indicators.py:283, frontend/src/components/FundamentalsSection.tsx:160 | posição na data; 6 casas |
 | `fundamentos.pe` | `negativo = false` | O `close` da janela de 10 dias dividido pelo LPA de 12 meses; nulo com LPA zero ou nulo. A frase mostra uma casa; o número em destaque, duas. | backend/apps/fundamentals/indicators.py:290, frontend/src/components/FundamentalsSection.tsx:161, frontend/src/components/FundamentalsSection.tsx:96 | 6 casas no banco; frase 1 casa, destaque 2 casas |
@@ -83,7 +83,7 @@ consolidado quando o documento o tem, senão o individual (`backend/apps/fundame
 ## O que não se ancorou em `caminho:linha`
 
 - **"Receita líquida", "descontados os impostos sobre a venda, as devoluções e os abatimentos"**
-  (a iniciante de `fundamentos.revenue_ttm`, `frontend/src/content/textos.ts:493`): o código só diz
+  (a iniciante de `fundamentos.revenue_ttm` em `frontend/src/content/textos.ts`): o código só diz
   que a receita é a conta `3.01` da DRE (`backend/apps/fundamentals/conform.py:182`). Que a 3.01
   é a receita líquida é conhecimento do plano de contas da CVM, não do código. A frase avançada
   não deve afirmar o conteúdo da 3.01 além de "a conta 3.01 da DRE".
@@ -102,11 +102,11 @@ da T12 decidir.
 
 1. **`fundamentos.pares.abaixoDeTodas` com empate.** O percentil conta só os estritamente menores
    (`backend/apps/fundamentals/peers.py:164`): com `k = 0`, a ação pode estar empatada com o menor
-   valor do grupo, e "Abaixo de todas as outras" (`frontend/src/content/textos.ts:601`) seria
+   valor do grupo, e "Abaixo de todas as outras" (`fundamentos.pares.abaixoDeTodas` em `frontend/src/content/textos.ts`) seria
    falso nesse caso. A avançada proposta acima não afirma "abaixo de todas".
 2. **`fundamentos.pares.leitura`** (fora da lista das 55) diz "acima de quantas companhias do
    grupo o número está" — coerente com o estritamente menor; não muda.
-3. **`fundamentos.cash`**: "as aplicações financeiras" (`frontend/src/content/textos.ts:518`) —
+3. **`fundamentos.cash`**: "as aplicações financeiras" (a iniciante de `fundamentos.cash` em `frontend/src/content/textos.ts`) —
    o código soma só as do **Ativo Circulante** (`backend/apps/fundamentals/conform.py:161`). Não é
    falso, mas é menos preciso; a avançada diz "do circulante".
 4. **`fundamentos.market_cap`** e o PETR4: o caso escolhido pela T11/T12 sai com valor de mercado
