@@ -185,8 +185,8 @@ const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>>> = {
   ],
   "fundamentos.pb": [["25/09/2026", "R$ 48,07", "1,29"]],
   "fundamentos.equity_parent": [[false], [true]],
-  "fundamentos.pares.segmento": [["Exploração. Refino e Distribuição"]],
-  "fundamentos.pares.subsetor": [["Petróleo. Gás e Biocombustíveis"]],
+  "fundamentos.pares.segmento": [["Exploração, Refino e Distribuição"]],
+  "fundamentos.pares.subsetor": [["Petróleo, Gás e Biocombustíveis"]],
   "fundamentos.pares.posicao": [
     ["6", "6"],
     ["2", "3"],

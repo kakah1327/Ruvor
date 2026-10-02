@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ComputeRequest, InProgress, Risk, RiskRun } from "../src/api/types";
-import { MIN_SESSIONS } from "../src/content/sugestoes";
+import { MIN_SESSIONS } from "../src/risk/config";
 import {
   type AssetLoad,
   type PricesLoad,
