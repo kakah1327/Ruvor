@@ -33,7 +33,8 @@ export type ModelName =
   | "garchnet"
   | "caviar";
 
-export type AssetItem = {
+/** Os campos comuns ao item da busca e à identidade do ativo (M1.7, RF-05). */
+export type AssetBase = {
   ticker: string;
   name: string;
   trading_name: string;
@@ -43,6 +44,9 @@ export type AssetItem = {
   has_prices: boolean;
 };
 
+/** O item da busca: só ele tem `has_risk` (M1.7, RF-05); a identidade não ganha o campo. */
+export type AssetItem = AssetBase & { has_risk: boolean };
+
 export type AssetPage = {
   count: number;
   limit: number;
@@ -50,7 +54,7 @@ export type AssetPage = {
   results: AssetItem[];
 };
 
-export type AssetDetail = AssetItem & {
+export type AssetDetail = AssetBase & {
   subsector: string | null;
   segment: string | null;
   listing_segment: string | null;

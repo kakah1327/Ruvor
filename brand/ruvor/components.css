@@ -1067,6 +1067,15 @@
   outline-offset: 2px;
 }
 
+/* O "e mais N" na fileira dos atalhos, sem cara de atalho: não é link (M1.7, RF-10). */
+.ruvor-chips__more {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
 /* A lista suspensa da barra. A cor volta à da página: a barra pinta o texto de claro. */
 .ruvor-search__popover {
   position: absolute;
@@ -1198,6 +1207,14 @@
 
 .ruvor-skeleton--short {
   height: var(--ruvor-space-6);
+}
+
+/* O esqueleto de um atalho: a altura e o raio do .ruvor-chip (M1.7, a sugestão carregando). */
+.ruvor-skeleton--chip {
+  display: block;
+  width: 64px;
+  height: 38px;
+  border-radius: var(--ruvor-radius-sm);
 }
 
 /* O erro de uma seção: a frase e o "tentar de novo" na mesma linha. */

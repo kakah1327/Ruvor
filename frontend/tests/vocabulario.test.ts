@@ -42,6 +42,8 @@ const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>>> = {
   "busca.mostrando": [[20, 1234]],
   "busca.semResultado": [["xpto"]],
   "busca.suspensaRodape": [[8, 1234]],
+  // O "e mais N" da sugestão (M1.7): os ramos da tabela de textos do busca-sugestao.html.
+  "busca.sugestaoMais": [[1], [3], [1234]],
   "rodape.ultimoPregao": [["26/09/2026"]],
   "rodape.calculadoEm": [["26/09/2026", "18:40"]],
   "ativo.listagem": [["N1"]],
