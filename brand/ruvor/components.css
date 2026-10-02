@@ -1572,6 +1572,63 @@
   font-size: var(--ruvor-type-micro-size);
 }
 
+/* M2.3: o controle de recolher (docs/mockups/M2.3/comportamento.html). O raiz leva
+   data-collapsible e data-open; uma régua fina o separa do que vem antes. Fechado, só o
+   botão; aberto, o conteúdo logo abaixo dele — fechado, o conteúdo não é desenhado. */
+.ruvor-collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-4);
+  padding-top: var(--ruvor-space-3);
+  border-top: 1px solid var(--ruvor-table-rule);
+}
+
+/* O botão: o .ruvor-table__toggle — a seta à esquerda, que gira 90° aberto —, com o alvo de
+   toque mais alto (6 px acima e abaixo) e o sublinhado no hover, que a linha da tabela não
+   precisa porque a linha inteira reage. Um rótulo só, nos dois estados: aberto ou fechado é
+   dito pela seta e pelo aria-expanded. */
+.ruvor-collapsible__toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  font: inherit;
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  color: var(--ruvor-ink);
+  background: transparent;
+  border: 0;
+  padding: 6px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ruvor-collapsible__toggle .ruvor-glyph {
+  flex: none;
+  transition: transform 0.15s;
+}
+
+.ruvor-collapsible__toggle[aria-expanded="true"] .ruvor-glyph {
+  transform: rotate(90deg);
+}
+
+.ruvor-collapsible__toggle:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ruvor-collapsible__toggle:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruvor-collapsible__toggle .ruvor-glyph {
+    transition: none;
+  }
+}
+
 /* A última coluna à direita (a tabela dos proventos). */
 .ruvor-table--end td:last-child,
 .ruvor-table--end th:last-child {

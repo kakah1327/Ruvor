@@ -188,4 +188,41 @@ export const EXEMPLOS_AVANCADOS: Readonly<
 > = {
   // O cabeçalho (T4): a linha do `casco-e-preco.html`. `ativo.precoAjustado` é texto.
   "ativo.ultimoFechamento": [["26/09/2026"]],
+  // O comportamento (T7): o `EXEMPLOS_AVANCADOS` do `comportamento.html`, cobrindo os ramos da
+  // avançada; o primeiro de cada um é o do ITUB4 em 01/10/2026. As chaves de texto não entram.
+  "comportamento.return_1m": [["R$ 110,75"]],
+  "comportamento.return_3m": [["R$ 104,16"]],
+  "comportamento.return_6m": [["R$ 101,90"]],
+  "comportamento.return_12m": [["R$ 128,19"]],
+  "comportamento.return_36m": [["R$ 231,07"]],
+  "comportamento.return_60m": [["R$ 231,82"]],
+  "comportamento.return_120m": [["R$ 413,95"]],
+  "comportamento.return_ytd": [["R$ 114,98"]],
+  "comportamento.volatility_12m": [["24,5%"]],
+  "comportamento.volatility_60m": [["24,9%"]],
+  "comportamento.max_drawdown": [
+    // A volta preenchida (ITUB4), e a volta nula.
+    ["44,3%", "02/01/2020", "23/03/2020", "22/09/2016", "13/12/2023"],
+    ["61,8%", "18/05/2021", "04/11/2022", "22/09/2016", null],
+  ],
+  "comportamento.max_drawdown_recovery_sessions": [["3,7"]],
+  "comportamento.beta_60m": [
+    // oposta = false (ITUB4), e oposta = true.
+    ["1,01%", false],
+    ["0,18%", true],
+  ],
+  "comportamento.correlation_60m": [["0,70"], ["−0,12"]],
+  "comportamento.skewness": [
+    // sinal < 0 (ITUB4), sinal > 0 e sinal = 0.
+    ["−1,44", -1],
+    ["0,37", 1],
+    ["0,00", 0],
+  ],
+  "comportamento.excess_kurtosis": [
+    // sinal > 0 (ITUB4), sinal < 0 e sinal = 0.
+    ["20,93", 1],
+    ["−0,41", -1],
+    ["0,00", 0],
+  ],
+  "comportamento.dividend_yield_12m": [["01/10/2026", "R$ 7,06"]],
 };

@@ -217,7 +217,7 @@ export const TEXTOS = {
   "comportamento.return_120m": (x: string) =>
     `Nos últimos 10 anos, com os proventos: R$ 100 viraram ${x}.`,
   "comportamento.return_ytd": (x: string) =>
-    `Desde o primeiro pregão do ano, com os proventos: R$ 100 viraram ${x}.`,
+    `Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100 viraram ${x}.`,
   "comportamento.volatility_12m": (v: string) =>
     `O quanto o preço oscilou no último ano, em base anual: num ano como esse, variações de ${v} para cima ou para baixo são o normal.`,
   "comportamento.volatility_60m": (v: string) =>
@@ -259,6 +259,9 @@ export const TEXTOS = {
   "comportamento.avg_volume_252d":
     "A mesma média no último ano: comparada com a do mês, mostra se o interesse recente está acima ou abaixo do habitual.",
   "comportamento.unidade.volume": (m: string) => `${m} milhões`,
+  // O controle de recolher da assimetria e da curtose (RF-06, RF-07 do M2.3): do
+  // `comportamento.html` aprovado — um rótulo só, nos dois estados e nos dois níveis.
+  "comportamento.momentos.abrir": "Ver a assimetria e a curtose",
 
   // risco.* — a camada 3.
   "risco.sobrancelha": "O que pode acontecer",

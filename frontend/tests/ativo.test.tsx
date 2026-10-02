@@ -13,6 +13,10 @@
  *
  * - M2.3 (T4): o cabeçalho e o preço nos dois níveis — a prova por seção no avançado (V-04), o
  *   valor igual nos dois, e a troca pelo alternador sem pedido à API com o risco em E1 (V-08).
+ * - M2.3 (T7): o comportamento nos dois níveis — a prova por seção das 22 chaves no avançado
+ *   (V-04), os números iguais nos dois níveis, e a assimetria e a curtose recolhidas na iniciante,
+ *   com o histograma aberto (V-05). Os testes do M1.6b que leem a assimetria e a curtose abrem o
+ *   controle (`openMoments`): na iniciante, elas nascem recolhidas.
  *
  * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
  * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
@@ -365,6 +369,19 @@ async function loaded(): Promise<void> {
     ),
   );
   await waitFor(() => expect(behavior().querySelector("[aria-busy]")).toBeNull());
+}
+
+/** O controle da assimetria e da curtose (M2.3), na seção Comportamento. */
+const momentsToggle = () =>
+  within(behavior()).getByRole("button", {
+    name: TEXTOS["comportamento.momentos.abrir"],
+  });
+
+/** Abre a assimetria e a curtose, se estiverem recolhidas — na iniciante, nascem recolhidas. */
+function openMoments(): void {
+  if (momentsToggle().getAttribute("aria-expanded") === "false") {
+    fireEvent.click(momentsToggle());
+  }
 }
 
 // ---------------------------------------------------------------- RF-06
@@ -1081,6 +1098,7 @@ describe("RF-10 — o comportamento, formatado em pt-BR, e V-14: a frase junto d
   it.each(EXPECTED)("%s: %s, com a frase", async (field, value, phrase) => {
     renderAsset();
     await loaded();
+    openMoments();
     expect(statValue(field)).toBe(value);
     expect(statPhrase(field)).toBe(phrase);
   });
@@ -1143,6 +1161,7 @@ describe("V-06 — nulo não é zero", () => {
   it.each(NULLS)("%s nulo mostra '—' e o porquê", async (field, phrase) => {
     renderAsset();
     await loaded();
+    openMoments();
     expect(statValue(field)).toBe("—");
     expect(statPhrase(field)).toBe(phrase);
   });
@@ -1180,6 +1199,7 @@ describe("V-06 — nulo não é zero", () => {
   it("nenhum número em destaque de campo nulo é zero", async () => {
     renderAsset();
     await loaded();
+    openMoments();
     for (const [field] of NULLS) {
       expect(statValue(field)).not.toMatch(/\d/);
     }
@@ -1218,5 +1238,264 @@ describe("V-06 — nulo não é zero", () => {
     expect(document.getElementById("risco")).not.toBeNull();
     expect(section.querySelector("[data-field]")).toBeNull();
     expect(within(section).queryByText(/^até /)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- M2.3: o comportamento nos dois níveis
+
+type PhraseSource = Readonly<Record<string, unknown>>;
+
+/** A frase de uma chave num dos dois módulos, com os argumentos (chave de texto: sem argumento). */
+function phraseOf(source: PhraseSource, key: string, args: readonly unknown[]): string {
+  const entry = source[key];
+  if (typeof entry === "function")
+    return (entry as (...a: unknown[]) => string)(...args);
+  if (typeof entry === "string") return entry;
+  throw new Error(`sem entrada: ${key}`);
+}
+
+/**
+ * As 22 chaves `comportamento.*` da lista do RF-04, com os argumentos que a fixture `METRIC`
+ * produz — os mesmos de `EXPECTED`. A fixture exercita todas as 22; o ramo que ela não tem (a
+ * queda sem volta) vem de `METRIC_SHORT`, no caso próprio abaixo.
+ */
+const BEHAVIOR_KEYS: Array<[key: string, args: readonly unknown[]]> = [
+  ["comportamento.return_1m", [formatCurrency(102)]],
+  ["comportamento.return_3m", [formatCurrency(95)]],
+  ["comportamento.return_6m", [formatCurrency(110)]],
+  ["comportamento.return_12m", [formatCurrency(125.81)]],
+  ["comportamento.return_36m", [formatCurrency(150)]],
+  ["comportamento.return_60m", [formatCurrency(166.17)]],
+  ["comportamento.return_120m", [formatCurrency(308.29)]],
+  ["comportamento.return_ytd", [formatCurrency(113.57)]],
+  ["comportamento.volatility_12m", ["17,5%"]],
+  ["comportamento.volatility_60m", ["25,0%"]],
+  [
+    "comportamento.max_drawdown",
+    ["46,8%", "23/01/2020", "23/03/2020", "22/09/2016", "06/01/2021"],
+  ],
+  ["comportamento.max_drawdown_recovery_sessions", ["0,8"]],
+  ["comportamento.beta_60m", ["0,85%", false]],
+  ["comportamento.correlation_60m", ["−0,12"]],
+  ["comportamento.histograma", []],
+  ["comportamento.skewness", ["−0,05", -1]],
+  ["comportamento.excess_kurtosis", ["1,07", 1]],
+  ["comportamento.dividends_12m", []],
+  ["comportamento.dividend_payments_12m", []],
+  ["comportamento.dividend_yield_12m", ["28/09/2026", formatCurrency(8.12)]],
+  ["comportamento.avg_volume_21d", []],
+  ["comportamento.avg_volume_252d", []],
+];
+
+const distribution = () => block(TEXTOS["comportamento.bloco.distribuicao"]);
+const momentsRoot = () =>
+  behavior().querySelector<HTMLElement>('[data-collapsible="moments"]') as HTMLElement;
+/** Os números em destaque da seção, na ordem da tela. */
+const statValues = () =>
+  [...behavior().querySelectorAll(".ruvor-stat__value")].map((el) => el.textContent);
+/**
+ * Se a frase está na seção, exata, num parágrafo: compara o `textContent` cru — o `getByText`
+ * normaliza o espaço fino do "R$" na tela, mas não no texto procurado.
+ */
+const behaviorHas = (phrase: string) =>
+  [...behavior().querySelectorAll("p")].some((el) => el.textContent === phrase);
+
+describe("M2.3 — o comportamento nos dois níveis (V-04)", () => {
+  it("a lista cobre as 22 chaves comportamento.* do RF-04, todas com avançada", () => {
+    expect(new Set(BEHAVIOR_KEYS.map(([key]) => key)).size).toBe(22);
+    for (const [key] of BEHAVIOR_KEYS) {
+      expect(Object.hasOwn(TEXTOS_AVANCADOS, key), key).toBe(true);
+    }
+  });
+
+  it("a prova por seção no avançado: cada chave na avançada, nunca na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of BEHAVIOR_KEYS) {
+      const avancada = phraseOf(TEXTOS_AVANCADOS, key, args);
+      const iniciante = phraseOf(TEXTOS, key, args);
+      if (!behaviorHas(avancada)) ausentes.push(key);
+      if (behaviorHas(iniciante)) presentes.push(key);
+    }
+    expect(ausentes, "avançada ausente").toEqual([]);
+    expect(presentes, "iniciante presente").toEqual([]);
+  });
+
+  it("no iniciante, aberta a assimetria e a curtose: as iniciantes, e nenhuma avançada", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    openMoments();
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of BEHAVIOR_KEYS) {
+      const avancada = phraseOf(TEXTOS_AVANCADOS, key, args);
+      const iniciante = phraseOf(TEXTOS, key, args);
+      if (!behaviorHas(iniciante)) ausentes.push(key);
+      if (behaviorHas(avancada)) presentes.push(key);
+    }
+    expect(ausentes, "iniciante ausente").toEqual([]);
+    expect(presentes, "avançada presente").toEqual([]);
+  });
+
+  it("o ramo da queda sem volta, no avançado (a série curta)", async () => {
+    allOk({ metrics: ok({ ticker: "ITUB4", metric: METRIC_SHORT }) });
+    stubFetch();
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    const args = ["46,8%", "23/01/2020", "23/03/2020", "02/01/2025", null] as const;
+    expect(statPhrase("max_drawdown")).toBe(
+      TEXTOS_AVANCADOS["comportamento.max_drawdown"](...args),
+    );
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis, e a troca pelo alternador só muda a frase", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    openMoments();
+    const antes = statValues();
+    expect(antes).toHaveLength(21);
+    expect(statPhrase("volatility_12m")).toBe(
+      TEXTOS["comportamento.volatility_12m"]("17,5%"),
+    );
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.avancada"],
+      }),
+    );
+    expect(statPhrase("volatility_12m")).toBe(
+      TEXTOS_AVANCADOS["comportamento.volatility_12m"]("17,5%"),
+    );
+    expect(statValues()).toEqual(antes);
+  });
+});
+
+describe("M2.3 — a assimetria e a curtose recolhidas na iniciante (V-05)", () => {
+  it("na iniciante: o botão fechado, e a assimetria e a curtose fora da árvore", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(momentsRoot().getAttribute("data-open")).toBe("false");
+    expect(stat("skewness")).toBeNull();
+    expect(stat("excess_kurtosis")).toBeNull();
+    expect(
+      within(behavior()).queryByText(TEXTOS["comportamento.rotulo.skewness"]),
+    ).toBeNull();
+    const controls = momentsToggle().getAttribute("aria-controls") as string;
+    expect(document.getElementById(controls)).toBeNull();
+  });
+
+  it("abrir na iniciante mostra os mesmos números do avançado, com as frases iniciantes", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    fireEvent.click(momentsToggle());
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+    expect(statValue("excess_kurtosis")).toBe("1,07");
+    expect(statPhrase("skewness")).toBe(TEXTOS["comportamento.skewness"]("−0,05", -1));
+    const controls = momentsToggle().getAttribute("aria-controls") as string;
+    expect(document.getElementById(controls)?.contains(stat("skewness"))).toBe(true);
+  });
+
+  it("na avançada: aberto por padrão, com os mesmos números", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(momentsRoot().getAttribute("data-open")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+    expect(statValue("excess_kurtosis")).toBe("1,07");
+  });
+
+  it("trocar o nível pelo alternador reaplica o padrão: o aberto à mão fecha ao voltar à iniciante", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    fireEvent.click(momentsToggle());
+    const button = (key: "casco.leitura.avancada" | "casco.leitura.iniciante") =>
+      within(readingGroup()).getByRole("button", { name: TEXTOS[key] });
+    fireEvent.click(button("casco.leitura.avancada"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(momentsToggle());
+    expect(stat("skewness")).toBeNull();
+    fireEvent.click(button("casco.leitura.iniciante"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(button("casco.leitura.avancada"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+  });
+
+  it("o histograma fica aberto nos dois níveis, fora do recolhível", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await loaded();
+      const chart = within(distribution()).getByRole("img");
+      expect(chart.closest("[data-collapsible]"), reading).toBeNull();
+      const phrase = within(distribution()).getByText(
+        reading === "advanced"
+          ? TEXTOS_AVANCADOS["comportamento.histograma"]
+          : TEXTOS["comportamento.histograma"],
+      );
+      expect(phrase.closest("[data-collapsible]"), reading).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("o resto da seção nunca tem controle: o único recolhível é o da assimetria e da curtose", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await loaded();
+      expect(behavior().querySelectorAll("[data-collapsible]")).toHaveLength(1);
+      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(1);
+      for (const field of [
+        "return_12m",
+        "volatility_12m",
+        "max_drawdown",
+        "beta_60m",
+      ]) {
+        expect(stat(field).closest("[data-collapsible]"), field).toBeNull();
+      }
+      cleanup();
+    }
+  });
+
+  it("nem o recolhível nem o alternador ficam dentro de região viva", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    for (const el of document.querySelectorAll("[data-collapsible]")) {
+      expect(el.closest("[aria-live]")).toBeNull();
+      expect(el.querySelector("[aria-live]")).toBeNull();
+    }
+    expect(readingGroup().closest("[aria-live]")).toBeNull();
+    expect(behavior().closest("[aria-live]")).toBeNull();
+  });
+
+  it("a série curta: a frase no lugar do histograma, e o recolhível continua, com os nulos dentro", async () => {
+    allOk({ metrics: ok({ ticker: "ITUB4", metric: METRIC_SHORT }) });
+    stubFetch();
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    const short = within(distribution()).getByText(
+      TEXTOS["comportamento.histogramaCurto"],
+    );
+    expect(short.closest("[data-collapsible]")).toBeNull();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(stat("skewness")).toBeNull();
+    fireEvent.click(momentsToggle());
+    expect(statValue("skewness")).toBe("—");
+    expect(statPhrase("skewness")).toBe(TEXTOS["comportamento.nulo.janela"](60));
+    expect(statValue("excess_kurtosis")).toBe("—");
   });
 });
