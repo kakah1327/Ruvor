@@ -405,13 +405,8 @@ def test_v21_o_esquema_valida_sem_aviso() -> None:
 # --- RF-20: todo codigo levantado tem traducao ------------------------------------------
 
 SERVICES = Path(__file__).resolve().parents[2] / "apps" / "portfolios" / "services.py"
-# os codigos do risco, que a T5 faz nascer em `services.py`
-DA_T5 = {
-    "insufficient_history",
-    "portfolio_risk_up_to_date",
-    "portfolio_compute_busy",
-    "portfolio_queue_full",
-}
+# os codigos do risco nasceram em `services.py` na T5: o conjunto fica vazio
+DA_T5: set[str] = set()
 
 
 def _codigos_levantados() -> set[str]:

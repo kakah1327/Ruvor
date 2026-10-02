@@ -43,6 +43,7 @@ LEITURA = {
     conta.ReportCsvView,
     carteira.PortfoliosView,  # M2.2a, RF-19: a chave le carteira
     carteira.PortfolioView,
+    carteira.PortfolioRiskView,
 }
 ESCRITA_PERMITIDA_COM_READ = {
     leitura.AssetRiskView,
@@ -50,6 +51,7 @@ ESCRITA_PERMITIDA_COM_READ = {
     conta.ReportsView,  # o `POST` gera; a regra do metodo seguro o barra
     carteira.PortfoliosView,  # o `POST` cria, o `PATCH` e o `DELETE` mudam: barrados
     carteira.PortfolioView,
+    carteira.PortfolioRiskView,  # o `POST` pede; barrado
 }
 # as que a chave nao alcanca: conta, gestao e as proprias chaves
 SEM_CHAVE = {

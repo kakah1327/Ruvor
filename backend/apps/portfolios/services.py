@@ -13,25 +13,42 @@ de carteira arquivada dao o **mesmo** `portfolio_not_found`.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from django.db import transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.tenancy import organization_scope
 from apps.assets.models import Asset
+from apps.portfolios import config as portfolio_config
+from apps.portfolios import series
 from apps.portfolios.errors import PortfolioError
-from apps.portfolios.models import Portfolio, PortfolioHolding, PortfolioVersion
+from apps.portfolios.locks import lock_requests, lock_run
+from apps.portfolios.models import (
+    Portfolio,
+    PortfolioHolding,
+    PortfolioRiskResult,
+    PortfolioRiskRun,
+    PortfolioVersion,
+)
+from apps.risk import config as risk_config
+from apps.risk.models import RiskRun
+from config.celery import app
 
 MIN_HOLDINGS = 2
 MAX_HOLDINGS = 20
 WEIGHTS_TOTAL = Decimal("100")
 _CENT = Decimal("0.01")
+
+logger = logging.getLogger(__name__)
 
 
 def _after_portfolio_lock() -> None:
@@ -260,3 +277,196 @@ def loss_brl(notional: Decimal | None, var: Decimal | None) -> Decimal | None:
     if notional is None or var is None:
         return None
     return (notional * (1 - (-var).exp())).quantize(_CENT, rounding=ROUND_HALF_UP)
+
+
+# --- o risco (RF-13, RF-16) -------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class PortfolioRisk:
+    """O que a view serializa no corpo `portfolio_risk` (RF-16)."""
+
+    portfolio: Portfolio
+    version: PortfolioVersion
+    latest: PortfolioRiskRun | None  # com os resultados em `model_name`, `-alpha`
+    in_progress: PortfolioRiskRun | None
+
+
+def count_running_everywhere(since: datetime) -> int:
+    """Quantas execucoes `running` nao vencidas ha, **de todas as organizacoes** (RF-13, 3.4).
+
+    A unica consulta que atravessa organizacoes, e o unico `.unscoped` deste arquivo (RF-18):
+    devolve um inteiro, nenhuma linha.
+    """
+    return PortfolioRiskRun.unscoped.filter(
+        status=RiskRun.Status.RUNNING, calculated_at__gte=since
+    ).count()
+
+
+def enqueue_run(run_id: int, organization_id: int) -> None:
+    """A funcao do `on_commit` do pedido: enfileira a abertura pelo nome (D-89).
+
+    Abre o escopo sozinha -- o `captureOnCommitCallbacks` a roda fora do contexto de quem pediu.
+    Se o corretor recusar, fecha a execucao `failed`, sob a trava da execucao e so se ainda
+    `running` (D-150, item 4). **Nunca levanta**: o pedido ja foi confirmado.
+    """
+    with organization_scope(organization_id):
+        try:
+            app.send_task(
+                "apps.portfolios.tasks.abrir_risco_carteira",
+                args=[run_id, organization_id],
+            )
+        except Exception:
+            logger.exception("carteira run=%d: o corretor recusou a abertura", run_id)
+            try:
+                with transaction.atomic():
+                    lock_run(run_id)
+                    run = PortfolioRiskRun.objects.get(pk=run_id)
+                    if run.status == RiskRun.Status.RUNNING:
+                        run.status = RiskRun.Status.FAILED
+                        run.finished_at = timezone.now()
+                        run.save(update_fields=["status", "finished_at"])
+            except Exception:
+                logger.exception(
+                    "carteira run=%d: nao deu para fechar a execucao", run_id
+                )
+
+
+def request_risk(actor: User, portfolio_id: str, now: datetime) -> None:
+    """Pede o risco da versao corrente (RF-13), na ordem da spec.
+
+    A serie e montada **antes** da trava. Sob a trava dos pedidos: a `running` desta versao,
+    nao vencida, segura (devolve sem execucao nova); a fechada mais nova `ok` ou `partial` com a
+    mesma serie e `portfolio_risk_up_to_date`; uma `running` nao vencida de qualquer carteira da
+    organizacao e `portfolio_compute_busy`; o teto global e `portfolio_queue_full`. Senao, grava a
+    execucao `running` e enfileira **depois do commit**.
+    """
+    with organization_scope(actor.organization_id):
+        portfolio = _get(portfolio_id)
+        version = current_version(portfolio)
+        s = series.build(version)
+        sessions = len(s.dates)
+        if sessions < risk_config.MIN_SESSIONS:
+            raise PortfolioError(
+                "insufficient_history",
+                f"A carteira tem {sessions} pregões em comum; "
+                f"o mínimo é {risk_config.MIN_SESSIONS}.",
+                {
+                    "sessions": sessions,
+                    "minimum": risk_config.MIN_SESSIONS,
+                    "assets": [
+                        {
+                            "ticker": c.ticker,
+                            "first_date": None
+                            if c.first_date is None
+                            else c.first_date.isoformat(),
+                            "sessions": c.sessions,
+                        }
+                        for c in s.coverage
+                    ],
+                },
+            )
+        since = now - portfolio_config.timeout()
+        with transaction.atomic():
+            lock_requests()
+            runs = PortfolioRiskRun.objects.filter(version=version)
+            if runs.filter(
+                status=RiskRun.Status.RUNNING, calculated_at__gte=since
+            ).exists():
+                return
+            closed = (
+                runs.exclude(status=RiskRun.Status.RUNNING)
+                .order_by("-calculated_at")
+                .first()
+            )
+            if (
+                closed is not None
+                and closed.status in (RiskRun.Status.OK, RiskRun.Status.PARTIAL)
+                and closed.as_of_date == s.dates[-1]
+                and closed.series_sha256 == s.sha256
+            ):
+                raise PortfolioError(
+                    "portfolio_risk_up_to_date",
+                    "O risco desta composição já está calculado com os preços atuais.",
+                    {"run_id": closed.pk},
+                )
+            if PortfolioRiskRun.objects.filter(
+                status=RiskRun.Status.RUNNING, calculated_at__gte=since
+            ).exists():
+                raise PortfolioError(
+                    "portfolio_compute_busy",
+                    "A organização já tem um cálculo de carteira em andamento.",
+                    {},
+                )
+            if count_running_everywhere(since) >= portfolio_config.compute_max():
+                raise PortfolioError(
+                    "portfolio_queue_full",
+                    "Muitos cálculos de carteira em andamento; tente mais tarde.",
+                    {},
+                )
+            # com 503 datas ou mais a serie nao e vazia, e o `price_run_id` existe
+            assert s.price_run_id is not None
+            _before_insert_run()
+            run = PortfolioRiskRun.objects.create(
+                version=version,
+                requested_by=actor,
+                calculated_at=now,
+                status=RiskRun.Status.RUNNING,
+                engine_version="",
+                seed=risk_config.DEFAULT_SEED,
+                train_window_days=risk_config.TRAIN_WINDOW_DAYS,
+                first_date=s.dates[0],
+                as_of_date=s.dates[-1],
+                session_count=sessions,
+                train_count=risk_config.TRAIN_WINDOW_DAYS,
+                test_count=sessions - 1 - risk_config.TRAIN_WINDOW_DAYS,
+                requested_models=list(portfolio_config.PORTFOLIO_MODELS),
+                price_run_id=s.price_run_id,
+                series_sha256=s.sha256,
+            )
+            run_id = run.pk
+            organization_id = actor.organization_id
+            transaction.on_commit(lambda: enqueue_run(run_id, organization_id))
+
+
+def read_risk(actor: User, portfolio_id: str, now: datetime) -> PortfolioRisk:
+    """O risco da versao corrente (RF-16): a fechada mais nova e a `running` nao vencida, se mais
+    nova que ela."""
+    with organization_scope(actor.organization_id):
+        portfolio = _get(portfolio_id)
+        version = current_version(portfolio)
+        runs = PortfolioRiskRun.objects.filter(version=version)
+        latest = (
+            runs.exclude(status=RiskRun.Status.RUNNING)
+            .select_related("requested_by")
+            .prefetch_related(
+                Prefetch(
+                    "results",
+                    queryset=PortfolioRiskResult.objects.order_by(
+                        "model_name", "-alpha"
+                    ),
+                )
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        in_progress = (
+            runs.filter(
+                status=RiskRun.Status.RUNNING,
+                calculated_at__gte=now - portfolio_config.timeout(),
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        if (
+            in_progress is not None
+            and latest is not None
+            and in_progress.calculated_at <= latest.calculated_at
+        ):
+            in_progress = None
+        return PortfolioRisk(
+            portfolio=portfolio,
+            version=version,
+            latest=latest,
+            in_progress=in_progress,
+        )

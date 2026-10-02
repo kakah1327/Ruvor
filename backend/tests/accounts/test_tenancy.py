@@ -266,7 +266,9 @@ def test_report_sem_contexto_o_gerente_base_serve_ao_django(
 # que chega ao gerente base sem dizer `unscoped`.
 
 APPS = Path(__file__).resolve().parents[2] / "apps"
-CHAMADORES_DE_UNSCOPED = {"accounts/authentication.py"}
+# M2.2a, RF-18: o teto global conta execucoes de todas as organizacoes, so em
+# `count_running_everywhere` (provado em `tests/portfolios/test_unscoped.py`)
+CHAMADORES_DE_UNSCOPED = {"accounts/authentication.py", "portfolios/services.py"}
 _SAIDAS_SEM_ESCOPO = {"unscoped", "_base_manager"}
 
 

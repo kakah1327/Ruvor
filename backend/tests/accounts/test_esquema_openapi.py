@@ -54,6 +54,7 @@ CARTEIRA = {
     carteira.PortfoliosView,
     carteira.PortfolioView,
     carteira.PortfolioHoldingsView,
+    carteira.PortfolioRiskView,
 }
 # os downloads: binario no tipo de midia de cada um, e nao objeto com `$ref` (RF-13)
 BINARIO = {
@@ -217,13 +218,15 @@ def test_m22_carteira_exige_conta_e_sai_sem_anonimo(esquema: dict[str, Any]) -> 
         assert classe.permission_classes == [AccountReady], classe.__name__
     operacoes = _operacoes(esquema)
     achadas = {c: k for c, k in _rotas_da_api().items() if k in CARTEIRA}
-    assert set(achadas) == {  # contra a varredura inerte: as seis, no esquema
+    assert set(achadas) == {  # contra a varredura inerte: as oito, no esquema
         ("get", "/api/v1/portfolios"),
         ("post", "/api/v1/portfolios"),
         ("get", "/api/v1/portfolios/{id}"),
         ("patch", "/api/v1/portfolios/{id}"),
         ("delete", "/api/v1/portfolios/{id}"),
         ("put", "/api/v1/portfolios/{id}/holdings"),
+        ("get", "/api/v1/portfolios/{id}/risk"),
+        ("post", "/api/v1/portfolios/{id}/risk"),
     }
     for chave in achadas:
         assert {} not in operacoes[chave]["security"], chave

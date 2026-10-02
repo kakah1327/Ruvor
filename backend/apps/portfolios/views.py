@@ -11,8 +11,10 @@ Toda view e `AccountReady` -- anonimo recebe 401 -- e declara `api_key_scope` no
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any, ClassVar
 
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.request import Request
@@ -27,14 +29,21 @@ from apps.accounts.views import _query_int
 from apps.api.errors import ApiError
 from apps.portfolios import services
 from apps.portfolios.errors import PortfolioError
-from apps.portfolios.models import Portfolio, PortfolioHolding
+from apps.portfolios.models import (
+    Portfolio,
+    PortfolioHolding,
+    PortfolioRiskResult,
+    PortfolioRiskRun,
+)
 from apps.portfolios.serializers import (
     HoldingsIn,
     PortfolioCreateIn,
     PortfolioListOut,
     PortfolioOneOut,
+    PortfolioRiskOut,
     PortfolioUpdateIn,
 )
+from apps.risk import config as risk_config
 
 # O status de cada codigo de `PortfolioError` (RF-20). Codigo fora daqui e defeito de programa:
 # `KeyError`, que o tratador responde como 500.
@@ -193,3 +202,143 @@ class PortfolioHoldingsView(APIView):
         except PortfolioError as err:
             raise portfolio_error_to_api(err) from err
         return _one(portfolio)
+
+
+# --- o risco (RF-13, RF-16, RF-17) --------------------------------------------------------
+
+
+def _level(
+    alpha: Decimal, results: list[PortfolioRiskResult], notional: Decimal | None
+) -> dict[str, Any]:
+    """Um nivel do `summary`, pela regra do relatorio (M4.1, RF-03), sobre os `Decimal`."""
+    computed = sorted(
+        (r for r in results if r.var_latest is not None), key=lambda r: r.model_name
+    )
+    values = [r.var_latest for r in computed if r.var_latest is not None]
+    var_min = min(values) if values else None
+    var_max = max(values) if values else None
+    return {
+        "alpha": alpha,
+        "computed": [r.model_name for r in computed],
+        "var_min": var_min,
+        "var_max": var_max,
+        "loss_brl_min": services.loss_brl(notional, var_min),
+        "loss_brl_max": services.loss_brl(notional, var_max),
+        # lista, sem eleger nenhum (D-65); vazia e resultado legitimo
+        "not_rejected": sorted(r.model_name for r in results if r.adequate is True),
+    }
+
+
+def _run_out(
+    run: PortfolioRiskRun, number: int, notional: Decimal | None
+) -> dict[str, Any]:
+    results = list(run.results.all())  # pre-carregados em `model_name`, `-alpha`
+    return {
+        "id": run.pk,
+        "version": number,
+        "status": run.status,
+        "calculated_at": run.calculated_at,
+        "finished_at": run.finished_at,
+        "engine_version": run.engine_version,
+        "seed": run.seed,
+        "train_window_days": run.train_window_days,
+        "first_date": run.first_date,
+        "as_of_date": run.as_of_date,
+        "session_count": run.session_count,
+        "train_count": run.train_count,
+        "test_count": run.test_count,
+        "requested_models": run.requested_models,
+        "series_sha256": run.series_sha256,
+        "price_run_id": run.price_run_id,
+        "requested_by": {
+            "email": run.requested_by.email,
+            "name": run.requested_by.name,
+        },
+        "results": [
+            {
+                "model_name": r.model_name,
+                "model_category": r.model_category,
+                "alpha": r.alpha,
+                "hyperparameters": r.hyperparameters,
+                "var_latest": r.var_latest,
+                "var_mean": r.var_mean,
+                "violations": r.violations,
+                "expected_violations": r.expected_violations,
+                "kupiec_passed": r.kupiec_passed,
+                "kupiec_p_value": r.kupiec_p_value,
+                "christoffersen_passed": r.christoffersen_passed,
+                "christoffersen_p_value": r.christoffersen_p_value,
+                "dq_passed": r.dq_passed,
+                "dq_p_value": r.dq_p_value,
+                "adequate": r.adequate,
+                "error": r.error,
+                "loss_brl": services.loss_brl(notional, r.var_latest),
+            }
+            for r in results
+        ],
+        "summary": [
+            _level(alpha, [r for r in results if r.alpha == alpha], notional)
+            for alpha in sorted({r.alpha for r in results}, reverse=True)
+        ],
+    }
+
+
+def portfolio_risk_out(risk: services.PortfolioRisk) -> dict[str, Any]:
+    """O dict que o `PortfolioRiskOut` le. A perda em reais e calculada aqui, com o `notional`
+    atual -- nunca gravada (RF-17)."""
+    portfolio = risk.portfolio
+    notional = portfolio.notional
+    number = risk.version.number
+    with organization_scope(portfolio.organization_id):
+        progress = risk.in_progress
+        return {
+            "portfolio_risk": {
+                "portfolio_id": portfolio.public_id,
+                "version": number,
+                "notional": notional,
+                "latest": None
+                if risk.latest is None
+                else _run_out(risk.latest, number, notional),
+                "in_progress": None
+                if progress is None
+                else {
+                    "id": progress.pk,
+                    "version": number,
+                    "calculated_at": progress.calculated_at,
+                    "requested_models": progress.requested_models,
+                    "results_written": progress.results.count(),
+                    "results_expected": len(progress.requested_models)
+                    * len(risk_config.ALPHAS),
+                },
+            }
+        }
+
+
+class PortfolioRiskView(APIView):
+    """`GET portfolios/{id}/risk` le e `POST` pede o risco da versao corrente (RF-13, RF-16).
+
+    `"read"` com `POST`: a chave le, e a regra do metodo seguro barra o pedido (RF-19).
+    """
+
+    permission_classes = [AccountReady]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = "read"  # RF-19: a chave le o risco
+
+    def _body(self, request: Request, id: str) -> dict[str, Any]:
+        try:
+            risk = services.read_risk(_user(request), id, timezone.now())
+        except PortfolioError as err:
+            raise portfolio_error_to_api(err) from err
+        return PortfolioRiskOut(portfolio_risk_out(risk)).data
+
+    @extend_schema(responses={200: PortfolioRiskOut})
+    def get(self, request: Request, id: str) -> Response:
+        return Response(self._body(request, id))
+
+    @extend_schema(request=None, responses={202: PortfolioRiskOut})
+    def post(self, request: Request, id: str) -> Response:
+        try:
+            services.request_risk(_user(request), id, timezone.now())
+        except PortfolioError as err:
+            raise portfolio_error_to_api(err) from err
+        # depois do commit e do `on_commit`: com o corretor recusando, ja traz a `failed`
+        return Response(self._body(request, id), status=202)

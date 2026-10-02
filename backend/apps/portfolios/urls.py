@@ -8,10 +8,16 @@ from __future__ import annotations
 
 from django.urls import URLPattern, URLResolver, path
 
-from apps.portfolios.views import PortfolioHoldingsView, PortfoliosView, PortfolioView
+from apps.portfolios.views import (
+    PortfolioHoldingsView,
+    PortfolioRiskView,
+    PortfoliosView,
+    PortfolioView,
+)
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("portfolios", PortfoliosView.as_view()),
     path("portfolios/<str:id>", PortfolioView.as_view()),
     path("portfolios/<str:id>/holdings", PortfolioHoldingsView.as_view()),
+    path("portfolios/<str:id>/risk", PortfolioRiskView.as_view()),
 ]
