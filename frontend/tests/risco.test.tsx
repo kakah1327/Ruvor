@@ -11,6 +11,11 @@
  *   `RISCO_ERRO`; as respostas do `POST` (202, 409 com `details`, 429, 422, erro, sem
  *   resposta) e o `X-CSRFToken`;
  * - V-14 da seção; a trilha na coluna lateral e a proveniência no rodapé.
+ * - M2.3 (T10): o risco nos dois níveis — a prova por seção das 9 chaves no avançado (V-04), os
+ *   números iguais nos dois níveis, a tabela dos nove, as linhas de teste e a trilha recolhidas
+ *   na iniciante e abertas na avançada, com o painel sempre aberto (V-05), e nenhum `aria-live`
+ *   no corpo da seção. Os testes do M1.6b que leem a tabela ou a trilha abrem o controle
+ *   (`openModels`, `openTrail`): na iniciante, as duas nascem recolhidas.
  *
  * O `fetch` é um duplo que responde pela rota e pelo método; o uPlot, um duplo mínimo.
  */
@@ -39,10 +44,12 @@ import {
   type RiskResult,
   type RiskRun,
 } from "../src/api/types";
+import { BLOCOS_AVANCADOS, TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { traduzirMotivo } from "../src/content/motivos";
 import { TEXTOS } from "../src/content/textos";
 import { formatPercent } from "../src/format/numbers";
 import { lossFromVar } from "../src/format/var";
+import { comNivel, limparNivel } from "./nivel";
 
 vi.mock("uplot", () => {
   class FakeUPlot {
@@ -344,6 +351,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   clearCookie();
+  limparNivel();
 });
 
 // ---------------------------------------------------------------- as partes
@@ -379,12 +387,36 @@ async function settled(state: string): Promise<void> {
 
 const loss = (v: number) => formatPercent(lossFromVar(v), 1);
 
+/** O controle da tabela dos nove (M2.3), na seção. */
+const modelsToggle = () =>
+  within(section()).getByRole("button", { name: TEXTOS["risco.modelos.abrir"] });
+
+/** Abre a tabela dos nove, se estiver recolhida — na iniciante, nasce recolhida. */
+function openModels(): void {
+  if (modelsToggle().getAttribute("aria-expanded") === "false") {
+    fireEvent.click(modelsToggle());
+  }
+}
+
+/** O controle da trilha (M2.3), na coluna lateral. */
+const trailToggle = () =>
+  within(rail() as HTMLElement).getByRole("button", {
+    name: TEXTOS["risco.trilha.abrir"],
+  });
+
+/** Abre a trilha, se estiver recolhida — espera a coluna lateral, que chega por portal. */
+async function openTrail(): Promise<void> {
+  const toggle = await waitFor(() => trailToggle());
+  if (toggle.getAttribute("aria-expanded") === "false") fireEvent.click(toggle);
+}
+
 // ---------------------------------------------------------------- V-07
 
 describe("V-07 — a perda em percentual simples, sempre com o horizonte", () => {
   it('"0.0500000000" mostra 4,9%', async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     const cell = cells("historical")[0];
     expect(cell.querySelector(".ruvor-loss")?.textContent).toBe("4,9%");
   });
@@ -392,6 +424,7 @@ describe("V-07 — a perda em percentual simples, sempre com o horizonte", () =>
   it('toda perda da seção vem com "em 1 dia": junto da faixa, ou no cabeçalho da coluna', async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     const ranges = section().querySelectorAll(".ruvor-range");
     expect(ranges).toHaveLength(2);
     for (const range of ranges) {
@@ -499,6 +532,7 @@ describe("V-09 — a ordem fixa e os não rejeitados, sem eleger", () => {
     stubFetch();
     renderAsset();
     await settled("E1");
+    openModels();
     const order = [...table().querySelectorAll("tbody tr[data-model]")].map((tr) =>
       tr.getAttribute("data-model"),
     );
@@ -563,6 +597,7 @@ describe("V-09 — a ordem fixa e os não rejeitados, sem eleger", () => {
     expect(text).toContain("7 de 9 julgados");
     expect(text).toContain("2 modelos não puderam ser julgados");
 
+    openModels();
     const tags95 = MODEL_ORDER.map(
       (m) => cells(m)[0].querySelector(".ruvor-tag")?.textContent,
     );
@@ -598,6 +633,7 @@ describe("V-10 — a tabela", () => {
   it("as barras numa escala só: o máximo das dezoito perdas", async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     const max = lossFromVar(EGARCH_99);
     for (const model of MODEL_ORDER) {
       const [c95, c99] = cells(model);
@@ -620,6 +656,7 @@ describe("V-10 — a tabela", () => {
   it("nenhum texto de Basileia na seção", async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     fireEvent.click(
       within(row("historical")).getByRole("button", {
         name: TEXTOS["risco.tabela.abrir"](TEXTOS["risco.modelo.historical"]),
@@ -631,6 +668,7 @@ describe("V-10 — a tabela", () => {
   it("cada tag tem texto", async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     const tags = section().querySelectorAll(".ruvor-tag");
     expect(tags.length).toBeGreaterThan(18);
     for (const tag of tags) expect(tag.textContent?.trim()).not.toBe("");
@@ -639,6 +677,7 @@ describe("V-10 — a tabela", () => {
   it("abrir a linha mostra violações × esperadas e os três testes, com p-valor e se passou, nos dois níveis", async () => {
     renderAsset();
     await settled("E1");
+    openModels();
     const toggle = within(row("garch_1_1")).getByRole("button", {
       name: TEXTOS["risco.tabela.abrir"](TEXTOS["risco.modelo.garch_1_1"]),
     });
@@ -716,6 +755,7 @@ describe("V-10 — a tabela", () => {
     stubFetch();
     renderAsset();
     await settled("E1");
+    openModels();
     const [, c99] = cells("lstm");
     expect(c99.querySelector(".ruvor-loss")?.textContent).toBe("—");
     expect(c99.querySelector(".ruvor-bar")).toBeNull();
@@ -754,6 +794,7 @@ describe("V-14 — cada número do risco com a frase junto", () => {
       expect(phrase(panel, "discordancia")).not.toBe("");
       expect(phrase(panel, "naoRejeitados")).not.toBe("");
     }
+    openModels();
     const tablePanel = table().closest("section") as HTMLElement;
     expect(tablePanel.querySelector('[data-phrase="veredito"]')?.textContent).toBe(
       TEXTOS["risco.veredito"],
@@ -767,6 +808,7 @@ describe("RF-16 — a trilha na coluna lateral, e a proveniência no rodapé", (
   it("E1: a trilha no aside do casco, com o que entrou no cálculo", async () => {
     renderAsset();
     await settled("E1");
+    await openTrail();
     const aside = await waitFor(() => {
       const found = rail();
       expect(found?.querySelector(".ruvor-trail")).not.toBeNull();
@@ -803,6 +845,7 @@ describe("RF-16 — a trilha na coluna lateral, e a proveniência no rodapé", (
     stubFetch();
     renderAsset();
     await settled("E1");
+    await openTrail();
     await waitFor(() =>
       expect(
         within(rail() as HTMLElement).getByText(
@@ -842,6 +885,7 @@ describe("RF-16 — a trilha na coluna lateral, e a proveniência no rodapé", (
     expect(within(section()).queryByRole("table")).toBeNull();
     expect(within(section()).getByText(TEXTOS["risco.estado.E3.titulo"])).toBeDefined();
     expect(within(section()).queryByRole("button", { name: /calcular/i })).toBeNull();
+    await openTrail();
     await waitFor(() =>
       expect(
         within(rail() as HTMLElement).getByText(TEXTOS["risco.trilha.status.failed"]),
@@ -1155,6 +1199,7 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
     await settled("E8");
     fireEvent.click(calcular());
     await settled("E1");
+    openModels();
     expect(within(section()).getByRole("table")).toBeDefined();
   });
 
@@ -1237,5 +1282,369 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
     expect(calls.find((c) => c.route === "post")?.headers).not.toHaveProperty(
       "X-CSRFToken",
     );
+  });
+});
+
+// ---------------------------------------------------------------- M2.3: o risco nos dois níveis
+
+type PhraseSource = Readonly<Record<string, unknown>>;
+
+/** A frase de uma chave num dos dois módulos, com os argumentos (chave de texto: sem argumento). */
+function phraseOf(source: PhraseSource, key: string, args: readonly unknown[]): string {
+  const entry = source[key];
+  if (typeof entry === "function")
+    return (entry as (...a: unknown[]) => string)(...args);
+  if (typeof entry === "string") return entry;
+  throw new Error(`sem entrada: ${key}`);
+}
+
+// A faixa da fixture E1: o LSTM é o menor dos nove nos dois níveis, e o EGARCH o maior.
+const MIN95 = loss(VAR95.lstm);
+const MAX95 = loss(VAR95.egarch);
+const MIN99 = loss(1.5 * VAR95.lstm);
+const MAX99 = loss(EGARCH_99);
+
+/**
+ * As 9 chaves `risco.*` da lista do RF-04, com os argumentos que a fixture `E1` produz — a
+ * tabela e as nove linhas de teste abertas. Uma linha por (chave, argumentos): a mesma chave
+ * aparece nos dois níveis. A fixture exercita as 9; o ramo `k ≥ 1` de `risco.naoRejeitados`,
+ * que ela não tem (nenhum adequado), vem de outra fixture, no caso próprio abaixo.
+ */
+const RISK_KEYS: Array<[key: string, args: readonly unknown[]]> = [
+  ["risco.perda95", []],
+  ["risco.perda99", []],
+  ["risco.discordancia", [MIN95, MAX95, 9, 9, 20, MIN95]],
+  ["risco.discordancia", [MIN99, MAX99, 9, 9, 100, MIN99]],
+  ["risco.veredito", []],
+  ["risco.naoRejeitados", [0, 9, 9]],
+  ["risco.violacoes", ["118", "112,1", 20, true]],
+  ["risco.violacoes", ["25", "22,4", 100, true]],
+  ["risco.kupiec", ["0,581", true]],
+  ["risco.christoffersen", ["< 0,001", false]],
+  ["risco.dq", ["0,082", true]],
+];
+
+/**
+ * Se a frase está na seção, exata, num parágrafo: compara o `textContent` cru, como a prova
+ * do comportamento (T7).
+ */
+const sectionHas = (text: string) =>
+  [...section().querySelectorAll("p")].some((el) => el.textContent === text);
+
+const readingButton = (key: "casco.leitura.avancada" | "casco.leitura.iniciante") =>
+  within(screen.getByRole("group", { name: TEXTOS["casco.leitura.rotulo"] })).getByRole(
+    "button",
+    { name: TEXTOS[key] },
+  );
+
+/** Os botões das nove linhas de teste, na ordem da tabela. */
+const testToggles = () =>
+  MODEL_ORDER.map((model) =>
+    within(row(model)).getByRole("button", {
+      name: TEXTOS["risco.tabela.abrir"](TEXTOS[`risco.modelo.${model}`]),
+    }),
+  );
+/** As nove linhas expansíveis, com a marca `tests`. */
+const testRows = () => [
+  ...section().querySelectorAll<HTMLElement>('[data-collapsible="tests"]'),
+];
+const modelsRoot = () =>
+  section().querySelector<HTMLElement>('[data-collapsible="models"]') as HTMLElement;
+const trailRoot = () =>
+  (rail() as HTMLElement).querySelector<HTMLElement>(
+    '[data-collapsible="trail"]',
+  ) as HTMLElement;
+/** Os números da seção, na ordem da tela: as faixas e, com a tabela aberta, as dezoito perdas. */
+const riskValues = () =>
+  [...section().querySelectorAll(".ruvor-range b, .ruvor-loss")].map(
+    (el) => el.textContent,
+  );
+
+describe("M2.3 — o risco nos dois níveis (V-04)", () => {
+  it("a lista cobre as 9 chaves risco.* do RF-04, todas com avançada", () => {
+    expect(new Set(RISK_KEYS.map(([key]) => key)).size).toBe(9);
+    for (const [key] of RISK_KEYS) {
+      expect(Object.hasOwn(TEXTOS_AVANCADOS, key), key).toBe(true);
+    }
+  });
+
+  it("a prova por seção no avançado: cada chave na avançada, nunca na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await settled("E1");
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of RISK_KEYS) {
+      if (!sectionHas(phraseOf(TEXTOS_AVANCADOS, key, args))) ausentes.push(key);
+      if (sectionHas(phraseOf(TEXTOS, key, args))) presentes.push(key);
+    }
+    expect(ausentes, "avançada ausente").toEqual([]);
+    expect(presentes, "iniciante presente").toEqual([]);
+  });
+
+  it("no iniciante, aberta a tabela e as nove linhas: as iniciantes, e nenhuma avançada", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    openModels();
+    for (const toggle of testToggles()) fireEvent.click(toggle);
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of RISK_KEYS) {
+      if (!sectionHas(phraseOf(TEXTOS, key, args))) ausentes.push(key);
+      if (sectionHas(phraseOf(TEXTOS_AVANCADOS, key, args))) presentes.push(key);
+    }
+    expect(ausentes, "iniciante ausente").toEqual([]);
+    expect(presentes, "avançada presente").toEqual([]);
+  });
+
+  it("o ramo k ≥ 1 dos não rejeitados, no avançado (três adequados a 95%)", async () => {
+    const adequate = new Set<ModelName>(["caviar", "historical", "egarch"]);
+    const results = apiOrder((m, a) => ({
+      adequate: a === "0.0500" && adequate.has(m),
+    }));
+    allOk({ risk: ok(risk({ latest: run(results) })) });
+    stubFetch();
+    comNivel("advanced");
+    renderAsset();
+    await settled("E1");
+    expect(phrase(level("0.0500"), "naoRejeitados")).toBe(
+      TEXTOS_AVANCADOS["risco.naoRejeitados"](3, 9, 9),
+    );
+    expect(phrase(level("0.0100"), "naoRejeitados")).toBe(
+      TEXTOS_AVANCADOS["risco.naoRejeitados"](0, 9, 9),
+    );
+  });
+
+  it("a intro da tabela: a de bloco na avançada, a de hoje na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await settled("E1");
+    expect(phrase(section(), "intro")).toBe(BLOCOS_AVANCADOS["risco.tabela.intro"]);
+    fireEvent.click(readingButton("casco.leitura.iniciante"));
+    openModels();
+    expect(phrase(section(), "intro")).toBe(TEXTOS["risco.tabela.intro"]);
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis, e a troca pelo alternador só muda a frase", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    openModels();
+    const antes = riskValues();
+    expect(antes).toHaveLength(20);
+    expect(phrase(level("0.0500"), "perda")).toBe(TEXTOS["risco.perda95"]);
+
+    fireEvent.click(readingButton("casco.leitura.avancada"));
+    expect(phrase(level("0.0500"), "perda")).toBe(TEXTOS_AVANCADOS["risco.perda95"]);
+    expect(phrase(level("0.0100"), "perda")).toBe(TEXTOS_AVANCADOS["risco.perda99"]);
+    expect(riskValues()).toEqual(antes);
+  });
+});
+
+describe("M2.3 — a tabela, as linhas de teste e a trilha recolhidas na iniciante (V-05)", () => {
+  it("na iniciante: o painel aberto; a tabela e a trilha fechadas, fora da árvore", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    // o painel dos dois níveis, aberto e fora de qualquer recolhível
+    for (const alpha of ["0.0500", "0.0100"]) {
+      expect(level(alpha), alpha).not.toBeNull();
+      expect(level(alpha).closest("[data-collapsible]"), alpha).toBeNull();
+    }
+    // a tabela dos nove
+    expect(modelsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(modelsRoot().getAttribute("data-open")).toBe("false");
+    expect(within(section()).queryByRole("table")).toBeNull();
+    expect(within(section()).queryByText(TEXTOS["risco.veredito"])).toBeNull();
+    expect(
+      document.getElementById(modelsToggle().getAttribute("aria-controls") as string),
+    ).toBeNull();
+    expect(testRows()).toHaveLength(0);
+    // a trilha: o título à vista, o conteúdo fechado
+    const toggle = await waitFor(() => trailToggle());
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(trailRoot().getAttribute("data-open")).toBe("false");
+    expect(
+      within(rail() as HTMLElement).getByText(TEXTOS["risco.trilha.titulo"]),
+    ).toBeDefined();
+    expect((rail() as HTMLElement).querySelector(".ruvor-trail")).toBeNull();
+    expect(
+      within(rail() as HTMLElement).queryByText(TEXTOS["risco.trilha"]),
+    ).toBeNull();
+    expect(
+      document.getElementById(toggle.getAttribute("aria-controls") as string),
+    ).toBeNull();
+  });
+
+  it("aberta a tabela na iniciante: as nove linhas de teste fechadas, cada uma com a marca", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    openModels();
+    expect(modelsRoot().getAttribute("data-open")).toBe("true");
+    const rows = testRows();
+    expect(rows.map((r) => r.getAttribute("data-model"))).toEqual([...MODEL_ORDER]);
+    for (const r of rows) expect(r.getAttribute("data-open")).toBe("false");
+    for (const toggle of testToggles()) {
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      const detail = document.getElementById(
+        toggle.getAttribute("aria-controls") as string,
+      ) as HTMLElement;
+      expect(detail.hidden).toBe(true);
+    }
+  });
+
+  it("na avançada: tudo aberto — a tabela, as nove linhas de teste e a trilha", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await settled("E1");
+    expect(modelsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(modelsRoot().getAttribute("data-open")).toBe("true");
+    expect(within(section()).getByRole("table")).toBeDefined();
+    const rows = testRows();
+    expect(rows).toHaveLength(9);
+    for (const r of rows) expect(r.getAttribute("data-open")).toBe("true");
+    for (const toggle of testToggles()) {
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      const detail = document.getElementById(
+        toggle.getAttribute("aria-controls") as string,
+      ) as HTMLElement;
+      expect(detail.hidden).toBe(false);
+      expect(detail.querySelector('[data-test="kupiec"]')).not.toBeNull();
+    }
+    const toggle = await waitFor(() => trailToggle());
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(trailRoot().getAttribute("data-open")).toBe("true");
+    expect((rail() as HTMLElement).querySelector(".ruvor-trail")).not.toBeNull();
+  });
+
+  it("abrir na iniciante mostra os mesmos números da avançada", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await settled("E1");
+    const avancada = riskValues();
+    const trilhaAvancada = (rail() as HTMLElement).querySelector(
+      ".ruvor-trail",
+    )?.textContent;
+    cleanup();
+    limparNivel();
+
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    openModels();
+    await openTrail();
+    expect(riskValues()).toEqual(avancada);
+    expect((rail() as HTMLElement).querySelector(".ruvor-trail")?.textContent).toBe(
+      trilhaAvancada,
+    );
+  });
+
+  it("uma linha de teste abre e fecha nos dois níveis", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await settled("E1");
+      openModels();
+      const toggle = testToggles()[3];
+      const start = toggle.getAttribute("aria-expanded");
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded"), reading).not.toBe(start);
+      expect(row("garch_1_1").getAttribute("data-open"), reading).toBe(
+        toggle.getAttribute("aria-expanded"),
+      );
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded"), reading).toBe(start);
+      cleanup();
+      limparNivel();
+    }
+  });
+
+  it("trocar o nível pelo alternador reaplica o padrão aos três recolhíveis", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await settled("E1");
+    // na iniciante, abertos à mão: a tabela, uma linha e a trilha
+    openModels();
+    fireEvent.click(testToggles()[0]);
+    await openTrail();
+
+    fireEvent.click(readingButton("casco.leitura.avancada"));
+    expect(modelsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(testRows().map((r) => r.getAttribute("data-open"))).toEqual(
+      MODEL_ORDER.map(() => "true"),
+    );
+    expect(trailToggle().getAttribute("aria-expanded")).toBe("true");
+    // na avançada, fechados à mão: uma linha e a trilha
+    fireEvent.click(testToggles()[1]);
+    fireEvent.click(trailToggle());
+
+    fireEvent.click(readingButton("casco.leitura.iniciante"));
+    expect(modelsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(within(section()).queryByRole("table")).toBeNull();
+    expect(trailToggle().getAttribute("aria-expanded")).toBe("false");
+    openModels();
+    expect(testRows().map((r) => r.getAttribute("data-open"))).toEqual(
+      MODEL_ORDER.map(() => "false"),
+    );
+
+    fireEvent.click(readingButton("casco.leitura.avancada"));
+    expect(testRows().map((r) => r.getAttribute("data-open"))).toEqual(
+      MODEL_ORDER.map(() => "true"),
+    );
+    expect(trailToggle().getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("o painel nunca tem controle: o único recolhível da seção é a tabela, e o da coluna, a trilha", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await settled("E1");
+      await waitFor(() => trailToggle());
+      expect(
+        section().querySelectorAll(
+          '[data-collapsible]:not([data-collapsible="tests"])',
+        ),
+        reading,
+      ).toHaveLength(1);
+      expect(modelsRoot(), reading).not.toBeNull();
+      for (const alpha of ["0.0500", "0.0100"]) {
+        expect(level(alpha).querySelector("[aria-expanded]"), reading).toBeNull();
+        for (const name of ["perda", "discordancia", "naoRejeitados"]) {
+          const el = level(alpha).querySelector(
+            `[data-phrase="${name}"]`,
+          ) as HTMLElement;
+          expect(el.closest("[data-collapsible]"), `${reading} ${name}`).toBeNull();
+        }
+      }
+      expect(
+        (rail() as HTMLElement).querySelectorAll("[data-collapsible]"),
+        reading,
+      ).toHaveLength(1);
+      cleanup();
+      limparNivel();
+    }
+  });
+
+  it("nenhum aria-live no corpo da seção, e nenhum recolhível dentro de região viva", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await settled("E1");
+      await waitFor(() => trailToggle());
+      // a única região viva da seção é a do andamento, vazia no E1
+      const live = [...section().querySelectorAll("[aria-live]")];
+      expect(live, reading).toHaveLength(1);
+      expect(live[0].classList.contains("ruvor-sr-only"), reading).toBe(true);
+      expect(live[0].textContent, reading).toBe("");
+      expect(section().closest("[aria-live]"), reading).toBeNull();
+      for (const el of document.querySelectorAll("[data-collapsible]")) {
+        expect(el.closest("[aria-live]"), reading).toBeNull();
+        expect(el.querySelector("[aria-live]"), reading).toBeNull();
+      }
+      cleanup();
+      limparNivel();
+    }
   });
 });

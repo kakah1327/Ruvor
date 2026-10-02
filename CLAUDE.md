@@ -132,7 +132,8 @@ com SHA-256. Desde o
 M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechado —, e desde o M1.6c a tela tem as
 cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M1.7
 a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão da página inicial vem da API
-(`has_risk`) e a classificação da B3 sai da API com vírgula.
+(`has_risk`) e a classificação da B3 sai da API com vírgula. Desde o M2.3 há a
+**camada explicativa**: as duas leituras, iniciante e avançada, escolhidas no casco.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -261,7 +262,14 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   pede; consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
   `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
   `src/content/`** (copiado dos mockups aprovados), e varreduras reprovam cor literal, texto literal
-  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. 1110 testes.
+  em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. Desde o M2.3, **duas
+  leituras**: o alternador Iniciante/Avançada no casco (`components/ReadingSwitch.tsx`), lembrado em `localStorage`
+  (`ruvor-reading`) por `src/reading.ts`, com o padrão iniciante; a frase avançada de cada número da lista fechada em
+  `src/content/avancado.ts` (`TEXTOS_AVANCADOS`, mesma chave e mesma assinatura da iniciante de `textos.ts`), e o que é
+  método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
+  ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
+  [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
+  entradas. 1217 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,

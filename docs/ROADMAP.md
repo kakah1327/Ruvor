@@ -80,10 +80,14 @@ produção; o laboratório vai para o Marco 2, como M2.4.
 | 🟡 | **M2.1b — Telas de acesso** | entrar, cadastro, troca de senha (inclusive a obrigatória), menu de conta e gestão de usuários, cada uma com mockup aprovado, sobre o casco e o kit do M1.6b e as rotas do M2.1a; o pedido de cálculo passa a exigir conta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)) — spec e plano aprovados (PR #24), **frente `marco1`** (toda interface visual é dela, decisão do darkside171, 2026-09-27) |
 | 🟡 | **M2.2a — Carteira** | composição pelo usuário — pesos em %, versionada — e risco de carteira pelo caminho barato, sob demanda, nos nove modelos ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) a [D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)) — [spec](specs/M2.2a-carteira.md) em rascunho, frente `identidade`, só backend; **a implementação só entra na `main` com o parecer da CVM** |
 | ⬜ | **M2.2b — Telas da carteira** | montar, editar e ver o risco da carteira, cada tela com mockup aprovado, sobre as rotas do M2.2a — **frente `marco1`** (toda interface visual é dela); o merge também espera o parecer (D-116) |
-| 🟡 | **M2.3 — Camada explicativa** | leitura iniciante/avançado como sistema: alternador global no casco, uma frase avançada por número, detalhes técnicos recolhidos na iniciante ([D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) a [D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)) — spec e plano aprovados (PR #22), frente `marco1`; depende do M1.6d |
+| ✅ | **M2.3 — Camada explicativa** | **fechado em 2026-10-02**; leitura iniciante/avançado como sistema: alternador global no casco, uma frase avançada por número, detalhes técnicos recolhidos na iniciante ([D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) a [D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)) — spec e plano aprovados (PR #22), frente `marco1`. As 55 chaves com a frase avançada conferida no código que calcula, quatro portões de mockup, 1206 testes no frontend e 631 conferências na execução real, nos dois níveis |
 | ⬜ | **M2.4 — Regime de laboratório** | a camada 3 validada ao longo de uma década, na plataforma ([D-04](decisoes/D-04-dois-regimes-de-operacao.md)); veio do Marco 1 pela [D-74](decisoes/D-74-o-marco-1-e-so-producao.md) |
 
-**Pré-requisito:** parecer sobre a fronteira regulatória da CVM.
+**Pré-requisito:** parecer sobre a fronteira regulatória da CVM — **só para os blocos que tocam composição ou peso de
+carteira** (o M2.2 e o que dele derivar), pela [D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md); e,
+nesses, ele segura o merge da implementação, não a spec nem o plano
+([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)). O resto do
+Marco 2 não espera o parecer.
 
 ---
 
