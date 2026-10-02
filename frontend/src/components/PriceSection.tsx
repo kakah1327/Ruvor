@@ -3,6 +3,7 @@ import { useId } from "react";
 import type { Load } from "../api/resource";
 import type { Prices } from "../api/types";
 import { TEXTOS } from "../content/textos";
+import { textFor, useReading } from "../reading";
 import { Glyph } from "./Glyph";
 import { PriceChart } from "./PriceChart";
 import { SectionError, SectionSkeleton } from "./SectionStatus";
@@ -19,6 +20,8 @@ type Props = {
  */
 export function PriceSection({ load, onRetry }: Props) {
   const titleId = useId();
+  // O nível muda só a frase do preço ajustado, nunca o gráfico (D-152, V-04).
+  const reading = useReading();
   return (
     <section className="ruvor-panel" aria-labelledby={titleId}>
       <div className="ruvor-panel__head">
@@ -36,7 +39,7 @@ export function PriceSection({ load, onRetry }: Props) {
         {load.state === "ok" && (
           // A frase e o gráfico numa pilha do kit: o espaço entre eles é o da pilha.
           <div className="ruvor-stack">
-            <p className="ruvor-note">{TEXTOS["ativo.precoAjustado"]}</p>
+            <p className="ruvor-note">{textFor("ativo.precoAjustado", reading)}</p>
             <div>
               <PriceChart rows={load.data.results} />
             </div>

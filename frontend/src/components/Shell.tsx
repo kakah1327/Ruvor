@@ -5,6 +5,7 @@ import { Link, Outlet, useLocation, useOutletContext } from "react-router";
 import { TEXTOS } from "../content/textos";
 import { formatDate, formatInstant } from "../format/numbers";
 import { Glyph } from "./Glyph";
+import { ReadingSwitch } from "./ReadingSwitch";
 import { SearchBox } from "./SearchBox";
 import { ThemeSwitch } from "./ThemeSwitch";
 
@@ -95,7 +96,12 @@ export function Shell() {
           <SearchBox variant="bar" />
         )}
 
-        <ThemeSwitch />
+        {/* As duas chaves, a de leitura antes da de tema (RF-01 e RF-11 do M2.3): o arranjo
+            em 1440 e em 360 px é o do casco-e-preco.html, em .ruvor-topbar__prefs. */}
+        <div className="ruvor-topbar__prefs">
+          <ReadingSwitch />
+          <ThemeSwitch />
+        </div>
       </header>
 
       <div className="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">

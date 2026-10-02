@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — o casco com o alternador de leitura, e o preço (mockup, M2.3)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css">
+<style>
+  /*
+   * Mockup do casco e do preço (T3 do plano M2.3). Parte do aprovado no M1.6b (busca.html,
+   * ativo.html) e no M1.6c (ativo-fundamentos.html), com as classes do kit. Dado real do
+   * ITUB4, pedido a /api/v1/ pelo proxy do Vite. Só var(--ruvor-*) e valores estruturais:
+   * nenhuma cor literal. O canvas do uPlot recebe a cor lida dos tokens e é recriado na troca
+   * de tema, como o Chart.tsx.
+   *
+   * O que é novo, e o portão aprova:
+   *   - o alternador de leitura (Iniciante / Avançada) na barra, ao lado da chave de tema, no
+   *     molde dela (.ruvor-segmented): m23-prefs junta as duas chaves no terceiro lugar da
+   *     grade da barra, e, até 720 px, o alternador fica na primeira linha, ao lado da marca, a
+   *     chave de tema desce para a segunda, à direita, e a busca vai para a terceira — a ordem
+   *     visual igual à do DOM e à de 1440 (RF-11);
+   *   - as frases avançadas de ativo.ultimoFechamento e ativo.precoAjustado, copiadas de
+   *     docs/mockups/M2.3/conferencia-casco.md, no lugar da iniciante (D-152).
+   * O menu de conta do M2.1b não está aprovado (T0 do plano): a barra não o mostra.
+   *
+   * Estilo local: m23- (a barra com as duas chaves, que vai ao kit se o portão aprovar) e mk-
+   * (a moldura do mockup, que não é tela).
+   */
+
+  /* --- O uPlot nas cores do tema (o app.css do produto) ------------------------------ */
+  .uplot .u-select { background: var(--ruvor-control-hover); }
+  .uplot.u-hz .u-cursor-x, .uplot.u-vt .u-cursor-y { border-right-color: var(--ruvor-border); }
+  .uplot.u-hz .u-cursor-y, .uplot.u-vt .u-cursor-x { border-bottom-color: var(--ruvor-border); }
+  .uplot { font-family: var(--ruvor-font-sans); }
+
+  /* --- NOVO: as duas chaves da barra, a de leitura antes da de tema ----------------- */
+  .m23-prefs { display: flex; align-items: center; gap: var(--ruvor-space-3); justify-self: end; }
+  @media (max-width: 720px) {
+    /* Na barra de duas colunas do kit: marca e alternador na primeira linha, o tema na
+       segunda, à direita, e a busca (quando há) na terceira: a ordem do DOM. */
+    .m23-prefs { display: contents; }
+    .m23-prefs > [data-switch="reading"] { grid-column: 2; grid-row: 1; justify-self: end; }
+    .m23-prefs > [data-switch="theme"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+    .ruvor-topbar .ruvor-topbar__search { grid-row: 3; }
+  }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-bar__hint { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-frame iframe { width: 360px; height: 1500px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-frame--short iframe { height: 780px; }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 22%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code, .mk-pad code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/regular/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-chart-line" viewBox="0 0 256 256"><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0v94.37L90.73,98a8,8,0,0,1,10.07-.38l58.81,44.11L218.73,90a8,8,0,1,1,10.54,12l-64,56a8,8,0,0,1-10.07.38L96.39,114.29,40,163.63V200H224A8,8,0,0,1,232,208Z"/></symbol>
+  <symbol id="i-calendar-blank" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.3 · casco e preço · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk="ativo">ITUB4 · largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk="busca">a busca · largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk="textos">os textos</button>
+  </div>
+  <p class="mk-bar__hint">O nível e o tema se trocam pela barra da tela, abaixo; as vistas em 360 px seguem a escolha.</p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="#" data-mk-link="busca" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search" data-bar-search>
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="ruvor-topbar__spacer" aria-hidden="true" data-bar-spacer hidden></div>
+  <!-- NOVO: as duas chaves; a de leitura antes da de tema (RF-01). -->
+  <div class="m23-prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div id="views">
+
+    <!-- A tela do ativo: cabeçalho, preço e proventos, com o dado real do ITUB4. -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="ativo" hidden>
+      <section class="ruvor-asset-head" id="sec-head" aria-busy="true">
+        <div class="ruvor-asset-head__id"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>
+      </section>
+
+      <section class="ruvor-panel" id="sec-price" aria-labelledby="h-price">
+        <div class="ruvor-panel__head">
+          <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-chart-line"/></svg>
+          <h2 class="ruvor-h3" id="h-price" data-t="ativo.preco.titulo"></h2>
+        </div>
+        <div class="ruvor-panel__body" data-body aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>
+      </section>
+
+      <section class="ruvor-panel" id="sec-events" aria-labelledby="h-events">
+        <div class="ruvor-panel__head">
+          <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-calendar-blank"/></svg>
+          <h2 class="ruvor-h3" id="h-events" data-t="ativo.eventos.titulo"></h2>
+          <span class="ruvor-push ruvor-muted" data-periodo></span>
+        </div>
+        <div class="ruvor-panel__body" data-body aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block ruvor-skeleton--short" aria-hidden="true"></div></div>
+      </section>
+
+      <p class="mk-tail">Moldura: daqui para baixo, a tela aprovada no M1.6b e no M1.6c — comportamento, risco, fundamentos e comunicados, e a trilha do cálculo na coluna lateral. Os textos delas nos dois níveis são dos mockups do comportamento (T6), do risco (T9) e dos fundamentos (T12). Os proventos não mudam com o nível (spec, Fora): aparecem aqui para o portão ver a seção nos dois.</p>
+    </main>
+
+    <!-- A busca: a barra sem o campo (o grande basta), com o alternador. -->
+    <main class="ruvor-content mk-view" data-view="busca" hidden>
+      <section class="ruvor-home" aria-labelledby="home-title">
+        <p class="ruvor-eyebrow" data-t="busca.eyebrow"></p>
+        <h1 class="ruvor-display" id="home-title" data-t="busca.titulo"></h1>
+        <p class="ruvor-sub" data-t="busca.sub"></p>
+        <div class="ruvor-search ruvor-search--lg">
+          <svg class="ruvor-glyph ruvor-glyph--lg" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+          <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="busca.rotulo" data-t-placeholder="busca.placeholder">
+        </div>
+      </section>
+      <p class="mk-tail">Moldura: a página inicial é a aprovada no M1.6b (busca.html), sem mudança; aqui só para mostrar a barra dela, sem o campo de busca, com o alternador (RF-01: a escolha pode ser feita antes de abrir um ativo).</p>
+    </main>
+
+    <!-- 360 px: a própria página em moldura estreita, no nível e no tema escolhidos. -->
+    <div class="mk-view mk-pad" data-view="estreito" hidden>
+      <p class="mk-tail">Moldura: a mesma página em 360 px de largura, sem a barra do mockup. Até 720 px a barra do kit tem duas colunas; o alternador fica na primeira linha, ao lado da marca, a chave de tema desce para a segunda, à direita, e a busca vai para a terceira — a ordem do DOM e a de 1440. Nada rola na horizontal (RF-11).</p>
+      <div class="mk-frames" data-frames></div>
+    </div>
+
+    <!-- Os textos. -->
+    <div class="mk-view mk-pad" data-view="textos" hidden>
+      <p class="mk-tail">Moldura: as chaves que nascem neste mockup e as duas frases avançadas, com a saída de cada forma. As afirmações das avançadas são as de <code>docs/mockups/M2.3/conferencia-casco.md</code>, que traz o <code>caminho:linha</code> de cada uma.</p>
+      <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos das chaves-função</h2></div>
+        <div class="ruvor-panel__body ruvor-stack">
+          <p class="ruvor-note">No molde do <code>EXEMPLOS</code> do M1.6c. A T4 leva a linha da avançada a <code>EXEMPLOS_AVANCADOS</code>, em <code>frontend/tests/exemplos.ts</code>. A iniciante de <code>ativo.ultimoFechamento</code> já tem o exemplo dela em <code>EXEMPLOS</code> (<code>frontend/tests/exemplos.ts</code>), repetido aqui; <code>ativo.precoAjustado</code> e as três chaves do alternador são texto, sem exemplo.</p>
+          <pre class="mk-code" data-exemplos></pre>
+        </div>
+      </section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+        <div class="ruvor-panel__body">
+          <ul class="mk-notes">
+            <li>As duas avançadas dizem o que o código mostra, e só isso. Duas afirmações ficam de fora porque não se ancoram no código (o fim da conferência): <b>o que o ajustado corrige</b> — a avançada diz "fechamento ajustado como o Yahoo Finance o informa", sem prometer a fórmula do ajuste —, e <b>o fechamento "como foi negociado"</b> — a avançada diz "como o Yahoo Finance o informa". Afirmar mais pede conferir a fonte.</li>
+            <li>As avançadas dizem em palavras o que a conferência afirma com os nomes do cálculo (<code>close</code>, <code>adj_close</code>, <code>silver.price</code>, o <code>chart</code> do Yahoo, a fórmula do log-retorno): a revisão do mockup pediu a frase sem nomes internos. A conferência guarda o <code>caminho:linha</code> de cada afirmação, e a janela (do primeiro pregão coletado ao último; a primeira coleta pede dez anos) está na frase do preço ajustado.</li>
+            <li>O valor do último fechamento, a série do gráfico, o resumo do gráfico e a tabela de proventos são os mesmos nos dois níveis: o nível muda só as duas frases (D-152). Na seção Preço e proventos nada é recolhido (RF-06).</li>
+            <li>O alternador fica à esquerda da chave de tema em 1440, e na primeira linha, ao lado da marca, em 360. O menu de conta do M2.1b, que entra antes do tema, não está aprovado e não aparece; quando entrar, a barra em 360 px se refaz no mockup dele.</li>
+            <li>O rótulo do grupo, "Nível de leitura", só é lido pelo leitor de tela, como o "Tema" da chave ao lado.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span><span data-t="rodape.fonte"></span><span data-provenance></span></span></p>
+  </footer>
+</div>
+
+<script type="module">
+import uPlot from "https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.esm.js";
+
+const TICKER = "ITUB4";
+
+// ---------------------------------------------------------------- formatação (pt-BR), a de format/numbers.ts
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fMoney = NF({ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fMoney0 = NF({ style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const fMoneyEv = NF({ style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 6 });
+const fInt = NF({ maximumFractionDigits: 0 });
+const fInstantF = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+
+// ---------------------------------------------------------------- os textos
+// Herdados: os de frontend/src/content/textos.ts que esta parte da tela usa, literais.
+const HERDADOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "busca.eyebrow": "Busca",
+  "busca.titulo": "Qual ativo você quer analisar?",
+  "busca.sub": "Digite o código ou o nome de uma ação da B3, ou do Ibovespa. Na página do ativo, você vê como o preço se comportou e quanto nove métodos estimam que ele pode perder em um dia.",
+  "busca.rotulo": "Buscar ativo por código ou nome",
+  "busca.placeholder": "Código ou nome, como PETR4",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+  "rodape.ultimoPregao": (data) => `Último pregão usado: ${data}.`,
+  "rodape.calculadoEm": (data, hora) => `Risco calculado em ${data} às ${hora}.`,
+  "ativo.tipo.stock": "ação",
+  "ativo.tipo.index": "índice",
+  "ativo.situacao.active": "em negociação",
+  "ativo.situacao.inactive": "inativo",
+  "ativo.listagem": (s) => `segmento de listagem ${s}`,
+  "ativo.classificacao": "Classificação na B3",
+  "ativo.ultimoFechamento.rotulo": "Último fechamento",
+  "ativo.ultimoFechamento": (data) => `O preço de fechamento do último pregão coletado, ${data}, como foi negociado na bolsa — sem ajuste por proventos.`,
+  "ativo.semPreco": "sem preço coletado ainda",
+  "ativo.preco.titulo": "Preço ajustado",
+  "ativo.precoAjustado": "Preço corrigido por proventos e desdobramentos: os valores antigos são ajustados para que a linha mostre quanto a ação rendeu de fato, sem os saltos dos pagamentos. É a mesma série que vai aos modelos de risco.",
+  "ativo.preco.vazio": "Ainda não há preços coletados deste ativo.",
+  "ativo.preco.vazio.nota": "A série de preços é coletada junto com o cálculo do risco.",
+  "ativo.eventos.titulo": "Proventos e desdobramentos",
+  "ativo.eventos.periodo": (d) => `nos 12 meses até ${d}`,
+  "ativo.eventos.col.data": "Data",
+  "ativo.eventos.col.tipo": "Tipo",
+  "ativo.eventos.col.valor": "Valor ou proporção",
+  "ativo.eventos.dividend": "provento",
+  "ativo.eventos.split": "desdobramento",
+  "ativo.eventos.valor": (v) => `${v} por ação`,
+  "ativo.eventos.proporcao": (num, den) => `cada ${den} ações viraram ${num}`,
+  "ativo.eventos.verTodos": (n) => `Ver todos (${n})`,
+  "ativo.eventos.verMenos": "Ver só os últimos 12 meses",
+  "ativo.eventos.nenhum": "Não houve proventos nem desdobramentos nos últimos 12 meses.",
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "ativo.tentarDeNovo": "Tentar de novo",
+  "grafico.atalhos": "Período do gráfico",
+  "grafico.atalho.1a": "1 ano",
+  "grafico.atalho.5a": "5 anos",
+  "grafico.atalho.tudo": "Tudo",
+  "grafico.arrasto": "Arraste sobre o gráfico para aproximar; clique duas vezes para ver tudo de novo.",
+  "grafico.dicaPreco": (data, preco) => `${data} · ${preco}`,
+  "grafico.resumoPreco": (ini, fim, min, dmin, max, dmax, ult) => `De ${ini} a ${fim}, o preço ajustado foi do mínimo de ${min}, em ${dmin}, ao máximo de ${max}, em ${dmax}; o último é ${ult}.`,
+};
+
+// NOVOS em textos.ts: os rótulos do alternador (RF-10).
+const TEXTOS = {
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+};
+
+// NOVOS em avancado.ts: as frases avançadas das duas chaves, mesma chave e mesma assinatura
+// da iniciante (RF-05). As afirmações são as de conferencia-casco.md, em palavras, sem os nomes
+// internos (redação da revisão do mockup); as duas linhas de ativo.precoAjustado (a linha do
+// gráfico e a série que vai aos modelos) viram uma frase só, porque a chave é texto, sem ramo.
+const TEXTOS_AVANCADOS = {
+  "ativo.ultimoFechamento": (data) => `O fechamento do pregão de ${data}, o mais recente coletado, como o Yahoo Finance o informa — sem o ajuste por proventos do preço ajustado. A data é a do pregão no fuso da bolsa.`,
+  "ativo.precoAjustado": "Fechamento ajustado como o Yahoo Finance o informa; o Ruvor não refaz o ajuste. A série vai do primeiro pregão coletado — a primeira coleta pede dez anos — até o último, e é pedida de novo inteira quando chega provento ou desdobramento novo, porque o ajuste muda todo o passado. Dela sai o retorno diário, o logaritmo da razão entre o fechamento ajustado e o do pregão anterior, que é o que vai aos modelos de risco.",
+};
+
+// O registro de exemplos (o molde do EXEMPLOS do M1.6c): os argumentos de cada chave-função.
+const EXEMPLOS = {
+  "ativo.ultimoFechamento": [["26/09/2026"]],
+};
+const EXEMPLOS_AVANCADOS = {
+  "ativo.ultimoFechamento": [["26/09/2026"]],
+};
+
+// O nível corrente (o que reading.ts guarda) e o texto do nível (o textFor do plano).
+let reading = "beginner";
+const pick = (k) => {
+  if (reading === "advanced" && k in TEXTOS_AVANCADOS) return TEXTOS_AVANCADOS[k];
+  const v = k in TEXTOS ? TEXTOS[k] : HERDADOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return v;
+};
+const T = (k, ...a) => { const v = pick(k); return typeof v === "function" ? v(...a) : v; };
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const tok = (name) => getComputedStyle(document.documentElement).getPropertyValue(`--ruvor-${name}`).trim();
+// A frase de um número, marcada com a chave e os argumentos: a troca de nível só a reescreve.
+const phrase = (k, ...a) => `<p class="ruvor-note" data-phrase="${esc(k)}" data-args="${esc(JSON.stringify(a))}">${esc(T(k, ...a))}</p>`;
+function refreshPhrases() {
+  for (const n of document.querySelectorAll("[data-phrase]")) n.textContent = T(n.dataset.phrase, ...JSON.parse(n.dataset.args));
+}
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+const api = async (p) => {
+  const r = await fetch(`/api/v1/assets/${TICKER}${p}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+};
+
+function sectionError(host, retry) {
+  host.removeAttribute("aria-busy");
+  host.innerHTML = `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${esc(T("ativo.erroSecao"))}</span><button class="ruvor-btn" type="button"><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-arrows-clockwise"/></svg><span>${esc(T("ativo.tentarDeNovo"))}</span></button></div>`;
+  $("button", host).addEventListener("click", retry);
+}
+
+// ---------------------------------------------------------------- o gráfico (uPlot)
+const charts = new Map();
+function colors() {
+  return { evidence: tok("evidence"), surface: tok("surface"), ink: tok("ink"), muted: tok("text-muted"), rule: tok("table-rule"), font: `${tok("type-micro-size")} ${tok("font-sans")}` };
+}
+const axis = (c, extra = {}) => ({ stroke: c.muted, grid: { stroke: c.rule, width: 1 }, ticks: { stroke: c.rule, width: 1 }, font: c.font, ...extra });
+function redrawAll() { for (const make of charts.values()) make(); }
+
+// ---------------------------------------------------------------- cabeçalho
+async function loadHead() {
+  const host = $("#sec-head");
+  let a;
+  try { a = await api(""); } catch { sectionError(host, loadHead); return; }
+  const crumbs = [a.sector, a.subsector, a.segment].filter(Boolean).map((s) => `<li>${esc(s)}</li>`).join("");
+  const lp = a.last_price;
+  host.removeAttribute("aria-busy");
+  host.innerHTML = `
+    <div class="ruvor-asset-head__id">
+      <p class="ruvor-eyebrow">${esc(a.trading_name)}</p>
+      <h1 class="ruvor-display">${esc(a.ticker)}</h1>
+      <p class="ruvor-asset-head__name">${esc(a.name)}</p>
+      <div class="ruvor-asset-head__tags">
+        <span class="ruvor-tag ruvor-tag--evidence">${esc(T(`ativo.tipo.${a.kind}`))}</span>
+        <span class="ruvor-tag ${a.status === "active" ? "ruvor-tag--validated" : "ruvor-tag--review"}">${esc(T(`ativo.situacao.${a.status}`))}</span>
+        ${a.listing_segment ? `<span class="ruvor-tag ruvor-tag--neutral">${esc(T("ativo.listagem", a.listing_segment))}</span>` : ""}
+      </div>
+      ${crumbs ? `<ol class="ruvor-crumbs" aria-label="${esc(T("ativo.classificacao"))}">${crumbs}</ol>` : ""}
+    </div>
+    <div class="ruvor-panel ruvor-asset-head__last">
+      <p class="ruvor-eyebrow">${esc(T("ativo.ultimoFechamento.rotulo"))}</p>
+      ${lp ? `<p class="ruvor-asset-head__value ruvor-num" data-value="last-close">${esc(fMoney.format(Number(lp.close)))}</p>${phrase("ativo.ultimoFechamento", fDate(lp.date))}`
+           : `<p class="ruvor-asset-head__value" data-value="last-close">—</p><p class="ruvor-note">${esc(T("ativo.semPreco"))}</p>`}
+    </div>`;
+  return a;
+}
+
+// ---------------------------------------------------------------- preço
+async function loadPrice() {
+  const sec = $("#sec-price"), host = $("[data-body]", sec);
+  let p;
+  try { p = await api("/prices"); } catch { sectionError(host, loadPrice); return; }
+  const rows = p.results;
+  host.removeAttribute("aria-busy");
+  if (rows.length === 0) {
+    host.innerHTML = `<div class="ruvor-stack">${phrase("ativo.precoAjustado")}<div><div class="ruvor-chart__empty"><div><p>${esc(T("ativo.preco.vazio"))}</p><p class="ruvor-note">${esc(T("ativo.preco.vazio.nota"))}</p></div></div></div></div>`;
+    return;
+  }
+  const xs = rows.map((r) => Date.parse(`${r.date}T00:00:00Z`) / 1000);
+  const ys = rows.map((r) => Number(r.adj_close));
+  let iMin = 0, iMax = 0;
+  ys.forEach((v, i) => { if (v < ys[iMin]) iMin = i; if (v > ys[iMax]) iMax = i; });
+  const last = rows.length - 1;
+  const resumo = T("grafico.resumoPreco", fDate(rows[0].date), fDate(rows[last].date),
+    fMoney.format(ys[iMin]), fDate(rows[iMin].date), fMoney.format(ys[iMax]), fDate(rows[iMax].date), fMoney.format(ys[last]));
+  host.innerHTML = `
+    <div class="ruvor-stack">
+      ${phrase("ativo.precoAjustado")}
+      <div>
+        <div class="ruvor-chart__bar">
+          <div class="ruvor-btn-group" role="group" aria-label="${esc(T("grafico.atalhos"))}">
+            <button class="ruvor-btn" type="button" data-range="1" aria-pressed="false">${esc(T("grafico.atalho.1a"))}</button>
+            <button class="ruvor-btn" type="button" data-range="5" aria-pressed="false">${esc(T("grafico.atalho.5a"))}</button>
+            <button class="ruvor-btn" type="button" data-range="all" aria-pressed="true">${esc(T("grafico.atalho.tudo"))}</button>
+          </div>
+          <span class="ruvor-chart__readout ruvor-num" data-readout aria-hidden="true"></span>
+        </div>
+        <div class="ruvor-chart" id="chart-price" role="img" aria-label="${esc(resumo)}"></div>
+        <p class="ruvor-note ruvor-chart__summary" aria-hidden="true">${esc(resumo)}</p>
+        <p class="ruvor-note">${esc(T("grafico.arrasto"))}</p>
+      </div>
+    </div>`;
+
+  let range = "all";
+  const readout = $("[data-readout]", host);
+  const showRead = (i) => { readout.textContent = T("grafico.dicaPreco", fDate(rows[i].date), fMoney.format(ys[i])); };
+  const applyRange = (u) => {
+    if (range === "all") u.setScale("x", { min: xs[0], max: xs[last] });
+    else u.setScale("x", { min: xs[last] - Number(range) * 365.25 * 86400, max: xs[last] });
+  };
+  const setPressed = () => { for (const b of host.querySelectorAll("[data-range]")) b.setAttribute("aria-pressed", String(b.dataset.range === range)); };
+  let u = null;
+  const make = () => {
+    const box = $("#chart-price");
+    u?.destroy(); box.replaceChildren();
+    const c = colors();
+    u = new uPlot({
+      width: box.clientWidth, height: 260,
+      legend: { show: false },
+      tzDate: (ts) => uPlot.tzDate(new Date(ts * 1e3), "Etc/UTC"),
+      cursor: { points: { stroke: c.ink, fill: c.surface, size: 8 }, drag: { x: true, y: false } },
+      scales: { x: { time: true } },
+      axes: [
+        axis(c, { values: (self, splits) => {
+          const span = (self.scales.x.max - self.scales.x.min) / 86400;
+          return splits.map((s) => { const d = new Date(s * 1e3); return span > 3 * 365 ? String(d.getUTCFullYear()) : `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`; });
+        } }),
+        axis(c, { size: 64, values: (self, splits) => splits.map((v) => fMoney0.format(v)) }),
+      ],
+      series: [{}, { stroke: c.evidence, fill: undefined, width: 1.5, points: { stroke: c.evidence, fill: c.surface } }],
+      hooks: {
+        setCursor: [(self) => showRead(self.cursor.idx ?? last)],
+        setSelect: [(self) => { if (self.select.width > 0) { range = "custom"; setPressed(); } }],
+      },
+    }, [xs, ys], box);
+    if (range !== "custom") applyRange(u);
+    showRead(last);
+  };
+  for (const b of host.querySelectorAll("[data-range]")) b.addEventListener("click", () => { range = b.dataset.range; setPressed(); applyRange(u); });
+  $("#chart-price").addEventListener("dblclick", () => { range = "all"; setPressed(); });
+  charts.set("price", make);
+  make();
+  new ResizeObserver(() => u && u.setSize({ width: $("#chart-price").clientWidth, height: 260 })).observe($("#chart-price"));
+}
+
+// ---------------------------------------------------------------- proventos (não mudam com o nível)
+async function loadEvents(assetP) {
+  const sec = $("#sec-events"), host = $("[data-body]", sec);
+  let ev, asset;
+  try { [ev, asset] = await Promise.all([api("/events"), assetP]); } catch { sectionError(host, () => loadEvents(api(""))); return; }
+  if (!asset?.last_price) return;
+  const ref = asset.last_price.date;
+  const [y, m, d] = ref.split("-");
+  const start = `${Number(y) - 1}-${m}-${d}`;
+  const all = [...ev.results].sort((a, b) => b.date.localeCompare(a.date));
+  const recent = all.filter((e) => e.date > start && e.date <= ref);
+  $("[data-periodo]", sec).textContent = T("ativo.eventos.periodo", fDate(ref));
+  host.removeAttribute("aria-busy");
+  const row = (e) => `<tr><td class="ruvor-num">${fDate(e.date)}</td><td>${esc(T(`ativo.eventos.${e.kind}`))}</td><td class="ruvor-num">${esc(e.kind === "dividend"
+    ? T("ativo.eventos.valor", fMoneyEv.format(Number(e.amount)))
+    : T("ativo.eventos.proporcao", fInt.format(Number(e.numerator)), fInt.format(Number(e.denominator))))}</td></tr>`;
+  let showAll = false;
+  const render = () => {
+    const list = showAll ? all : recent;
+    host.innerHTML = `<div class="ruvor-stack">${list.length === 0
+      ? `<p class="ruvor-muted">${esc(T("ativo.eventos.nenhum"))}</p>`
+      : `<table class="ruvor-table ruvor-table--end"><thead><tr><th scope="col">${esc(T("ativo.eventos.col.data"))}</th><th scope="col">${esc(T("ativo.eventos.col.tipo"))}</th><th scope="col">${esc(T("ativo.eventos.col.valor"))}</th></tr></thead><tbody>${list.map(row).join("")}</tbody></table>`}
+      ${all.length > recent.length ? `<div><button class="ruvor-btn ruvor-btn--ghost" type="button" aria-expanded="${showAll}">${esc(showAll ? T("ativo.eventos.verMenos") : T("ativo.eventos.verTodos", fInt.format(all.length)))}</button></div>` : ""}</div>`;
+    $("button", host)?.addEventListener("click", () => { showAll = !showAll; render(); });
+  };
+  render();
+}
+
+// ---------------------------------------------------------------- o rodapé: a proveniência do risco
+async function loadProvenance() {
+  try {
+    const r = await api("/risk");
+    const l = r.latest;
+    if (!l) return;
+    const [data, hora] = fInstantF.format(new Date(l.calculated_at)).replace(",", "").split(" ");
+    $("[data-provenance]").textContent = ` ${T("rodape.ultimoPregao", fDate(l.as_of_date))} ${T("rodape.calculadoEm", data, hora)}`;
+  } catch { /* sem proveniência, o rodapé fica só com a fonte, como o Shell.tsx */ }
+}
+
+// ---------------------------------------------------------------- os textos (vista "os textos")
+function renderTextos() {
+  const out = (v, ex) => (typeof v === "function" ? (ex ?? [[]]).map((a) => v(...a)) : [v]);
+  const cell = (outs) => outs.map((o) => esc(o)).join("<br><br>");
+  const fromHtml = (k) => HERDADOS[k];
+  let rows = `<thead><tr><th scope="col">chave</th><th scope="col">iniciante</th><th scope="col">avançada</th></tr></thead><tbody>`;
+  for (const k of Object.keys(TEXTOS)) {
+    rows += `<tr><td>${esc(k)}<small>nova em textos.ts</small></td><td colspan="2">${cell(out(TEXTOS[k]))}</td></tr>`;
+  }
+  for (const k of Object.keys(TEXTOS_AVANCADOS)) {
+    const v = TEXTOS_AVANCADOS[k];
+    const sig = typeof v === "function" ? `função de ${v.length} argumento${v.length === 1 ? "" : "s"}` : "texto";
+    rows += `<tr><td>${esc(k)}<small>${esc(sig)} · avançada nova em avancado.ts</small></td><td>${cell(out(fromHtml(k), EXEMPLOS[k]))}<small>herdada, sem mudança</small></td><td>${cell(out(v, EXEMPLOS_AVANCADOS[k]))}<small>conferencia-casco.md</small></td></tr>`;
+  }
+  $("[data-textos]").innerHTML = `${rows}</tbody>`;
+  $("[data-exemplos]").textContent = `// a iniciante, já em EXEMPLOS\nconst EXEMPLOS = ${JSON.stringify(EXEMPLOS, null, 2)};\n\n// a avançada, nova em EXEMPLOS_AVANCADOS\nconst EXEMPLOS_AVANCADOS = ${JSON.stringify(EXEMPLOS_AVANCADOS, null, 2)};`;
+}
+
+// ---------------------------------------------------------------- tema, nível e vistas
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+let theme = "system";
+
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  theme = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  redrawAll(); // o canvas não lê var(): recria com as cores do tema novo
+  refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (!root.hasAttribute("data-theme")) redrawAll(); });
+
+const readingBtns = document.querySelectorAll("[data-set-reading]");
+function setReading(next) {
+  reading = next === "advanced" ? "advanced" : "beginner";
+  root.dataset.reading = reading;
+  for (const b of readingBtns) b.setAttribute("aria-pressed", String(b.dataset.setReading === reading));
+  refreshPhrases(); // só as frases mudam: nenhum pedido à API, nenhum número redesenhado
+  refreshFrames();
+}
+for (const b of readingBtns) b.addEventListener("click", () => setReading(b.dataset.setReading));
+
+const mkBtns = document.querySelectorAll("[data-mk]");
+let view = "ativo";
+function setView(next) {
+  view = next;
+  for (const b of mkBtns) b.setAttribute("aria-pressed", String(b.dataset.mk === next));
+  for (const v of document.querySelectorAll(".mk-view")) v.hidden = v.dataset.view !== next;
+  // A barra da busca não tem campo: o vão no lugar dele (Shell.tsx).
+  const noSearch = next === "busca";
+  $("[data-bar-search]").hidden = noSearch;
+  $("[data-bar-spacer]").hidden = !noSearch;
+  refreshFrames();
+}
+for (const b of mkBtns) b.addEventListener("click", () => setView(b.dataset.mk));
+$("[data-mk-link='busca']").addEventListener("click", (e) => { e.preventDefault(); if (params.get("moldura") !== "0") setView("busca"); });
+
+// As vistas em 360 px: a própria página, sem a moldura, no nível e no tema correntes.
+function refreshFrames() {
+  const host = $("[data-frames]");
+  if (!host || view !== "estreito") return;
+  const src = (v) => `${location.pathname}?moldura=0&vista=${v}&nivel=${reading}&tema=${theme}`;
+  host.innerHTML = `
+    <div class="mk-frame"><p>A tela do ativo, 360 px</p><iframe title="A tela do ativo em 360 px" src="${src("ativo")}"></iframe></div>
+    <div class="mk-frame mk-frame--short"><p>A busca, 360 px (a barra sem o campo)</p><iframe title="A busca em 360 px" src="${src("busca")}"></iframe></div>`;
+}
+
+// ?vista=ativo|busca|estreito|textos &nivel=beginner|advanced &tema=light|dark|system &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+setReading(params.get("nivel") || "beginner");
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "ativo");
+renderTextos();
+
+const assetP = loadHead();
+Promise.allSettled([assetP, loadPrice(), loadEvents(assetP), loadProvenance()]).then(() => { document.body.dataset.ready = "true"; });
+</script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 import { Fragment, useId, useState } from "react";
 
 import { MODEL_ORDER, type ModelName, type RiskResult } from "../api/types";
+import { BLOCOS_AVANCADOS } from "../content/avancado";
 import { TEXTOS } from "../content/textos";
 import { formatDecimal, formatInteger } from "../format/numbers";
 import { formatLoss, lossFromVar } from "../format/var";
+import { type Reading, textFor, useReading } from "../reading";
 import type { Alpha } from "../risk/summary";
 import { Glyph } from "./Glyph";
 import { ALPHAS, CADA_N } from "./LossSummary";
@@ -105,6 +107,7 @@ function TestRow({
   pValue: string | null;
   passed: boolean | null;
 }) {
+  const reading = useReading();
   const known = pValue !== null && passed !== null;
   return (
     <div className="ruvor-test" data-test={test}>
@@ -115,7 +118,7 @@ function TestRow({
       </dd>
       {known && (
         <p className="ruvor-note">
-          {TEXTOS[`risco.${test}`](formatPValue(pValue), passed)}
+          {textFor(`risco.${test}`, reading)(formatPValue(pValue), passed)}
         </p>
       )}
     </div>
@@ -127,6 +130,7 @@ function TestRow({
  * DQ. O modelo que falhou — sem linha, com erro, ou com o Kupiec nulo — mostra o erro.
  */
 function LevelTests({ result, alpha }: { result: RiskResult | null; alpha: Alpha }) {
+  const reading = useReading();
   const title = <p className="ruvor-eyebrow">{TEXTOS[`risco.nivel.${alpha}`]}</p>;
   if (
     result === null ||
@@ -154,7 +158,7 @@ function LevelTests({ result, alpha }: { result: RiskResult | null; alpha: Alpha
           <dt>{TEXTOS["risco.rotulo.violacoes"]}</dt>
           <dd className="ruvor-num">{`${violations} × ${expected}`}</dd>
           <p className="ruvor-note">
-            {TEXTOS["risco.violacoes"](
+            {textFor("risco.violacoes", reading)(
               violations,
               expected,
               CADA_N[alpha],
@@ -179,14 +183,37 @@ function LevelTests({ result, alpha }: { result: RiskResult | null; alpha: Alpha
 }
 
 /**
+ * As linhas de teste abertas no padrão de cada nível (RF-06, RF-07 do M2.3): nenhuma na
+ * iniciante, as nove na avançada.
+ */
+function openFor(reading: Reading): ReadonlySet<ModelName> {
+  return new Set(reading === "advanced" ? MODEL_ORDER : []);
+}
+
+/**
  * A tabela dos nove (RF-15), **em MODEL_ORDER** — nunca na ordem de chegada nem por valor.
  * As barras usam uma escala só: o máximo das dezoito perdas não nulas. A linha abre os
  * testes dos dois níveis. A zona de Basileia não aparece.
+ *
+ * As linhas de teste (M2.3): fechadas na iniciante e abertas na avançada; trocar o nível
+ * reaplica o padrão — o estado guarda o nível em que foi decidido, como o `Collapsible` —, e
+ * cada linha expansível leva `data-collapsible="tests"` e o seu `data-open`.
  */
 export function ModelTable({ results }: { results: readonly RiskResult[] }) {
+  const reading = useReading();
   const baseId = useId();
   const titleId = `${baseId}-titulo`;
-  const [open, setOpen] = useState<ReadonlySet<ModelName>>(() => new Set());
+  const [state, setState] = useState<{
+    reading: Reading;
+    open: ReadonlySet<ModelName>;
+  }>(() => ({ reading, open: openFor(reading) }));
+
+  let open = state.open;
+  if (state.reading !== reading) {
+    // O nível mudou: o padrão dele vale de novo, ainda no desenho (o molde do `Collapsible`).
+    open = openFor(reading);
+    setState({ reading, open });
+  }
 
   const at = (model: ModelName, alpha: Alpha): RiskResult | null =>
     results.find((r) => r.model_name === model && r.alpha === alpha) ?? null;
@@ -197,11 +224,11 @@ export function ModelTable({ results }: { results: readonly RiskResult[] }) {
   const scale = Math.max(0, ...losses) || 1;
 
   const toggle = (model: ModelName) => {
-    setOpen((current) => {
-      const next = new Set(current);
+    setState((current) => {
+      const next = new Set(current.open);
       if (next.has(model)) next.delete(model);
       else next.add(model);
-      return next;
+      return { reading: current.reading, open: next };
     });
   };
 
@@ -215,14 +242,18 @@ export function ModelTable({ results }: { results: readonly RiskResult[] }) {
       </div>
       <div className="ruvor-panel__body">
         <div className="ruvor-stack">
-          <p className="ruvor-note">{TEXTOS["risco.tabela.intro"]}</p>
+          <p className="ruvor-note" data-phrase="intro">
+            {reading === "advanced"
+              ? BLOCOS_AVANCADOS["risco.tabela.intro"]
+              : TEXTOS["risco.tabela.intro"]}
+          </p>
           <div className="ruvor-legend">
             <VerdictTag adequate={true} />
             <VerdictTag adequate={false} />
             <VerdictTag adequate={null} />
           </div>
           <p className="ruvor-note" data-phrase="veredito">
-            {TEXTOS["risco.veredito"]}
+            {textFor("risco.veredito", reading)}
           </p>
         </div>
       </div>
@@ -249,7 +280,12 @@ export function ModelTable({ results }: { results: readonly RiskResult[] }) {
             const expanded = open.has(model);
             return (
               <Fragment key={model}>
-                <tr className="ruvor-table__row--expandable" data-model={model}>
+                <tr
+                  className="ruvor-table__row--expandable"
+                  data-model={model}
+                  data-collapsible="tests"
+                  data-open={expanded}
+                >
                   <td>
                     <button
                       className="ruvor-table__toggle"

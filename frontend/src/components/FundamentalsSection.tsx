@@ -21,6 +21,7 @@ import {
   formatPercent,
   typographicMinus,
 } from "../format/numbers";
+import { type Reading, textFor, useReading } from "../reading";
 import { Glyph } from "./Glyph";
 import { SectionError, SectionSkeleton } from "./SectionStatus";
 
@@ -116,11 +117,15 @@ function per100(value: number): string {
   return formatCurrency(Math.abs(100 * value));
 }
 
-/** A frase de um número presente (D-97). */
+/**
+ * A frase de um número presente (D-97), no nível pedido (RF-05 do M2.3): a avançada substitui a
+ * iniciante, com os mesmos argumentos. A frase do nulo não passa por aqui: é a mesma nos dois.
+ */
 function phrase(
   field: StatField,
   indicator: Indicator,
   lastPriceDate: string | null,
+  reading: Reading,
 ): string {
   const value = Number(indicator[field]);
   const negative = value < 0;
@@ -136,37 +141,44 @@ function phrase(
     case "cash":
     case "total_assets":
     case "market_cap":
-      return TEXTOS[`fundamentos.${field}`];
+      return textFor(`fundamentos.${field}`, reading);
     case "ebit_ttm":
     case "net_income_ttm":
     case "net_debt":
     case "equity_parent":
-      return TEXTOS[`fundamentos.${field}`](negative);
+      return textFor(`fundamentos.${field}`, reading)(negative);
     case "net_margin":
     case "ebit_margin":
     case "roe":
     case "net_debt_to_equity":
-      return TEXTOS[`fundamentos.${field}`](per100(value), negative);
+      return textFor(`fundamentos.${field}`, reading)(per100(value), negative);
     case "close":
       // O preço de outra data (RF-06): o do cálculo é anterior ao último pregão da identidade.
       return lastPriceDate !== null &&
         indicator.price_date !== null &&
         indicator.price_date < lastPriceDate
-        ? TEXTOS["fundamentos.closeOutraData"](priceDate, formatDate(lastPriceDate))
-        : TEXTOS["fundamentos.close"](priceDate);
+        ? textFor("fundamentos.closeOutraData", reading)(
+            priceDate,
+            formatDate(lastPriceDate),
+          )
+        : textFor("fundamentos.close", reading)(priceDate);
     case "eps":
-      return TEXTOS["fundamentos.eps"](shares, negative);
+      return textFor("fundamentos.eps", reading)(shares, negative);
     case "bvps":
-      return TEXTOS["fundamentos.bvps"](shares);
+      return textFor("fundamentos.bvps", reading)(shares);
     case "pe":
-      return TEXTOS["fundamentos.pe"](
+      return textFor("fundamentos.pe", reading)(
         priceDate,
         close,
         typographicMinus(formatDecimal(value, 1)),
         negative,
       );
     case "pb":
-      return TEXTOS["fundamentos.pb"](priceDate, close, formatDecimal(value, 2));
+      return textFor("fundamentos.pb", reading)(
+        priceDate,
+        close,
+        formatDecimal(value, 2),
+      );
   }
 }
 
@@ -177,9 +189,11 @@ function median(field: PeerIndicatorName, value: number): string {
 /**
  * A posição entre os pares (RF-10): `k = round(percentile × (n − 1))`, com `n = count`, só com
  * `n ≥ 3` e as três colunas presentes. A barra é a do kit, na cor neutra da evidência, nunca a
- * de aprovação; `k = 0` diz "abaixo de todas" (ajuste do portão).
+ * de aprovação; `k = 0` tem frase própria (ajuste do portão). A posição e a mediana seguem o
+ * nível (RF-05 do M2.3); o rótulo e o "sem comparação", não.
  */
 function PeerSlot({ field, peers }: { field: PeerIndicatorName; peers: Peers }) {
+  const reading = useReading();
   const peer = peers[field];
   const label = (
     <span className="ruvor-peer__label">{TEXTOS["fundamentos.pares.rotulo"]}</span>
@@ -203,11 +217,12 @@ function PeerSlot({ field, peers }: { field: PeerIndicatorName; peers: Peers }) 
   const others = formatInteger(n - 1);
   const position =
     k === 0
-      ? TEXTOS["fundamentos.pares.abaixoDeTodas"](others)
-      : TEXTOS["fundamentos.pares.posicao"](formatInteger(k), others);
-  const groupMedian = TEXTOS["fundamentos.pares.mediana"](
-    median(field, Number(peer.median)),
-  );
+      ? textFor("fundamentos.pares.abaixoDeTodas", reading)(others)
+      : textFor("fundamentos.pares.posicao", reading)(formatInteger(k), others);
+  const groupMedian = textFor(
+    "fundamentos.pares.mediana",
+    reading,
+  )(median(field, Number(peer.median)));
   return (
     <div className="ruvor-peer" data-peer-k={k} data-peer-n={n - 1}>
       {label}
@@ -233,6 +248,7 @@ function Stat({
   peers: Peers | null;
   lastPriceDate: string | null;
 }) {
+  const reading = useReading();
   const raw = indicator[field];
   // A leitura de acessibilidade (RF-06) vai num texto só para leitor de tela, e a forma
   // visível fica `aria-hidden`: `aria-label` num `span` sem papel não é lido (o ARIA proíbe
@@ -262,7 +278,7 @@ function Stat({
         )}
       </span>
     );
-    note = phrase(field, indicator, lastPriceDate);
+    note = phrase(field, indicator, lastPriceDate, reading);
   }
   return (
     <div className="ruvor-stat" data-field={field}>

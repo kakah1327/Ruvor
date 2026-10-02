@@ -13,6 +13,8 @@ import {
   toNumber,
   typographicMinus,
 } from "../format/numbers";
+import { textFor, useReading } from "../reading";
+import { Collapsible } from "./Collapsible";
 import { Glyph } from "./Glyph";
 import { ReturnsHistogram } from "./ReturnsHistogram";
 import { SectionError, SectionSkeleton } from "./SectionStatus";
@@ -112,6 +114,9 @@ function signedDecimal(value: number): string {
 }
 
 function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
+  // A frase de cada número da lista fechada pelo nível (RF-05 do M2.3): a avançada substitui a
+  // iniciante, com os mesmos argumentos. O nulo, o rótulo e a unidade não mudam com o nível.
+  const reading = useReading();
   // Nulo continua nulo: `toNumber`, nunca `Number`, que faria do nulo um zero.
   const num = (field: DecField): number | null => toNumber(metric[field]);
   const isBenchmark = ticker === BENCHMARK_TICKER;
@@ -131,7 +136,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
         key={field}
         field={field}
         value={formatSignedPercent(r, 1)}
-        phrase={TEXTOS[`comportamento.${field}`](hundred(r))}
+        phrase={textFor(`comportamento.${field}`, reading)(hundred(r))}
       />
     );
   });
@@ -146,7 +151,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
         phrase={
           v === null
             ? TEXTOS["comportamento.nulo.janela"](field === "volatility_12m" ? 12 : 60)
-            : TEXTOS[`comportamento.${field}`](formatPercent(v, 1))
+            : textFor(`comportamento.${field}`, reading)(formatPercent(v, 1))
         }
       />
     );
@@ -161,7 +166,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
   const drawdownPhrase =
     drawdown === null || peak === null || trough === null
       ? null
-      : TEXTOS["comportamento.max_drawdown"](
+      : textFor("comportamento.max_drawdown", reading)(
           formatPercent(Math.abs(drawdown), 1),
           formatDate(peak),
           formatDate(trough),
@@ -170,9 +175,10 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
         );
   const sessionsPhrase =
     sessions !== null
-      ? TEXTOS["comportamento.max_drawdown_recovery_sessions"](
-          formatDecimal(sessions / 252, 1),
-        )
+      ? textFor(
+          "comportamento.max_drawdown_recovery_sessions",
+          reading,
+        )(formatDecimal(sessions / 252, 1))
       : drawdown !== null
         ? TEXTOS["comportamento.nulo.naoRecuperou"]
         : null;
@@ -206,7 +212,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
             ? TEXTOS["comportamento.nulo.pregoes"](
                 field === "avg_volume_21d" ? 21 : 252,
               )
-            : TEXTOS[`comportamento.${field}`]
+            : textFor(`comportamento.${field}`, reading)
         }
       />
     );
@@ -262,7 +268,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
             phrase={
               beta === null
                 ? benchmarkNull
-                : TEXTOS["comportamento.beta_60m"](
+                : textFor("comportamento.beta_60m", reading)(
                     `${formatDecimal(Math.abs(beta), 2)}%`,
                     beta < 0,
                   )
@@ -274,7 +280,10 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
             phrase={
               correlation === null
                 ? benchmarkNull
-                : TEXTOS["comportamento.correlation_60m"](signedDecimal(correlation))
+                : textFor(
+                    "comportamento.correlation_60m",
+                    reading,
+                  )(signedDecimal(correlation))
             }
           />
         </div>
@@ -285,12 +294,12 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
           <Stat
             field="dividends_12m"
             value={dividends === null ? NULL : formatCurrency(dividends)}
-            phrase={TEXTOS["comportamento.dividends_12m"]}
+            phrase={textFor("comportamento.dividends_12m", reading)}
           />
           <Stat
             field="dividend_payments_12m"
             value={formatInteger(metric.dividend_payments_12m)}
-            phrase={TEXTOS["comportamento.dividend_payments_12m"]}
+            phrase={textFor("comportamento.dividend_payments_12m", reading)}
           />
           <Stat
             field="dividend_yield_12m"
@@ -298,7 +307,7 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
             phrase={
               yieldValue === null
                 ? null
-                : TEXTOS["comportamento.dividend_yield_12m"](
+                : textFor("comportamento.dividend_yield_12m", reading)(
                     formatDate(metric.as_of_date),
                     formatCurrency(100 * yieldValue),
                   )
@@ -318,37 +327,41 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
       >
         <div className="ruvor-stack">
           {observations !== null && (
-            <p className="ruvor-note">{TEXTOS["comportamento.histograma"]}</p>
+            <p className="ruvor-note">{textFor("comportamento.histograma", reading)}</p>
           )}
           <div>
             <ReturnsHistogram bins={metric.histogram} observations={observations} />
           </div>
-          <div className="ruvor-stats">
-            <Stat
-              field="skewness"
-              value={skewness === null ? NULL : signedDecimal(skewness)}
-              phrase={
-                skewness === null
-                  ? TEXTOS["comportamento.nulo.janela"](60)
-                  : TEXTOS["comportamento.skewness"](
-                      signedDecimal(skewness),
-                      Math.sign(skewness),
-                    )
-              }
-            />
-            <Stat
-              field="excess_kurtosis"
-              value={kurtosis === null ? NULL : signedDecimal(kurtosis)}
-              phrase={
-                kurtosis === null
-                  ? TEXTOS["comportamento.nulo.janela"](60)
-                  : TEXTOS["comportamento.excess_kurtosis"](
-                      signedDecimal(kurtosis),
-                      Math.sign(kurtosis),
-                    )
-              }
-            />
-          </div>
+          {/* A assimetria e a curtose, recolhidas na iniciante (RF-06); o histograma fica
+              aberto nos dois níveis. Com a série curta, o recolhível continua, com os nulos. */}
+          <Collapsible name="moments" label={TEXTOS["comportamento.momentos.abrir"]}>
+            <div className="ruvor-stats">
+              <Stat
+                field="skewness"
+                value={skewness === null ? NULL : signedDecimal(skewness)}
+                phrase={
+                  skewness === null
+                    ? TEXTOS["comportamento.nulo.janela"](60)
+                    : textFor("comportamento.skewness", reading)(
+                        signedDecimal(skewness),
+                        Math.sign(skewness),
+                      )
+                }
+              />
+              <Stat
+                field="excess_kurtosis"
+                value={kurtosis === null ? NULL : signedDecimal(kurtosis)}
+                phrase={
+                  kurtosis === null
+                    ? TEXTOS["comportamento.nulo.janela"](60)
+                    : textFor("comportamento.excess_kurtosis", reading)(
+                        signedDecimal(kurtosis),
+                        Math.sign(kurtosis),
+                      )
+                }
+              />
+            </div>
+          </Collapsible>
         </div>
       </Block>
 

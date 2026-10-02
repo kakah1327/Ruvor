@@ -8,6 +8,7 @@ import { TEXTOS } from "../content/textos";
 import { formatInteger } from "../format/numbers";
 import { MIN_SESSIONS } from "../risk/config";
 import { type RiskState, riskState } from "../risk/state";
+import { Collapsible } from "./Collapsible";
 import { ComputeInvite } from "./ComputeInvite";
 import { Glyph } from "./Glyph";
 import { LossSummary } from "./LossSummary";
@@ -183,7 +184,11 @@ export function liveText(state: SectionState, risk: Risk | null): string {
   return "";
 }
 
-/** O conteúdo da coluna lateral: a trilha, ou o esqueleto dela enquanto o `/risk` carrega. */
+/**
+ * O conteúdo da coluna lateral: a trilha, ou o esqueleto dela enquanto o `/risk` carrega. A
+ * trilha fica atrás do controle de recolher (RF-06 do M2.3): fechada na iniciante, aberta na
+ * avançada; o título fica à vista nos dois níveis.
+ */
 function Trail({ risk }: { risk: Risk | null }) {
   const titleId = useId();
   const run = risk?.latest ?? null;
@@ -197,7 +202,9 @@ function Trail({ risk }: { risk: Risk | null }) {
           <SectionSkeleton />
         </div>
       ) : (
-        <RunTrail run={run} />
+        <Collapsible name="trail" label={TEXTOS["risco.trilha.abrir"]}>
+          <RunTrail run={run} />
+        </Collapsible>
       )}
     </section>
   );
@@ -257,7 +264,11 @@ export function RiskSection({
             <Recalculating progress={progress} failed={false} />
           )}
           <LossSummary results={latest.results} />
-          <ModelTable results={latest.results} />
+          {/* A tabela dos nove recolhida inteira na iniciante (RF-06 do M2.3); o painel acima
+              fica aberto nos dois níveis. */}
+          <Collapsible name="models" label={TEXTOS["risco.modelos.abrir"]}>
+            <ModelTable results={latest.results} />
+          </Collapsible>
         </div>
       );
       break;
