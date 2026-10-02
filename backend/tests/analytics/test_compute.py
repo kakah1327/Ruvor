@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from typing import NoReturn
 
 import pytest
 from django.utils import timezone
@@ -35,8 +36,9 @@ from apps.analytics.compute import (
     run_compute_metrics,
     write_metrics,
 )
-from apps.analytics.metrics import Metrics
-from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.analytics.metrics import Bar, Metrics
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
+from apps.analytics.stress import EpisodeResult, compute_stress
 from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
 
 pytestmark = pytest.mark.django_db
@@ -304,14 +306,17 @@ def test_v12_escrita_que_levanta_no_segundo_reverte_so_ele(
     vistos: list[str] = []
 
     def fake_write(
-        asset: Asset, calculated_at: datetime, metrics: Metrics
+        asset: Asset,
+        calculated_at: datetime,
+        metrics: Metrics,
+        stress: list[EpisodeResult],
     ) -> BehaviorMetric:
         vistos.append(asset.ticker)
         if asset.ticker != "BBB3":
-            return write_metrics(asset, calculated_at, metrics)
+            return write_metrics(asset, calculated_at, metrics, stress)
         # grava a linha e os 42 baldes e so entao levanta: sem isso nao haveria o que
         # reverter, e o teste passaria verde com a transacao no lugar errado.
-        write_metrics(asset, calculated_at, metrics)
+        write_metrics(asset, calculated_at, metrics, stress)
         raise RuntimeError("gravacao quebrou depois da linha e dos baldes")
 
     monkeypatch.setattr("apps.analytics.compute.write_metrics", fake_write)
@@ -581,3 +586,127 @@ def test_dividendo_sem_valor_e_descartado_ao_montar_a_lista() -> None:
     metric = linha("AAA3")
     assert metric.dividend_payments_12m == 1
     assert metric.dividends_12m == Decimal("2.500000")
+
+
+# --- M3.3: os episodios de estresse, na mesma transacao (V-05) ------------------------
+
+
+def episodios(metric: BehaviorMetric) -> list[StressEpisode]:
+    return list(StressEpisode.objects.filter(metric=metric).order_by("start_date"))
+
+
+def campos(episodio: StressEpisode) -> dict[str, object]:
+    return {f.attname: getattr(episodio, f.attname) for f in StressEpisode._meta.fields}
+
+
+def test_m33_uma_linha_por_episodio_com_a_definicao_copiada() -> None:
+    ibov()
+    com_serie_longa("AAA3")
+
+    run_compute_metrics(["AAA3", "IBOV"], now=lambda: RUN_1)
+
+    # As datas escritas aqui sao as da D-147, nao lidas de `EPISODES`.
+    esperado = [
+        ("jbs_2017", date(2017, 5, 17), date(2017, 6, 30)),
+        ("truckers_2018", date(2018, 5, 18), date(2018, 6, 29)),
+        ("covid_2020", date(2020, 2, 21), date(2020, 3, 31)),
+        ("rates_2021", date(2021, 6, 7), date(2022, 7, 14)),
+    ]
+    acao = episodios(linha("AAA3"))
+    assert [(e.episode, e.start_date, e.end_date) for e in acao] == esperado
+    # A serie e mensal, no dia 15: o ciclo de juros comeca em 2021-06-07 e a base e
+    # 2021-05-15, 23 dias antes -- `stale_start`. Os outros tres tem base a menos de 10.
+    assert [e.missing for e in acao] == [None, None, None, "stale_start"]
+    com_dado, juros = acao[:3], acao[3]
+    # A serie sobe sempre: queda zero.
+    assert all(e.drawdown == 0 for e in com_dado)
+    # A acao e o IBOV tem a mesma serie: o indice do recorte e o retorno da propria acao.
+    assert all(e.benchmark_period_return is not None for e in com_dado)
+    assert all(e.benchmark_period_return == e.period_return for e in com_dado)
+    # No ciclo de juros o indice tambem tem base velha: as tres dele, nulas.
+    assert juros.period_return is None
+    assert juros.benchmark_period_return is None
+
+    # No proprio IBOV as tres do indice sao nulas: nao se compara consigo mesmo.
+    indice = episodios(linha("IBOV"))
+    assert len(indice) == 4
+    assert [e.missing for e in indice] == [None, None, None, "stale_start"]
+    assert all(e.benchmark_period_return is None for e in indice)
+    assert all(e.benchmark_drawdown is None for e in indice)
+    assert all(e.benchmark_recovery_sessions is None for e in indice)
+
+
+def test_m33_recalcular_nao_muda_os_episodios_antigos() -> None:
+    ibov()
+    com_serie_longa("AAA3")
+
+    run_compute_metrics(["AAA3"], now=lambda: RUN_1)
+    primeira = linha("AAA3")
+    antes = [campos(e) for e in episodios(primeira)]
+
+    run_compute_metrics(["AAA3"], now=lambda: RUN_2)
+
+    depois = [campos(e) for e in episodios(BehaviorMetric.objects.get(pk=primeira.pk))]
+    assert depois == antes
+    assert StressEpisode.objects.count() == 8
+
+
+def test_m33_falha_na_escrita_do_estresse_nao_deixa_metrica_nem_baldes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ibov()
+    com_serie_longa("AAA3")
+
+    def quebra(*args: object, **kwargs: object) -> NoReturn:
+        raise RuntimeError("estresse quebrou")
+
+    # Depois da linha e dos 42 baldes ja escritos: so o `atomic` os desfaz.
+    monkeypatch.setattr(StressEpisode.objects, "bulk_create", quebra)
+
+    with pytest.raises(MetricsFailed) as info:
+        run_compute_metrics(["AAA3"], now=lambda: RUN_1)
+
+    assert (
+        resultado(info.value.report, "AAA3").error == "RuntimeError: estresse quebrou"
+    )
+    assert BehaviorMetric.objects.count() == 0
+    assert ReturnHistogramBin.objects.count() == 0
+    assert StressEpisode.objects.count() == 0
+
+
+def test_m33_excecao_no_calculo_do_estresse_falha_so_o_ativo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ibov()
+    for ticker in ("AAA3", "BBB3", "CCC3"):
+        com_serie_longa(ticker)
+    original = compute_stress
+    chamadas: list[int] = []
+
+    def estresse_que_falha_no_segundo(
+        bars: list[Bar], benchmark: list[Bar] | None, calendar: list[Bar] | None
+    ) -> list[EpisodeResult]:
+        # As tres series sao iguais; o segundo ativo do laco, em ordem de ticker, e o BBB3.
+        chamadas.append(1)
+        if len(chamadas) == 2:
+            raise RuntimeError("calculo do estresse quebrou")
+        return original(bars, benchmark, calendar)
+
+    monkeypatch.setattr(
+        "apps.analytics.compute.compute_stress", estresse_que_falha_no_segundo
+    )
+
+    with pytest.raises(MetricsFailed) as info:
+        run_compute_metrics(["AAA3", "BBB3", "CCC3"], now=lambda: RUN_1)
+
+    report = info.value.report
+    assert resultado(report, "BBB3").error == (
+        "RuntimeError: calculo do estresse quebrou"
+    )
+    assert resultado(report, "AAA3").error is None
+    assert resultado(report, "CCC3").error is None
+    assert set(BehaviorMetric.objects.values_list("asset__ticker", flat=True)) == {
+        "AAA3",
+        "CCC3",
+    }
+    assert StressEpisode.objects.count() == 8
