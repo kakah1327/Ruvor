@@ -22,6 +22,7 @@ import math
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
+from importlib.metadata import version
 
 import numpy as np
 import pytest
@@ -210,10 +211,15 @@ def test_v20_os_nove_modelos_dao_dezoito_resultados_com_a_janela_de_252() -> Non
     assert sorted({str(r.alpha) for r in results}) == ["0.0100", "0.0500"]
     assert resultado(report, "AAA3").results == 18
 
-    # V-14b: `hyperparameters` nao nasce vazio. Os pares vem da lista fechada da spec; os
-    # dois `{}` sao os que o codigo do motor de fato nao tem parametro configuravel.
+    # V-14b: `hyperparameters` nao nasce vazio. Os pares vem da lista fechada da spec; desde o
+    # motor 0.4.0 (M1.4b, RF-16) os tres tradicionais reestimam a cada 252 pregoes, e nenhum
+    # dos nove devolve `{}`.
     por_modelo = {r.model_name: r.hyperparameters for r in results}
-    assert por_modelo["monte_carlo"] == {"n_simulations": 100000, "random_state": 42}
+    assert por_modelo["monte_carlo"] == {
+        "n_simulations": 100000,
+        "random_state": 42,
+        "refit_frequency_days": 252,
+    }
     assert por_modelo["caviar"] == {"refit_frequency_days": 252, "n_restarts": 10}
     assert por_modelo["garch_1_1"] == {
         "dist": "normal",
@@ -234,8 +240,8 @@ def test_v20_os_nove_modelos_dao_dezoito_resultados_com_a_janela_de_252() -> Non
             "patience",
             "val_fraction",
         }
-    assert por_modelo["parametric"] == {}
-    assert por_modelo["historical"] == {}
+    assert por_modelo["parametric"] == {"refit_frequency_days": 252}
+    assert por_modelo["historical"] == {"refit_frequency_days": 252}
     # e a categoria vem do registry, nao de uma tabela paralela
     assert {r.model_name: r.model_category for r in results}["egarch"] == "garch"
 
@@ -356,7 +362,7 @@ def test_v14_o_manifesto_esta_completo_e_o_price_run_e_o_maior_da_janela() -> No
     assert run.asset_id == asset.pk
     assert run.calculated_at == INICIO_1
     assert run.finished_at == FIM_1
-    assert run.engine_version == "0.3.0"
+    assert run.engine_version == version("ruvor-engine")
     assert run.seed == config.DEFAULT_SEED == 42
     assert run.train_window_days == 252
     assert run.as_of_date == ULTIMO_PREGAO
@@ -672,7 +678,7 @@ def test_open_run_cria_running_sem_finished_at_e_com_o_manifesto() -> None:
     assert run.results.count() == 0
     # o manifesto e o mesmo que o sincrono monta
     assert run.calculated_at == INICIO_1
-    assert run.engine_version == "0.3.0"
+    assert run.engine_version == version("ruvor-engine")
     assert run.seed == 42
     assert (run.train_window_days, run.train_count, run.test_count) == (252, 252, 250)
     assert (run.first_price_date, run.as_of_date) == (bars[0].date, bars[-1].date)
