@@ -15,7 +15,7 @@ from typing import Any, cast
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import effective_status, expired_reason, is_expired
 from apps.assets.classification import display_classification
@@ -180,12 +180,42 @@ class HistogramBinSerializer(serializers.ModelSerializer[ReturnHistogramBin]):
         fields = ("bin_index", "lower_bound", "upper_bound", "count")
 
 
+class StressEpisodeSerializer(serializers.ModelSerializer[StressEpisode]):
+    """Um episodio de estresse da linha de metrica (M3.3, RF-10). `episode` sai como texto
+    livre, sem enum: a lista muda por decisao e linhas antigas guardam codigos antigos.
+    """
+
+    class Meta:
+        model = StressEpisode
+        fields = (
+            "episode",
+            "start_date",
+            "end_date",
+            "missing",
+            "window_start_date",
+            "window_end_date",
+            "period_return",
+            "drawdown",
+            "drawdown_peak_date",
+            "drawdown_trough_date",
+            "recovery_date",
+            "recovery_sessions",
+            "benchmark_period_return",
+            "benchmark_drawdown",
+            "benchmark_recovery_sessions",
+        )
+
+
 class BehaviorMetricSerializer(serializers.ModelSerializer[BehaviorMetric]):
-    """A linha de metrica: o cabecalho, as 26 colunas e os baldes. A view entrega os baldes
-    ja ordenados por `bin_index` (prefetch ordenado).
+    """A linha de metrica: o cabecalho, as 26 colunas, os baldes e os episodios de
+    estresse. A view entrega os baldes ordenados por `bin_index` e os episodios por
+    `start_date` (prefetch ordenado).
     """
 
     histogram = HistogramBinSerializer(source="bins", many=True, read_only=True)
+    stress = StressEpisodeSerializer(
+        source="stress_episodes", many=True, read_only=True
+    )
 
     class Meta:
         model = BehaviorMetric
@@ -196,6 +226,7 @@ class BehaviorMetricSerializer(serializers.ModelSerializer[BehaviorMetric]):
             "price_count",
             *METRIC_COLUMNS,
             "histogram",
+            "stress",
         )
 
 
