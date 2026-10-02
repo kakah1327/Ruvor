@@ -14,6 +14,10 @@ mudar. Ao gravar, so as dez entradas sao trocadas; `parametros`, a ordem e as en
 do `caviar` saem byte a byte como em `origin/main`.
 
 "Igual" e "mudou" usam a mesma tolerancia do teste (`_proximo`).
+
+Serve a recaptura do M1.4b: o "antes" e `origin/main` e a lista dos cinco modelos esta no
+codigo. Depois da mesclagem, rodar de novo sempre recusa (as dez sairiam iguais); uma
+recaptura futura, por outra mudanca de calculo decidida, edita o script.
 """
 
 from __future__ import annotations

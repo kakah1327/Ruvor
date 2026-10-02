@@ -43,7 +43,7 @@ Conferido uma vez, citado abaixo onde a frase depende disto.
   (`backend/apps/risk/config.py:15`).
 - **Os níveis e o horizonte.** α = 0,05 e 0,01 (`backend/apps/risk/config.py:20`), horizonte de 1 dia
   (`engine/src/engine/experiments/runner.py:29`). "1 dia a cada N" é 20 e 100 (`frontend/src/components/LossSummary.tsx:12`).
-- **O VaR é uma série.** Cada modelo produz um VaR por dia do período de teste (`engine/src/engine/models/base.py:60`),
+- **O VaR é uma série.** Cada modelo produz um VaR por dia do período de teste (`engine/src/engine/models/base.py:61`),
   e os quatro testes rodam sobre essa série inteira contra os retornos do mesmo dia
   (`engine/src/engine/experiments/runner.py:110`, `engine/src/engine/experiments/runner.py:113`,
   `engine/src/engine/experiments/runner.py:116`). O número exibido, `var_latest`, é **o último ponto** da série
