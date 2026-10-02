@@ -6,6 +6,11 @@ Para os modelos de volatilidade condicional ha a guarda do piso: se a sigma em `
 `sigma_floor_`, a perturbacao nao mede nada (o caso que a revisao achou no EGARCH em
 t = 100), e o teste reprova alto em vez de passar calado.
 
+V-02 — a janela expansiva dos tradicionais: o VaR do trecho que comeca em `p` e o calculado
+a mao sobre `treino + teste[:p]` (o Monte Carlo pelo mesmo gerador, em sequencia), o
+trecho 0 e o numero de antes da correcao, e os trechos mudam numa serie com mudanca de
+regime.
+
 V-03 — o GARCH contra o `arch`: a sigma do teste em `pos` e a volatilidade condicional do
 proprio `arch`, com os parametros fixos do ultimo reajuste anterior a `pos`, sobre a serie
 ate `pos` — a definicao, nao a implementacao.
@@ -28,6 +33,11 @@ from engine.models.base import VaRModel
 from engine.models.garch._conditional import SCALE, ConditionalVolatilityVaR
 from engine.models.garch.egarch import EgarchVaR
 from engine.models.garch.garch_1_1 import Garch11VaR
+from engine.models.ml.caviar import CaviarVaR
+from engine.models.traditional._expanding import REFIT_FREQUENCY_DAYS
+from engine.models.traditional.historical import HistoricalVaR
+from engine.models.traditional.monte_carlo import MonteCarloVaR
+from engine.models.traditional.parametric import ParametricVaR
 
 N_TRAIN = 252
 N_TEST = 756  # tres trechos de 252
@@ -40,8 +50,13 @@ FOLGA_DO_PISO = 1e-9
 T_PERTURBACAO = (300, 504, 700)
 
 _FABRICAS: dict[str, Callable[[], VaRModel]] = {
+    "historical": HistoricalVaR,
+    "parametric": ParametricVaR,
+    "monte_carlo": MonteCarloVaR,
     "garch_1_1": Garch11VaR,
     "egarch": EgarchVaR,
+    # hiperparametros de producao (N_RESTARTS = 10)
+    "caviar": CaviarVaR,
 }
 
 # os modelos cuja sigma tem o piso `sigma_floor_` — a guarda do V-01 vale para eles
@@ -123,6 +138,92 @@ def test_o_var_ate_t_nao_muda_quando_o_futuro_muda(nome: str, t: int) -> None:
     if nome in _COM_PISO:
         # a perturbacao chega ao modelo: o VaR depois de t muda (senao o teste e vazio)
         assert np.abs(var_a.to_numpy()[t + 1 :] - var_b.to_numpy()[t + 1 :]).max() > 0
+
+
+# --- V-02 -------------------------------------------------------------------------------
+
+_TRADICIONAIS = ("historical", "parametric", "monte_carlo")
+
+
+@cache
+def _serie_com_mudanca_de_regime() -> pd.Series:
+    """Treino calmo, teste agitado: cada trecho ve mais do regime novo e o VaR tem de subir."""
+    rng = np.random.default_rng(11)
+    valores = np.concatenate(
+        [rng.normal(0.0, 0.01, N_TRAIN), rng.normal(0.0, 0.03, N_TEST)]
+    )
+    return pd.Series(
+        valores, index=pd.bdate_range("2015-01-01", periods=N_TRAIN + N_TEST)
+    )
+
+
+def _var_a_mao(nome: str, serie: pd.Series) -> list[float]:
+    """O VaR de cada trecho calculado a mao, com numpy, sobre `treino + teste[:k * R]`."""
+    z = norm.ppf(ALPHA)
+    gerador = np.random.default_rng(MonteCarloVaR().random_state)
+    valores = []
+    for k in range(N_TEST // REFIT_FREQUENCY_DAYS):
+        conhecidos = serie.to_numpy()[: N_TRAIN + k * REFIT_FREQUENCY_DAYS]
+        media, desvio = conhecidos.mean(), conhecidos.std(ddof=1)
+        if nome == "historical":
+            valores.append(-np.quantile(conhecidos, ALPHA))
+        elif nome == "parametric":
+            valores.append(-(media + z * desvio))
+        else:
+            # o mesmo gerador, em sequencia: o trecho k tira depois dos k anteriores
+            sorteio = gerador.normal(media, desvio, size=MonteCarloVaR().n_simulations)
+            valores.append(-np.quantile(sorteio, ALPHA))
+    return [float(v) for v in valores]
+
+
+def _var_de_antes_da_correcao(nome: str, treino: pd.Series) -> float:
+    """O numero do codigo de antes do M1.4b, que so olhava o treino."""
+    if nome == "historical":
+        return float(-treino.quantile(ALPHA))
+    media, desvio = treino.mean(), treino.std(ddof=1)
+    if nome == "parametric":
+        return float(-(media + norm.ppf(ALPHA) * desvio))
+    gerador = np.random.default_rng(MonteCarloVaR().random_state)
+    sorteio = gerador.normal(media, desvio, size=MonteCarloVaR().n_simulations)
+    return float(-np.quantile(sorteio, ALPHA))
+
+
+@pytest.mark.parametrize("nome", _TRADICIONAIS)
+def test_cada_trecho_usa_o_treino_e_o_teste_ate_o_seu_inicio(nome: str) -> None:
+    serie = _serie_com_mudanca_de_regime()
+    _, var = _ajusta_e_estima(nome, serie)
+    assert var.index.equals(serie.index[N_TRAIN:])
+
+    esperados = _var_a_mao(nome, serie)
+    for k, esperado in enumerate(esperados):
+        trecho = var.to_numpy()[
+            k * REFIT_FREQUENCY_DAYS : (k + 1) * REFIT_FREQUENCY_DAYS
+        ]
+        assert len(trecho) == REFIT_FREQUENCY_DAYS
+        assert (trecho == trecho[0]).all(), f"{nome}: o VaR muda dentro do trecho {k}"
+        assert trecho[0] == pytest.approx(esperado, rel=1e-12, abs=0.0), (
+            f"{nome}: o trecho {k} nao e o VaR de treino + teste[:{k * REFIT_FREQUENCY_DAYS}]"
+        )
+
+    # o trecho 0 e o numero de antes da correcao, bit a bit
+    assert var.iloc[0] == _var_de_antes_da_correcao(nome, serie.iloc[:N_TRAIN])
+
+    # a mudanca de regime aparece: cada trecho ve mais do teste agitado
+    assert esperados[0] < esperados[1] < esperados[2]
+
+
+@pytest.mark.parametrize("nome", _TRADICIONAIS)
+def test_o_ultimo_trecho_incompleto_tambem_e_reestimado(nome: str) -> None:
+    """Um teste de 600 pregoes: o terceiro trecho tem 96 e comeca em 504."""
+    serie = _serie_com_mudanca_de_regime().iloc[: N_TRAIN + 600]
+    _, var = _ajusta_e_estima(nome, serie)
+    assert len(var) == 600
+    ultimo = var.to_numpy()[2 * REFIT_FREQUENCY_DAYS :]
+    assert len(ultimo) == 96
+    assert (ultimo == ultimo[0]).all()
+    assert ultimo[0] == pytest.approx(
+        _var_a_mao(nome, _serie_com_mudanca_de_regime())[2], rel=1e-12, abs=0.0
+    )
 
 
 # --- V-03 -------------------------------------------------------------------------------

@@ -36,7 +36,7 @@ def test_parametric_matches_closed_form_reference(train_test_returns):
     assert estimate.var_series.iloc[0] == pytest.approx(expected)
     assert (
         estimate.var_series == estimate.var_series.iloc[0]
-    ).all()  # estatico: 1 valor p/ toda a serie
+    ).all()  # um trecho so (200 < 252 pregoes): 1 valor p/ toda a serie
 
 
 def test_historical_matches_independent_empirical_quantile(train_test_returns):

@@ -43,9 +43,10 @@ class VaRModel(ABC):
         """Os hiperparametros efetivos desta instancia, para o manifesto de execucao (D-15).
 
         Leitura pura: nenhum caminho de calculo a chama, e sobrescreve-la nao pode alterar
-        o que `fit` ou `estimate_var` produzem. O `{}` padrao e resposta legitima para
-        modelo sem parametro configuravel (`parametric`, `historical`) — mas so vale
-        quando foi conferido no codigo, nao quando ninguem implementou a propriedade.
+        o que `fit` ou `estimate_var` produzem. O `{}` padrao seria resposta legitima para
+        modelo sem parametro configuravel — hoje nenhum dos nove; os tradicionais declaram
+        ao menos `refit_frequency_days` (M1.4b) —, mas so vale quando foi conferido no
+        codigo, nao quando ninguem implementou a propriedade.
         """
         return {}
 
@@ -59,8 +60,8 @@ class VaRModel(ABC):
     ) -> VaREstimate:
         """Retorna as estimativas de VaR alinhadas ao indice de `returns` (periodo de teste).
 
-        `returns` aqui serve para o modelo saber PARA QUAIS DATAS gerar a serie de VaR —
-        modelos estaticos (Etapa 1) ignoram os valores e so usam `returns.index`; modelos
-        condicionais/rolling (GARCH, ML) podem usar os valores para atualizar o estado a
-        cada passo (walk-forward).
+        `returns` aqui serve para o modelo saber PARA QUAIS DATAS gerar a serie de VaR e
+        para atualizar o estado walk-forward: os tradicionais (Etapa 1) reestimam em janela
+        expansiva a cada 252 pregoes; os condicionais/rolling (GARCH, ML) atualizam a cada
+        passo. Em todos, o VaR do dia t usa so os retornos ate t - 1 (M1.4b).
         """

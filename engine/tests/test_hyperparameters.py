@@ -6,10 +6,11 @@ segunda alteracao autorizada no motor perde a propria justificativa. Por isso a
 verificacao percorre os nove modelos do registry e compara as CHAVES com a lista da spec,
 em vez de so checar que a propriedade existe ou que devolve um dicionario.
 
-O `{}` de `parametric` e `historical` e resposta legitima — conferido no codigo: nenhum
-dos dois tem construtor nem constante configuravel —, mas so vale porque esta declarado
-aqui, ao lado dos outros sete. A diferenca entre "nao tem hiperparametro" e "ninguem
-implementou a propriedade" e invisivel na coluna e total no significado.
+Desde o M1.4b nenhum dos nove devolve `{}`: `parametric` e `historical`, que antes nao
+tinham parametro configuravel, reestimam em janela expansiva e declaram
+`refit_frequency_days`, como o `monte_carlo`. Um `{}` voltaria a ser legitimo so declarado
+aqui. A diferenca entre "nao tem hiperparametro" e "ninguem implementou a propriedade" e
+invisivel na coluna e total no significado.
 
 Nenhuma linha aqui ajusta modelo: a propriedade e leitura pura, e `get_model(nome)()`
 basta porque os nove construtores tem padrao para tudo.
@@ -25,9 +26,9 @@ from engine.models.ml import caviar
 #: a lista fechada da spec do M1.4, derivada dos atributos que cada modelo ja tem no
 #: codigo — nao da memoria.
 CHAVES_ESPERADAS: dict[str, set[str]] = {
-    "parametric": set(),
-    "historical": set(),
-    "monte_carlo": {"n_simulations", "random_state"},
+    "parametric": {"refit_frequency_days"},
+    "historical": {"refit_frequency_days"},
+    "monte_carlo": {"n_simulations", "random_state", "refit_frequency_days"},
     "garch_1_1": {"dist", "refit_frequency_days", "vol", "p", "q"},
     "egarch": {"dist", "refit_frequency_days", "vol", "p", "o", "q"},
     "caviar": {"refit_frequency_days", "n_restarts"},
@@ -66,14 +67,13 @@ def test_as_chaves_declaradas_batem_com_a_lista_fechada(nome: str) -> None:
     assert set(hiperparametros) == CHAVES_ESPERADAS[nome]
 
 
-def test_sete_dos_nove_nao_devolvem_vazio() -> None:
+def test_nenhum_dos_nove_devolve_vazio() -> None:
     """A trava contra a implementacao que so existe em `base.py`: se a propriedade
-    nascer devolvendo `{}` para todos, o teste acima ainda passaria para `parametric` e
-    `historical`, e este reprova."""
+    nascer devolvendo `{}` para algum, este reprova."""
     vazios = {
         nome for nome in CHAVES_ESPERADAS if not get_model(nome)().hyperparameters
     }
-    assert vazios == {"parametric", "historical"}
+    assert vazios == set()
 
 
 @pytest.mark.parametrize("nome", ("garchnet", "lstm", "gru"))
