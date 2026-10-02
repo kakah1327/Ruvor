@@ -19,6 +19,7 @@ from apps.accounts import services
 from apps.accounts import views as conta
 from apps.accounts.models import ApiKey, User
 from apps.api import views as leitura
+from apps.portfolios import views as carteira
 from tests.accounts.conftest import organizacao, usuario
 
 SAFE = {"get", "head", "options"}
@@ -40,11 +41,15 @@ LEITURA = {
     conta.ReportView,
     conta.ReportJsonView,
     conta.ReportCsvView,
+    carteira.PortfoliosView,  # M2.2a, RF-19: a chave le carteira
+    carteira.PortfolioView,
 }
 ESCRITA_PERMITIDA_COM_READ = {
     leitura.AssetRiskView,
     leitura.ApiNotFound,
     conta.ReportsView,  # o `POST` gera; a regra do metodo seguro o barra
+    carteira.PortfoliosView,  # o `POST` cria, o `PATCH` e o `DELETE` mudam: barrados
+    carteira.PortfolioView,
 }
 # as que a chave nao alcanca: conta, gestao e as proprias chaves
 SEM_CHAVE = {
@@ -59,6 +64,7 @@ SEM_CHAVE = {
     conta.TemporaryPasswordView,
     conta.ApiKeysView,
     conta.ApiKeyView,
+    carteira.PortfolioHoldingsView,  # M2.2a, RF-19: so `PUT`
 }
 
 

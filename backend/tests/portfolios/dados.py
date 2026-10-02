@@ -13,10 +13,12 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from django.utils import timezone
+from rest_framework.test import APIClient
 
+from apps.accounts import services as account_services
 from apps.accounts.models import Organization, User
 from apps.accounts.tenancy import organization_scope
 from apps.assets.models import Asset, CollectionRun, Price
@@ -209,3 +211,30 @@ def resultado(
             hyperparameters={},
             error="RuntimeError: de teste",
         )
+
+
+def sessao(user: User, *, csrf: bool = False) -> APIClient:
+    """O cliente com a sessao de `user`, por `force_login` -- nunca `force_authenticate`, que
+    deixa o pedido sem a organizacao no contexto."""
+    cliente = APIClient(enforce_csrf_checks=csrf)
+    cliente.force_login(user)
+    return cliente
+
+
+def chave(user: User) -> APIClient:
+    """O cliente com uma chave de leitura de `user`, pelo `Bearer`."""
+    segredo = account_services.create_api_key(user, name="leitura", ip=None)[1]
+    cliente = APIClient()
+    cliente.credentials(HTTP_AUTHORIZATION=f"Bearer {segredo}")
+    return cliente
+
+
+def erro(resposta: Any, status: int, codigo: str) -> dict[str, Any]:
+    """O corpo de erro da D-86, conferido na forma; devolve o corpo inteiro."""
+    assert resposta.status_code == status, resposta.content
+    assert resposta["Content-Type"] == "application/json"
+    corpo: dict[str, Any] = resposta.json()
+    assert set(corpo) == {"error"}
+    assert set(corpo["error"]) == {"code", "message", "details"}
+    assert corpo["error"]["code"] == codigo
+    return corpo
