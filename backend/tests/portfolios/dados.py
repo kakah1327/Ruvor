@@ -30,6 +30,7 @@ from apps.portfolios.models import (
     PortfolioRiskRun,
     PortfolioVersion,
 )
+from apps.portfolios.series import build
 from apps.risk.models import RiskRun
 from tests.accounts.conftest import organizacao, usuario
 
@@ -238,3 +239,40 @@ def erro(resposta: Any, status: int, codigo: str) -> dict[str, Any]:
     assert set(corpo["error"]) == {"code", "message", "details"}
     assert corpo["error"]["code"] == codigo
     return corpo
+
+
+def execucao_da_serie(
+    portfolio: Portfolio,
+    pessoa: User,
+    status: str = RiskRun.Status.RUNNING,
+    calculated_at: datetime | None = None,
+    *,
+    engine_version: str = "0.3.0",
+) -> PortfolioRiskRun:
+    """Uma execucao da versao corrente com o manifesto da serie de agora: as mesmas datas, o mesmo
+    `price_run` e o mesmo hash que o pedido gravaria."""
+    instante = calculated_at or timezone.now()
+    versao = PortfolioVersion.unscoped.filter(portfolio=portfolio).order_by("-number")[
+        0
+    ]
+    with organization_scope(portfolio.organization_id):
+        serie = build(versao)
+        assert serie.price_run_id is not None
+        return PortfolioRiskRun.objects.create(
+            version=versao,
+            requested_by=pessoa,
+            calculated_at=instante,
+            finished_at=None if status == RiskRun.Status.RUNNING else instante,
+            status=status,
+            engine_version=engine_version,
+            seed=42,
+            train_window_days=252,
+            first_date=serie.dates[0],
+            as_of_date=serie.dates[-1],
+            session_count=len(serie.dates),
+            train_count=252,
+            test_count=len(serie.dates) - 253,
+            requested_models=list(portfolio_config.PORTFOLIO_MODELS),
+            price_run_id=serie.price_run_id,
+            series_sha256=serie.sha256,
+        )
