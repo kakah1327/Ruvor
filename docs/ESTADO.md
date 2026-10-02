@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-09-30
+**Última atualização:** 2026-10-02
 
 ---
 
@@ -17,15 +17,17 @@
 e entrou na `main` pela PR #17, como o M1.6b pela PR #16; e o **M2.1m fechou em 2026-09-29** — a coluna
 `core.compute_request.requested_by`, a metade da `marco1` no M2.1a — e entrou na `main` pela PR #18; o **M1.6d fechou em 2026-09-30** — o
 acabamento — e entrou na `main` pela PR #27; o **M1.5c fechou em 2026-09-30** — a execução presa em `running` é
-fechada pela varredura —, com a PR de implementação a abrir pelo dono; quatro blocos da `marco1` — M1.7, M3.3, M2.3 e
-M2.1b — têm spec e plano aprovados, a implementar; na frente
+fechada pela varredura — e entrou na `main` pela PR #30, em 2026-10-01; o **M1.7 fechou em 2026-10-02** — a busca sem
+acento, `has_risk` e a sugestão pela API, a classificação da B3 com vírgula —, com a PR de implementação a abrir pelo
+dono e a revisar pela `fundamentos`; dos três blocos da `marco1` que faltam — M3.3, M2.3 e M2.1b —, o **M2.3 está em
+implementação**, e os outros dois têm spec e plano aprovados; na frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
 exportável e auditável — e entrou na `main` pela PR #28, e o **M2.1a fechou em 2026-09-30** — a T14
 preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) —, com a PR da T14 a T16 a abrir
 pelo dono; o **M4.2 fechou em 2026-09-28**
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -100,7 +102,12 @@ não rejeitados por nível, a tabela com os testes e a trilha do cálculo —, o
 ativo nunca calculado e o acompanhamento dele, nos dois temas, de 360 a 1440 px. **Desde o M1.6c a tela tem as
 cinco camadas:** depois do risco, os fundamentos — os 17 indicadores do último balanço, com a frase de cada um, o
 porquê de cada nulo e a posição entre os pares do segmento em contagem exata — e os comunicados da companhia à CVM,
-com filtro por categoria, pelas rotas `/fundamentals` e `/disclosures`.
+com filtro por categoria, pelas rotas `/fundamentals` e `/disclosures`. **Desde o M1.7 a busca ignora acento**, pela
+extensão `unaccent` do PostgreSQL ([D-143](decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)); o item da busca traz
+`has_risk` e a busca o filtra; a sugestão da página inicial e da tela "ativo não encontrado" vem da API
+(`has_risk=true&limit=8`), não mais de uma lista fixa; e a classificação da B3 sai da API com vírgula, por tabela
+fechada, com o `silver` como veio
+([D-144](decisoes/D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md)).
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1479,14 +1486,51 @@ mesmo com o arquivo novo montado; o `--max-tasks-per-child` não resolve, porque
 Nenhuma decisão nova: as oito, [D-100](decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md) a
 [D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md), vieram com a spec.
 
+### M1.7 — Busca e catálogo
+
+Spec em [`specs/M1.7-busca-e-catalogo.md`](specs/M1.7-busca-e-catalogo.md) e plano em
+[`planos/M1.7-busca-e-catalogo.md`](planos/M1.7-busca-e-catalogo.md). Frente `marco1`, ramo
+`marco1/M1.7-busca-e-catalogo`, implementado num worktree. Nove tarefas, de `1713174` (T0) a `ea0f35c` (T8), a partir da `main`
+em `804cda4`, que não avançou durante o bloco; o mockup `docs/mockups/M1.7/busca-sugestao.html` aprovado pelo dono no portão da T4, em
+2026-10-02, depois da revisão. Duas decisões, aceitas com a spec:
+[D-143](decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md) e
+[D-144](decisoes/D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md); a D-145 fica sem uso. Paga
+as três dívidas que o M1.6b registrou: a busca com acento, a classificação com ponto e a sugestão fixa.
+
+**O que passou a existir:** a extensão `unaccent` (`apps/assets/migrations/0004_unaccent.py`, com
+`django.contrib.postgres` em `INSTALLED_APPS`) e o `q` da busca sem diferença de caixa nem de acento no nome e no nome de
+pregão; `has_risk` no item da busca — a execução fechada mais recente `ok` ou `partial`, a regra que a tela usa — e o
+filtro `has_risk=true|false`, comparado como texto (`True`, `1` e o vazio dão 400); a tabela fechada de
+`apps/assets/classification.py`, aplicada na saída da API em `sector`, `subsector`, `segment` e nos `group_*` dos pares,
+com o `silver` e o `gold.peer_comparison` intactos, e a quinta linha do relatório do `import_assets`
+(`classificacao com ponto fora da tabela: N`); no frontend, a sugestão pedida pela caixa de busca **de página** — a `/`
+e a tela "ativo não encontrado" — uma vez por montagem, com carregando, erro, nenhum, a lista e o "e mais N";
+`sugestoes.ts` saiu, e o `MIN_SESSIONS` foi para `frontend/src/risk/config.ts`.
+
+| Verificação | Resultado |
+|---|---|
+| Suítes | ✅ **1456 no backend** (eram 1397), em 12 min 24 s, num contêiner avulso do `worker` com o worktree montado e o Beat parado; **1110 no frontend** (eram 1099); `mypy` estrito limpo em 232 arquivos, `ruff check` e `ruff format --check` limpos, `makemigrations --check` sem mudança, `spectacular --validate --fail-on-warn` limpo; lint, typecheck e build do frontend limpos |
+| Mutações (T7) | ✅ as 20 reprovaram sobre o código final, cada uma revertida — as das T1, T2, T3 e T6, e as extras registradas no plano |
+| **Execução real (V-12)** | ✅ o roteiro `frontend/e2e/capturas.mjs`, na imagem do Playwright 1.63.0 e na rede do contêiner `frontend`, com `RUVOR_E2E_SOB_DEMANDA=0` e `RUVOR_E2E_EMPRESA=PETR4`: **258 conferências, 0 falhas**, 20 capturas, nenhum erro de página |
+| A sugestão pela API | ✅ os atalhos lidos da `/` renderizada — `AALR3`, `BBDC4`, `IBOV`, `ITUB4`, `PETR4`, `VALE3` — iguais, na mesma ordem, à primeira página de `has_risk=true&limit=8` (`count` 6); sem "e mais N", porque o `count` não passa de 8 (o caso com `count` 11 só os testes provam); cada um com `latest` `ok` no `/risk` |
+| Acento e classificação | ✅ "itaú" lista o `ITUB4` na página de busca; a tela do `PETR4` mostra "Petróleo, Gás e Biocombustíveis" e "Exploração, Refino e Distribuição", sem ponto |
+| O mockup | ✅ a `/` e o `/ativos/XPTO3` servidos pelo `frontend`, nos dois temas, em 1440 e 360 px, iguais ao estado "lista (count 6)" do mockup aprovado — os mesmos textos, atalhos e disposição, sem rolagem horizontal. Carregando, erro e nenhum só pelos testes unitários: o banco real não os produz sem mexer no stack |
+| A taxa (RF-13) | a medida da taxa do roteiro (`measureRate`) carrega só `/ativos/ITUB4`: **não inclui a página inicial**, e não conta o pedido novo da sugestão; não rodou nesta execução (`RUVOR_THROTTLE_ANON` alto no `.env` local, como no M1.6c) |
+
+**O que a execução mostrou:** o banco real tem seis ativos com risco, todos com a fechada mais recente `ok`; o
+"e mais N", o `failed` mais novo que um `ok` e a `running` mais nova que a fechada só aparecem nas fixtures. Duas
+armadilhas novas em [aprendizados](aprendizados.md): o filtro por campo de `annotate` atrás de `QuerySet[Asset]`, que
+o `mypy` recusa, e o efeito de montagem que corre depois de o título aparecer.
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M1.5c**, que o dono abre e mescla com a CI verde e a revisão da `identidade` (o bloco
-cruza com a T14 do M2.1a, no texto de `apps/risk/tasks.py`, e já recebeu a `main` com ela); depois, **implementar o
-M1.7 — Busca e catálogo**, pelo [plano](planos/M1.7-busca-e-catalogo.md). Os quatro blocos que faltam se implementam
-nesta ordem: **M1.7 → M3.3 → M2.3 → M2.1b** — a T14 do M2.1a entrou antes do M2.1b (ver o fecho do M2.1a), e o M2.1b
-ajusta a ordem por ela. Ramos, worktrees e a regra de onde cada comando roda estão em
-[frentes/marco1.md](frentes/marco1.md).
+**Na frente `marco1`, a PR do M1.7**, que o dono abre e mescla com a CI verde e a revisão da `fundamentos` (cortesia
+de contrato: a tela passa a mostrar o grupo de pares dela com vírgula); o M1.5c entrou pela PR #30, em 2026-10-01. O
+**M2.3 — Camada explicativa** está em implementação, pelo [plano](planos/M2.3-camada-explicativa.md); depois, o M3.3 e
+o M2.1b — a T14 do M2.1a entrou antes do M2.1b (ver o fecho do M2.1a), e o M2.1b ajusta a ordem por ela. Ramos,
+worktrees e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md). **Duas entradas novas em
+[Aberto](#aberto-e-aguardando-decisão)**, achadas na conferência do M2.3, são do motor: o GARCH e o EGARCH olham um
+dia à frente, e os três tradicionais ficam no primeiro ano da série.
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
 qualquer pedido bem-sucedido torna o ativo coberto para sempre
@@ -1540,9 +1584,9 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **A taxa anônima depende de `NUM_PROXIES`.** Sem ele certo, atrás de um proxy todo pedido chega com o IP do proxy, e os 60 por minuto por IP viram teto do site inteiro — o mesmo risco do limite `auth` do M2.1a, agora sobre a leitura | `backend/config/settings.py`, `REST_FRAMEWORK["NUM_PROXIES"]` | A hospedagem, antes de expor a API ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
 | ~~**O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0~~ | ~~`frontend/biome.json`, campo `linter.rules.recommended`~~ | ✅ **quitada no M1.6d** — `"preset": "recommended"`, e `frontend/tests/biome.test.ts` reprova o campo antigo de volta |
 | **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
-| **A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento | `backend/apps/api/views.py`, a busca do RF-12 do M1.6a | Quando a busca for revista — é mudança de contrato da API (`unaccent` no Postgres ou normalização na conformação) |
-| **O setor da B3 vem com ponto no lugar da vírgula** ("Petróleo. Gás e Biocombustíveis"), e a tela mostra como chega | `silver.asset.sector`, a conformação do M1.1 | Na conformação do catálogo, com a regra escrita — é dado, não tela |
-| **A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista | `frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs` | Com um filtro por `has_prices` na busca da API (mudança de contrato) |
+| ~~**A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento~~ | ~~`backend/apps/api/views.py`, a busca do RF-12 do M1.6a~~ | ✅ **quitada no M1.7** — o lookup `unaccent` do Django, bilateral, no nome e no nome de pregão, com a extensão criada pela `apps/assets/migrations/0004_unaccent.py`; o banco de produção precisa dela ([D-143](decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)) |
+| ~~**O setor da B3 vem com ponto no lugar da vírgula** ("Petróleo. Gás e Biocombustíveis"), e a tela mostra como chega~~ | ~~`silver.asset.sector`, a conformação do M1.1~~ | ✅ **quitada no M1.7**, na **saída da API**, não na conformação: a tabela fechada de `apps/assets/classification.py` corrige cinco textos e deixa os dois de abreviação; o `silver` e o `gold.peer_comparison` seguem com o texto da B3, e o relatório do `import_assets` conta o texto com ponto fora da tabela ([D-144](decisoes/D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md)) |
+| ~~**A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista~~ | ~~`frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.7** — não por `has_prices`, mas por `has_risk` (a fechada mais recente `ok` ou `partial`, a regra da tela): a caixa de página pede `has_risk=true&limit=8` uma vez por montagem; `sugestoes.ts` saiu, e o `MIN_SESSIONS` foi para `frontend/src/risk/config.ts`; o roteiro confere a sugestão contra a API |
 | ~~**O `aria-live` da seção de risco envolve a seção inteira**: na passagem do cálculo para o resultado, o leitor de tela pode anunciar a tabela toda~~ | ~~`frontend/src/components/RiskSection.tsx`~~ | ✅ **quitada no M1.6d** — uma região `ruvor-sr-only`, sempre montada, só com o andamento; Fundamentos e Comunicados perderam o `aria-live` do embrulho |
 | ~~**O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir~~ | ~~`frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.6c** (T8, `f00f3d2`) |
 | **A taxa do anônimo aceitou 81 pedidos com o limite em 60 por minuto** (execução real do M1.6c). Hipótese não provada: o `SimpleRateThrottle` do DRF conta sem atomicidade sob o `runserver` concorrente. E, com a taxa certa, a tela do ativo aguenta **5 cargas por minuto** a um anônimo em desenvolvimento | `backend/apps/accounts/throttling.py` (frente `identidade`), `RUVOR_THROTTLE_ANON` | Antes de expor a aplicação: a `identidade` confirma a contagem, e a hospedagem decide a taxa e se a tela junta rotas |
@@ -1556,7 +1600,9 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
-| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe. **A tela do M1.6b não a mostra** até a investigação | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
+| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe. **A tela do M1.6b não a mostra** até a investigação. As 159 violações do `historical` têm explicação provável na entrada dos tradicionais, abaixo: o VaR deles é o do primeiro ano, constante no teste inteiro | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
+| **O GARCH e o EGARCH usam o retorno do próprio dia na previsão** (achado na conferência do M2.3, 2026-10-02, não investigado). Em `_sigma_path`, `fixed.forecast(start=n_train + pos, horizon=1, …)` devolve na primeira linha a previsão **para o dia seguinte** a `n_train + pos`, já condicionada ao retorno desse dia; ela é gravada em `sigma_1d[pos]` e o backtest a compara com o retorno de `pos`. Se confirmado, o VaR do dia vê o próprio retorno (olhar à frente de um dia), e os backtests dos dois modelos ficam otimistas; o GARCHNet, que recebe a mesma série por `full_sigma_series` (`engine/src/engine/models/ml/garchnet.py:30`), pode herdar o desvio. Mexer é mudar o motor, sob a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) e a [D-76](decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md) | `engine/src/engine/models/garch/_conditional.py:115`; `engine/src/engine/experiments/runner.py:110` (o alinhamento com o retorno do teste) |
+| **Os três tradicionais são ajustados só nos 252 primeiros retornos, e o VaR deles é constante no teste inteiro** (achado na conferência do M2.3, 2026-10-02). O `run_experiment` treina cada modelo uma vez em `returns.iloc[:252]`, e o `historical` (como o `parametric` e o `monte_carlo`) devolve o mesmo número para todo dia do teste. **O "número de hoje" deles vem do primeiro ano da série**, dez anos atrás. É a explicação provável das 159 violações do `historical` do `BBDC4` na entrada da zona de Basileia, acima; as duas se investigam juntas. Mexer é mudar o motor (D-21, D-76) | `engine/src/engine/experiments/runner.py:87` e `:93`; `engine/src/engine/models/traditional/historical.py:24` |
 
 ## Pendências que bloqueiam trabalho futuro
 

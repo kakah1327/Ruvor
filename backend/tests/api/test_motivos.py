@@ -7,7 +7,7 @@ e em `frontend/tests/motivos.test.ts` -- e cada lado confere a sua contra ela:
 - as constantes `REASON_*` de `apps.api.ondemand`, lidas por introspeccao do modulo: uma
   constante nova, ou um valor mudado, reprova;
 - os dois motivos montados, `expired_reason()` e `apps.risk.tasks._short_series_reason(N)`;
-- `apps.risk.config.MIN_SESSIONS == 503`, que o frontend copia em `sugestoes.ts`.
+- `apps.risk.config.MIN_SESSIONS == 503`, que o frontend copia em `risk/config.ts`.
 
 Um motivo escrito como literal fora de `ondemand.py` e de `_short_series_reason` escapa a este
 teste (Riscos da spec).

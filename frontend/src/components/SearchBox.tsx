@@ -9,9 +9,9 @@ import {
 } from "react";
 import { Link, useNavigate } from "react-router";
 
-import { apiGet } from "../api/client";
+import { ApiError, apiGet } from "../api/client";
+import type { Load } from "../api/resource";
 import type { AssetItem, AssetPage } from "../api/types";
-import { SUGESTOES } from "../content/sugestoes";
 import { TEXTOS } from "../content/textos";
 import { Glyph } from "./Glyph";
 
@@ -20,6 +20,12 @@ export const SEARCH_PAUSE_MS = 200;
 /** Quantos resultados por consulta: a página inicial, com "mostrar mais"; a barra, só estes. */
 export const PAGE_LIMIT = 20;
 export const BAR_LIMIT = 8;
+/** Quantos ativos a sugestão mostra (M1.7, RF-10: fixo); o resto vira "e mais N". */
+export const SUGGESTION_LIMIT = 8;
+/** O pedido da sugestão: os ativos com risco calculado, a primeira página (RF-10). */
+export const SUGGESTION_PATH = `/api/v1/assets?has_risk=true&limit=${SUGGESTION_LIMIT}`;
+/** Quantos atalhos o esqueleto da sugestão desenha enquanto carrega (o do mockup). */
+const SUGGESTION_SKELETONS = [0, 1, 2, 3, 4, 5];
 
 type SearchState =
   | { kind: "empty" }
@@ -151,6 +157,51 @@ function useAssetSearch(limit: number) {
   return { value, state, active, setActive, run, type, clear };
 }
 
+/**
+ * A sugestão da caixa vazia (M1.7, RF-10 e RF-11): **um** pedido por montagem do `SearchBox`
+ * de página, guardado aqui — voltar ao vazio mostra a mesma resposta, sem pedido novo. Com
+ * `enabled` falso (a busca da barra), não pede nada.
+ *
+ * O descarte segue o molde da busca: cada pedido leva um número de sequência, e a resposta só
+ * se aplica se o número dela ainda for o último. Desmontar também conta — é o que descarta o
+ * pedido do primeiro efeito do `StrictMode`, que monta, desmonta e monta de novo.
+ */
+function useSuggestion(enabled: boolean): Load<AssetPage> {
+  const [load, setLoad] = useState<Load<AssetPage>>({ state: "loading" });
+  const seq = useRef(0);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+    seq.current += 1;
+    const mine = seq.current;
+    apiGet<AssetPage>(SUGGESTION_PATH).then(
+      (data) => {
+        if (mine === seq.current) {
+          setLoad({ state: "ok", data });
+        }
+      },
+      (error: unknown) => {
+        if (mine === seq.current) {
+          setLoad({
+            state: "error",
+            error:
+              error instanceof ApiError
+                ? error
+                : new ApiError(0, "unexpected_response", String(error)),
+          });
+        }
+      },
+    );
+    return () => {
+      seq.current += 1;
+    };
+  }, [enabled]);
+
+  return load;
+}
+
 type SearchBoxProps = {
   /** `page`: o campo grande da página inicial; `bar`: o da barra, com a lista suspensa. */
   variant: "page" | "bar";
@@ -167,6 +218,8 @@ export function SearchBox({ variant }: SearchBoxProps) {
   const { value, state, active, setActive, run, type, clear } = useAssetSearch(
     isBar ? BAR_LIMIT : PAGE_LIMIT,
   );
+  // Só a caixa de página pede a sugestão; a da barra não pede nada (RF-10).
+  const suggestion = useSuggestion(!isBar);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -358,7 +411,7 @@ export function SearchBox({ variant }: SearchBoxProps) {
     <>
       {field}
       {state.kind === "empty" ? (
-        <Suggestions />
+        <Suggestions load={suggestion} />
       ) : (
         <div className="ruvor-search__results">
           <p className="ruvor-search__count" aria-live="polite">
@@ -486,24 +539,68 @@ function SearchOption({ asset, id, active, onPick }: SearchOptionProps) {
   );
 }
 
-/** O estado vazio da página inicial: os ativos com risco calculado (RF-05). */
-function Suggestions() {
+/**
+ * O estado vazio da caixa de página: os ativos com risco calculado, vindos da API (M1.7,
+ * RF-10 e RF-11). Recebe o estado do `SearchBox` e não pede nada — ela desmonta a cada busca.
+ * Sem região viva e sem `role="alert"`: a sugestão é auxiliar, e o erro dela não bloqueia a
+ * caixa, que continua aceitando o que se digita.
+ */
+function Suggestions({ load }: { load: Load<AssetPage> }) {
   const titleId = useId();
   return (
-    <section className="ruvor-search__suggest" aria-labelledby={titleId}>
+    <section
+      className="ruvor-search__suggest"
+      aria-labelledby={titleId}
+      aria-busy={load.state === "loading" || undefined}
+    >
       <h2 className="ruvor-eyebrow" id={titleId}>
         {TEXTOS["busca.sugestaoTitulo"]}
       </h2>
-      <ul className="ruvor-chips">
-        {SUGESTOES.map((ticker) => (
-          <li key={ticker}>
-            <Link className="ruvor-chip" to={assetPath(ticker)}>
-              {ticker}
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <p>{TEXTOS["busca.sugestaoNota"]}</p>
+      {load.state === "loading" && (
+        <>
+          <p className="ruvor-sr-only">{TEXTOS["busca.sugestaoCarregando"]}</p>
+          <ul className="ruvor-chips" aria-hidden="true">
+            {SUGGESTION_SKELETONS.map((slot) => (
+              <li key={slot}>
+                <span className="ruvor-skeleton ruvor-skeleton--chip" />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {load.state === "error" && (
+        <div className="ruvor-panel ruvor-search__empty">
+          <b>{TEXTOS["busca.sugestaoErro"]}</b>
+          <p>{TEXTOS["busca.sugestaoErroDica"]}</p>
+        </div>
+      )}
+      {load.state === "ok" && load.data.count === 0 && (
+        <div className="ruvor-panel ruvor-search__empty">
+          <b>{TEXTOS["busca.sugestaoNenhum"]}</b>
+          <p>{TEXTOS["busca.sugestaoNenhumNota"]}</p>
+        </div>
+      )}
+      {load.state === "ok" && load.data.count > 0 && (
+        <>
+          <ul className="ruvor-chips">
+            {load.data.results.map((asset) => (
+              <li key={asset.ticker}>
+                <Link className="ruvor-chip" to={assetPath(asset.ticker)}>
+                  {asset.ticker}
+                </Link>
+              </li>
+            ))}
+            {load.data.count > SUGGESTION_LIMIT && (
+              <li>
+                <span className="ruvor-chips__more">
+                  {TEXTOS["busca.sugestaoMais"](load.data.count - SUGGESTION_LIMIT)}
+                </span>
+              </li>
+            )}
+          </ul>
+          <p>{TEXTOS["busca.sugestaoNota"]}</p>
+        </>
+      )}
     </section>
   );
 }

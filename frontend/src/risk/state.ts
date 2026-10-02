@@ -7,7 +7,7 @@
  */
 
 import type { Risk } from "../api/types";
-import { MIN_SESSIONS } from "../content/sugestoes";
+import { MIN_SESSIONS } from "./config";
 
 /** A situação da identidade do ativo (`GET /api/v1/assets/{ticker}`). */
 export type AssetLoad =

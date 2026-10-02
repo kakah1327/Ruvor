@@ -5,17 +5,41 @@
  */
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App, routes } from "../src/App";
+import type { AssetPage } from "../src/api/types";
 import { TEXTOS } from "../src/content/textos";
 
 // A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
 // no import, e o jsdom não o tem. Aqui nenhum gráfico chega a ser desenhado.
 vi.mock("uplot", () => ({ default: class {} }));
 
+/**
+ * O duplo do `fetch` (M1.7): a página inicial pede a sugestão ao montar (RF-10), e ela responde
+ * vazia; qualquer outro pedido — as rotas da tela do ativo — fica pendente: estes testes só
+ * olham o endereço.
+ */
+const SUGGESTION: AssetPage = { count: 0, limit: 8, offset: 0, results: [] };
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      url === "/api/v1/assets?has_risk=true&limit=8"
+        ? Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => SUGGESTION,
+          } as unknown as Response)
+        : new Promise<Response>(() => {}),
+    ),
+  );
+});
+
 afterEach(() => {
   cleanup(); // sem globals: true no Vitest, a Testing Library nao limpa o DOM sozinha
+  vi.unstubAllGlobals();
   window.history.replaceState(null, "", "/");
 });
 

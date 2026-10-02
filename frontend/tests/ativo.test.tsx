@@ -9,7 +9,10 @@
  *   o índice com beta nulo diz que é a referência; `metric: null`;
  * - V-14 das seções desta tarefa (RF-21): a frase de cada número está junto dele;
  * - `data-ready` e o `reloadAll()` que a T11 usa; as duas seções do M1.6c depois do risco, fora
- *   do `data-ready`.
+ *   do `data-ready`;
+ * - V-09 do M1.7 (RF-10): a busca da barra não pede a sugestão — **todo teste** confere, no
+ *   `afterEach`, que a rota `suggestion` recebeu `suggestionsExpected` pedidos (0, menos na tela
+ *   "ativo não encontrado", que monta a caixa de página e pede exatamente 1).
  *
  * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
  * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
@@ -30,6 +33,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "../src/App";
 import type {
   AssetDetail,
+  AssetItem,
+  AssetPage,
   Disclosures,
   EventRow,
   Events,
@@ -245,7 +250,8 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
-  | "disclosures";
+  | "disclosures"
+  | "suggestion";
 type Reply = { status: number; body: unknown };
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -260,8 +266,16 @@ let calls: Call[] = [];
 /** A resposta de cada rota; `undefined` deixa o pedido pendente até o teste responder. */
 let replies: Partial<Record<Route, Reply>> = {};
 
-/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
+/** O pedido da sugestão (M1.7, RF-10), literal: só ele casa com a rota `suggestion`. */
+const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
+
+/**
+ * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). A
+ * sugestão é a rota própria `suggestion`, casada só pelo endereço exato; qualquer outro pedido
+ * continua lançando.
+ */
 function routeOf(url: string): Route {
+  if (url === SUGGESTION_URL) return "suggestion";
   const match =
     /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
@@ -295,6 +309,42 @@ function stubFetch(): void {
   );
 }
 
+/** Quantos pedidos a rota recebeu neste teste, por qualquer duplo do `fetch` em vigor. */
+function count(route: Route): number {
+  return vi
+    .mocked(globalThis.fetch)
+    .mock.calls.filter(([url]) => routeOf(String(url)) === route).length;
+}
+
+/** Quantos pedidos de sugestão o teste espera: 0 na tela do ativo (a barra não pede). */
+let suggestionsExpected = 0;
+
+const SUGGESTED: AssetItem = {
+  ticker: "PETR4",
+  name: "PETROLEO BRASILEIRO S.A. PETROBRAS",
+  trading_name: "PETROBRAS",
+  kind: "stock",
+  sector: "Petróleo, Gás e Biocombustíveis",
+  status: "active",
+  has_prices: true,
+  has_risk: true,
+};
+const SUGGESTION: AssetPage = {
+  count: 2,
+  limit: 8,
+  offset: 0,
+  results: [
+    {
+      ...SUGGESTED,
+      ticker: "ITUB4",
+      name: "ITAU UNIBANCO HOLDING S.A.",
+      trading_name: "ITAUUNIBANCO",
+      sector: "Financeiro",
+    },
+    SUGGESTED,
+  ],
+};
+
 function allOk(over: Partial<Record<Route, Reply>> = {}): void {
   replies = {
     asset: ok(ASSET),
@@ -304,6 +354,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     risk: ok(RISK),
     fundamentals: ok(FUNDAMENTALS),
     disclosures: ok(DISCLOSURES),
+    suggestion: ok(SUGGESTION),
     ...over,
   };
 }
@@ -315,13 +366,19 @@ function renderAsset(ticker = "ITUB4") {
 }
 
 beforeEach(() => {
+  suggestionsExpected = 0;
   allOk();
   stubFetch();
 });
 
 afterEach(() => {
+  // RF-10: a barra não pede a sugestão; só a caixa de página do "ativo não encontrado" pede.
+  // Conta antes de desfazer o duplo, e confere depois de limpar: a falha não deixa a tela
+  // montada para o teste seguinte.
+  const suggestions = count("suggestion");
   cleanup();
   vi.unstubAllGlobals();
+  expect(suggestions).toBe(suggestionsExpected);
 });
 
 // ---------------------------------------------------------------- as partes da tela
@@ -364,6 +421,7 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
   it("pede as sete juntas, antes de qualquer resposta", () => {
     replies = {};
     renderAsset();
+    expect(count("suggestion")).toBe(0);
     expect(calls.map((c) => c.url).sort()).toEqual(
       [
         "/api/v1/assets/ITUB4",
@@ -403,6 +461,7 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
   });
 
   it("404 asset_not_found na identidade: a tela inteira vira 'ativo não encontrado', com a busca", async () => {
+    suggestionsExpected = 1;
     allOk({ asset: fail(404, "asset_not_found") });
     stubFetch();
     renderAsset("XPTO3");
@@ -419,6 +478,21 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
       screen.queryByRole("heading", { name: TEXTOS["comportamento.titulo"] }),
     ).toBeNull();
     expect(page.getAttribute("data-ready")).toBe("true");
+
+    // M1.7, RF-10: a caixa de página pede a sugestão exatamente uma vez e mostra a resposta.
+    // O pedido sai no efeito de montagem, que pode correr depois de o título aparecer: espera
+    // por ele; o `afterEach` confere de novo, com tudo assentado, que foi exatamente 1.
+    const suggest = within(page).getByRole("region", {
+      name: TEXTOS["busca.sugestaoTitulo"],
+    });
+    await waitFor(() =>
+      expect(
+        within(suggest)
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(["ITUB4", "PETR4"]),
+    );
+    expect(count("suggestion")).toBe(1);
   });
 
   it("identidade com 500: o erro no cabeçalho, com tentar de novo, e o comportamento renderiza", async () => {

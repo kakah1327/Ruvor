@@ -10,7 +10,7 @@ Este modulo nao importa o motor, nem direta nem indiretamente (RF-10).
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -18,6 +18,7 @@ from rest_framework import serializers
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import effective_status, expired_reason, is_expired
+from apps.assets.classification import display_classification
 from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
 from apps.fundamentals.models import (
     Disclosure,
@@ -60,10 +61,51 @@ METRIC_COLUMNS = (
 )
 
 
+# A regra do `has_risk` (M1.7, RF-03), na descricao do parametro da busca e do campo do item
+# (RF-06): o esquema OpenAPI a diz nos dois lugares.
+HAS_RISK_DESCRIPTION = (
+    "Verdadeiro quando o último cálculo fechado terminou `ok` ou `partial`: a execução "
+    "de risco mais recente com status `ok`, `partial` ou `failed` — a mesma que o `/risk` "
+    "devolve como `latest`. Uma execução `running` não conta."
+)
+
+# A classificacao da B3 (M1.7, RF-06 a RF-08; D-144): a descricao de todo campo de
+# classificacao que a API publica.
+CLASSIFICATION_DESCRIPTION = (
+    "Classificação setorial da B3. O texto sai corrigido pela tabela fechada da D-144: "
+    "onde a B3 entrega ponto no lugar da vírgula, a API devolve o texto com a vírgula; "
+    "fora da tabela, o texto sai como a B3 o entrega."
+)
+
+
+class ClassificationField(serializers.CharField):
+    """Um campo de classificacao da B3 (RF-08): o texto gravado passa por
+    `display_classification` na saida, e so nela. Declarado com os mesmos argumentos que o
+    `ModelSerializer` daria a coluna (`max_length=120`, anulavel, nao obrigatorio), para o
+    tipo do esquema ficar o mesmo (`string`, anulavel), agora com a descricao do RF-06.
+    O nulo nao chega aqui: o serializador o devolve antes de chamar o campo.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault("max_length", 120)
+        kwargs.setdefault("allow_null", True)
+        kwargs.setdefault("required", False)
+        kwargs.setdefault("help_text", CLASSIFICATION_DESCRIPTION)
+        super().__init__(**kwargs)
+
+    def to_representation(self, value: Any) -> str:
+        # texto entra, texto sai: o `None` da assinatura da funcao e so o do nulo
+        return cast(str, display_classification(super().to_representation(value)))
+
+
 class AssetItemSerializer(serializers.ModelSerializer[Asset]):
-    """O item da busca. `has_prices` vem da anotacao que a view poe no `queryset`."""
+    """O item da busca. `has_prices` e `has_risk` vem das anotacoes que a view poe no
+    `queryset`.
+    """
 
     has_prices = serializers.BooleanField(read_only=True)
+    has_risk = serializers.BooleanField(read_only=True, help_text=HAS_RISK_DESCRIPTION)
+    sector = ClassificationField()
 
     class Meta:
         model = Asset
@@ -75,6 +117,7 @@ class AssetItemSerializer(serializers.ModelSerializer[Asset]):
             "sector",
             "status",
             "has_prices",
+            "has_risk",
         )
 
 
@@ -93,6 +136,9 @@ class AssetDetailSerializer(serializers.ModelSerializer[Asset]):
 
     has_prices = serializers.BooleanField(read_only=True)
     last_price = serializers.SerializerMethodField()
+    sector = ClassificationField()
+    subsector = ClassificationField()
+    segment = ClassificationField()
 
     class Meta:
         model = Asset
@@ -362,6 +408,10 @@ class PeerIndicatorOut(serializers.Serializer[PeerComparison]):
 class PeersOut(serializers.ModelSerializer[PeerComparison]):
     """A comparacao do proprio indicador com os pares (M3.2)."""
 
+    # os `group_*` saem pela tabela da D-144 (M1.7, RF-08), como a classificacao do ativo
+    group_sector = ClassificationField()
+    group_subsector = ClassificationField()
+    group_segment = ClassificationField()
     roe = PeerIndicatorOut(indicator="roe", source="*", read_only=True)
     net_margin = PeerIndicatorOut(indicator="net_margin", source="*", read_only=True)
     ebit_margin = PeerIndicatorOut(indicator="ebit_margin", source="*", read_only=True)
