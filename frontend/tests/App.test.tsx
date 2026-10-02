@@ -36,11 +36,12 @@ describe("App", () => {
     expect(screen.getByRole("main")).toBeDefined();
   });
 
-  it("não chama /health nem outra rota da rede", () => {
-    const fetchSpy = vi.fn();
+  it("em /, o único pedido é o da sugestão: nem /health nem outra rota (M1.7, RF-10)", () => {
+    const fetchSpy = vi.fn((_url: string) => new Promise<Response>(() => {}));
     vi.stubGlobal("fetch", fetchSpy);
     render(<App />);
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0]?.[0]).toBe("/api/v1/assets?has_risk=true&limit=8");
   });
 
   it("endereço desconhecido mostra a página não encontrada dentro do casco", () => {

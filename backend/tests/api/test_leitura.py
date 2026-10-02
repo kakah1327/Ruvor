@@ -37,6 +37,7 @@ CHAVES_ITEM = {
     "sector",
     "status",
     "has_prices",
+    "has_risk",
 }
 CHAVES_ATIVO = {
     "ticker",
@@ -232,6 +233,7 @@ def test_busca_devolve_o_corpo_e_o_item_inteiros(client: Client) -> None:
             "sector": "Financeiro",
             "status": "active",
             "has_prices": True,
+            "has_risk": False,
         }
     ]
 

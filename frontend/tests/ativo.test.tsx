@@ -9,7 +9,17 @@
  *   o índice com beta nulo diz que é a referência; `metric: null`;
  * - V-14 das seções desta tarefa (RF-21): a frase de cada número está junto dele;
  * - `data-ready` e o `reloadAll()` que a T11 usa; as duas seções do M1.6c depois do risco, fora
- *   do `data-ready`.
+ *   do `data-ready`;
+ * - V-09 do M1.7 (RF-10): a busca da barra não pede a sugestão — **todo teste** confere, no
+ *   `afterEach`, que a rota `suggestion` recebeu `suggestionsExpected` pedidos (0, menos na tela
+ *   "ativo não encontrado", que monta a caixa de página e pede exatamente 1).
+ *
+ * - M2.3 (T4): o cabeçalho e o preço nos dois níveis — a prova por seção no avançado (V-04), o
+ *   valor igual nos dois, e a troca pelo alternador sem pedido à API com o risco em E1 (V-08).
+ * - M2.3 (T7): o comportamento nos dois níveis — a prova por seção das 22 chaves no avançado
+ *   (V-04), os números iguais nos dois níveis, e a assimetria e a curtose recolhidas na iniciante,
+ *   com o histograma aberto (V-05). Os testes do M1.6b que leem a assimetria e a curtose abrem o
+ *   controle (`openMoments`): na iniciante, elas nascem recolhidas.
  *
  * O `fetch` é um duplo que responde pela rota; o uPlot, um duplo mínimo (o jsdom não tem
  * `<canvas>` nem `matchMedia`) — o que ele recebe é dos testes dos gráficos.
@@ -28,22 +38,29 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routes } from "../src/App";
-import type {
-  AssetDetail,
-  Disclosures,
-  EventRow,
-  Events,
-  Fundamentals,
-  HistogramBin,
-  Metric,
-  Metrics,
-  PriceRow,
-  Prices,
-  Risk,
+import {
+  type AssetDetail,
+  type AssetItem,
+  type AssetPage,
+  type Disclosures,
+  type EventRow,
+  type Events,
+  type Fundamentals,
+  type HistogramBin,
+  type Metric,
+  type Metrics,
+  MODEL_ORDER,
+  type PriceRow,
+  type Prices,
+  type Risk,
+  type RiskResult,
+  type RiskRun,
 } from "../src/api/types";
+import { TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { TEXTOS } from "../src/content/textos";
 import { formatCurrency, formatCurrencyPrecise } from "../src/format/numbers";
 import { useAssetData } from "../src/screens/AssetScreen";
+import { comNivel, limparNivel } from "./nivel";
 
 // ---------------------------------------------------------------- o duplo do uPlot
 
@@ -245,7 +262,8 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
-  | "disclosures";
+  | "disclosures"
+  | "suggestion";
 type Reply = { status: number; body: unknown };
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -260,8 +278,16 @@ let calls: Call[] = [];
 /** A resposta de cada rota; `undefined` deixa o pedido pendente até o teste responder. */
 let replies: Partial<Record<Route, Reply>> = {};
 
-/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
+/** O pedido da sugestão (M1.7, RF-10), literal: só ele casa com a rota `suggestion`. */
+const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
+
+/**
+ * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). A
+ * sugestão é a rota própria `suggestion`, casada só pelo endereço exato; qualquer outro pedido
+ * continua lançando.
+ */
 function routeOf(url: string): Route {
+  if (url === SUGGESTION_URL) return "suggestion";
   const match =
     /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
@@ -295,6 +321,42 @@ function stubFetch(): void {
   );
 }
 
+/** Quantos pedidos a rota recebeu neste teste, por qualquer duplo do `fetch` em vigor. */
+function count(route: Route): number {
+  return vi
+    .mocked(globalThis.fetch)
+    .mock.calls.filter(([url]) => routeOf(String(url)) === route).length;
+}
+
+/** Quantos pedidos de sugestão o teste espera: 0 na tela do ativo (a barra não pede). */
+let suggestionsExpected = 0;
+
+const SUGGESTED: AssetItem = {
+  ticker: "PETR4",
+  name: "PETROLEO BRASILEIRO S.A. PETROBRAS",
+  trading_name: "PETROBRAS",
+  kind: "stock",
+  sector: "Petróleo, Gás e Biocombustíveis",
+  status: "active",
+  has_prices: true,
+  has_risk: true,
+};
+const SUGGESTION: AssetPage = {
+  count: 2,
+  limit: 8,
+  offset: 0,
+  results: [
+    {
+      ...SUGGESTED,
+      ticker: "ITUB4",
+      name: "ITAU UNIBANCO HOLDING S.A.",
+      trading_name: "ITAUUNIBANCO",
+      sector: "Financeiro",
+    },
+    SUGGESTED,
+  ],
+};
+
 function allOk(over: Partial<Record<Route, Reply>> = {}): void {
   replies = {
     asset: ok(ASSET),
@@ -304,6 +366,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     risk: ok(RISK),
     fundamentals: ok(FUNDAMENTALS),
     disclosures: ok(DISCLOSURES),
+    suggestion: ok(SUGGESTION),
     ...over,
   };
 }
@@ -315,13 +378,20 @@ function renderAsset(ticker = "ITUB4") {
 }
 
 beforeEach(() => {
+  suggestionsExpected = 0;
   allOk();
   stubFetch();
 });
 
 afterEach(() => {
+  // RF-10: a barra não pede a sugestão; só a caixa de página do "ativo não encontrado" pede.
+  // Conta antes de desfazer o duplo, e confere depois de limpar: a falha não deixa a tela
+  // montada para o teste seguinte.
+  const suggestions = count("suggestion");
   cleanup();
   vi.unstubAllGlobals();
+  limparNivel();
+  expect(suggestions).toBe(suggestionsExpected);
 });
 
 // ---------------------------------------------------------------- as partes da tela
@@ -358,12 +428,26 @@ async function loaded(): Promise<void> {
   await waitFor(() => expect(behavior().querySelector("[aria-busy]")).toBeNull());
 }
 
+/** O controle da assimetria e da curtose (M2.3), na seção Comportamento. */
+const momentsToggle = () =>
+  within(behavior()).getByRole("button", {
+    name: TEXTOS["comportamento.momentos.abrir"],
+  });
+
+/** Abre a assimetria e a curtose, se estiverem recolhidas — na iniciante, nascem recolhidas. */
+function openMoments(): void {
+  if (momentsToggle().getAttribute("aria-expanded") === "false") {
+    fireEvent.click(momentsToggle());
+  }
+}
+
 // ---------------------------------------------------------------- RF-06
 
 describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () => {
   it("pede as sete juntas, antes de qualquer resposta", () => {
     replies = {};
     renderAsset();
+    expect(count("suggestion")).toBe(0);
     expect(calls.map((c) => c.url).sort()).toEqual(
       [
         "/api/v1/assets/ITUB4",
@@ -403,6 +487,7 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
   });
 
   it("404 asset_not_found na identidade: a tela inteira vira 'ativo não encontrado', com a busca", async () => {
+    suggestionsExpected = 1;
     allOk({ asset: fail(404, "asset_not_found") });
     stubFetch();
     renderAsset("XPTO3");
@@ -419,6 +504,21 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
       screen.queryByRole("heading", { name: TEXTOS["comportamento.titulo"] }),
     ).toBeNull();
     expect(page.getAttribute("data-ready")).toBe("true");
+
+    // M1.7, RF-10: a caixa de página pede a sugestão exatamente uma vez e mostra a resposta.
+    // O pedido sai no efeito de montagem, que pode correr depois de o título aparecer: espera
+    // por ele; o `afterEach` confere de novo, com tudo assentado, que foi exatamente 1.
+    const suggest = within(page).getByRole("region", {
+      name: TEXTOS["busca.sugestaoTitulo"],
+    });
+    await waitFor(() =>
+      expect(
+        within(suggest)
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(["ITUB4", "PETR4"]),
+    );
+    expect(count("suggestion")).toBe(1);
   });
 
   it("identidade com 500: o erro no cabeçalho, com tentar de novo, e o comportamento renderiza", async () => {
@@ -742,6 +842,194 @@ describe("RF-08 — o preço", () => {
   });
 });
 
+// ---------------------------------------------------------------- M2.3: os dois níveis
+
+/** Um resultado de modelo, o mínimo para a seção de risco sair em E1. */
+function riskResult(
+  model: RiskResult["model_name"],
+  alpha: RiskResult["alpha"],
+): RiskResult {
+  return {
+    model_name: model,
+    model_category: "traditional",
+    alpha,
+    hyperparameters: {},
+    var_latest: "0.0300000000",
+    var_mean: "0.0300000000",
+    violations: 10,
+    expected_violations: "11.000000",
+    kupiec_passed: true,
+    kupiec_p_value: "0.5000000000",
+    christoffersen_passed: true,
+    christoffersen_p_value: "0.5000000000",
+    dq_passed: true,
+    dq_p_value: "0.5000000000",
+    basel_zone: null,
+    adequate: true,
+    error: "",
+    reused_snapshots: null,
+    trained_snapshots: null,
+  };
+}
+
+const RUN_OK: RiskRun = {
+  id: 70,
+  calculated_at: "2026-09-28T19:40:00-03:00",
+  finished_at: "2026-09-28T19:45:00-03:00",
+  status: "ok",
+  engine_version: "0.3.0",
+  seed: 42,
+  train_window_days: 252,
+  as_of_date: "2026-09-28",
+  first_price_date: "2016-09-22",
+  price_count: 2487,
+  train_count: 252,
+  test_count: 2235,
+  price_run: {
+    id: 9,
+    source: "yahoo-chart",
+    started_at: "2026-09-28T19:00:00-03:00",
+    finished_at: "2026-09-28T19:00:30-03:00",
+  },
+  requested_models: [...MODEL_ORDER],
+  full_recompute: false,
+  results: MODEL_ORDER.flatMap((m) => [
+    riskResult(m, "0.0500"),
+    riskResult(m, "0.0100"),
+  ]),
+};
+
+/** E1: resultado pronto, sem cálculo em curso nem pedido — o acompanhamento não consulta. */
+const RISK_E1: Risk = {
+  ticker: "ITUB4",
+  covered: true,
+  latest: RUN_OK,
+  in_progress: null,
+  request: null,
+};
+
+const lastBox = () => header().querySelector(".ruvor-asset-head__last") as HTMLElement;
+const readingGroup = () =>
+  screen.getByRole("group", { name: TEXTOS["casco.leitura.rotulo"] });
+
+describe("M2.3 — o cabeçalho e o preço nos dois níveis (V-04)", () => {
+  // A data do último fechamento da fixture, como a tela a formata.
+  const DATA = "28/09/2026";
+
+  it("no iniciante: as iniciantes, e nenhuma avançada", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    expect(
+      within(lastBox()).getByText(TEXTOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect(
+      within(lastBox()).queryByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeNull();
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
+    expect(
+      within(pricePanel()).queryByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeNull();
+  });
+
+  it("a prova por seção no avançado: cada chave do cabeçalho e do preço na avançada, nunca na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    // Chave de função: a saída da avançada com os argumentos da fixture, e não a da iniciante.
+    expect(
+      within(lastBox()).getByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect(
+      within(main()).queryByText(TEXTOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeNull();
+    // Chave de texto: a avançada presente, a iniciante ausente.
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+    expect(within(main()).queryByText(TEXTOS["ativo.precoAjustado"])).toBeNull();
+  });
+
+  it("a prova por seção no avançado, sem preço: a frase do preço ajustado na avançada, junto da área vazia", async () => {
+    // Sem série, só a frase do preço ajustado muda; o último fechamento é do caso acima.
+    allOk({ prices: ok({ ...PRICES, results: [] }) });
+    stubFetch();
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+    expect(within(pricePanel()).queryByText(TEXTOS["ativo.precoAjustado"])).toBeNull();
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.preco.vazio"])).toBeDefined();
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis: o fechamento e o resumo do gráfico", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    const valor = () =>
+      lastBox().querySelector("[data-value='last-close']")?.textContent;
+    const resumo = () =>
+      within(pricePanel()).getByRole("img").getAttribute("aria-label");
+    const antes = { valor: valor(), resumo: resumo() };
+    expect(antes.valor).toBe(formatCurrency(38.5));
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.avancada"],
+      }),
+    );
+    expect(
+      within(lastBox()).getByText(TEXTOS_AVANCADOS["ativo.ultimoFechamento"](DATA)),
+    ).toBeDefined();
+    expect({ valor: valor(), resumo: resumo() }).toEqual(antes);
+  });
+});
+
+describe("M2.3 — V-08: trocar o nível não pede nada à API", () => {
+  it("com o risco em E1, a troca pelo alternador não chama o fetch, nos dois sentidos", async () => {
+    allOk({ risk: ok(RISK_E1) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    // E1: a seção de risco mostra o resultado pronto, sem acompanhamento.
+    expect(
+      main().querySelector("[data-risk-state]")?.getAttribute("data-risk-state"),
+    ).toBe("E1");
+    await waitFor(() =>
+      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
+    );
+    const fetchSpy = vi.mocked(fetch);
+    const antes = fetchSpy.mock.calls.length;
+    // Um respiro depois da troca, para qualquer efeito disparado por ela chegar ao fetch.
+    const respiro = () =>
+      act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+    const group = readingGroup();
+    expect(group.closest("[aria-live]")).toBeNull();
+    fireEvent.click(
+      within(group).getByRole("button", { name: TEXTOS["casco.leitura.avancada"] }),
+    );
+    await respiro();
+    expect(fetchSpy.mock.calls.length).toBe(antes);
+    expect(
+      within(pricePanel()).getByText(TEXTOS_AVANCADOS["ativo.precoAjustado"]),
+    ).toBeDefined();
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.iniciante"],
+      }),
+    );
+    await respiro();
+    expect(fetchSpy.mock.calls.length).toBe(antes);
+    expect(within(pricePanel()).getByText(TEXTOS["ativo.precoAjustado"])).toBeDefined();
+  });
+});
+
 // ---------------------------------------------------------------- RF-09
 
 describe("RF-09 — proventos e desdobramentos", () => {
@@ -881,9 +1169,18 @@ describe("RF-10 — o comportamento, formatado em pt-BR, e V-14: a frase junto d
     expect(EXPECTED).toHaveLength(21);
   });
 
+  it("o retorno no ano: a iniciante emendada no portão da T6 do M2.3, literal", () => {
+    // Segunda exceção ao "Fora" da spec do M2.3: o cálculo parte do fechamento do último
+    // pregão antes do ano corrente, não do primeiro pregão do ano.
+    expect(TEXTOS["comportamento.return_ytd"]("R$ 114,98")).toBe(
+      "Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100 viraram R$ 114,98.",
+    );
+  });
+
   it.each(EXPECTED)("%s: %s, com a frase", async (field, value, phrase) => {
     renderAsset();
     await loaded();
+    openMoments();
     expect(statValue(field)).toBe(value);
     expect(statPhrase(field)).toBe(phrase);
   });
@@ -946,6 +1243,7 @@ describe("V-06 — nulo não é zero", () => {
   it.each(NULLS)("%s nulo mostra '—' e o porquê", async (field, phrase) => {
     renderAsset();
     await loaded();
+    openMoments();
     expect(statValue(field)).toBe("—");
     expect(statPhrase(field)).toBe(phrase);
   });
@@ -983,6 +1281,7 @@ describe("V-06 — nulo não é zero", () => {
   it("nenhum número em destaque de campo nulo é zero", async () => {
     renderAsset();
     await loaded();
+    openMoments();
     for (const [field] of NULLS) {
       expect(statValue(field)).not.toMatch(/\d/);
     }
@@ -1021,5 +1320,264 @@ describe("V-06 — nulo não é zero", () => {
     expect(document.getElementById("risco")).not.toBeNull();
     expect(section.querySelector("[data-field]")).toBeNull();
     expect(within(section).queryByText(/^até /)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- M2.3: o comportamento nos dois níveis
+
+type PhraseSource = Readonly<Record<string, unknown>>;
+
+/** A frase de uma chave num dos dois módulos, com os argumentos (chave de texto: sem argumento). */
+function phraseOf(source: PhraseSource, key: string, args: readonly unknown[]): string {
+  const entry = source[key];
+  if (typeof entry === "function")
+    return (entry as (...a: unknown[]) => string)(...args);
+  if (typeof entry === "string") return entry;
+  throw new Error(`sem entrada: ${key}`);
+}
+
+/**
+ * As 22 chaves `comportamento.*` da lista do RF-04, com os argumentos que a fixture `METRIC`
+ * produz — os mesmos de `EXPECTED`. A fixture exercita todas as 22; o ramo que ela não tem (a
+ * queda sem volta) vem de `METRIC_SHORT`, no caso próprio abaixo.
+ */
+const BEHAVIOR_KEYS: Array<[key: string, args: readonly unknown[]]> = [
+  ["comportamento.return_1m", [formatCurrency(102)]],
+  ["comportamento.return_3m", [formatCurrency(95)]],
+  ["comportamento.return_6m", [formatCurrency(110)]],
+  ["comportamento.return_12m", [formatCurrency(125.81)]],
+  ["comportamento.return_36m", [formatCurrency(150)]],
+  ["comportamento.return_60m", [formatCurrency(166.17)]],
+  ["comportamento.return_120m", [formatCurrency(308.29)]],
+  ["comportamento.return_ytd", [formatCurrency(113.57)]],
+  ["comportamento.volatility_12m", ["17,5%"]],
+  ["comportamento.volatility_60m", ["25,0%"]],
+  [
+    "comportamento.max_drawdown",
+    ["46,8%", "23/01/2020", "23/03/2020", "22/09/2016", "06/01/2021"],
+  ],
+  ["comportamento.max_drawdown_recovery_sessions", ["0,8"]],
+  ["comportamento.beta_60m", ["0,85%", false]],
+  ["comportamento.correlation_60m", ["−0,12"]],
+  ["comportamento.histograma", []],
+  ["comportamento.skewness", ["−0,05", -1]],
+  ["comportamento.excess_kurtosis", ["1,07", 1]],
+  ["comportamento.dividends_12m", []],
+  ["comportamento.dividend_payments_12m", []],
+  ["comportamento.dividend_yield_12m", ["28/09/2026", formatCurrency(8.12)]],
+  ["comportamento.avg_volume_21d", []],
+  ["comportamento.avg_volume_252d", []],
+];
+
+const distribution = () => block(TEXTOS["comportamento.bloco.distribuicao"]);
+const momentsRoot = () =>
+  behavior().querySelector<HTMLElement>('[data-collapsible="moments"]') as HTMLElement;
+/** Os números em destaque da seção, na ordem da tela. */
+const statValues = () =>
+  [...behavior().querySelectorAll(".ruvor-stat__value")].map((el) => el.textContent);
+/**
+ * Se a frase está na seção, exata, num parágrafo: compara o `textContent` cru — o `getByText`
+ * normaliza o espaço fino do "R$" na tela, mas não no texto procurado.
+ */
+const behaviorHas = (phrase: string) =>
+  [...behavior().querySelectorAll("p")].some((el) => el.textContent === phrase);
+
+describe("M2.3 — o comportamento nos dois níveis (V-04)", () => {
+  it("a lista cobre as 22 chaves comportamento.* do RF-04, todas com avançada", () => {
+    expect(new Set(BEHAVIOR_KEYS.map(([key]) => key)).size).toBe(22);
+    for (const [key] of BEHAVIOR_KEYS) {
+      expect(Object.hasOwn(TEXTOS_AVANCADOS, key), key).toBe(true);
+    }
+  });
+
+  it("a prova por seção no avançado: cada chave na avançada, nunca na iniciante", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of BEHAVIOR_KEYS) {
+      const avancada = phraseOf(TEXTOS_AVANCADOS, key, args);
+      const iniciante = phraseOf(TEXTOS, key, args);
+      if (!behaviorHas(avancada)) ausentes.push(key);
+      if (behaviorHas(iniciante)) presentes.push(key);
+    }
+    expect(ausentes, "avançada ausente").toEqual([]);
+    expect(presentes, "iniciante presente").toEqual([]);
+  });
+
+  it("no iniciante, aberta a assimetria e a curtose: as iniciantes, e nenhuma avançada", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    openMoments();
+    const ausentes: string[] = [];
+    const presentes: string[] = [];
+    for (const [key, args] of BEHAVIOR_KEYS) {
+      const avancada = phraseOf(TEXTOS_AVANCADOS, key, args);
+      const iniciante = phraseOf(TEXTOS, key, args);
+      if (!behaviorHas(iniciante)) ausentes.push(key);
+      if (behaviorHas(avancada)) presentes.push(key);
+    }
+    expect(ausentes, "iniciante ausente").toEqual([]);
+    expect(presentes, "avançada presente").toEqual([]);
+  });
+
+  it("o ramo da queda sem volta, no avançado (a série curta)", async () => {
+    allOk({ metrics: ok({ ticker: "ITUB4", metric: METRIC_SHORT }) });
+    stubFetch();
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    const args = ["46,8%", "23/01/2020", "23/03/2020", "02/01/2025", null] as const;
+    expect(statPhrase("max_drawdown")).toBe(
+      TEXTOS_AVANCADOS["comportamento.max_drawdown"](...args),
+    );
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis, e a troca pelo alternador só muda a frase", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    openMoments();
+    const antes = statValues();
+    expect(antes).toHaveLength(21);
+    expect(statPhrase("volatility_12m")).toBe(
+      TEXTOS["comportamento.volatility_12m"]("17,5%"),
+    );
+
+    fireEvent.click(
+      within(readingGroup()).getByRole("button", {
+        name: TEXTOS["casco.leitura.avancada"],
+      }),
+    );
+    expect(statPhrase("volatility_12m")).toBe(
+      TEXTOS_AVANCADOS["comportamento.volatility_12m"]("17,5%"),
+    );
+    expect(statValues()).toEqual(antes);
+  });
+});
+
+describe("M2.3 — a assimetria e a curtose recolhidas na iniciante (V-05)", () => {
+  it("na iniciante: o botão fechado, e a assimetria e a curtose fora da árvore", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(momentsRoot().getAttribute("data-open")).toBe("false");
+    expect(stat("skewness")).toBeNull();
+    expect(stat("excess_kurtosis")).toBeNull();
+    expect(
+      within(behavior()).queryByText(TEXTOS["comportamento.rotulo.skewness"]),
+    ).toBeNull();
+    const controls = momentsToggle().getAttribute("aria-controls") as string;
+    expect(document.getElementById(controls)).toBeNull();
+  });
+
+  it("abrir na iniciante mostra os mesmos números do avançado, com as frases iniciantes", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    fireEvent.click(momentsToggle());
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+    expect(statValue("excess_kurtosis")).toBe("1,07");
+    expect(statPhrase("skewness")).toBe(TEXTOS["comportamento.skewness"]("−0,05", -1));
+    const controls = momentsToggle().getAttribute("aria-controls") as string;
+    expect(document.getElementById(controls)?.contains(stat("skewness"))).toBe(true);
+  });
+
+  it("na avançada: aberto por padrão, com os mesmos números", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(momentsRoot().getAttribute("data-open")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+    expect(statValue("excess_kurtosis")).toBe("1,07");
+  });
+
+  it("trocar o nível pelo alternador reaplica o padrão: o aberto à mão fecha ao voltar à iniciante", async () => {
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    fireEvent.click(momentsToggle());
+    const button = (key: "casco.leitura.avancada" | "casco.leitura.iniciante") =>
+      within(readingGroup()).getByRole("button", { name: TEXTOS[key] });
+    fireEvent.click(button("casco.leitura.avancada"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(momentsToggle());
+    expect(stat("skewness")).toBeNull();
+    fireEvent.click(button("casco.leitura.iniciante"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(button("casco.leitura.avancada"));
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("true");
+    expect(statValue("skewness")).toBe("−0,05");
+  });
+
+  it("o histograma fica aberto nos dois níveis, fora do recolhível", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await loaded();
+      const chart = within(distribution()).getByRole("img");
+      expect(chart.closest("[data-collapsible]"), reading).toBeNull();
+      const phrase = within(distribution()).getByText(
+        reading === "advanced"
+          ? TEXTOS_AVANCADOS["comportamento.histograma"]
+          : TEXTOS["comportamento.histograma"],
+      );
+      expect(phrase.closest("[data-collapsible]"), reading).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("o resto da seção nunca tem controle: o único recolhível é o da assimetria e da curtose", async () => {
+    for (const reading of ["beginner", "advanced"] as const) {
+      comNivel(reading);
+      renderAsset();
+      await loaded();
+      expect(behavior().querySelectorAll("[data-collapsible]")).toHaveLength(1);
+      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(1);
+      for (const field of [
+        "return_12m",
+        "volatility_12m",
+        "max_drawdown",
+        "beta_60m",
+      ]) {
+        expect(stat(field).closest("[data-collapsible]"), field).toBeNull();
+      }
+      cleanup();
+    }
+  });
+
+  it("nem o recolhível nem o alternador ficam dentro de região viva", async () => {
+    comNivel("advanced");
+    renderAsset();
+    await loaded();
+    for (const el of document.querySelectorAll("[data-collapsible]")) {
+      expect(el.closest("[aria-live]")).toBeNull();
+      expect(el.querySelector("[aria-live]")).toBeNull();
+    }
+    expect(readingGroup().closest("[aria-live]")).toBeNull();
+    expect(behavior().closest("[aria-live]")).toBeNull();
+  });
+
+  it("a série curta: a frase no lugar do histograma, e o recolhível continua, com os nulos dentro", async () => {
+    allOk({ metrics: ok({ ticker: "ITUB4", metric: METRIC_SHORT }) });
+    stubFetch();
+    comNivel("beginner");
+    renderAsset();
+    await loaded();
+    const short = within(distribution()).getByText(
+      TEXTOS["comportamento.histogramaCurto"],
+    );
+    expect(short.closest("[data-collapsible]")).toBeNull();
+    expect(momentsToggle().getAttribute("aria-expanded")).toBe("false");
+    expect(stat("skewness")).toBeNull();
+    fireEvent.click(momentsToggle());
+    expect(statValue("skewness")).toBe("—");
+    expect(statPhrase("skewness")).toBe(TEXTOS["comportamento.nulo.janela"](60));
+    expect(statValue("excess_kurtosis")).toBe("—");
   });
 });

@@ -4,6 +4,12 @@
  * fonte em toda tela, e a proveniência só quando a tela a dá, só no endereço em que a deu.
  *
  * `theme.ts` guarda a escolha em memória: cada teste importa o casco de novo.
+ *
+ * V-03 do M2.3, na tela: o alternador do nível de leitura — dois botões com `aria-pressed`, o
+ * padrão iniciante, a escolha lembrada, o valor desconhecido e o armazenamento que lança, a
+ * troca feita em outro ponto da página — e o primeiro desenho no nível lembrado, provado por
+ * `renderToString`, que não roda efeitos. `reading.ts` também guarda o nível em memória: o
+ * `freshShell` o importa de novo junto com o casco.
  */
 import {
   act,
@@ -14,7 +20,14 @@ import {
   within,
 } from "@testing-library/react";
 import { useEffect } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { renderToString } from "react-dom/server";
+import {
+  createMemoryRouter,
+  MemoryRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RESSALVA } from "../src/content/ressalva";
@@ -62,6 +75,7 @@ function pressed(): string[] {
 beforeEach(() => {
   window.localStorage.clear();
   document.documentElement.removeAttribute("data-theme");
+  document.documentElement.removeAttribute("data-reading");
 });
 
 afterEach(() => {
@@ -115,6 +129,135 @@ describe("chave de tema", () => {
 
     fireEvent.click(themeButton(TEXTOS["casco.tema.sistema"]));
     expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
+  });
+});
+
+function readingGroup(): HTMLElement {
+  return screen.getByRole("group", { name: TEXTOS["casco.leitura.rotulo"] });
+}
+
+function readingButton(label: string): HTMLElement {
+  return within(readingGroup()).getByRole("button", { name: label });
+}
+
+function readingPressed(): string[] {
+  return within(readingGroup())
+    .getAllByRole("button")
+    .filter((button) => button.getAttribute("aria-pressed") === "true")
+    .map((button) => button.textContent ?? "");
+}
+
+const INICIANTE = TEXTOS["casco.leitura.iniciante"];
+const AVANCADA = TEXTOS["casco.leitura.avancada"];
+
+describe("o alternador do nível de leitura (V-03 do M2.3)", () => {
+  it("dois botões com rótulo e aria-pressed, num grupo com rótulo; o padrão é iniciante", async () => {
+    await renderShell("/ativos/ITUB4");
+    const buttons = within(readingGroup()).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual([INICIANTE, AVANCADA]);
+    expect(buttons.every((b) => b.hasAttribute("aria-pressed"))).toBe(true);
+    expect(readingPressed()).toEqual([INICIANTE]);
+    expect(document.documentElement.dataset.reading).toBe("beginner");
+  });
+
+  it("aparece na busca também, antes da chave de tema, e fora de região viva", async () => {
+    await renderShell("/");
+    const reading = readingGroup();
+    const theme = screen.getByRole("group", { name: TEXTOS["casco.tema.rotulo"] });
+    expect(
+      reading.compareDocumentPosition(theme) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+    expect(reading.parentElement).toBe(theme.parentElement);
+    expect(reading.parentElement?.className).toBe("ruvor-topbar__prefs");
+    expect(reading.closest("[aria-live]")).toBeNull();
+  });
+
+  it("trocar grava, aplica data-reading e move o alternador", async () => {
+    await renderShell();
+    fireEvent.click(readingButton(AVANCADA));
+    expect(readingPressed()).toEqual([AVANCADA]);
+    expect(window.localStorage.getItem("ruvor-reading")).toBe("advanced");
+    expect(document.documentElement.dataset.reading).toBe("advanced");
+
+    fireEvent.click(readingButton(INICIANTE));
+    expect(readingPressed()).toEqual([INICIANTE]);
+    expect(window.localStorage.getItem("ruvor-reading")).toBe("beginner");
+    expect(document.documentElement.dataset.reading).toBe("beginner");
+  });
+
+  it("lembra a escolha: a próxima carga sai em avançada", async () => {
+    await renderShell();
+    fireEvent.click(readingButton(AVANCADA));
+    cleanup();
+
+    await renderShell();
+    expect(readingPressed()).toEqual([AVANCADA]);
+  });
+
+  it.each(["expert", "Advanced", ""])(
+    "valor guardado desconhecido %j sai em iniciante",
+    async (valor) => {
+      window.localStorage.setItem("ruvor-reading", valor);
+      await renderShell();
+      expect(readingPressed()).toEqual([INICIANTE]);
+    },
+  );
+
+  it("funciona com localStorage lançando exceção", async () => {
+    throwingStorage();
+    await renderShell();
+    expect(readingPressed()).toEqual([INICIANTE]);
+    fireEvent.click(readingButton(AVANCADA));
+    expect(readingPressed()).toEqual([AVANCADA]);
+    expect(document.documentElement.dataset.reading).toBe("advanced");
+  });
+
+  it("RF-03: quem mais trocar o nível na página move o alternador", async () => {
+    await renderShell();
+    // O mesmo módulo que o casco importou: `freshShell` reiniciou o registro antes dele.
+    const { setReading } = await import("../src/reading");
+    act(() => setReading("advanced"));
+    expect(readingPressed()).toEqual([AVANCADA]);
+    act(() => setReading("beginner"));
+    expect(readingPressed()).toEqual([INICIANTE]);
+  });
+
+  it("o primeiro desenho já sai no nível lembrado: renderToString, sem efeitos", async () => {
+    window.localStorage.setItem("ruvor-reading", "advanced");
+    const { Shell } = await freshShell();
+    const html = renderToString(
+      <MemoryRouter initialEntries={["/ativos/ITUB4"]}>
+        <Routes>
+          <Route element={<Shell />}>
+            <Route path="*" element={null} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const group = doc.querySelector(
+      `[role="group"][aria-label="${TEXTOS["casco.leitura.rotulo"]}"]`,
+    );
+    expect(group).not.toBeNull();
+    const pressedNow = [...(group as Element).querySelectorAll("button")]
+      .filter((b) => b.getAttribute("aria-pressed") === "true")
+      .map((b) => b.textContent);
+    expect(pressedNow).toEqual([AVANCADA]);
+  });
+
+  it("o primeiro desenho sem nada guardado sai em iniciante", async () => {
+    const { Shell } = await freshShell();
+    const html = renderToString(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route element={<Shell />}>
+            <Route path="*" element={null} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(html).toContain(`aria-pressed="true">${INICIANTE}</button>`);
+    expect(html).not.toContain(`aria-pressed="true">${AVANCADA}</button>`);
   });
 });
 

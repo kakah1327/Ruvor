@@ -15,6 +15,19 @@
 //   RUVOR_E2E_SOB_DEMANDA  padrão 1; com 0, o passo sob demanda não roda nem é conferido
 //   RUVOR_E2E_MEDIR_TAXA   padrão 0; com 1, só a medida da taxa roda (nada mais)
 //   RUVOR_E2E_EMPRESA      o ticker da companhia do mockup (a T0 do M1.6c escolheu PETR4)
+//
+// M1.7 (RF-14, docs/planos/M1.7-busca-e-catalogo.md, Tarefa 8): a sugestão vem da API, e o
+// roteiro deixa de copiar a lista. O passo 6 lê os atalhos da `/` renderizada e os confere
+// contra a primeira página de `GET /api/v1/assets?has_risk=true&limit=8` — a mesma ordem, o
+// "e mais N" contra o `count` — e o `latest` `ok` ou `partial` de cada um no `/risk`. Confere
+// também "itaú" achando o ITUB4 na busca e a classificação sem ponto na tela do PETR4.
+//
+// M2.3 (RF-12, docs/planos/M2.3-camada-explicativa.md, T15 e "As marcas para a execução real"):
+// antes de abrir o navegador, confere pela API que o ITUB4 e o PETR4 estão em E1 e, se algum não
+// estiver, aborta — a conferência de zero pedido não vale com o acompanhamento consultando. Depois
+// abre os dois nos dois níveis (grava `ruvor-reading` antes da carga e troca pelo alternador), nos
+// dois temas, em 360 e 1440 px, e confere `data-reading`, as marcas `data-collapsible`/`data-open`
+// e zero pedido `/api/v1/` entre a troca de nível e 2 s depois. Sem chave nova.
 
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -33,13 +46,33 @@ const RATE_IDLE_MS = 65_000;
 // Teto de cargas da medida: a 60/min e catorze pedidos por carga, o 429 chega na quinta.
 const RATE_MAX_LOADS = 30;
 
-// Cópia de SUGESTOES em frontend/src/content/sugestoes.ts: o roteiro só enxerga frontend/e2e.
-const SUGESTOES = ["ITUB4", "PETR4", "VALE3", "BBDC4", "IBOV"];
+// O pedido da sugestão (SUGGESTION_PATH em frontend/src/components/SearchBox.tsx, RF-10): o
+// roteiro só enxerga frontend/e2e. O "e mais N" mostra `count` − SUGGESTION_LIMIT.
+const SUGGESTION_LIMIT = 8;
+const SUGGESTION_PATH = `/api/v1/assets?has_risk=true&limit=${SUGGESTION_LIMIT}`;
+// Os `status` de `latest` que contam como risco calculado (RF-03 do M1.7).
+const RISK_OK = ["ok", "partial"];
+// A classificação da tela do PETR4 com a vírgula no lugar do ponto (RF-07 do M1.7).
+const PETR4_SECTOR = "Petróleo, Gás e Biocombustíveis";
 
 // A chave do tema (frontend/src/theme.ts) e o fundo de cada tema (--ruvor-canvas em
 // brand/ruvor/tokens.css), para conferir que a captura saiu no tema pedido.
 const THEME_KEY = "ruvor-theme";
 const CANVAS = { light: "#EEECE8", dark: "#1A1B1E" };
+
+// A chave do nível (READING_KEY em frontend/src/reading.ts) e os rótulos do alternador
+// (`casco.leitura.*` em frontend/src/content/textos.ts), copiados: o roteiro só enxerga frontend/e2e.
+const READING_KEY = "ruvor-reading";
+const READING_GROUP = "Nível de leitura";
+const READING_LABEL = { beginner: "Iniciante", advanced: "Avançada" };
+const READINGS = ["beginner", "advanced"];
+// RF-12 do M2.3: o ITUB4 e, pela seção Fundamentos, o PETR4.
+const READING_TICKERS = ["ITUB4", "PETR4"];
+// As marcas do RF-06 (docs/planos/M2.3, "As marcas para a execução real"): três `Collapsible` e
+// uma linha `tests` por modelo da tabela.
+const COLLAPSIBLES = ["moments", "models", "trail"];
+const MODEL_ROWS = 9;
+const SWITCH_WINDOW_MS = 2000;
 
 const FINAL_STATES = ["E1", "E3", "E6", "E7"];
 const MAX_CANDIDATES = 3;
@@ -67,6 +100,9 @@ const result = {
   on_demand: { attempts: [], computed: null },
   rf24: null,
   suggestions: null,
+  e1_guard: null,
+  reading: [],
+  classification: null,
   page_errors: [],
 };
 
@@ -79,12 +115,20 @@ function check(name, ok, detail = {}) {
 // Registra o tempo em que `data-ready="true"` apareceu pela primeira vez, a partir do início
 // da navegação (`performance.now()` conta do `timeOrigin`), e alarga o buffer do
 // PerformanceResourceTiming — o Vite de desenvolvimento serve cada módulo num pedido.
-function initScript({ key, theme }) {
+function initScript({ key, theme, readingKey, reading }) {
   if (theme !== null) {
     try {
       window.localStorage.setItem(key, theme);
     } catch {
       // sem armazenamento, a tela segue no padrão
+    }
+  }
+  // M2.3: o nível gravado antes da carga, quando pedido.
+  if (reading !== null) {
+    try {
+      window.localStorage.setItem(readingKey, reading);
+    } catch {
+      // sem armazenamento, a tela segue na iniciante
     }
   }
   try {
@@ -105,14 +149,19 @@ function initScript({ key, theme }) {
   });
 }
 
-async function newContext(browser, variant) {
+async function newContext(browser, variant, reading = null) {
   const context = await browser.newContext({
     viewport: { width: variant.width, height: variant.height },
     colorScheme: variant.scheme,
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
   });
-  await context.addInitScript(initScript, { key: THEME_KEY, theme: variant.theme });
+  await context.addInitScript(initScript, {
+    key: THEME_KEY,
+    theme: variant.theme,
+    readingKey: READING_KEY,
+    reading,
+  });
   return context;
 }
 
@@ -189,6 +238,47 @@ async function searchPage(browser, variant) {
   });
   await settle(page);
   await capture(page, "busca", variant);
+  await context.close();
+}
+
+/** M1.7 (RF-02, RF-14): "itaú", com acento, acha o ITUB4 na página de busca. Sem captura. */
+async function searchAccent(browser) {
+  const variant = VARIANTS[0];
+  const context = await newContext(browser, variant);
+  const page = await context.newPage();
+  watchErrors(page, "busca itaú");
+  await page.goto(`${BASE}/`);
+  await page.getByRole("combobox").fill("itaú");
+  const found = await page
+    .locator('[role="option"] a[href="/ativos/ITUB4"]')
+    .waitFor({ state: "visible", timeout: 15_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(`busca: "itaú" lista o ITUB4`, found, {
+    options: await page.locator('[role="option"]').count(),
+  });
+  await context.close();
+}
+
+/** M1.7 (RF-07, RF-14): a classificação da tela do PETR4, lida do cabeçalho renderizado. */
+async function classificationPage(browser) {
+  const variant = VARIANTS[0];
+  const context = await newContext(browser, variant);
+  const page = await context.newPage();
+  watchErrors(page, "classificação PETR4");
+  await page.goto(`${BASE}/ativos/PETR4`);
+  await page
+    .locator('[data-ready="true"]')
+    .first()
+    .waitFor({ timeout: 60_000 })
+    .catch(() => {});
+  const crumbs = await page
+    .locator(".ruvor-asset-head .ruvor-crumbs li")
+    .allTextContents()
+    .then((all) => all.map((t) => t.trim()));
+  result.classification = { ticker: "PETR4", crumbs };
+  check("PETR4: a classificação sem ponto", crumbs.length > 0 && crumbs.every((c) => !c.includes(".")), { crumbs });
+  check(`PETR4: a classificação mostra "${PETR4_SECTOR}"`, crumbs.includes(PETR4_SECTOR), { crumbs });
   await context.close();
 }
 
@@ -302,6 +392,182 @@ async function assetPage(browser, ticker, variant, expectState, expectSections =
   });
   await context.close();
   return facts;
+}
+
+/**
+ * M2.3: a guarda do E1, antes de abrir o navegador — pela API, a última `risk_run` de cada ativo
+ * do RF-12 em `ok` ou `partial` e `in_progress` nulo (a regra do E1 em frontend/src/risk/state.ts).
+ * O `request` aberto é registrado, não julgado: o plano não o inclui no E1.
+ */
+async function e1Guard() {
+  const assets = [];
+  for (const ticker of READING_TICKERS) {
+    const entry = { ticker };
+    try {
+      const response = await fetch(`${BASE}/api/v1/assets/${ticker}/risk`);
+      entry.http_status = response.status;
+      if (response.ok) {
+        const risk = await response.json();
+        entry.latest_status = risk.latest?.status ?? null;
+        entry.latest_id = risk.latest?.id ?? null;
+        entry.in_progress = risk.in_progress;
+        entry.request_status = risk.request?.status ?? null;
+      }
+    } catch (error) {
+      entry.error = String(error?.message ?? error);
+    }
+    entry.e1 =
+      (entry.latest_status === "ok" || entry.latest_status === "partial") && entry.in_progress === null;
+    assets.push(entry);
+    check(`E1 pela API: ${ticker} (última risk_run ok ou partial, in_progress nulo)`, entry.e1, entry);
+  }
+  result.e1_guard = { assets, ok: assets.every((a) => a.e1) };
+  return result.e1_guard.ok;
+}
+
+/** M2.3: `data-reading` no `<html>` e as marcas do recolhimento, como estão agora. */
+function readingFacts(page) {
+  return page.evaluate((names) => {
+    const marks = {};
+    for (const name of [...names, "tests"]) {
+      marks[name] = [...document.querySelectorAll(`[data-collapsible="${name}"]`)].map((el) =>
+        el.getAttribute("data-open"),
+      );
+    }
+    return { dataReading: document.documentElement.getAttribute("data-reading"), marks };
+  }, COLLAPSIBLES);
+}
+
+/** M2.3: abre a tabela dos nove pelo botão do `Collapsible` `models` e espera as nove linhas. */
+async function openModels(page, label) {
+  const toggle = page.locator('[data-collapsible="models"] > .ruvor-collapsible__toggle');
+  const clicked = await toggle
+    .click({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  const rows = await page
+    .waitForFunction(
+      (n) => document.querySelectorAll('[data-collapsible="tests"]').length === n,
+      MODEL_ROWS,
+      { timeout: 10_000, polling: 100 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  check(`${label}: abre models pelo botão`, clicked && rows, { clicked, rows });
+}
+
+/**
+ * M2.3: as conferências de um nível — `data-reading`; na iniciante `moments`, `models` e
+ * `trail` em `false`, `models` aberto pelo botão e as nove `tests` em `false`; na avançada as
+ * três e as nove `tests` em `true`. `entry` recebe os fatos lidos.
+ */
+async function checkReading(page, label, reading, entry) {
+  const expected = reading === "advanced" ? "true" : "false";
+  const before = await readingFacts(page);
+  check(`${label}: data-reading ${reading}`, before.dataReading === reading, {
+    dataReading: before.dataReading,
+  });
+  for (const name of COLLAPSIBLES) {
+    const values = before.marks[name];
+    check(`${label}: ${name} com data-open="${expected}"`, values.length === 1 && values[0] === expected, {
+      values,
+    });
+  }
+  if (reading === "beginner") {
+    check(`${label}: tabela dos nove fora da árvore antes de abrir models`, before.marks.tests.length === 0, {
+      tests: before.marks.tests,
+    });
+    await openModels(page, label);
+  }
+  const after = reading === "beginner" ? await readingFacts(page) : before;
+  const tests = after.marks.tests;
+  check(
+    `${label}: as nove tests com data-open="${expected}"`,
+    tests.length === MODEL_ROWS && tests.every((v) => v === expected),
+    { tests },
+  );
+  entry.before = before;
+  entry.after = after;
+}
+
+/** M2.3: sem rolagem horizontal no casco (a barra de cima), além da página que `capture` confere. */
+async function checkTopbar(page, label) {
+  const bar = await page.evaluate(() => {
+    const el = document.querySelector(".ruvor-topbar");
+    return el === null ? null : { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+  });
+  check(`${label}: sem rolagem horizontal no casco`, bar !== null && bar.scrollWidth <= bar.clientWidth, {
+    topbar: bar,
+  });
+}
+
+/**
+ * M2.3 (RF-12): um ativo carregado com `start` gravado em `ruvor-reading`; confere as marcas,
+ * troca pelo alternador para o outro nível, conta os pedidos `/api/v1/` da troca até 2 s depois
+ * (zero) e confere as marcas do outro nível. Reprova por erro de página.
+ */
+async function readingPage(browser, ticker, variant, start) {
+  const other = start === "beginner" ? "advanced" : "beginner";
+  const label = `leitura ${ticker} ${variant.id} ${start}`;
+  const entry = { ticker, variant: variant.id, start, other };
+  result.reading.push(entry);
+
+  const context = await newContext(browser, variant, start);
+  const page = await context.newPage();
+  watchErrors(page, label);
+  const isApi = (url) => new URL(url).pathname.startsWith("/api/v1/");
+  let counting = false;
+  const switchRequests = [];
+  page.on("request", (req) => {
+    if (counting && isApi(req.url())) switchRequests.push(new URL(req.url()).pathname);
+  });
+
+  const response = await page.goto(`${BASE}/ativos/${ticker}`);
+  const ready = await page
+    .locator('[data-ready="true"]')
+    .first()
+    .waitFor({ timeout: 60_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(`${label}: carregamento direto chega a data-ready`, ready && response?.ok(), {
+    status: response?.status(),
+  });
+  await sectionsSettled(page);
+  await settle(page);
+
+  // O nível gravado, como desenhado na carga.
+  const loaded = await capture(page, `leitura-${ticker}-${start}`, variant);
+  check(`${label}: data-risk-state E1`, loaded.riskState === "E1", { riskState: loaded.riskState });
+  if (variant.width === 360) await checkTopbar(page, label);
+  entry.loaded = {};
+  await checkReading(page, label, start, entry.loaded);
+
+  // A troca pelo alternador, com os pedidos contados da troca até 2 s depois.
+  const toggle = page
+    .getByRole("group", { name: READING_GROUP })
+    .getByRole("button", { name: READING_LABEL[other], exact: true });
+  counting = true;
+  const switched = await toggle
+    .click({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  await page.waitForTimeout(SWITCH_WINDOW_MS);
+  counting = false;
+  entry.switch_requests = [...switchRequests];
+  check(`${label}: troca para ${other} pelo alternador`, switched, {});
+  check(`${label}: zero pedido /api/v1/ até 2 s depois da troca para ${other}`, switchRequests.length === 0, {
+    requests: switchRequests,
+  });
+
+  const labelOther = `${label} para ${other}`;
+  await capture(page, `leitura-${ticker}-${start}-para-${other}`, variant);
+  if (variant.width === 360) await checkTopbar(page, labelOther);
+  entry.switched = {};
+  await checkReading(page, labelOther, other, entry.switched);
+
+  const errors = result.page_errors.filter((e) => e.where === label);
+  check(`${label}: nenhum erro de página`, errors.length === 0, { page_errors: errors });
+  await context.close();
 }
 
 async function allAssets(request) {
@@ -480,15 +746,88 @@ async function onDemand(browser, request) {
   return null;
 }
 
-/** Passo 6: as sugestões conferidas contra a busca completa. */
-async function suggestions(request) {
-  const assets = await allAssets(request);
-  const byTicker = new Map(assets.map((a) => [a.ticker, a]));
-  const listed = SUGESTOES.map((t) => ({ ticker: t, has_prices: byTicker.get(t)?.has_prices ?? null }));
-  const others = assets.filter((a) => a.has_prices && !SUGESTOES.includes(a.ticker)).map((a) => a.ticker);
-  result.suggestions = { catalog: assets.length, listed, others_with_prices: others };
-  check("sugestões: as cinco têm has_prices", listed.every((s) => s.has_prices === true), { listed });
-  console.log(`sugestões: outros com preço fora da lista: ${others.length ? others.join(", ") : "nenhum"}`);
+/**
+ * Passo 6 (M1.7, RF-14): os atalhos da `/` renderizada conferidos contra a primeira página de
+ * `has_risk=true&limit=8` — a mesma ordem, o "e mais N" se e só se o `count` passa de 8, com
+ * N = `count` − 8 e sem link —, e cada ativo da página com `latest` `ok` ou `partial` no `/risk`.
+ */
+async function suggestions(browser, request) {
+  const response = await request.get(`${BASE}${SUGGESTION_PATH}`);
+  if (!response.ok()) throw new Error(`${SUGGESTION_PATH}: ${response.status()}`);
+  const api = await response.json();
+  const apiTickers = api.results.map((a) => a.ticker);
+
+  const variant = VARIANTS[0];
+  const context = await newContext(browser, variant);
+  const page = await context.newPage();
+  watchErrors(page, "sugestão");
+  await page.goto(`${BASE}/`);
+  // A sugestão fora do carregando: os atalhos, ou um dos painéis (nenhum ativo, erro).
+  const settled = await page
+    .waitForFunction(
+      () => {
+        const el = document.querySelector(".ruvor-search__suggest");
+        return (
+          el !== null &&
+          el.getAttribute("aria-busy") !== "true" &&
+          (el.querySelector("a.ruvor-chip") !== null || el.querySelector(".ruvor-search__empty") !== null)
+        );
+      },
+      null,
+      { timeout: 30_000, polling: 200 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  const shown = await page.evaluate(() => {
+    const el = document.querySelector(".ruvor-search__suggest");
+    if (el === null) return null;
+    const more = [...el.querySelectorAll(".ruvor-chips__more")];
+    return {
+      chips: [...el.querySelectorAll("a.ruvor-chip")].map((a) => a.textContent.trim()),
+      more: more.map((m) => ({
+        text: m.textContent.trim(),
+        link: m.closest("a") !== null || m.querySelector("a") !== null,
+      })),
+      empty: el.querySelector(".ruvor-search__empty")?.textContent.trim() ?? null,
+    };
+  });
+  await context.close();
+
+  const risk = [];
+  for (const ticker of apiTickers) {
+    const r = await request.get(`${BASE}/api/v1/assets/${encodeURIComponent(ticker)}/risk`);
+    const body = r.ok() ? await r.json() : null;
+    risk.push({ ticker, http: r.status(), latest: body?.latest?.status ?? null });
+  }
+  result.suggestions = {
+    path: SUGGESTION_PATH,
+    api: { count: api.count, tickers: apiTickers },
+    settled,
+    shown,
+    risk,
+  };
+
+  check("sugestão: a / mostra a sugestão fora do carregando", settled && shown !== null, { shown });
+  if (shown === null) return;
+  check("sugestão: a página de has_risk=true não está vazia", api.count > 0 && apiTickers.length > 0, {
+    count: api.count,
+  });
+  check(
+    `sugestão: os atalhos da / são a primeira página de ${SUGGESTION_PATH}, na mesma ordem`,
+    JSON.stringify(shown.chips) === JSON.stringify(apiTickers),
+    { chips: shown.chips, api: apiTickers },
+  );
+  const expectedMore = api.count > SUGGESTION_LIMIT ? api.count - SUGGESTION_LIMIT : null;
+  const shownMore = shown.more.length === 1 ? Number((shown.more[0].text.match(/[\d.]+/)?.[0] ?? "").replaceAll(".", "")) : null;
+  check(
+    `sugestão: o "e mais N" aparece se e só se o count passa de ${SUGGESTION_LIMIT}, com N = count − ${SUGGESTION_LIMIT}`,
+    expectedMore === null ? shown.more.length === 0 : shown.more.length === 1 && shownMore === expectedMore,
+    { count: api.count, expected: expectedMore, more: shown.more },
+  );
+  check('sugestão: o "e mais N" sem link', shown.more.every((m) => !m.link), { more: shown.more });
+  for (const r of risk) {
+    check(`sugestão: ${r.ticker} com latest ok ou partial no /risk`, RISK_OK.includes(r.latest), r);
+  }
 }
 
 /**
@@ -618,6 +957,15 @@ async function main() {
   if (!MEASURE_RATE) await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
 
+  // M2.3: a guarda do E1 antes de abrir o navegador; sem E1, aborta (a medida da taxa não pede a
+  // API antes dela e não passa pela guarda).
+  if (!MEASURE_RATE && !(await e1Guard())) {
+    console.log("abortado: o ITUB4 e o PETR4 precisam estar em E1 (Beat parado, nenhum cálculo em curso)");
+    result.aborted = "e1_guard";
+    await finish();
+    return;
+  }
+
   const browser = await chromium.launch();
   const request = (await browser.newContext()).request;
   try {
@@ -625,10 +973,20 @@ async function main() {
       // Só a medida da taxa (RF-17): nada antes dela pede a API.
       await measureRate(browser);
     } else {
+      // M2.3 (RF-12): o ITUB4 e o PETR4 nos dois níveis, nos dois temas, em 360 e 1440 px.
+      for (const ticker of READING_TICKERS) {
+        for (const variant of VARIANTS.filter((v) => v.theme !== "system")) {
+          for (const start of READINGS) {
+            await readingPage(browser, ticker, variant, start);
+          }
+        }
+      }
       // 1 e 3: a busca.
       for (const variant of VARIANTS) {
         await searchPage(browser, variant);
       }
+      // 1 (M1.7): "itaú", com acento, acha o ITUB4.
+      await searchAccent(browser);
       // 2 e 3: ITUB4, IBOV e a companhia do mockup pelo carregamento direto, com as seções.
       check("RUVOR_E2E_EMPRESA definida", COMPANY !== null, { company: COMPANY });
       const pages = [
@@ -641,6 +999,8 @@ async function main() {
           await assetPage(browser, ticker, variant, "E1", expectSections);
         }
       }
+      // 2 (M1.7): a classificação do PETR4 sem ponto.
+      await classificationPage(browser);
       // 5: a medida, antes do cálculo sob demanda, para o worker ocupado não pesar na máquina.
       await measure(browser);
       // 4: um ativo sem preço, pedido pela tela — só com RUVOR_E2E_SOB_DEMANDA diferente de 0.
@@ -657,8 +1017,8 @@ async function main() {
         result.on_demand = { skipped: "RUVOR_E2E_SOB_DEMANDA=0" };
         console.log("sob demanda: não roda (RUVOR_E2E_SOB_DEMANDA=0)");
       }
-      // 6: as sugestões.
-      await suggestions(request);
+      // 6: a sugestão da /, contra a API (M1.7, RF-14).
+      await suggestions(browser, request);
     }
   } catch (error) {
     check("o roteiro correu até o fim", false, { error: String(error?.stack ?? error) });
@@ -666,6 +1026,10 @@ async function main() {
     await browser.close();
   }
 
+  await finish();
+}
+
+async function finish() {
   // O erro de página reprova (RF-17; o M1.6b só juntava).
   check("nenhum erro de página", result.page_errors.length === 0, { page_errors: result.page_errors });
 

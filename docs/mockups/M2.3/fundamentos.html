@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Fundamentos nas duas leituras (mockup, M2.3)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da seção Fundamentos nas duas leituras (T12 do plano M2.3). Dado real do PETR4 — e
+   * da VALE3, só para os dois ramos que o PETR4 não exercita com dado real: o valor de mercado
+   * com número e a posição zero entre os pares —, pedido a /api/v1/ pelo proxy do Vite. O
+   * desenho é o da seção aprovada no M1.6c (ativo-fundamentos.html) e implementada em
+   * frontend/src/components/FundamentalsSection.tsx; o que muda é só a frase pelo nível.
+   * Nada recolhe nesta seção (RF-06): os dezessete indicadores, o preço usado e a posição entre
+   * os pares ficam abertos nos dois níveis.
+   *
+   * As frases avançadas copiam as afirmações de docs/mockups/M2.3/conferencia-fundamentos.md;
+   * o que lá está como não ancorado no código não entra.
+   *
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal. Estilo local só com m23-:
+   *   - m23-prefs: a barra com as duas chaves, copiada do casco-e-preco.html (T3) aprovado;
+   *   - m23-bar, m23-note, m23-textos: a moldura do mockup, que não é tela.
+   */
+
+  /* --- A chave de tema e o alternador na barra: o arranjo aprovado na T3 --------------- */
+  .m23-prefs { display: flex; align-items: center; gap: var(--ruvor-space-3); justify-self: end; }
+  @media (max-width: 720px) {
+    .m23-prefs { display: contents; }
+    .m23-prefs > [data-switch="reading"] { grid-column: 2; grid-row: 1; justify-self: end; }
+    .m23-prefs > [data-switch="theme"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+    .ruvor-topbar .ruvor-topbar__search { grid-row: 3; }
+  }
+
+  /* --- Moldura do mockup: não é tela --------------------------------------------------- */
+  .m23-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .m23-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m23-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .m23-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .m23-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .m23-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .m23-view[hidden] { display: none; }
+  .m23-note { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  .m23-note b { color: var(--ruvor-ink); }
+  .m23-note p { margin: 0; }
+  .m23-note code { font-family: var(--ruvor-font-mono); }
+  .m23-note q { color: var(--ruvor-text); }
+  .m23-textos { table-layout: fixed; }
+  .m23-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .m23-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 20%; }
+  .m23-textos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 16%; }
+  @media (max-width: 720px) {
+    .m23-bar { padding-inline: var(--ruvor-space-4); }
+    .m23-textos thead { display: none; }
+    .m23-textos tr { display: block; padding: var(--ruvor-space-2) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m23-textos td { display: block; width: auto !important; border: 0; padding: 2px 0; }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="m23-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.3 · fundamentos · fora da tela</p>
+  <div class="m23-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-m23="petr4">PETR4 ao vivo</button>
+    <button class="ruvor-btn" type="button" data-m23="vale3">VALE3 ao vivo (valor de mercado, posição zero)</button>
+    <button class="ruvor-btn" type="button" data-m23="textos">os textos</button>
+  </div>
+  <p class="m23-group"><span>O tema e a leitura mudam na barra escura, como na tela.</span></p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="../M1.6b/busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <!-- A barra do casco-e-preco.html (T3): a chave de leitura antes da de tema (RF-01). -->
+  <div class="m23-prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div>
+    <!-- A seção, com o dado real do PETR4 -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m23-view" data-view="petr4" hidden>
+      <div class="m23-note" data-note="petr4"></div>
+      <div data-host="PETR4"></div>
+    </main>
+
+    <!-- A seção, com o dado real da VALE3: os dois ramos que o PETR4 não tem -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m23-view" data-view="vale3" hidden>
+      <div class="m23-note" data-note="vale3"></div>
+      <div class="m23-note" data-note="abaixo"></div>
+      <div data-host="VALE3"></div>
+    </main>
+
+    <!-- Os textos: as 22 chaves nos dois níveis, com os exemplos de cada forma -->
+    <main class="ruvor-content ruvor-stack m23-view" data-view="textos" hidden>
+      <div class="m23-note" id="m23-textos-head"></div>
+      <div class="m23-note" data-note="abaixo"></div>
+      <section class="ruvor-panel"><table class="ruvor-table m23-textos"><thead><tr><th scope="col">chave</th><th scope="col">exemplo (argumentos)</th><th scope="col">iniciante (como está)</th><th scope="col">avançada (proposta)</th></tr></thead><tbody id="m23-textos-body"></tbody></table></section>
+    </main>
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------- formatação (pt-BR), a do M1.6c
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fPct1 = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fMoney = NF({ style: "currency", currency: "BRL" });
+const fMoney0 = NF({ style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const fInt = NF({ maximumFractionDigits: 0 });
+const fDec1 = NF({ minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fDec2 = NF({ minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fInstantF = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const minus = (s) => s.replace(/^-/, "−");
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+const fInstant = (s) => fInstantF.format(new Date(s)).replace(",", " às");
+const COMPACT = [[1e12, "tri"], [1e9, "bi"], [1e6, "mi"], [1e3, "mil"]];
+function fCompact(value) {
+  const v = Number(value), a = Math.abs(v), sign = v < 0 ? "−" : "";
+  for (const [base, unit] of COMPACT) if (a >= base) return `${sign}R$ ${fDec1.format(a / base)} ${unit}`;
+  return `${sign}${fMoney0.format(a)}`;
+}
+const fMoneyFull = (value) => minus(fMoney.format(Number(value)));
+
+// ---------------------------------------------------------------- os textos
+// A leitura iniciante: copiada de frontend/src/content/textos.ts como está hoje (aprovada no
+// M1.6c). Não muda neste bloco (spec, "Fora").
+const TEXTOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  // O alternador: os rótulos do casco-e-preco.html (T3).
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "risco.trilha.instante": (data, hora) => `${data} às ${hora}`,
+
+  "fundamentos.sobrancelha": "O que o balanço mostra",
+  "fundamentos.titulo": "Fundamentos",
+  "fundamentos.intro": "Os números do último balanço que a companhia entregou à CVM: quanto vendeu, quanto lucrou, quanto deve e quanto vale cada ação no papel. Ao lado de seis deles, a posição da companhia entre as do mesmo grupo na B3.",
+  "fundamentos.proveniencia": (ref, fonte, calc) => `balanço de ${ref} (${fonte}), calculado em ${calc}`,
+  "fundamentos.fonte.itr": "ITR",
+  "fundamentos.fonte.dfp": "DFP",
+  "fundamentos.fonteNota": "ITR é o balanço trimestral e DFP, o anual; os dois são entregues pela companhia à CVM. Os fundamentos são calculados de novo uma vez por semana.",
+  "fundamentos.bloco.resultado": "Resultado em 12 meses",
+  "fundamentos.bloco.rentabilidade": "Rentabilidade",
+  "fundamentos.bloco.endividamento": "Endividamento",
+  "fundamentos.bloco.porAcao": "Por ação e múltiplos",
+  "fundamentos.bloco.tamanho": "Tamanho",
+  "fundamentos.nota.resultado": "Os três somam os quatro últimos trimestres do balanço.",
+  "fundamentos.nota.endividamento": "A dívida bruta são os empréstimos e financiamentos, incluindo o arrendamento; o caixa inclui as aplicações financeiras.",
+  "fundamentos.nota.porAcao": "O lucro e o patrimônio por ação usam a quantidade de ações do balanço; o P/L e o P/VP, o preço de um pregão.",
+  "fundamentos.nota.tamanho": "O patrimônio e o ativo são a posição na data do balanço; o valor de mercado usa o preço das ações.",
+  "fundamentos.rotulo.revenue_ttm": "Receita líquida",
+  "fundamentos.rotulo.ebit_ttm": "Resultado operacional (EBIT)",
+  "fundamentos.rotulo.net_income_ttm": "Lucro líquido",
+  "fundamentos.rotulo.net_margin": "Margem líquida",
+  "fundamentos.rotulo.ebit_margin": "Margem operacional (EBIT)",
+  "fundamentos.rotulo.roe": "Retorno sobre o patrimônio (ROE)",
+  "fundamentos.rotulo.gross_debt": "Dívida bruta",
+  "fundamentos.rotulo.cash": "Caixa e aplicações",
+  "fundamentos.rotulo.net_debt": "Dívida líquida",
+  "fundamentos.rotulo.net_debt_to_equity": "Dívida líquida sobre o patrimônio",
+  "fundamentos.rotulo.close": "Preço usado",
+  "fundamentos.rotulo.eps": "Lucro por ação (LPA)",
+  "fundamentos.rotulo.bvps": "Patrimônio por ação (VPA)",
+  "fundamentos.rotulo.pe": "Preço sobre lucro (P/L)",
+  "fundamentos.rotulo.pb": "Preço sobre patrimônio (P/VP)",
+  "fundamentos.rotulo.equity_parent": "Patrimônio líquido",
+  "fundamentos.rotulo.total_assets": "Ativo total",
+  "fundamentos.rotulo.market_cap": "Valor de mercado",
+  "fundamentos.vezes": (x) => `${x} vezes`,
+  "fundamentos.semValor": "sem valor",
+
+  // As 22 chaves da lista do RF-04, na leitura iniciante.
+  "fundamentos.revenue_ttm": "O que a companhia vendeu nos últimos 12 meses, descontados os impostos sobre a venda, as devoluções e os abatimentos.",
+  "fundamentos.ebit_ttm": (negativo) => negativo
+    ? "Negativo: a operação deu prejuízo nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro."
+    : "O que a operação rendeu nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro.",
+  "fundamentos.net_income_ttm": (negativo) => negativo
+    ? "Negativo: nos últimos 12 meses, custos, juros e impostos passaram do que a companhia vendeu, e ela teve prejuízo."
+    : "O que sobrou para os acionistas da companhia nos últimos 12 meses, depois de custos, juros e impostos.",
+  "fundamentos.net_margin": (x, negativo) => negativo
+    ? `De cada R$ 100 vendidos, a companhia perdeu ${x}.`
+    : `De cada R$ 100 vendidos, ${x} viraram lucro para os acionistas.`,
+  "fundamentos.ebit_margin": (x, negativo) => negativo
+    ? `De cada R$ 100 vendidos, a operação perdeu ${x}, antes de juros e impostos.`
+    : `De cada R$ 100 vendidos, ${x} sobraram da operação, antes de juros e impostos.`,
+  "fundamentos.roe": (x, negativo) => negativo
+    ? `Cada R$ 100 do patrimônio dos acionistas tiveram ${x} de prejuízo nos últimos 12 meses.`
+    : `Cada R$ 100 do patrimônio dos acionistas geraram ${x} de lucro nos últimos 12 meses.`,
+  "fundamentos.gross_debt": "Os empréstimos e financiamentos, de curto e de longo prazo, incluindo o arrendamento — os aluguéis de longo prazo que o balanço conta como dívida.",
+  "fundamentos.cash": "O dinheiro em caixa mais as aplicações financeiras.",
+  "fundamentos.net_debt": (negativo) => negativo
+    ? "Negativa: o caixa é maior que a dívida bruta."
+    : "A dívida bruta menos o caixa: o que restaria de dívida se todo o caixa fosse usado para pagá-la.",
+  "fundamentos.net_debt_to_equity": (x, negativo) => negativo
+    ? "Negativa: o caixa é maior que a dívida bruta, e não sobra dívida para comparar com o patrimônio."
+    : `A dívida líquida perto do patrimônio dos acionistas: para cada R$ 100 de patrimônio, ${x} de dívida líquida.`,
+  "fundamentos.close": (data) => `O fechamento de ${data}, o preço que entra no P/L e no P/VP.`,
+  "fundamentos.closeOutraData": (data, ultimo) => `O fechamento de ${data}, não o do último pregão coletado (${ultimo}): os fundamentos são calculados uma vez por semana, com o último preço de até 10 dias antes do cálculo.`,
+  "fundamentos.eps": (acoes, negativo) => negativo
+    ? `O prejuízo dos últimos 12 meses dividido pelas ${acoes} ações da companhia, somadas todas as classes.`
+    : `O lucro dos últimos 12 meses dividido pelas ${acoes} ações da companhia, somadas todas as classes.`,
+  "fundamentos.bvps": (acoes) => `O patrimônio dos acionistas dividido pelas mesmas ${acoes} ações.`,
+  "fundamentos.pe": (data, preco, x, negativo) => negativo
+    ? `Negativo porque a companhia teve prejuízo nos últimos 12 meses. Com o fechamento de ${data}, ${preco}, ele não diz em quantos anos o lucro pagaria o preço: não houve lucro.`
+    : `O preço dividido pelo lucro por ação, com o fechamento de ${data}, ${preco}: o preço equivale a ${x} anos do lucro dos últimos 12 meses.`,
+  "fundamentos.pb": (data, preco, x) => `O preço dividido pelo patrimônio por ação, com o fechamento de ${data}, ${preco}: a bolsa paga ${x} vezes o valor que o balanço dá a cada ação.`,
+  "fundamentos.equity_parent": (negativo) => negativo
+    ? "Negativo: a companhia deve mais do que tem, descontada a parte dos sócios de fora nas controladas."
+    : "O que é dos acionistas da companhia: tudo o que ela tem, menos o que deve e a parte dos sócios de fora nas controladas.",
+  "fundamentos.total_assets": "Tudo o que a companhia tem no balanço: caixa, créditos a receber, estoques, investimentos, imóveis e equipamentos.",
+  "fundamentos.market_cap": "O preço de cada classe de ação vezes a quantidade dela, somados: quanto a bolsa diz que a companhia inteira vale.",
+
+  // Os nulos (RF-05: não mudam com o nível) — os que esta página usa e os vizinhos, de textos.ts.
+  "fundamentos.nulo.planoFinanceiro": "Bancos e seguradoras publicam o balanço em outro formato, e este número não se aplica a eles.",
+  "fundamentos.nulo.planoDesconhecido": "O plano de contas desta companhia não foi reconhecido, e receita, margens e dívida não são calculadas.",
+  "fundamentos.nulo.porAcao.unit": "Este código é uma unit, um pacote com ações de mais de uma classe: o preço e os números por ação não valem para ele.",
+  "fundamentos.nulo.porAcao.stale_statement": "O último balanço entregue tem mais de 460 dias, velho demais para os números por ação e para o preço de hoje.",
+  "fundamentos.nulo.porAcao.no_share_count": "O balanço não informa a quantidade de ações — a CVM só a traz de 2020 em diante —, e sem ela não há número por ação.",
+  "fundamentos.nulo.porAcao.share_scale_unknown": "O balanço informa a quantidade de ações sem dizer se ela está em unidades ou em milhares, e não foi possível descobrir; sem isso, não há número por ação.",
+  "fundamentos.nulo.porAcao.no_price": "Não há preço desta ação coletado até 10 dias antes do cálculo, e sem preço não há P/L nem P/VP.",
+  "fundamentos.nulo.valorMercado.stale_statement": "O último balanço entregue tem mais de 460 dias, e a quantidade de ações dele não serve para o valor de mercado de hoje.",
+  "fundamentos.nulo.valorMercado.no_share_count": "O balanço não informa a quantidade de ações — a CVM só a traz de 2020 em diante —, e sem ela não há valor de mercado.",
+  "fundamentos.nulo.valorMercado.share_scale_unknown": "O balanço informa a quantidade de ações sem dizer se ela está em unidades ou em milhares, e não foi possível descobrir; sem isso, não há valor de mercado.",
+  "fundamentos.nulo.valorMercado.ambiguous_class": "A companhia tem mais de um código negociado na mesma classe de ação, e não há como saber qual preço usar.",
+  "fundamentos.nulo.valorMercado.no_price": "Não há preço coletado de nenhuma classe de ação da companhia.",
+  "fundamentos.nulo.valorMercado.missing_class_price": "Falta o preço de uma das classes de ação da companhia, ordinária ou preferencial, e o valor de mercado soma todas.",
+  "fundamentos.nulo.generico": "O balanço não permite calcular este número.",
+
+  "fundamentos.pares.segmento": (segmento) => `Comparado com as companhias do segmento ${segmento}, na B3.`,
+  "fundamentos.pares.subsetor": (subsetor) => `Comparado com as companhias do subsetor ${subsetor}, na B3: o segmento desta companhia não formou grupo, porque tem menos de três companhias ou não está informado.`,
+  "fundamentos.pares.nenhum": "Não há companhias comparáveis suficientes no segmento nem no subsetor desta companhia.",
+  "fundamentos.pares.indisponivel": "A comparação com os pares não está disponível para este cálculo.",
+  "fundamentos.pares.leitura": "A posição diz acima de quantas companhias do grupo o número está, contando só as que têm aquele indicador calculado. Acima não quer dizer bom, nem abaixo quer dizer ruim: numa dívida, estar acima é dever mais.",
+  "fundamentos.pares.rotulo": "Entre os pares",
+  "fundamentos.pares.posicao": (k, outras) => `Acima de ${k} das outras ${outras} companhias do grupo com este indicador calculado.`,
+  "fundamentos.pares.abaixoDeTodas": (outras) => `Abaixo de todas as outras ${outras} companhias do grupo com este indicador calculado.`,
+  "fundamentos.pares.mediana": (m) => `Mediana do grupo: ${m}.`,
+  "fundamentos.pares.semComparacao": "Sem comparação para este indicador.",
+};
+
+// A leitura avançada (RF-05): as 22 chaves de Fundamentos do RF-04 — as 19 fundamentos.<campo>,
+// com closeOutraData, e as 3 dos pares —, a mesma chave e os mesmos parâmetros, na mesma ordem,
+// da iniciante. Cada afirmação copia a de docs/mockups/M2.3/conferencia-fundamentos.md, onde
+// está o caminho:linha que a confere. O método em palavras, sem nome de tabela, coluna ou
+// função; o que a conferência marca como não ancorado (o que a conta 3.01 contém, o
+// arrendamento dentro dos empréstimos, por que a agenda é semanal) não entra.
+const TEXTOS_AVANCADOS = {
+  "fundamentos.revenue_ttm": "A conta 3.01 da demonstração do resultado, somada nos quatro balanços mais recentes, cada um reduzido ao próprio trimestre — o quarto trimestre é o anual menos o acumulado até o trimestre anterior. Os quatro têm de ser trimestres seguidos, de 88 a 93 dias entre uma data e a outra; senão, não há número. Só no plano de contas geral: banco, seguradora e plano não reconhecido ficam sem valor.",
+  "fundamentos.ebit_ttm": (negativo) => `A linha "Resultado Antes do Resultado Financeiro e dos Tributos" da demonstração do resultado, achada pela descrição, somada nos mesmos quatro trimestres da receita; só no plano de contas geral.${negativo ? " Abaixo de zero: nos 12 meses, o resultado antes do financeiro e dos tributos foi negativo." : ""}`,
+  "fundamentos.net_income_ttm": (negativo) => `O lucro atribuído aos sócios da controladora — no balanço consolidado, a parte do lucro que cabe a eles; no individual, o lucro do período —, somado nos mesmos quatro trimestres. Calculado em todo plano de contas, banco e seguradora inclusive.${negativo ? " Abaixo de zero: prejuízo da controladora nos 12 meses." : ""}`,
+  "fundamentos.net_margin": (x, negativo) => `O lucro de 12 meses da controladora dividido pela receita de 12 meses; sem valor quando a receita falta ou não é positiva. ${negativo ? `Negativa porque o lucro foi prejuízo: ${x} de prejuízo a cada R$ 100 de receita.` : `${x} de lucro a cada R$ 100 de receita.`}`,
+  "fundamentos.ebit_margin": (x, negativo) => `O EBIT de 12 meses dividido pela mesma receita de 12 meses, com a mesma exigência de receita positiva. ${negativo ? `Negativa porque o EBIT foi negativo: ${x} abaixo de zero a cada R$ 100 de receita.` : `${x} de EBIT a cada R$ 100 de receita.`}`,
+  "fundamentos.roe": (x, negativo) => `O lucro de 12 meses da controladora dividido pelo patrimônio da controladora na data do balanço mais recente — a posição daquele dia, não a média do período; sem valor quando o patrimônio falta ou não é positivo. ${negativo ? `Negativo porque o lucro foi prejuízo: ${x} de prejuízo a cada R$ 100 de patrimônio.` : `${x} de lucro a cada R$ 100 de patrimônio.`}`,
+  "fundamentos.gross_debt": "A soma das linhas \"Empréstimos e Financiamentos\" logo abaixo do passivo circulante e do passivo não circulante, na data do balanço mais recente; só no plano de contas geral.",
+  "fundamentos.cash": "A soma das linhas \"Caixa e Equivalentes de Caixa\" e \"Aplicações Financeiras\" logo abaixo do ativo circulante, na data do balanço; a aplicação de longo prazo não entra. Só no plano de contas geral.",
+  "fundamentos.net_debt": (negativo) => `A dívida bruta menos o caixa e aplicações, os dois na mesma data; sem valor se um dos dois falta.${negativo ? " Negativa: o caixa e as aplicações do circulante passam da dívida bruta." : ""}`,
+  "fundamentos.net_debt_to_equity": (x, negativo) => `A dívida líquida dividida pelo patrimônio da controladora, os dois na data do balanço; sem valor com o patrimônio não positivo. ${negativo ? "Negativa porque a dívida líquida é negativa: o caixa e as aplicações passam da dívida." : `${x} de dívida líquida a cada R$ 100 de patrimônio.`}`,
+  "fundamentos.close": (data) => `O fechamento sem ajuste por proventos do pregão de ${data}, como o Yahoo Finance o informa: o último pregão entre 10 dias corridos antes do dia do cálculo e o próprio dia. É o preço do P/L e do P/VP.`,
+  "fundamentos.closeOutraData": (data, ultimo) => `O fechamento sem ajuste por proventos do pregão de ${data}, como o Yahoo Finance o informa — o último entre 10 dias corridos antes do dia do cálculo e o próprio dia —, e não o do último pregão coletado, ${ultimo}: os fundamentos são calculados por agenda semanal, não a cada pregão. É o preço do P/L e do P/VP.`,
+  "fundamentos.eps": (acoes, negativo) => `O lucro de 12 meses da controladora dividido por ${acoes} ações: as ordinárias mais as preferenciais do balanço mais recente, cada classe sem as ações em tesouraria. A escala — unidades ou milhares — é a que deixa o lucro acumulado no exercício desse balanço, dividido pelas ações, mais perto do lucro por ação básico que a companhia declara para o mesmo período; aceita só a menos de um fator 2 dele.${negativo ? " Negativo porque o lucro de 12 meses foi prejuízo." : ""}`,
+  "fundamentos.bvps": (acoes) => `O patrimônio da controladora na data do balanço dividido pelas mesmas ${acoes} ações, ordinárias mais preferenciais, sem as de tesouraria.`,
+  "fundamentos.pe": (data, preco, x, negativo) => `O fechamento de ${data}, ${preco}, dividido pelo lucro por ação de 12 meses; sem valor com o lucro por ação zero ou ausente. ${negativo ? `Negativo porque o lucro por ação é negativo: o quociente, ${x}, existe, mas não é um número de anos.` : `Aqui, ${x} (o destaque tem duas casas): o preço equivale a ${x} vezes o lucro por ação de 12 meses.`}`,
+  "fundamentos.pb": (data, preco, x) => `O fechamento de ${data}, ${preco}, dividido pelo patrimônio por ação: ${x}. Sem valor quando o patrimônio por ação não é positivo — por isso nunca é negativo.`,
+  "fundamentos.equity_parent": (negativo) => `No balanço consolidado, a linha "Patrimônio Líquido Atribuído ao Controlador", quando existe; senão, o patrimônio líquido menos a participação dos acionistas não controladores. No individual, o patrimônio líquido. Na data do balanço mais recente.${negativo ? " Abaixo de zero: com ele não positivo, o ROE, a dívida líquida sobre o patrimônio e o P/VP ficam sem valor." : ""}`,
+  "fundamentos.total_assets": "O ativo total — a linha de topo do balanço patrimonial ativo —, na data do balanço mais recente; calculado em todo plano de contas.",
+  "fundamentos.market_cap": "Para cada classe com ações, ordinária e preferencial, o fechamento sem ajuste do único código ativo da classe, da mesma janela de 10 dias do preço usado — final 3 na ordinária, de 4 a 8 na preferencial; a unit nunca entra —, vezes a quantidade da classe no balanço mais recente, sem as de tesouraria, e as classes somadas. Sem valor se falta o preço de uma das classes ou se uma classe tem mais de um código.",
+  "fundamentos.pares.posicao": (k, outras) => `Percentil: a fração das outras companhias do grupo com o indicador calculado cujo valor é estritamente menor — aqui, ${k} das ${outras}; empate não conta.`,
+  "fundamentos.pares.abaixoDeTodas": (outras) => `Percentil zero: nenhuma das outras ${outras} companhias do grupo com o indicador calculado tem valor estritamente menor; a que tiver o mesmo valor está empatada, não acima.`,
+  "fundamentos.pares.mediana": (m) => `Mediana do grupo, esta companhia inclusa, um valor por companhia (com número par, a média dos dois do meio): ${m}.`,
+};
+
+// Os argumentos de exemplo de cada chave-função avançada, cobrindo os ramos dela (V-07): o que a
+// T13 leva a EXEMPLOS_AVANCADOS em frontend/tests/exemplos.ts. Os valores imitam os da tela (a
+// forma de FundamentalsSection.tsx); o primeiro de cada um é o do PETR4 no cálculo de
+// 28/09/2026 (o de abaixoDeTodas, o da VALE3); os do ramo negativo são inventados, como no
+// registro do M1.6c — o PETR4 não tem número negativo.
+const EXEMPLOS_AVANCADOS = {
+  "fundamentos.ebit_ttm": [[false], [true]],
+  "fundamentos.net_income_ttm": [[false], [true]],
+  "fundamentos.net_margin": [["R$ 24,32", false], ["R$ 4,21", true]],
+  "fundamentos.ebit_margin": [["R$ 33,86", false], ["R$ 2,10", true]],
+  "fundamentos.roe": [["R$ 27,73", false], ["R$ 6,12", true]],
+  "fundamentos.net_debt": [[false], [true]],
+  "fundamentos.net_debt_to_equity": [["R$ 65,03", false], ["R$ 12,40", true]],
+  "fundamentos.close": [["25/09/2026"]],
+  "fundamentos.closeOutraData": [["25/09/2026", "01/10/2026"]],
+  "fundamentos.eps": [["12.888.732.761", false], ["4.980.000.000", true]],
+  "fundamentos.bvps": [["12.888.732.761"]],
+  "fundamentos.pe": [["25/09/2026", "R$ 48,07", "4,6", false], ["25/09/2026", "R$ 12,15", "−28,7", true]],
+  "fundamentos.pb": [["25/09/2026", "R$ 48,07", "1,29"]],
+  "fundamentos.equity_parent": [[false], [true]],
+  "fundamentos.pares.posicao": [["6", "6"], ["3", "6"]],
+  "fundamentos.pares.abaixoDeTodas": [["3"]],
+  "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
+};
+const RAMO = {
+  "fundamentos.ebit_ttm": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.net_income_ttm": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.net_margin": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.ebit_margin": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.roe": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.net_debt": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.net_debt_to_equity": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.close": ["preço do último pregão coletado"],
+  "fundamentos.closeOutraData": ["preço anterior ao último pregão (PETR4)"],
+  "fundamentos.eps": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.bvps": ["PETR4"],
+  "fundamentos.pe": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.pb": ["PETR4"],
+  "fundamentos.equity_parent": ["negativo = false (PETR4)", "negativo = true"],
+  "fundamentos.pares.posicao": ["k ≥ 1, ROE (PETR4)", "k ≥ 1, dívida líquida/PL (PETR4)"],
+  "fundamentos.pares.abaixoDeTodas": ["k = 0, ROE (VALE3)"],
+  "fundamentos.pares.mediana": ["em %, ROE (PETR4)", "em vezes"],
+};
+
+// ---------------------------------------------------------------- o nível
+const root = document.documentElement;
+let reading = "beginner";
+const T = (k, ...a) => { const v = TEXTOS[k]; if (v === undefined) throw new Error(`texto sem chave: ${k}`); return typeof v === "function" ? v(...a) : v; };
+// textFor: a frase do nível corrente — a avançada substitui a iniciante (D-152), com os mesmos argumentos.
+const P = (k, ...a) => {
+  const v = reading === "advanced" && k in TEXTOS_AVANCADOS ? TEXTOS_AVANCADOS[k] : TEXTOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const why = (text) => `<p class="ruvor-note">${esc(text)}</p>`;
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- a seção (o desenho de FundamentalsSection.tsx)
+// A atribuição dos nulos: cópia de frontend/src/content/nulos.ts. A frase do nulo sai por T(),
+// nunca por P(): é a mesma nos dois níveis (RF-05).
+const REASON_NULLS = {
+  unit: ["price_date", "close", "eps", "bvps", "pe", "pb"],
+  stale_statement: ["price_date", "close", "eps", "bvps", "pe", "pb"],
+  no_share_count: ["eps", "bvps", "pe", "pb"],
+  share_scale_unknown: ["eps", "bvps", "pe", "pb"],
+  no_price: ["price_date", "close", "pe", "pb"],
+};
+const PLAN_NULLS = ["revenue_ttm", "ebit_ttm", "net_margin", "ebit_margin", "gross_debt", "cash", "net_debt", "net_debt_to_equity"];
+const MARKET_CAP_REASONS = ["stale_statement", "no_share_count", "share_scale_unknown", "ambiguous_class", "no_price", "missing_class_price"];
+function nullReason(ind, field) {
+  const plan = ind.account_plan;
+  if (plan !== "general" && PLAN_NULLS.includes(field)) {
+    if (plan === "bank" || plan === "insurance") return { code: `plan:${plan}`, text: T("fundamentos.nulo.planoFinanceiro") };
+    if (plan === "unknown") return { code: "plan:unknown", text: T("fundamentos.nulo.planoDesconhecido") };
+  }
+  const r = ind.per_share_missing;
+  if (r != null && REASON_NULLS[r]?.includes(field)) return { code: `per_share:${r}`, text: T(`fundamentos.nulo.porAcao.${r}`) };
+  const m = ind.market_cap_missing;
+  if (field === "market_cap" && m != null && MARKET_CAP_REASONS.includes(m)) return { code: `market_cap:${m}`, text: T(`fundamentos.nulo.valorMercado.${m}`) };
+  return { code: "generic", text: T("fundamentos.nulo.generico") };
+}
+
+const KIND = {
+  revenue_ttm: "money", ebit_ttm: "money", net_income_ttm: "money", equity_parent: "money", total_assets: "money",
+  gross_debt: "money", cash: "money", net_debt: "money", market_cap: "money",
+  net_margin: "ratio", ebit_margin: "ratio", roe: "ratio", net_debt_to_equity: "ratio",
+  close: "perShare", eps: "perShare", bvps: "perShare", pe: "multiple", pb: "multiple",
+};
+const BLOCKS = [
+  ["resultado", ["revenue_ttm", "ebit_ttm", "net_income_ttm"]],
+  ["rentabilidade", ["net_margin", "ebit_margin", "roe"]],
+  ["endividamento", ["gross_debt", "cash", "net_debt", "net_debt_to_equity"]],
+  ["porAcao", ["close", "eps", "bvps", "pe", "pb"]],
+  ["tamanho", ["equity_parent", "total_assets", "market_cap"]],
+];
+const PEER_FIELDS = ["roe", "net_margin", "ebit_margin", "net_debt_to_equity", "pe", "pb"];
+const ratio = (v) => minus(fPct1.format(Number(v)));
+const times = (v) => T("fundamentos.vezes", minus(fDec2.format(Number(v))));
+function display(field, v) {
+  switch (KIND[field]) {
+    case "money": return { text: fCompact(v), full: fMoneyFull(v) };
+    case "ratio": return { text: ratio(v) };
+    case "perShare": return { text: fMoneyFull(v) };
+    default: return { text: times(v) };
+  }
+}
+const per100 = (v) => fMoney.format(Math.abs(100 * Number(v)));
+
+// A frase de um número presente, pelo nível (P). lastPriceDate: o último pregão da identidade.
+function phrase(field, ind, lastPriceDate) {
+  const v = Number(ind[field]), neg = v < 0;
+  const shares = ind.shares_total == null ? "—" : fInt.format(ind.shares_total);
+  const pd = ind.price_date ? fDate(ind.price_date) : "—";
+  const close = ind.close == null ? "—" : fMoneyFull(ind.close);
+  switch (field) {
+    case "revenue_ttm": case "gross_debt": case "cash": case "total_assets": case "market_cap": return P(`fundamentos.${field}`);
+    case "ebit_ttm": case "net_income_ttm": case "net_debt": case "equity_parent": return P(`fundamentos.${field}`, neg);
+    case "net_margin": case "ebit_margin": case "roe": case "net_debt_to_equity": return P(`fundamentos.${field}`, per100(v), neg);
+    case "close":
+      return lastPriceDate && ind.price_date && ind.price_date < lastPriceDate
+        ? P("fundamentos.closeOutraData", pd, fDate(lastPriceDate))
+        : P("fundamentos.close", pd);
+    case "eps": return P("fundamentos.eps", shares, neg);
+    case "bvps": return P("fundamentos.bvps", shares);
+    case "pe": return P("fundamentos.pe", pd, close, minus(fDec1.format(v)), neg);
+    case "pb": return P("fundamentos.pb", pd, close, fDec2.format(v));
+  }
+  return "";
+}
+
+function peerSlot(field, peers) {
+  const p = peers[field];
+  const label = `<span class="ruvor-peer__label">${esc(T("fundamentos.pares.rotulo"))}</span>`;
+  if (!p || p.median == null || p.percentile == null || p.count == null || p.count < 3) return `<div class="ruvor-peer">${label}${why(T("fundamentos.pares.semComparacao"))}</div>`;
+  const n = p.count, pct = Number(p.percentile);
+  const k = Math.round(pct * (n - 1));
+  const others = fInt.format(n - 1);
+  const position = k === 0 ? P("fundamentos.pares.abaixoDeTodas", others) : P("fundamentos.pares.posicao", fInt.format(k), others);
+  const med = P("fundamentos.pares.mediana", KIND[field] === "ratio" ? ratio(p.median) : times(p.median));
+  return `<div class="ruvor-peer" data-peer-k="${k}" data-peer-n="${n - 1}">${label}
+    <span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * pct).toFixed(1)}%"></span></span>
+    ${why(`${position} ${med}`)}</div>`;
+}
+
+function stat(field, ind, peers, lastPriceDate) {
+  const raw = ind[field];
+  let value, note;
+  if (raw == null) {
+    const r = nullReason(ind, field);
+    value = `<span class="ruvor-stat__value ruvor-num" data-null-reason="${r.code}"><span aria-hidden="true">—</span><span class="ruvor-sr-only">${esc(T("fundamentos.semValor"))}</span></span>`;
+    note = r.text;
+  } else {
+    const d = display(field, raw);
+    value = `<span class="ruvor-stat__value ruvor-num">${d.full ? `<span aria-hidden="true">${esc(d.text)}</span><span class="ruvor-sr-only">${esc(d.full)}</span>` : esc(d.text)}</span>`;
+    note = phrase(field, ind, lastPriceDate);
+  }
+  const peer = peers && PEER_FIELDS.includes(field) ? peerSlot(field, peers) : "";
+  return `<div class="ruvor-stat" data-field="${field}"><span class="ruvor-stat__label">${esc(T(`fundamentos.rotulo.${field}`))}</span>${value}${why(note)}${peer}</div>`;
+}
+
+function statePanel(title, text = "") {
+  return `<div class="ruvor-state ruvor-state--notice"><span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+    <div class="ruvor-state__body"><p class="ruvor-state__title">${esc(title)}</p>${text ? `<p class="ruvor-state__text">${esc(text)}</p>` : ""}</div></div>`;
+}
+function peersNotice(peers) {
+  if (peers == null) return statePanel(T("fundamentos.pares.indisponivel"));
+  if (peers.peer_level === "segment") return statePanel(T("fundamentos.pares.segmento", peers.group_segment ?? "—"), T("fundamentos.pares.leitura"));
+  if (peers.peer_level === "subsector") return statePanel(T("fundamentos.pares.subsetor", peers.group_subsector ?? "—"), T("fundamentos.pares.leitura"));
+  return statePanel(T("fundamentos.pares.nenhum"));
+}
+
+// Os dados guardados: trocar o nível não pede nada à API (RF-03).
+const DATA = {};
+
+// A seção inteira; nada recolhe (RF-06), e o corpo não tem aria-live (como FundamentalsSection.tsx).
+function renderSection(ticker) {
+  const host = $(`[data-host="${ticker}"]`);
+  const d = DATA[ticker];
+  const head = (tag) => `<div class="ruvor-section-head"><div><p class="ruvor-eyebrow">${esc(T("fundamentos.sobrancelha"))}</p><h2 class="ruvor-h2" id="h-fnd-${ticker}">${esc(T("fundamentos.titulo"))}</h2></div>${tag}</div>
+    <p class="ruvor-sub">${esc(T("fundamentos.intro"))}</p>`;
+  if (!d || d.error) {
+    host.innerHTML = `<section class="ruvor-stack" data-section="fundamentals" data-state="error" aria-labelledby="h-fnd-${ticker}">${head("")}<div><div class="ruvor-callout ruvor-callout--critical" role="alert">${esc(T("ativo.erroSecao"))}</div></div></section>`;
+    return;
+  }
+  const ind = d.body.indicator, peers = d.body.peers;
+  const last = d.asset?.last_price?.date ?? null;
+  const [data = "", hora = ""] = fInstant(ind.calculated_at).split(" às ");
+  const tag = `<span class="ruvor-tag ruvor-tag--evidence">${esc(T("fundamentos.proveniencia", fDate(ind.statement.reference_date), T(`fundamentos.fonte.${ind.statement.source}`), T("risco.trilha.instante", data, hora)))}</span>`;
+  const blocks = BLOCKS.map(([k, fields]) => {
+    const note = TEXTOS[`fundamentos.nota.${k}`];
+    const stats = k === "porAcao"
+      ? `<div class="ruvor-stats">${stat("close", ind, peers, last)}</div><div class="ruvor-divider ruvor-divider--spaced"></div><div class="ruvor-stats">${fields.slice(1).map((f) => stat(f, ind, peers, last)).join("")}</div>`
+      : `<div class="ruvor-stats">${fields.map((f) => stat(f, ind, peers, last)).join("")}</div>`;
+    return `<section class="ruvor-panel"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(`fundamentos.bloco.${k}`))}</h3></div>
+      <div class="ruvor-panel__body">${stats}${note ? `<p class="ruvor-note ruvor-panel__note">${esc(note)}</p>` : ""}</div></section>`;
+  }).join("");
+  host.innerHTML = `<section class="ruvor-stack" data-section="fundamentals" data-state="ready" aria-labelledby="h-fnd-${ticker}">${head(tag)}
+    <div><div class="ruvor-stack">${peersNotice(peers)}${blocks}${why(T("fundamentos.fonteNota"))}</div></div></section>`;
+}
+
+async function load(ticker) {
+  try {
+    const [rb, ra] = await Promise.all([fetch(`/api/v1/assets/${ticker}/fundamentals`), fetch(`/api/v1/assets/${ticker}`)]);
+    if (!rb.ok || !ra.ok) throw new Error(`HTTP ${rb.status}/${ra.status}`);
+    const body = await rb.json();
+    if (!body.indicator) throw new Error("sem indicador");
+    DATA[ticker] = { body, asset: await ra.json() };
+  } catch {
+    DATA[ticker] = { error: true };
+  }
+}
+
+// ---------------------------------------------------------------- as notas do mockup (não são tela)
+function notes() {
+  const p = DATA.PETR4?.body?.indicator, v = DATA.VALE3?.body?.indicator;
+  const pAsset = DATA.PETR4?.asset;
+  $('[data-note="petr4"]').innerHTML = `<p><b>Nota do mockup · não é tela.</b> Nada recolhe nesta seção (RF-06): os dezessete indicadores, o preço usado e a posição entre os pares ficam abertos nos dois níveis; o alternador troca só a frase, nunca o número.</p>
+    <p><b>O nulo, igual nos dois níveis (RF-05):</b> o valor de mercado do PETR4 sai sem valor${p ? ` (motivo gravado: falta o preço de uma classe — <code>data-null-reason="market_cap:${esc(p.market_cap_missing ?? "")}"</code>)` : ""}, e a frase do porquê não muda ao trocar a leitura; o mesmo com o P/L e o P/VP entre os pares (<q>${esc(T("fundamentos.pares.semComparacao"))}</q>). A frase do valor de mercado com número está na vista <b>VALE3 ao vivo</b> e na vista dos textos.</p>
+    <p><b>O preço usado:</b> ${p && pAsset ? `o cálculo usou o fechamento de ${esc(fDate(p.price_date))}, e o último pregão coletado é ${esc(fDate(pAsset.last_price.date))}` : "o preço do cálculo é anterior ao último pregão coletado"} — por isso o PETR4 mostra <code>fundamentos.closeOutraData</code>; o ramo <code>fundamentos.close</code> está na vista dos textos, como os ramos negativos, que o PETR4 não tem.</p>`;
+  $('[data-note="vale3"]').innerHTML = `<p><b>Nota do mockup · não é tela.</b> A VALE3 entra só pelos dois ramos que o PETR4 não exercita com dado real: o <b>valor de mercado com número</b>${v?.market_cap ? ` (${esc(fCompact(v.market_cap))})` : ""}, com a frase de <code>fundamentos.market_cap</code>, e a <b>posição zero entre os pares</b> — no ROE e na margem líquida, <code>fundamentos.pares.abaixoDeTodas</code>. A seção do portão é a do PETR4.</p>`;
+  const others = DATA.VALE3?.body?.peers?.roe?.count ? fInt.format(DATA.VALE3.body.peers.roe.count - 1) : "3";
+  const proposta = (o) => `Nenhuma das outras ${o} companhias do grupo com este indicador calculado tem número menor.`;
+  for (const n of document.querySelectorAll('[data-note="abaixo"]')) n.innerHTML = `<p><b>Nota do mockup · não é tela · para o portão: a iniciante de <code>fundamentos.pares.abaixoDeTodas</code> pode ser falsa com empate.</b></p>
+    <p>Como está (<code>fundamentos.pares.abaixoDeTodas</code> em <code>frontend/src/content/textos.ts</code>), e como esta página a mostra na leitura iniciante: <q>${esc(TEXTOS["fundamentos.pares.abaixoDeTodas"](others))}</q></p>
+    <p>O percentil conta só as companhias com valor <b>estritamente menor</b> (<code>backend/apps/fundamentals/peers.py:164</code>; conferência, divergência 1): com percentil zero, a ação pode estar <b>empatada</b> com o menor valor do grupo, e então não está abaixo de todas. A avançada já segue o código.</p>
+    <p>Proposta de correção da iniciante, mesma chave e mesmo argumento: <q>${esc(proposta(others))}</q></p>
+    <p>A decisão é do dono. A spec põe "mudar o que já está escrito na leitura iniciante" fora do bloco: aceitar a correção é uma <b>emenda ao "Fora" da spec</b>, como a do retorno no ano no portão da T6 — a spec muda, com a aprovação do dono, antes de a T13 tocar a iniciante. Esta página mostra a iniciante como está.</p>`;
+}
+
+// ---------------------------------------------------------------- os textos
+function renderTextos() {
+  $("#m23-textos-head").innerHTML = `<p><b>As 22 chaves de Fundamentos do RF-04, nas duas leituras</b> — as 18 <code>fundamentos.&lt;campo&gt;</code>, a variante <code>fundamentos.closeOutraData</code> e as 3 dos pares. A iniciante é a de <code>textos.ts</code>, como está; a avançada é a proposta deste portão, com a mesma chave e os mesmos argumentos (RF-05). Cada afirmação da avançada copia a de <code>docs/mockups/M2.3/conferencia-fundamentos.md</code>, onde está o <code>caminho:linha</code> que a confere.</p>
+    <p><b>O que a conferência marca como não ancorado no código não entra:</b> o que a conta 3.01 contém (a avançada diz só "a conta 3.01"); o arrendamento dentro dos empréstimos e financiamentos (vem da D-122, medido na carga, não do código — a nota do bloco Endividamento, que não muda com o nível, continua dizendo); e a hora da agenda (a avançada diz só "por agenda semanal": o padrão do código é semanal, e o fuso do cron não está ancorado).</p>
+    <p>Chave-função: uma linha por exemplo de <code>EXEMPLOS_AVANCADOS</code>, cobrindo os ramos da avançada — os negativos, <code>fundamentos.close</code> e <code>fundamentos.pares.abaixoDeTodas</code>, que o PETR4 não exercita, entram aqui; a coluna da iniciante mostra a iniciante com os mesmos argumentos. Chave de texto: uma linha. As frases do nulo (<code>fundamentos.nulo.*</code>, <code>fundamentos.pares.semComparacao</code>) não têm avançada: são as mesmas nos dois níveis.</p>
+    <p>Divergência menor, sem proposta: a iniciante de <code>fundamentos.cash</code> diz "as aplicações financeiras", e o código soma só as do ativo circulante (conferência, divergência 3) — não é falso, é menos preciso; a avançada diz "do circulante".</p>`;
+  const rows = [];
+  for (const k of Object.keys(TEXTOS_AVANCADOS)) {
+    const av = TEXTOS_AVANCADOS[k], ini = TEXTOS[k];
+    if (typeof av !== typeof ini || (typeof av === "function" && av.length !== ini.length)) throw new Error(`assinatura diverge: ${k}`);
+    if (typeof av === "function") {
+      const exs = EXEMPLOS_AVANCADOS[k];
+      if (!exs) throw new Error(`sem exemplo: ${k}`);
+      exs.forEach((a, i) => rows.push(`<tr><td>${esc(k)}</td><td>${esc((RAMO[k]?.[i] ? `${RAMO[k][i]}: ` : "") + JSON.stringify(a))}</td><td>${esc(ini(...a))}</td><td>${esc(av(...a))}</td></tr>`));
+    } else {
+      rows.push(`<tr><td>${esc(k)}</td><td>texto</td><td>${esc(ini)}</td><td>${esc(av)}</td></tr>`);
+    }
+  }
+  for (const k of Object.keys(EXEMPLOS_AVANCADOS)) if (!(k in TEXTOS_AVANCADOS)) throw new Error(`exemplo sem chave: ${k}`);
+  if (Object.keys(TEXTOS_AVANCADOS).length !== 22) throw new Error("as chaves avançadas não são 22");
+  $("#m23-textos-body").innerHTML = rows.join("");
+}
+
+// ---------------------------------------------------------------- tema, leitura e vista
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(theme) {
+  if (theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme));
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+
+const readingBtns = document.querySelectorAll("[data-set-reading]");
+function setReading(r) {
+  reading = r;
+  root.setAttribute("data-reading", r);
+  for (const b of readingBtns) b.setAttribute("aria-pressed", String(b.dataset.setReading === r));
+  for (const t of Object.keys(DATA)) renderSection(t);
+}
+for (const b of readingBtns) b.addEventListener("click", () => setReading(b.dataset.setReading));
+
+const viewBtns = document.querySelectorAll("[data-m23]");
+function setView(view) {
+  for (const b of viewBtns) b.setAttribute("aria-pressed", String(b.dataset.m23 === view));
+  for (const v of document.querySelectorAll(".m23-view")) v.hidden = v.dataset.view !== view;
+}
+for (const b of viewBtns) b.addEventListener("click", () => setView(b.dataset.m23));
+
+// ?vista=petr4|vale3|textos&tema=light|dark|system&leitura=beginner|advanced — para capturar cada vista direto.
+const params = new URLSearchParams(location.search);
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "petr4");
+reading = params.get("leitura") === "advanced" ? "advanced" : "beginner";
+renderTextos();
+await Promise.all([load("PETR4"), load("VALE3")]);
+notes();
+setReading(reading);
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>

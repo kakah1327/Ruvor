@@ -415,6 +415,7 @@ def test_rf13_relatorio_com_os_rotulos_e_os_numeros_do_cenario() -> None:
             "acoes conformadas: 5 (criadas 5, alteradas 0, inativadas 0, reativadas 0)",
             "casos de borda: detalhe vazio 1, hasQuotation=S sem codigo de acao 1, "
             "classificacao fora de tres partes 0",
+            "classificacao com ponto fora da tabela: 0",
         ]
     )
     assert len(page) == 9
@@ -438,6 +439,7 @@ def test_rf13_contagens_sao_disjuntas_entre_alteradas_inativadas_e_reativadas() 
         "acoes conformadas: 4 (criadas 0, alteradas 2, inativadas 1, reativadas 0)",
         "casos de borda: detalhe vazio 1, hasQuotation=S sem codigo de acao 1, "
         "classificacao fora de tres partes 1",
+        "classificacao com ponto fora da tabela: 0",
     ]
 
     # Coleta 3, de volta ao cenario completo: PETR3 reaparece com o `tradingName` original;
@@ -446,6 +448,29 @@ def test_rf13_contagens_sao_disjuntas_entre_alteradas_inativadas_e_reativadas() 
     assert report3.render().splitlines()[2] == (
         "acoes conformadas: 5 (criadas 0, alteradas 2, inativadas 0, reativadas 1)"
     )
+
+
+def test_m17_rf09_texto_com_ponto_fora_da_tabela_na_quinta_e_na_sexta_linha() -> None:
+    # Alteracao declarada: o segmento de PETR troca por um texto com ponto que nao esta
+    # em nenhuma das duas listas da D-144. PETR3 e PETR4 o carregam: conta uma vez so. O
+    # setor e o subsetor continuam os da tabela, e nao contam.
+    petr = {
+        **detail("PETR"),
+        "industryClassification": "Petróleo. Gás e Biocombustíveis / "
+        "Petróleo. Gás e Biocombustíveis / Refino. Nova Classe",
+    }
+    details = {**full_details(), CODE_CVM["PETR"]: petr}
+
+    report = run_import(FakeSource([full_page()], details))
+
+    assert report.dotted_outside_table == ("Refino. Nova Classe",)
+    assert report.render().splitlines()[4:] == [
+        "classificacao com ponto fora da tabela: 1",
+        "  Refino. Nova Classe",
+    ]
+    # a contagem nao reprova a coleta, e a silver guarda o texto como veio
+    assert last_run().status == CollectionRun.Status.OK
+    assert Asset.objects.get(ticker="PETR4").segment == "Refino. Nova Classe"
 
 
 # --- RF-16: um codigo em duas companhias e falha, antes de escrever --------------------

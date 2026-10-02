@@ -707,6 +707,15 @@
   outline-offset: 2px;
 }
 
+/* M2.3: as chaves da barra juntas no terceiro lugar da grade — o alternador de leitura
+   primeiro, a chave de tema depois. Até 720 px, ver o fim da folha. */
+.ruvor-topbar__prefs {
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+  justify-self: end;
+}
+
 /* A chave de tema: três botões com rótulo, sobre a barra escura (só na barra). */
 .ruvor-segmented {
   display: inline-flex;
@@ -1067,6 +1076,15 @@
   outline-offset: 2px;
 }
 
+/* O "e mais N" na fileira dos atalhos, sem cara de atalho: não é link (M1.7, RF-10). */
+.ruvor-chips__more {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
 /* A lista suspensa da barra. A cor volta à da página: a barra pinta o texto de claro. */
 .ruvor-search__popover {
   position: absolute;
@@ -1198,6 +1216,14 @@
 
 .ruvor-skeleton--short {
   height: var(--ruvor-space-6);
+}
+
+/* O esqueleto de um atalho: a altura e o raio do .ruvor-chip (M1.7, a sugestão carregando). */
+.ruvor-skeleton--chip {
+  display: block;
+  width: 64px;
+  height: 38px;
+  border-radius: var(--ruvor-radius-sm);
 }
 
 /* O erro de uma seção: a frase e o "tentar de novo" na mesma linha. */
@@ -1561,6 +1587,63 @@
   margin-left: calc(16px + var(--ruvor-space-2));
   color: var(--ruvor-text-muted);
   font-size: var(--ruvor-type-micro-size);
+}
+
+/* M2.3: o controle de recolher (docs/mockups/M2.3/comportamento.html). O raiz leva
+   data-collapsible e data-open; uma régua fina o separa do que vem antes. Fechado, só o
+   botão; aberto, o conteúdo logo abaixo dele — fechado, o conteúdo não é desenhado. */
+.ruvor-collapsible {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-4);
+  padding-top: var(--ruvor-space-3);
+  border-top: 1px solid var(--ruvor-table-rule);
+}
+
+/* O botão: o .ruvor-table__toggle — a seta à esquerda, que gira 90° aberto —, com o alvo de
+   toque mais alto (6 px acima e abaixo) e o sublinhado no hover, que a linha da tabela não
+   precisa porque a linha inteira reage. Um rótulo só, nos dois estados: aberto ou fechado é
+   dito pela seta e pelo aria-expanded. */
+.ruvor-collapsible__toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  font: inherit;
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  color: var(--ruvor-ink);
+  background: transparent;
+  border: 0;
+  padding: 6px 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ruvor-collapsible__toggle .ruvor-glyph {
+  flex: none;
+  transition: transform 0.15s;
+}
+
+.ruvor-collapsible__toggle[aria-expanded="true"] .ruvor-glyph {
+  transform: rotate(90deg);
+}
+
+.ruvor-collapsible__toggle:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ruvor-collapsible__toggle:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruvor-collapsible__toggle .ruvor-glyph {
+    transition: none;
+  }
 }
 
 /* A última coluna à direita (a tabela dos proventos). */
@@ -2043,5 +2126,28 @@
   /* M1.6c: a lista de comunicados em uma coluna — a data em cima do título. */
   .ruvor-doc {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* M2.3: com as duas chaves, a barra em três linhas, na ordem do DOM — a marca e o
+     alternador de leitura na primeira, a chave de tema na segunda, à direita, e a busca
+     (quando há) na terceira. */
+  .ruvor-topbar__prefs {
+    display: contents;
+  }
+
+  .ruvor-topbar__prefs > :first-child {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .ruvor-topbar__prefs > :last-child {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .ruvor-topbar:has(> .ruvor-topbar__prefs) .ruvor-topbar__search {
+    grid-row: 3;
   }
 }

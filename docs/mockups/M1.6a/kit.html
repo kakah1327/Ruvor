@@ -224,6 +224,8 @@
   .ruvor-table__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
   .ruvor-doc__link.is-hover { text-decoration-color: currentColor; }
   .ruvor-doc__link.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
+  .ruvor-collapsible__toggle.is-hover span { text-decoration: underline; text-underline-offset: 3px; }
+  .ruvor-collapsible__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
   .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
@@ -252,6 +254,7 @@
     <a class="ruvor-nav__link" href="#composicao"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></svg>Composição</a>
     <a class="ruvor-nav__link" href="#telas"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M1.6b</a>
     <a class="ruvor-nav__link" href="#telas-m16c"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Telas M1.6c</a>
+    <a class="ruvor-nav__link" href="#telas-m17"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M1.7</a>
   </nav>
   <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
 </header>
@@ -580,7 +583,7 @@ garch      -3,61%    adequado</div>
       <div class="kit-theme" data-theme="light" data-m16b>
 
         <div class="kit-block">
-          <h3 class="ruvor-h3">Casco: barra, busca suspensa, chave de tema, rodapé <code class="kit-token">.ruvor-topbar__search</code> <code class="kit-token">.ruvor-segmented</code> <code class="kit-token">.ruvor-footer</code></h3>
+          <h3 class="ruvor-h3">Casco: barra, busca suspensa, alternador de leitura e chave de tema, rodapé <code class="kit-token">.ruvor-topbar__search</code> <code class="kit-token">.ruvor-topbar__prefs</code> <code class="kit-token">.ruvor-segmented</code> <code class="kit-token">.ruvor-footer</code></h3>
           <div class="kit-frame">
             <header class="ruvor-topbar">
               <a class="ruvor-brand" href="#telas" aria-label="Ruvor, ir para a busca"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></a>
@@ -598,10 +601,16 @@ garch      -3,61%    adequado</div>
                   <div class="ruvor-search__foot">2 de 17 · continue digitando para filtrar</div>
                 </div>
               </div>
-              <div class="ruvor-segmented" role="group" aria-label="Tema de exemplo">
-                <button class="ruvor-segmented__btn is-hover" type="button" aria-pressed="false">Claro*</button>
-                <button class="ruvor-segmented__btn" type="button" aria-pressed="true">Escuro</button>
-                <button class="ruvor-segmented__btn" type="button" aria-pressed="false">Sistema</button>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura de exemplo">
+                  <button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button>
+                  <button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button>
+                </div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema de exemplo">
+                  <button class="ruvor-segmented__btn is-hover" type="button" aria-pressed="false">Claro*</button>
+                  <button class="ruvor-segmented__btn" type="button" aria-pressed="true">Escuro</button>
+                  <button class="ruvor-segmented__btn" type="button" aria-pressed="false">Sistema</button>
+                </div>
               </div>
             </header>
             <div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
@@ -619,7 +628,7 @@ garch      -3,61%    adequado</div>
               </footer>
             </div>
           </div>
-          <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Abaixo de 720 px a barra vira duas linhas, com a busca embaixo; o conteúdo perde margem e o título desce ao degrau h2. <code class="kit-token">topbar-control</code> é o token da chave (mesmo valor do avatar).</span></p>
+          <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Abaixo de 720 px a barra vira duas linhas, com a busca embaixo; o conteúdo perde margem e o título desce ao degrau h2. <code class="kit-token">topbar-control</code> é o token da chave (mesmo valor do avatar). M2.3: as duas chaves juntas em <code class="kit-token">.ruvor-topbar__prefs</code>, o alternador de leitura antes do tema; abaixo de 720 px, três linhas na ordem do DOM — a marca e o alternador, o tema à direita, a busca (<code class="kit-token">docs/mockups/M2.3/casco-e-preco.html</code>).</span></p>
         </div>
 
         <div class="kit-block">
@@ -720,6 +729,17 @@ garch      -3,61%    adequado</div>
               </div></section>
             </div>
           </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O controle de recolher (M2.3) <code class="kit-token">.ruvor-collapsible</code> <code class="kit-token">.ruvor-collapsible__toggle</code></h3>
+          <div class="kit-row">
+            <div class="kit-cell"><span class="kit-state">fechado</span><div class="ruvor-collapsible" data-collapsible="moments" data-open="false"><button class="ruvor-collapsible__toggle" type="button" aria-expanded="false"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg><span>Ver a assimetria e a curtose</span></button></div></div>
+            <div class="kit-cell"><span class="kit-state">hover*</span><div class="ruvor-collapsible" data-collapsible="moments" data-open="false"><button class="ruvor-collapsible__toggle is-hover" type="button" aria-expanded="false"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg><span>Ver a assimetria e a curtose</span></button></div></div>
+            <div class="kit-cell"><span class="kit-state">foco*</span><div class="ruvor-collapsible" data-collapsible="moments" data-open="false"><button class="ruvor-collapsible__toggle is-focus" type="button" aria-expanded="false"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg><span>Ver a assimetria e a curtose</span></button></div></div>
+            <div class="kit-cell"><span class="kit-state">aberto</span><div class="ruvor-collapsible" data-collapsible="moments" data-open="true"><button class="ruvor-collapsible__toggle" type="button" aria-expanded="true"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg><span>Ver a assimetria e a curtose</span></button><div><div class="ruvor-stats"><div class="ruvor-stat"><span class="ruvor-stat__label">Assimetria</span><span class="ruvor-stat__value ruvor-num">−1,44</span><p class="ruvor-note">O conteúdo recolhido, logo abaixo do botão.</p></div></div></div></div></div>
+          </div>
+          <p class="kit-decide"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Derivado de <code class="kit-token">.ruvor-table__toggle</code>: a seta gira 90° com <code class="kit-token">aria-expanded="true"</code>, a régua fina acima separa o controle do conteúdo anterior, e o hover sublinha o rótulo. Um rótulo só nos dois estados. Na tela, o botão leva <code class="kit-token">aria-controls</code> para o id do conteúdo, que só é desenhado aberto (<code class="kit-token">docs/mockups/M2.3/comportamento.html</code>).</span></p>
         </div>
 
         <div class="kit-block">
@@ -858,6 +878,43 @@ garch      -3,61%    adequado</div>
     </div>
   </section>
 
+  <!-- ============================================================ TELAS (M1.7) -->
+  <section class="kit-section" id="telas-m17">
+    <h2 class="ruvor-h2 kit-h">Telas do M1.7</h2>
+    <p class="kit-note">O que o mockup aprovado do M1.7 desenhou como estilo local (<code class="kit-token">docs/mockups/M1.7/busca-sugestao.html</code>, <code class="kit-token">.sug-chip-skeleton</code> e <code class="kit-token">.sug-more</code>), nos dois temas: o claro em cima, o escuro embaixo — a mesma marcação. Os tickers são de exemplo.</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m17>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A sugestão carregando e com "e mais N" <code class="kit-token">.ruvor-skeleton--chip</code> <code class="kit-token">.ruvor-chips__more</code></h3>
+          <section class="ruvor-search__suggest" aria-label="Sugestão carregando, de exemplo" aria-busy="true">
+            <h4 class="ruvor-eyebrow">ativos com risco calculado</h4>
+            <p class="ruvor-sr-only">Carregando os ativos com risco calculado.</p>
+            <ul class="ruvor-chips" aria-hidden="true">
+              <li><span class="ruvor-skeleton ruvor-skeleton--chip"></span></li>
+              <li><span class="ruvor-skeleton ruvor-skeleton--chip"></span></li>
+              <li><span class="ruvor-skeleton ruvor-skeleton--chip"></span></li>
+              <li><span class="ruvor-skeleton ruvor-skeleton--chip"></span></li>
+            </ul>
+          </section>
+          <section class="ruvor-search__suggest" aria-label="Sugestão com e mais N, de exemplo">
+            <h4 class="ruvor-eyebrow">ativos com risco calculado</h4>
+            <ul class="ruvor-chips">
+              <li><a class="ruvor-chip" href="#telas-m17">AALR3</a></li>
+              <li><a class="ruvor-chip" href="#telas-m17">ABEV3</a></li>
+              <li><a class="ruvor-chip" href="#telas-m17">B3SA3</a></li>
+              <li><span class="ruvor-chips__more">e mais 3 ativos</span></li>
+            </ul>
+            <p>Os outros ativos do catálogo podem ter o risco calculado na página de cada um.</p>
+          </section>
+          <p class="kit-note">Nenhum ativo com risco e o erro da sugestão usam o <code class="kit-token">.ruvor-search__empty</code> num <code class="kit-token">.ruvor-panel</code>, já acima.</p>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m17-copy></div>
+    </div>
+  </section>
+
 </main>
 
 <aside class="ruvor-rail">
@@ -899,6 +956,10 @@ garch      -3,61%    adequado</div>
   // M1.6c: o painel escuro das telas é a mesma marcação do claro.
   var m16c = document.querySelector("[data-m16c]");
   document.querySelector("[data-m16c-copy]").innerHTML = m16c.innerHTML;
+
+  // M1.7: o painel escuro das telas é a mesma marcação do claro.
+  var m17 = document.querySelector("[data-m17]");
+  document.querySelector("[data-m17-copy]").innerHTML = m17.innerHTML;
 
   // Os 48 tokens de cor, na ordem de tokens.css.
   var GROUPS = [

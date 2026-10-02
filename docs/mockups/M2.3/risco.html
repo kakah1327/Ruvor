@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Risco nas duas leituras (mockup, M2.3)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da seção de risco nas duas leituras (T9 do plano M2.3). Dado real do ITUB4, pedido a
+   * /api/v1/ pelo proxy do Vite, no estado E1. O desenho é o da seção aprovada no M1.6b
+   * (ativo.html) e implementada em frontend/src/components/RiskSection.tsx, LossSummary.tsx,
+   * ModelTable.tsx e RunTrail.tsx; o que muda é a frase pelo nível, o recolhimento da tabela dos
+   * nove (com as linhas de teste) e da trilha (RF-06, RF-07), e a expressão da D-64 (RF-08).
+   *
+   * As frases avançadas copiam as afirmações de docs/mockups/M2.3/conferencia-risco.md; o que lá
+   * está como não ancorado no código não entra — em particular, nenhuma frase diz que todos os
+   * modelos preveem cada dia só com a véspera, nem que usam o último ano.
+   *
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal. Estilo local só com m23-:
+   *   - m23-collapsible: o CONTROLE DE RECOLHER, copiado do comportamento.html (T6, aprovado);
+   *   - m23-prefs: a barra com as duas chaves, copiada do comportamento.html (T6, aprovado);
+   *   - m23-bar, m23-note, m23-textos, m23-expr, m23-case: a moldura do mockup, que não é tela.
+   */
+
+  /* --- O controle de recolher: o do comportamento.html (T6), sem mudança ------------------ */
+  .m23-collapsible { display: flex; flex-direction: column; gap: var(--ruvor-space-4); padding-top: var(--ruvor-space-3); border-top: 1px solid var(--ruvor-table-rule); }
+  .m23-collapsible__toggle { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--ruvor-space-2); font: inherit; font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); color: var(--ruvor-ink); background: transparent; border: 0; padding: 6px 0; cursor: pointer; text-align: left; }
+  .m23-collapsible__toggle .ruvor-glyph { flex: none; transition: transform 0.15s; }
+  .m23-collapsible__toggle[aria-expanded="true"] .ruvor-glyph { transform: rotate(90deg); }
+  .m23-collapsible__toggle:hover span, .m23-collapsible__toggle.is-hover span { text-decoration: underline; text-underline-offset: 3px; }
+  .m23-collapsible__toggle:focus-visible, .m23-collapsible__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { .m23-collapsible__toggle .ruvor-glyph { transition: none; } }
+
+  /* --- A barra com as duas chaves: a do comportamento.html (T6) ------------------------- */
+  .m23-prefs { display: flex; align-items: center; gap: var(--ruvor-space-3); justify-self: end; }
+  @media (max-width: 720px) {
+    .m23-prefs { display: contents; }
+    .m23-prefs > [data-switch="reading"] { grid-column: 2; grid-row: 1; justify-self: end; }
+    .m23-prefs > [data-switch="theme"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+    .ruvor-topbar .ruvor-topbar__search { grid-row: 3; }
+  }
+
+  /* --- Moldura do mockup: não é tela --------------------------------------------------- */
+  .m23-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .m23-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m23-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .m23-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .m23-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .m23-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .m23-view[hidden] { display: none; }
+  .m23-note { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  .m23-note b { color: var(--ruvor-ink); }
+  .m23-note p { margin: 0; }
+  .m23-note code { font-family: var(--ruvor-font-mono); }
+  .m23-note q { color: var(--ruvor-text); }
+  .m23-note ul { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  /* A expressão da D-64, sublinhada onde aparece nas vistas de texto (não na tela). */
+  .m23-expr { color: inherit; background: transparent; text-decoration: underline; text-decoration-color: var(--ruvor-focus); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+  .m23-textos { table-layout: fixed; }
+  .m23-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .m23-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 18%; }
+  .m23-textos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 16%; }
+  .m23-textos td p { margin: 0 0 var(--ruvor-space-2); }
+  .m23-textos td p:last-child { margin-bottom: 0; }
+  .m23-case { display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
+  .m23-case > h3 { margin: 0; }
+  @media (max-width: 720px) {
+    .m23-bar { padding-inline: var(--ruvor-space-4); }
+    .m23-textos thead { display: none; }
+    .m23-textos tr { display: block; padding: var(--ruvor-space-2) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m23-textos td { display: block; width: auto !important; border: 0; padding: 2px 0; }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-scales" viewBox="0 0 256 256"><path d="M239.43,133l-32-80h0a8,8,0,0,0-9.16-4.84L136,62V40a8,8,0,0,0-16,0V65.58L54.26,80.19A8,8,0,0,0,48.57,85h0v.06L16.57,165a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32a7.92,7.92,0,0,0-.57-3L66.92,93.77,120,82V208H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16H136V78.42L187,67.1,160.57,133a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32A7.92,7.92,0,0,0,239.43,133ZM56,184c-7.53,0-22.76-3.61-23.93-14.64L56,109.54l23.93,59.82C78.76,180.39,63.53,184,56,184Zm144-32c-7.53,0-22.76-3.61-23.93-14.64L200,77.54l23.93,59.82C222.76,148.39,207.53,152,200,152Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="m23-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.3 · risco · fora da tela</p>
+  <div class="m23-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-m23="itub4">ITUB4 ao vivo</button>
+    <button class="ruvor-btn" type="button" data-m23="casos">k = 0 e julgados = 0</button>
+    <button class="ruvor-btn" type="button" data-m23="textos">os textos</button>
+    <button class="ruvor-btn" type="button" data-m23="d64">a D-64</button>
+  </div>
+  <p class="m23-group"><span>O tema e a leitura mudam na barra escura, como na tela.</span></p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="../M1.6b/busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <!-- A barra do comportamento.html (T6): a chave de leitura antes da de tema (RF-01). -->
+  <div class="m23-prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div>
+    <!-- A seção, com o dado real do ITUB4, e a trilha na coluna lateral (Shell.tsx:110-116) -->
+    <div class="ruvor-workspace m23-view" data-view="itub4" hidden>
+      <main class="ruvor-content ruvor-stack ruvor-stack--loose">
+        <div class="m23-note" id="m23-itub4-note"></div>
+        <section class="ruvor-stack" id="sec-risk" aria-labelledby="h-risk" data-risk-state="RISCO_CARREGANDO">
+          <div class="ruvor-section-head">
+            <div>
+              <p class="ruvor-eyebrow" data-t="risco.sobrancelha"></p>
+              <h2 class="ruvor-h2" id="h-risk" data-t="risco.titulo"></h2>
+            </div>
+          </div>
+          <p class="ruvor-sub" data-t="risco.intro"></p>
+          <p class="ruvor-sr-only" aria-live="polite"></p>
+          <div data-body aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>
+        </section>
+      </main>
+      <aside class="ruvor-rail ruvor-rail--stack">
+        <section class="ruvor-rail__inner" id="sec-trail" aria-labelledby="h-trail">
+          <p class="ruvor-eyebrow" id="h-trail" data-t="risco.trilha.titulo"></p>
+          <div data-body aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Os dois casos que o ITUB4 não tem: k = 0 e julgados = 0 (dado fictício) -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m23-view" data-view="casos" hidden>
+      <div class="m23-note" id="m23-casos-note"></div>
+      <section class="m23-case" aria-labelledby="h-caso-k0">
+        <h3 class="ruvor-h3" id="h-caso-k0">Caso k = 0 · fictício: a 95%, 7 julgados e 2 sem veredito; a 99%, os 9 julgados — nenhum adequado</h3>
+        <div data-case="k0"></div>
+      </section>
+      <section class="m23-case" aria-labelledby="h-caso-j0">
+        <h3 class="ruvor-h3" id="h-caso-j0">Caso julgados = 0 · fictício: o cálculo falhou nos nove, nos dois níveis</h3>
+        <div data-case="j0"></div>
+      </section>
+    </main>
+
+    <!-- Os textos: as 9 chaves nos dois níveis, com os exemplos de cada forma -->
+    <main class="ruvor-content ruvor-stack m23-view" data-view="textos" hidden>
+      <div class="m23-note" id="m23-textos-head"></div>
+      <section class="ruvor-panel"><table class="ruvor-table m23-textos"><thead><tr><th scope="col">chave</th><th scope="col">exemplo (argumentos)</th><th scope="col">iniciante</th><th scope="col">avançada (proposta)</th></tr></thead><tbody id="m23-textos-body"></tbody></table></section>
+      <div class="m23-note" id="m23-novos"></div>
+    </main>
+
+    <!-- A D-64 por chave e ramo (RF-08), com as iniciantes que mudam, e a alternativa -->
+    <main class="ruvor-content ruvor-stack m23-view" data-view="d64" hidden>
+      <div class="m23-note" id="m23-d64-head"></div>
+      <section class="ruvor-panel"><table class="ruvor-table m23-textos"><thead><tr><th scope="col">chave · ramo</th><th scope="col">exigida</th><th scope="col">iniciante</th><th scope="col">avançada (proposta)</th></tr></thead><tbody id="m23-d64-body"></tbody></table></section>
+      <div class="m23-note" id="m23-d64-alt"></div>
+    </main>
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<script type="module">
+const TICKER = "ITUB4";
+
+// ---------------------------------------------------------------- formatação (pt-BR), a do M1.6b
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fPct1 = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fInt = NF({ maximumFractionDigits: 0 });
+const fDec1 = NF({ minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fDec3 = NF({ minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+// O instante da trilha no fuso da B3 (RunTrail.tsx:8-12).
+const fInstantParts = (s) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(s)).map((x) => [x.type, x.value]));
+  return [`${p.day}/${p.month}/${p.year}`, `${p.hour}:${p.minute}`];
+};
+const lossFromVar = (v) => 1 - Math.exp(-v);               // format/var.ts:11
+const fPval = (v) => (Number(v) < 0.001 ? "< 0,001" : fDec3.format(Number(v))); // ModelTable.tsx:25-28
+
+// ---------------------------------------------------------------- os textos
+// A leitura iniciante: copiada de frontend/src/content/textos.ts como está hoje (aprovada no
+// M1.6b). Só o ramo k = 0 de risco.naoRejeitados muda neste portão (RF-08) — ver
+// INICIANTE_PROPOSTA, logo abaixo.
+const TEXTOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  // O alternador: os rótulos do casco-e-preco.html (T3, aprovado).
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "risco.sobrancelha": "O que pode acontecer",
+  "risco.titulo": "Quanto se pode perder em 1 dia",
+  "risco.intro": "Nove métodos estimam, cada um do seu jeito, o limite da perda de um dia. A plataforma não escolhe nenhum: eles aparecem lado a lado, com o resultado dos testes de cada um.",
+  "risco.horizonte": "em 1 dia",
+  "risco.nivel.0.0500": "A 95%",
+  "risco.nivel.0.0100": "A 99%",
+  "risco.faixa": (min, max) => `${min} a ${max}`,
+  "risco.perda95": "A 95%, o limite é o valor que a perda de um dia deve respeitar em 19 de cada 20 dias. Em 1 dia a cada 20, espera-se que a perda passe dele.",
+  "risco.perda99": "A 99%, o limite é o valor que a perda de um dia deve respeitar em 99 de cada 100 dias. Em 1 dia a cada 100, espera-se que a perda passe dele.",
+  "risco.discordancia": (min, max, n, total, cadaN, unico) => {
+    if (n === 0)
+      return "Nenhum modelo calculou este nível: o cálculo falhou em todos. A trilha do cálculo mostra o que houve.";
+    if (n === 1)
+      return `Só um modelo calculou este nível, e não há faixa para comparar: ele põe em ${unico} o limite que a perda de um dia só deve passar em 1 dia a cada ${cadaN}.`;
+    const quem = n === total
+      ? "Os nove modelos põem"
+      : `${n} de ${total} modelos calcularam; ${total - n} ${total - n === 1 ? "falhou" : "falharam"}. Eles põem`;
+    return `${quem} entre ${min} e ${max} o limite que a perda de um dia só deve passar em 1 dia a cada ${cadaN}. A distância entre eles também é informação: modelos próximos indicam uma leitura mais sólida; distantes, um momento mais incerto, em que o número depende mais do método.`;
+  },
+  "risco.naoRejeitados.titulo": "Não rejeitados pelos testes",
+  "risco.naoRejeitados": (k, julgados, total) => {
+    const faltam = total - julgados;
+    const semJulgar = faltam > 0
+      ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.`
+      : "";
+    if (julgados === 0)
+      return "Não foi possível julgar nenhum modelo neste nível: o cálculo falhou em todos, e isso não conta como reprovação.";
+    if (k === 0)
+      return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste.${semJulgar}`;
+    const quem = k === 1
+      ? `1 dos ${julgados} modelos julgados passou`
+      : `${k} dos ${julgados} modelos julgados passaram`;
+    return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste — não garante o número de hoje —, e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
+  },
+  "risco.tabela.titulo": "Os nove modelos",
+  "risco.tabela.intro": "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam a mesma escala nas duas colunas. Abra um modelo para ver os testes.",
+  "risco.tabela.col.modelo": "Modelo",
+  "risco.tabela.col.0.0500": "Perda a 95% em 1 dia",
+  "risco.tabela.col.0.0100": "Perda a 99% em 1 dia",
+  "risco.tabela.abrir": (m) => `Ver os testes de ${m}`,
+  "risco.categoria.traditional": "Tradicionais",
+  "risco.categoria.garch": "GARCH",
+  "risco.categoria.ml": "Aprendizado de máquina",
+  "risco.modelo.historical": "Histórico",
+  "risco.modelo.parametric": "Paramétrico",
+  "risco.modelo.monte_carlo": "Monte Carlo",
+  "risco.modelo.garch_1_1": "GARCH(1,1)",
+  "risco.modelo.egarch": "EGARCH",
+  "risco.modelo.lstm": "LSTM",
+  "risco.modelo.gru": "GRU",
+  "risco.modelo.garchnet": "GARCHNet",
+  "risco.modelo.caviar": "CAViaR",
+  "risco.tag.adequado": "adequado",
+  "risco.tag.naoAdequado": "não adequado",
+  "risco.tag.naoJulgado": "não julgado",
+  "risco.veredito": "O veredito junta dois testes feitos no período de teste: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou no passado, não de quanto o número de hoje está certo.",
+  "risco.teste.passou": "passou",
+  "risco.teste.naoPassou": "não passou",
+  "risco.rotulo.violacoes": "Violações × esperadas",
+  "risco.rotulo.kupiec": "Kupiec",
+  "risco.rotulo.christoffersen": "Christoffersen",
+  "risco.rotulo.dq": "DQ",
+  "risco.violacoes": (v, e, cadaN, kupiecOk) =>
+    `Em ${v} pregões de teste a perda passou do limite, para cerca de ${e} esperados (1 dia a cada ${cadaN}).${kupiecOk ? "" : " Bem acima do esperado, o modelo subestimou o risco; bem abaixo, superestimou."}`,
+  "risco.kupiec": (p, ok) =>
+    `Confere se a quantidade de dias acima do limite é compatível com a esperada; passa com p-valor acima de 0,05. Aqui, ${p}: ${ok ? "compatível" : "longe demais do esperado para ser acaso"}.`,
+  "risco.christoffersen": (p, ok) =>
+    `Confere se os dias acima do limite vêm espalhados, e não em sequência; passa com p-valor acima de 0,05. Aqui, ${p}: ${ok ? "vieram espalhados" : "tenderam a vir em sequência"}.`,
+  "risco.dq": (p, ok) =>
+    `O mais exigente: confere se os dias acima do limite podiam ser previstos pelos anteriores; passa com p-valor acima de 0,05. Aqui, ${p}: ${ok ? "não podiam" : "podiam, em parte"}. Não entra no veredito.`,
+  "risco.erroModelo": (msg) => `O cálculo deste modelo falhou neste nível (${msg}).`,
+  "risco.trilha.titulo": "Trilha do cálculo",
+  "risco.trilha": "O que entrou neste cálculo — a série, a divisão entre treino e teste e a versão do método —, para que ele possa ser conferido e refeito.",
+  "risco.trilha.asOf": "Último pregão usado",
+  "risco.trilha.firstPrice": "Primeiro pregão",
+  "risco.trilha.priceCount": "Pregões",
+  "risco.trilha.train": "Treino",
+  "risco.trilha.test": "Teste",
+  "risco.trilha.window": "Janela de treino",
+  "risco.trilha.calculatedAt": "Calculado em",
+  "risco.trilha.finishedAt": "Terminou em",
+  "risco.trilha.engine": "Versão do motor",
+  "risco.trilha.seed": "Semente",
+  "risco.trilha.priceRun": "Coleta de preço",
+  "risco.trilha.status": "Situação",
+  "risco.trilha.pregoes": (n) => `${n} pregões`,
+  "risco.trilha.coleta": (fonte, quando) => `${fonte}, ${quando}`,
+  "risco.trilha.instante": (data, hora) => `${data} às ${hora}`,
+  "risco.trilha.fonte.yahoo-chart": "Yahoo Finance",
+  "risco.trilha.status.ok": "concluído, os nove modelos calcularam",
+  "risco.trilha.status.partial": (n) => `parcial: ${n} de 9 modelos falharam`,
+  "risco.trilha.status.failed": "o cálculo falhou inteiro",
+
+  // NOVOS neste portão — os rótulos dos dois controles de recolher (RF-07, RF-10: vão a
+  // textos.ts na T10). Um rótulo só, nos dois estados, como o comportamento.momentos.abrir da T6.
+  "risco.modelos.abrir": "Ver os nove modelos",
+  "risco.trilha.abrir": "Ver o que entrou no cálculo",
+};
+
+// As duas expressões da D-64 propostas pela conferência (conferencia-risco.md, "As duas
+// expressões propostas"): uma por chave, a mesma nos dois níveis e em todos os ramos exigidos.
+const EXPR = {
+  "risco.veredito": "não de quanto o número de hoje está certo",
+  "risco.naoRejeitados": "não garante o número de hoje",
+};
+
+// A INICIANTE QUE MUDA (RF-08, exceção ao "Fora" da spec): só o ramo k = 0 de
+// risco.naoRejeitados ganha a expressão. Os ramos julgados = 0 e k ≥ 1 ficam como estão —
+// a função delega a eles —, e risco.veredito não muda (já contém a expressão).
+const INICIANTE_PROPOSTA = {
+  "risco.naoRejeitados": (k, julgados, total) => {
+    if (julgados === 0 || k > 0) return TEXTOS["risco.naoRejeitados"](k, julgados, total);
+    const faltam = total - julgados;
+    const semJulgar = faltam > 0
+      ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.`
+      : "";
+    return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste. O veredito fala desse período — não garante o número de hoje, nem para mais nem para menos.${semJulgar}`;
+  },
+};
+// A iniciante que a tela mostra: a de hoje, com a proposta por cima.
+const INICIANTE = { ...TEXTOS, ...INICIANTE_PROPOSTA };
+
+// A leitura avançada (RF-05): as 9 chaves risco.* do RF-04, a mesma chave e os mesmos
+// parâmetros, na mesma ordem, da iniciante. Cada afirmação copia a de
+// docs/mockups/M2.3/conferencia-risco.md, onde está o caminho:linha que a confere.
+const TEXTOS_AVANCADOS = {
+  "risco.perda95": "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito; o número mostrado é, nos três tradicionais — histórico, paramétrico e Monte Carlo —, o quantil estimado uma vez sobre os 252 primeiros retornos da série e repetido no teste inteiro; nos outros seis, o do último pregão. Vai à tela como perda percentual simples, 1 − e^(−VaR).",
+  "risco.perda99": "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, com a mesma janela por família e mostrado da mesma forma.",
+  "risco.discordancia": (min, max, n, total, _cadaN, unico) => {
+    if (n === 0)
+      return "Nenhum dos nove produziu VaR neste nível: o cálculo falhou em todos, e não há faixa.";
+    if (n === 1)
+      return `Só um modelo produziu VaR neste nível: ${unico} é o dele, tomado e convertido como na perda acima. Sem um segundo, não há faixa.`;
+    const quem = n === total
+      ? "Os nove modelos produziram VaR neste nível"
+      : `${n} de ${total} modelos produziram VaR neste nível; ${total - n === 1 ? "o outro não: o cálculo dele falhou ou ele ficou" : `os outros ${total - n} não: o cálculo falhou ou eles ficaram`} sem resultado nesta execução`;
+    return `${quem}. A faixa vai da menor perda entre eles, ${min}, à maior, ${max}, cada uma tomada e convertida como na perda acima. A largura mede o quanto os números mostrados pelos métodos diferem entre si; não diz qual extremo está certo.`;
+  },
+  "risco.naoRejeitados": (k, julgados, total) => {
+    const faltam = total - julgados;
+    const semVeredito = faltam > 0
+      ? ` ${faltam} ${faltam === 1 ? "modelo ficou sem veredito porque o cálculo falhou: conta" : "modelos ficaram sem veredito porque o cálculo falhou: contam"} à parte, não como reprovação.`
+      : "";
+    if (julgados === 0)
+      return "Nenhum modelo pôde ser julgado neste nível: o cálculo falhou em todos, e falha não é reprovação.";
+    if (k === 0)
+      return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o número exibido: o veredito não garante o número de hoje, nem para mais nem para menos.${semVeredito}`;
+    const quem = k === 1 ? `1 dos ${julgados} modelos julgados tem` : `${k} dos ${julgados} modelos julgados têm`;
+    return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o número exibido — o veredito não garante o número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
+  },
+  "risco.veredito": "Veredito por modelo e por nível: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ fica fora. Os testes avaliam a série de VaR do período de teste, não o número exibido: falam do passado do modelo, não de quanto o número de hoje está certo.",
+  "risco.violacoes": (v, e, cadaN, kupiecOk) =>
+    `${v === "1" ? "1 violação — dia" : `${v} violações — dias`} do período de teste em que o retorno logarítmico ficou abaixo de −VaR do dia — para ${e} esperadas, os dias de teste divididos por ${cadaN}.${kupiecOk ? "" : " Longe o bastante do esperado para o Kupiec rejeitar: acima, o VaR subestimou a cauda; abaixo, superestimou."}`,
+  "risco.kupiec": (p, ok) =>
+    `Teste de proporção de falhas de Kupiec: razão de verossimilhança entre a taxa de violações observada e a esperada, contra uma qui-quadrado com 1 grau de liberdade; testa a cobertura incondicional. Aqui, ${p}: a cobertura correta ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+  "risco.christoffersen": (p, ok) =>
+    `Teste de independência de Christoffersen: numa cadeia de Markov de 1ª ordem, compara a chance de violar no dia seguinte a uma violação com a de violar no dia seguinte a um dia sem violação, contra uma qui-quadrado com 1 grau de liberdade; o p-valor é o da independência. Aqui, ${p}: a independência ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+  "risco.dq": (p, ok) =>
+    `Teste de quantil dinâmico: regride a violação de cada dia (1 ou 0), menos a taxa esperada, sobre uma constante, as violações dos quatro dias anteriores e o VaR do dia, e testa se todos os coeficientes são zero, contra uma qui-quadrado com 6 graus de liberdade. Pega ao mesmo tempo taxa errada e violações previsíveis. Passa com p-valor acima de 0,05 e fica fora do veredito. Aqui, ${p}: coeficientes nulos ${ok ? "não rejeitados" : "rejeitados"}.`,
+};
+
+// A risco.tabela.intro na avançada (RF-06, "O texto que manda abrir"): proposta de entrada
+// própria, como texto de bloco, FORA da contagem das 55. A decisão é do portão.
+const INTRO_AVANCADA = "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam uma escala só nas duas colunas; a escala é a da maior perda da tabela. Os testes de cada modelo, nos dois níveis, vêm abertos abaixo da linha dele.";
+
+// Os argumentos de exemplo de cada chave-função avançada, cobrindo os ramos dela (V-07): o que a
+// T10 leva a EXEMPLOS_AVANCADOS em frontend/tests/exemplos.ts. Os valores imitam os da tela; os
+// marcados ITUB4 são os da execução 85, de 01/10/2026; os outros são fictícios.
+const EXEMPLOS_AVANCADOS = {
+  "risco.discordancia": [["2,2%", "3,1%", 9, 9, 20, "2,2%"], ["2,6%", "3,1%", 7, 9, 20, "2,6%"], ["3,7%", "5,6%", 8, 9, 100, "3,7%"], ["4,1%", "4,1%", 1, 9, 100, "4,1%"], [null, null, 0, 9, 20, null]],
+  "risco.naoRejeitados": [[6, 9, 9], [2, 9, 9], [1, 8, 9], [0, 9, 9], [0, 7, 9], [0, 1, 9], [0, 0, 9]],
+  "risco.violacoes": [["111", "112,3", 20, true], ["50", "22,5", 100, false], ["7", "22,5", 100, false], ["1", "4,0", 100, false]],
+  "risco.kupiec": [["0,903", true], ["< 0,001", false]],
+  "risco.christoffersen": [["0,225", true], ["0,042", false]],
+  "risco.dq": [["0,082", true], ["< 0,001", false]],
+};
+const RAMO = {
+  "risco.discordancia": ["n = total (ITUB4, 95%)", "n ≥ 2, 2 sem VaR", "n ≥ 2, 1 sem VaR", "n = 1", "n = 0"],
+  "risco.naoRejeitados": ["k ≥ 1 (ITUB4, 95%)", "k ≥ 1 (ITUB4, 99%)", "k = 1, 1 sem veredito", "k = 0", "k = 0, 2 sem veredito", "k = 0, um só julgado", "julgados = 0 (isento)"],
+  "risco.violacoes": ["kupiecOk (CAViaR 95%, ITUB4)", "acima, rejeitado (CAViaR 99%, ITUB4)", "abaixo, rejeitado (EGARCH 99%, ITUB4)", "singular"],
+  "risco.kupiec": ["ok (CAViaR 95%, ITUB4)", "rejeitado (CAViaR 99%, ITUB4)"],
+  "risco.christoffersen": ["ok (CAViaR 95%, ITUB4)", "rejeitado (GARCH(1,1) 99%, ITUB4)"],
+  "risco.dq": ["ok (CAViaR 95%, ITUB4)", "rejeitado (CAViaR 99%, ITUB4)"],
+};
+
+// ---------------------------------------------------------------- o nível
+const root = document.documentElement;
+let reading = "beginner";
+const T = (k, ...a) => { const v = TEXTOS[k]; if (v === undefined) throw new Error(`texto sem chave: ${k}`); return typeof v === "function" ? v(...a) : v; };
+// textFor: a frase do nível corrente — a avançada substitui a iniciante (D-152), com os mesmos argumentos.
+const P = (k, ...a) => {
+  const v = reading === "advanced" && k in TEXTOS_AVANCADOS ? TEXTOS_AVANCADOS[k] : INICIANTE[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph ${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const why = (text, phrase = "") => `<p class="ruvor-note"${phrase ? ` data-phrase="${phrase}"` : ""}>${esc(text)}</p>`;
+// Sublinha a expressão da D-64 da chave onde ela aparece (só nas vistas de texto).
+const mark = (key, text) => {
+  const e = EXPR[key];
+  const s = esc(text);
+  return e && text.includes(e) ? s.replace(esc(e), `<mark class="m23-expr">${esc(e)}</mark>`) : s;
+};
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- o controle de recolher
+// O de comportamento.html (T6, aprovado), o molde do Collapsible.tsx do plano: aberto por padrão
+// no avançado, fechado no iniciante; trocar o nível reaplica o padrão; abrir não é lembrado. O
+// conteúdo fechado não é desenhado, e o aria-controls aponta para o id que só existe aberto.
+const MODEL_ORDER = ["historical", "parametric", "monte_carlo", "garch_1_1", "egarch", "lstm", "gru", "garchnet", "caviar"];
+const CATEGORY = { historical: "traditional", parametric: "traditional", monte_carlo: "traditional", garch_1_1: "garch", egarch: "garch", lstm: "ml", gru: "ml", garchnet: "ml", caviar: "ml" };
+const ALPHAS = ["0.0500", "0.0100"];
+const CADA_N = { "0.0500": 20, "0.0100": 100 };
+const openState = { models: false, trail: false, tests: new Set() };
+function collapsible(name, label, inner, open, id = `m23-${name}-body`) {
+  return `<div class="m23-collapsible" data-collapsible="${name}" data-open="${open}">
+    <button class="m23-collapsible__toggle" type="button" aria-expanded="${open}" aria-controls="${id}" data-toggle="${name}">${glyph("i-caret-right")}<span>${esc(label)}</span></button>
+    ${open ? `<div id="${id}">${inner}</div>` : ""}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- o painel (LossSummary.tsx)
+function discordancia(results, alpha) {
+  const v = results.filter((r) => r.alpha === alpha && r.var_latest != null).map((r) => lossFromVar(Number(r.var_latest)));
+  if (v.length === 0) return null;
+  return { min: Math.min(...v), max: Math.max(...v), n: v.length, total: MODEL_ORDER.length };
+}
+function naoRejeitados(results, alpha) {
+  const at = results.filter((r) => r.alpha === alpha);
+  return {
+    adequados: MODEL_ORDER.filter((m) => at.some((r) => r.model_name === m && r.adequate === true)),
+    julgados: at.filter((r) => r.adequate !== null).length,
+  };
+}
+function levelPanel(results, alpha) {
+  const d = discordancia(results, alpha);
+  const nr = naoRejeitados(results, alpha);
+  const min = d == null ? null : fPct1.format(d.min);
+  const max = d == null ? null : fPct1.format(d.max);
+  const shown = d == null ? "—" : d.n === 1 ? min : T("risco.faixa", min, max);
+  const list = nr.adequados.map((m) => `<li><span class="ruvor-tag ruvor-tag--validated">${glyph("i-check-circle", "ruvor-glyph--sm")}${esc(T(`risco.modelo.${m}`))}</span></li>`).join("");
+  return `<article class="ruvor-panel" data-alpha="${alpha}"><div class="ruvor-panel__body ruvor-level">
+    <p class="ruvor-eyebrow">${esc(T(`risco.nivel.${alpha}`))}</p>
+    <p class="ruvor-range"><b class="ruvor-num">${esc(shown)}</b><small>${esc(T("risco.horizonte"))}</small></p>
+    ${why(P(alpha === "0.0500" ? "risco.perda95" : "risco.perda99"), "perda")}
+    ${why(P("risco.discordancia", min, max, d?.n ?? 0, MODEL_ORDER.length, CADA_N[alpha], min), "discordancia")}
+    <div class="ruvor-divider"></div>
+    <p class="ruvor-level__title">${esc(T("risco.naoRejeitados.titulo"))}</p>
+    ${list ? `<ul class="ruvor-tag-list">${list}</ul>` : ""}
+    ${why(P("risco.naoRejeitados", nr.adequados.length, nr.julgados, MODEL_ORDER.length), "naoRejeitados")}
+  </div></article>`;
+}
+const lossSummary = (results) => `<div class="ruvor-levels">${ALPHAS.map((a) => levelPanel(results, a)).join("")}</div>`;
+
+// ---------------------------------------------------------------- a tabela (ModelTable.tsx)
+const verdictTag = (adequate) => (adequate == null
+  ? `<span class="ruvor-tag ruvor-tag--neutral">${esc(T("risco.tag.naoJulgado"))}</span>`
+  : adequate ? `<span class="ruvor-tag ruvor-tag--validated">${esc(T("risco.tag.adequado"))}</span>`
+             : `<span class="ruvor-tag ruvor-tag--review">${esc(T("risco.tag.naoAdequado"))}</span>`);
+const passTag = (ok) => `<span class="ruvor-tag ${ok ? "ruvor-tag--validated" : "ruvor-tag--review"}">${esc(ok ? T("risco.teste.passou") : T("risco.teste.naoPassou"))}</span>`;
+
+function testRow(test, p, ok) {
+  const known = p != null && ok != null;
+  return `<div class="ruvor-test" data-test="${test}"><dt>${esc(T(`risco.rotulo.${test}`))}</dt>
+    <dd><span class="ruvor-num">${known ? esc(fPval(p)) : "—"}</span>${known ? passTag(ok) : ""}</dd>
+    ${known ? why(P(`risco.${test}`, fPval(p), ok)) : ""}</div>`;
+}
+function levelTests(r, alpha) {
+  const title = `<p class="ruvor-eyebrow">${esc(T(`risco.nivel.${alpha}`))}</p>`;
+  if (r == null || r.error !== "" || r.kupiec_passed == null || r.violations == null || r.expected_violations == null) {
+    return `<div data-alpha="${alpha}">${title}${why(T("risco.erroModelo", r?.error || "—"), "erroModelo")}</div>`;
+  }
+  const v = fInt.format(r.violations);
+  const e = fDec1.format(Number(r.expected_violations));
+  return `<div data-alpha="${alpha}">${title}<dl class="ruvor-tests">
+    <div class="ruvor-test" data-test="violacoes"><dt>${esc(T("risco.rotulo.violacoes"))}</dt><dd class="ruvor-num">${esc(`${v} × ${e}`)}</dd>${why(P("risco.violacoes", v, e, CADA_N[alpha], r.kupiec_passed))}</div>
+    ${testRow("kupiec", r.kupiec_p_value, r.kupiec_passed)}
+    ${testRow("christoffersen", r.christoffersen_p_value, r.christoffersen_passed)}
+    ${testRow("dq", r.dq_p_value, r.dq_passed)}
+  </dl></div>`;
+}
+function modelTable(results, idp) {
+  const at = (m, a) => results.find((r) => r.model_name === m && r.alpha === a) ?? null;
+  const all = results.filter((r) => r.var_latest != null).map((r) => lossFromVar(Number(r.var_latest)));
+  const scale = Math.max(0, ...all) || 1; // a mesma escala nas dezoito células
+  const cell = (r) => {
+    if (r == null || r.var_latest == null) return `<td><div class="ruvor-cell-stack"><span class="ruvor-loss"><b class="ruvor-num">—</b></span>${verdictTag(r?.adequate ?? null)}</div></td>`;
+    const l = lossFromVar(Number(r.var_latest));
+    return `<td><div class="ruvor-cell-stack">
+      <span class="ruvor-loss"><b class="ruvor-num">${esc(fPct1.format(l))}</b></span>
+      <span class="ruvor-bar ruvor-bar--evidence" aria-hidden="true"><span class="ruvor-bar__fill" style="width: ${(100 * l / scale).toFixed(1)}%"></span></span>
+      ${verdictTag(r.adequate)}</div></td>`;
+  };
+  const rows = MODEL_ORDER.map((m) => {
+    const name = T(`risco.modelo.${m}`);
+    const open = openState.tests.has(m);
+    const id = `${idp}-det-${m}`;
+    // Cada linha expansível leva data-collapsible="tests" e o seu data-open (plano, "O recolhimento").
+    return `<tr class="ruvor-table__row--expandable" data-model="${m}" data-collapsible="tests" data-open="${open}">
+      <td><button class="ruvor-table__toggle" type="button" aria-expanded="${open}" aria-controls="${id}" aria-label="${esc(T("risco.tabela.abrir", name))}" data-test-toggle="${m}">${glyph("i-caret-right")}<span>${esc(name)}</span></button><span class="ruvor-table__sub">${esc(T(`risco.categoria.${CATEGORY[m]}`))}</span></td>
+      ${cell(at(m, "0.0500"))}${cell(at(m, "0.0100"))}
+    </tr>
+    <tr class="ruvor-table__detail" id="${id}"${open ? "" : " hidden"}><td colspan="3"><div class="ruvor-table__detail-grid">${levelTests(at(m, "0.0500"), "0.0500")}${levelTests(at(m, "0.0100"), "0.0100")}</div></td></tr>`;
+  }).join("");
+  const intro = reading === "advanced" ? INTRO_AVANCADA : T("risco.tabela.intro");
+  return `<section class="ruvor-panel" aria-labelledby="${idp}-h-models">
+    <div class="ruvor-panel__head">${glyph("i-scales")}<h3 class="ruvor-h3" id="${idp}-h-models">${esc(T("risco.tabela.titulo"))}</h3></div>
+    <div class="ruvor-panel__body"><div class="ruvor-stack">
+      <p class="ruvor-note" data-phrase="intro">${esc(intro)}</p>
+      <div class="ruvor-legend">${verdictTag(true)}${verdictTag(false)}${verdictTag(null)}</div>
+      ${why(P("risco.veredito"), "veredito")}
+    </div></div>
+    <table class="ruvor-table ruvor-table--models">
+      <colgroup><col class="ruvor-table__col--lead"><col><col></colgroup>
+      <thead><tr><th scope="col">${esc(T("risco.tabela.col.modelo"))}</th><th scope="col" data-alpha="0.0500">${esc(T("risco.tabela.col.0.0500"))}</th><th scope="col" data-alpha="0.0100">${esc(T("risco.tabela.col.0.0100"))}</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </section>`;
+}
+
+// ---------------------------------------------------------------- a trilha (RunTrail.tsx)
+function runTrail(l) {
+  const instant = (s) => T("risco.trilha.instante", ...fInstantParts(s));
+  const status = l.status === "ok" ? T("risco.trilha.status.ok")
+    : l.status === "partial" ? T("risco.trilha.status.partial", MODEL_ORDER.length - new Set(l.results.filter((r) => r.error === "").map((r) => r.model_name)).size)
+    : T("risco.trilha.status.failed");
+  const item = (k, v) => `<div><dt>${esc(T(`risco.trilha.${k}`))}</dt><dd>${esc(v)}</dd></div>`;
+  const pregoes = (n) => T("risco.trilha.pregoes", fInt.format(n));
+  return `${why(T("risco.trilha"))}
+    <dl class="ruvor-trail">
+      ${item("asOf", fDate(l.as_of_date))}
+      ${item("firstPrice", fDate(l.first_price_date))}
+      ${item("priceCount", fInt.format(l.price_count))}
+      ${item("train", pregoes(l.train_count))}
+      ${item("test", pregoes(l.test_count))}
+      ${item("window", pregoes(l.train_window_days))}
+      ${item("calculatedAt", instant(l.calculated_at))}
+      ${item("finishedAt", l.finished_at ? instant(l.finished_at) : "—")}
+      ${item("engine", l.engine_version)}
+      ${item("seed", String(l.seed))}
+      ${item("priceRun", T("risco.trilha.coleta", TEXTOS[`risco.trilha.fonte.${l.price_run.source}`] ?? l.price_run.source, instant(l.price_run.finished_at ?? l.price_run.started_at)))}
+      ${item("status", status)}
+    </dl>`;
+}
+
+// ---------------------------------------------------------------- a seção (E1)
+let risk = null; // a resposta guardada: trocar o nível não pede nada à API (RF-03)
+
+// O painel fica aberto nos dois níveis e fora de qualquer recolhível; a tabela inteira recolhe
+// (models), e dentro dela cada linha de teste (tests); a trilha recolhe na coluna lateral (trail).
+function renderRisk() {
+  const l = risk.latest;
+  const host = $("#sec-risk [data-body]");
+  host.removeAttribute("aria-busy");
+  host.innerHTML = `<div class="ruvor-stack">
+    ${lossSummary(l.results)}
+    <div data-models-host>${collapsible("models", T("risco.modelos.abrir"), modelTable(l.results, "itub4"), openState.models)}</div>
+  </div>`;
+  const tHost = $("#sec-trail [data-body]");
+  tHost.removeAttribute("aria-busy");
+  tHost.innerHTML = collapsible("trail", T("risco.trilha.abrir"), runTrail(l), openState.trail);
+}
+
+function renderItub4Note() {
+  const st = risk == null ? "—" : `status <code>${esc(risk.latest.status)}</code>, <code>in_progress</code> ${risk.in_progress == null ? "nulo" : "PREENCHIDO"}, execução ${risk.latest.id} de ${fDate(risk.latest.as_of_date)}`;
+  $("#m23-itub4-note").innerHTML = `<p><b>Nota do mockup · não é tela.</b> ITUB4 ao vivo, no estado E1 (${st}).</p>
+    <p><b>Iniciante:</b> o painel dos dois níveis aberto; a tabela dos nove recolhida inteira atrás de <q>${esc(T("risco.modelos.abrir"))}</q>; a trilha recolhida na coluna lateral atrás de <q>${esc(T("risco.trilha.abrir"))}</q>. Aberta a tabela, as nove linhas de teste nascem fechadas, como hoje, e as frases são as iniciantes (RF-07).</p>
+    <p><b>Avançada:</b> tudo aberto — a tabela, as nove linhas de teste e a trilha —, e as frases avançadas nas 9 chaves. A <code>risco.tabela.intro</code> troca pela proposta de entrada avançada (ver a vista <q>os textos</q>). Trocar a leitura reaplica o padrão a todos os recolhíveis.</p>
+    <p>Com o ITUB4, nenhum ramo <code>k = 0</code> nem <code>julgados = 0</code> aparece (6 e 2 adequados): os dois estão na vista <q>k = 0 e julgados = 0</q>.</p>`;
+}
+
+async function loadRisk() {
+  const sec = $("#sec-risk"), host = $("[data-body]", sec);
+  try {
+    const r = await fetch(`/api/v1/assets/${TICKER}/risk`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    risk = await r.json();
+  } catch {
+    sec.dataset.riskState = "RISCO_ERRO";
+    host.removeAttribute("aria-busy");
+    host.innerHTML = `<div class="ruvor-callout ruvor-callout--critical" role="alert">${esc(T("ativo.erroSecao"))}</div>`;
+    return;
+  }
+  if (risk.latest == null || risk.in_progress != null) {
+    // O mockup é do E1; fora dele, diz e não finge.
+    sec.dataset.riskState = "FORA_DE_E1";
+    host.removeAttribute("aria-busy");
+    host.innerHTML = `<div class="m23-note"><p><b>Nota do mockup:</b> o ITUB4 não está em E1 agora (<code>latest</code> ${risk.latest == null ? "nulo" : "presente"}, <code>in_progress</code> ${risk.in_progress == null ? "nulo" : "preenchido"}). Recarregue quando o cálculo terminar.</p></div>`;
+    return;
+  }
+  sec.dataset.riskState = "E1";
+  renderRisk();
+  renderItub4Note();
+}
+
+// ---------------------------------------------------------------- os casos k = 0 e julgados = 0
+// Dado fictício, montado no formato da API: as perdas do ITUB4, com o veredito trocado.
+function fakeResult(model, alpha, varLatest, adequate, error = "") {
+  const failed = error !== "";
+  return { model_name: model, alpha, var_latest: failed ? null : varLatest, adequate: failed ? null : adequate, error,
+    violations: failed ? null : 140, expected_violations: failed ? null : "112.250000",
+    kupiec_passed: failed ? null : false, kupiec_p_value: failed ? null : "0.0000300000",
+    christoffersen_passed: failed ? null : true, christoffersen_p_value: failed ? null : "0.4100000000",
+    dq_passed: failed ? null : false, dq_p_value: failed ? null : "0.0000000000" };
+}
+const FAKE_VAR = { "0.0500": [0.0220, 0.0269, 0.0271, 0.0297, 0.0269, 0.0285, 0.0316, 0.0259, 0.0296], "0.0100": [0.0442, 0.0385, 0.0388, 0.0420, 0.0380, 0.0451, 0.0573, 0.0451, 0.0543] };
+const CASE_K0 = ALPHAS.flatMap((a) => MODEL_ORDER.map((m, i) => fakeResult(m, a, String(FAKE_VAR[a][i]), false,
+  a === "0.0500" && (m === "lstm" || m === "gru") ? "falha fictícia do treino" : "")));
+const CASE_J0 = ALPHAS.flatMap((a) => MODEL_ORDER.map((m) => fakeResult(m, a, null, null, "falha fictícia")));
+
+function renderCasos() {
+  $("#m23-casos-note").innerHTML = `<p><b>Nota do mockup · não é tela · dado fictício.</b> O ITUB4 não tem estes ramos; estes painéis são montados pelo mesmo caminho do painel da tela (<code>LossSummary.tsx</code>), com resultados inventados no formato da API. Troque a leitura na barra escura para ver os dois níveis.</p>
+    <p><b>k = 0:</b> na iniciante, a frase dos não rejeitados é a <b>proposta deste portão</b> — ganha <q>${esc(EXPR["risco.naoRejeitados"])}</q> (RF-08); na avançada, a proposta avançada. A 95%, 2 modelos sem veredito mostram o <q>julgados de total</q>; a 99%, os nove julgados.</p>
+    <p><b>julgados = 0:</b> isento da expressão nos dois níveis (RF-08) — não há veredito. A faixa também cai no ramo <code>n = 0</code> da discordância.</p>`;
+  $("[data-case='k0']").innerHTML = lossSummary(CASE_K0);
+  $("[data-case='j0']").innerHTML = lossSummary(CASE_J0);
+}
+
+// ---------------------------------------------------------------- os textos
+function renderTextos() {
+  $("#m23-textos-head").innerHTML = `<p><b>As 9 chaves <code>risco.*</code> do RF-04, nas duas leituras.</b> A iniciante é a de <code>textos.ts</code>, como está — salvo o ramo <code>k = 0</code> de <code>risco.naoRejeitados</code>, que mostra a de hoje e a proposta (<span class="ruvor-tag ruvor-tag--review">muda</span>). A avançada é a proposta deste portão, com a mesma chave e os mesmos argumentos (RF-05). Cada afirmação da avançada copia a de <code>docs/mockups/M2.3/conferencia-risco.md</code>, onde está o <code>caminho:linha</code> que a confere; o que a conferência marca como não ancorado não entra: nenhuma frase diz que todos os modelos preveem cada dia só com a véspera (o GARCH(1,1) e o EGARCH usam o retorno do próprio dia), nem que usam o último ano (os três tradicionais são ajustados uma vez, no começo da série). O p-valor do Christoffersen é o da independência.</p>
+    <p>Chave-função: uma linha por exemplo de <code>EXEMPLOS_AVANCADOS</code>, cobrindo os ramos da avançada; a coluna da iniciante mostra a iniciante com os mesmos argumentos. Chave de texto: uma linha. A expressão da D-64 vem <mark class="m23-expr">sublinhada</mark> onde aparece.</p>`;
+  const rows = [];
+  for (const k of Object.keys(TEXTOS_AVANCADOS)) {
+    const av = TEXTOS_AVANCADOS[k], ini = TEXTOS[k];
+    if (typeof av !== typeof ini || (typeof av === "function" && av.length !== ini.length)) throw new Error(`assinatura diverge: ${k}`);
+    if (typeof av === "function") {
+      const exs = EXEMPLOS_AVANCADOS[k];
+      if (!exs) throw new Error(`sem exemplo: ${k}`);
+      exs.forEach((a, i) => {
+        const hoje = ini(...a), nova = INICIANTE[k](...a);
+        const iniCell = hoje === nova ? `<p>${mark(k, hoje)}</p>`
+          : `<p><span class="ruvor-tag ruvor-tag--review">muda</span></p><p><b>hoje:</b> ${mark(k, hoje)}</p><p><b>proposta:</b> ${mark(k, nova)}</p>`;
+        rows.push(`<tr><td>${esc(k)}</td><td>${esc((RAMO[k]?.[i] ? `${RAMO[k][i]}: ` : "") + JSON.stringify(a))}</td><td>${iniCell}</td><td>${mark(k, av(...a))}</td></tr>`);
+      });
+    } else {
+      rows.push(`<tr><td>${esc(k)}</td><td>texto</td><td>${mark(k, ini)}</td><td>${mark(k, av)}</td></tr>`);
+    }
+  }
+  if (Object.keys(TEXTOS_AVANCADOS).length !== 9) throw new Error("as chaves avançadas não são 9");
+  for (const k of Object.keys(EXEMPLOS_AVANCADOS)) if (!(k in TEXTOS_AVANCADOS)) throw new Error(`exemplo sem chave: ${k}`);
+  // A intro, fora da contagem.
+  rows.push(`<tr><td>risco.tabela.intro<br>(fora das 55)</td><td>texto de bloco</td><td>${esc(T("risco.tabela.intro"))}</td><td>${esc(INTRO_AVANCADA)}</td></tr>`);
+  $("#m23-textos-body").innerHTML = rows.join("");
+  $("#m23-novos").innerHTML = `<p><b>Para o portão decidir · <code>risco.tabela.intro</code> na avançada.</b> A iniciante diz <q>Abra um modelo para ver os testes</q>; na avançada as linhas nascem abertas. Proposta: uma entrada avançada própria, texto de bloco, <b>fora da contagem das 55</b> (RF-06): <q>${esc(INTRO_AVANCADA)}</q> — a escala é a maior das dezoito perdas não nulas (<code>frontend/src/components/ModelTable.tsx:194-197</code>, o <code>scale</code>). Alternativa: não ganhar entrada, e a avançada mostrar a iniciante (a frase manda abrir o que já está aberto).</p>
+    <p><b>Rótulos novos dos controles</b> (vão a <code>textos.ts</code> na T10; um rótulo só nos dois estados, como o <code>comportamento.momentos.abrir</code> aprovado): <code>risco.modelos.abrir</code> = <q>${esc(T("risco.modelos.abrir"))}</q> (o exemplo do RF-07); <code>risco.trilha.abrir</code> = <q>${esc(T("risco.trilha.abrir"))}</q> — abaixo do título <q>${esc(T("risco.trilha.titulo"))}</q>, que fica à vista, por isso não o repete. Alternativa: <q>Ver a trilha do cálculo</q>. As linhas de teste seguem com o botão que já existe (<code>risco.tabela.abrir</code>).</p>
+    <p><b>Achado, fora deste bloco:</b> com o p-valor em 3 casas, o Christoffersen do Paramétrico a 99% do ITUB4 aparece <q>0,050</q> e <q>não passou</q> (o valor é 0,04967, e passa só acima de 0,05). A frase está certa; o arredondamento confunde. Registrado para o dono; não muda aqui.</p>`;
+}
+
+// ---------------------------------------------------------------- a D-64
+function renderD64() {
+  const V = EXPR["risco.veredito"], N = EXPR["risco.naoRejeitados"];
+  $("#m23-d64-head").innerHTML = `<p><b>A D-64 por chave e ramo (RF-08) — a proposta da conferência: a que menos muda a iniciante.</b> Uma expressão por chave, a mesma nos dois níveis e em todos os ramos exigidos:</p>
+    <ul><li><code>risco.veredito</code>: <q>${esc(V)}</q> — a iniciante já contém; <b>não muda</b>.</li>
+    <li><code>risco.naoRejeitados</code>: <q>${esc(N)}</q> — a iniciante <code>k ≥ 1</code> já contém; <b>muda só a iniciante <code>k = 0</code></b>, que hoje fala do período de teste sem dizer do número de hoje. O ramo <code>julgados = 0</code> é isento nos dois níveis.</li></ul>
+    <p>A <code>risco.veredito</code> mora dentro da tabela, que a iniciante recolhe; na iniciante, a distinção fica à vista pelo painel dos não rejeitados, aberto nos dois níveis (RF-08, último item).</p>`;
+  const cases = [
+    ["risco.veredito", "texto, sem ramo", "exigida", []],
+    ["risco.naoRejeitados", "k ≥ 1", "exigida", [6, 9, 9]],
+    ["risco.naoRejeitados", "k ≥ 1, com 1 sem veredito", "exigida", [1, 8, 9]],
+    ["risco.naoRejeitados", "k = 0", "exigida", [0, 9, 9]],
+    ["risco.naoRejeitados", "k = 0, com 2 sem veredito", "exigida", [0, 7, 9]],
+    ["risco.naoRejeitados", "julgados = 0", "isento", [0, 0, 9]],
+  ];
+  $("#m23-d64-body").innerHTML = cases.map(([k, ramo, req, a]) => {
+    const hoje = typeof TEXTOS[k] === "function" ? TEXTOS[k](...a) : TEXTOS[k];
+    const nova = typeof INICIANTE[k] === "function" ? INICIANTE[k](...a) : INICIANTE[k];
+    const av = typeof TEXTOS_AVANCADOS[k] === "function" ? TEXTOS_AVANCADOS[k](...a) : TEXTOS_AVANCADOS[k];
+    const e = EXPR[k];
+    const ok = (s) => (req === "isento" ? "" : s.includes(e) ? " ✓" : " ✗ FALTA A EXPRESSÃO");
+    const iniCell = hoje === nova ? `<p>${mark(k, hoje)}${ok(hoje)}</p><p><b>sem mudança</b></p>`
+      : `<p><span class="ruvor-tag ruvor-tag--review">muda</span></p><p><b>hoje:</b> ${mark(k, hoje)}${ok(hoje)}</p><p><b>proposta:</b> ${mark(k, nova)}${ok(nova)}</p>`;
+    return `<tr><td>${esc(k)}<br>${esc(ramo)}${a.length ? `<br>${esc(JSON.stringify(a))}` : ""}</td><td>${esc(req)}</td><td>${iniCell}</td><td>${mark(k, av)}${ok(av)}</td></tr>`;
+  }).join("");
+
+  // A alternativa da conferência: uma expressão só para as duas chaves.
+  const ALT = "não do número de hoje";
+  const altVeredito = "O veredito junta dois testes feitos no período de teste: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou no período de teste, não do número de hoje.";
+  const altK1 = TEXTOS["risco.naoRejeitados"](6, 9, 9).replace("O veredito fala do comportamento de cada modelo no período de teste — não garante o número de hoje —, e passar", "O veredito fala do comportamento de cada modelo no período de teste, não do número de hoje; e passar");
+  const altK0 = TEXTOS["risco.naoRejeitados"](0, 9, 9) + " O veredito fala desse período, não do número de hoje.";
+  const m = (s) => esc(s).replace(ALT, `<mark class="m23-expr">${ALT}</mark>`);
+  // As três avançadas que a alternativa pediria, derivadas das propostas por troca de um trecho —
+  // a troca que não casar derruba a página, para o texto mostrado ser sempre o literal.
+  const swap = (text, from, to) => { if (!text.includes(from)) throw new Error(`alternativa: trecho ausente: ${from}`); return text.replace(from, to); };
+  const altAvVeredito = swap(TEXTOS_AVANCADOS["risco.veredito"], ", não o número exibido: falam do passado do modelo, não de quanto o número de hoje está certo.", ": falam do passado do modelo, não do número de hoje.");
+  const altAvK1 = swap(TEXTOS_AVANCADOS["risco.naoRejeitados"](6, 9, 9), "Os testes avaliam essa série inteira, não o número exibido — o veredito não garante o número de hoje.", "Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.");
+  const altAvK0 = swap(TEXTOS_AVANCADOS["risco.naoRejeitados"](0, 9, 9), "Os testes avaliam essa série inteira, não o número exibido: o veredito não garante o número de hoje, nem para mais nem para menos.", "Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.");
+  $("#m23-d64-alt").innerHTML = `<p><b>Nota de portão · a alternativa da conferência: uma expressão só, <q>${ALT}</q>, para as duas chaves.</b> Lê bem nos três ramos exigidos — inclusive no <code>k = 0</code>, onde <q>não garante</q> soa estranho —, e custa mudar as <b>três</b> iniciantes exigidas, não uma. Como ficariam:</p>
+    <ul><li><code>risco.veredito</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altVeredito)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k ≥ 1</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altK1)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k = 0</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altK0)}</q></li></ul>
+    <p><b>As três avançadas que a alternativa pediria</b> (no lugar das propostas; o resto da frase não muda):</p>
+    <ul><li><code>risco.veredito</code>: <q>${m(altAvVeredito)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k ≥ 1</code> (exemplo <code>[6,9,9]</code>): <q>${m(altAvK1)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k = 0</code> (exemplo <code>[0,9,9]</code>): <q>${m(altAvK0)}</q></li></ul>
+    <p>Nenhuma das duas propostas usa palavra da varredura de vocabulário nem sugere ação (D-153). <b>O portão escolhe uma das duas</b>; o <code>d64.test.ts</code> da T10 escreve a escolhida, literal.</p>`;
+}
+
+// ---------------------------------------------------------------- tema, leitura e vista
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(theme) {
+  if (theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme));
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+
+function applyDefaults(r) {
+  // Trocar o nível reaplica o padrão de cada recolhível (RF-07): iniciante fecha, avançada abre —
+  // inclusive as nove linhas de teste (RF-06).
+  const open = r === "advanced";
+  openState.models = open;
+  openState.trail = open;
+  openState.tests = new Set(open ? MODEL_ORDER : []);
+}
+const readingBtns = document.querySelectorAll("[data-set-reading]");
+function setReading(r) {
+  reading = r;
+  root.setAttribute("data-reading", r);
+  for (const b of readingBtns) b.setAttribute("aria-pressed", String(b.dataset.setReading === r));
+  applyDefaults(r);
+  if (risk?.latest && risk.in_progress == null) renderRisk();
+  renderCasos();
+}
+for (const b of readingBtns) b.addEventListener("click", () => setReading(b.dataset.setReading));
+
+// Abrir e fechar: os dois recolhíveis e as linhas de teste; o foco volta ao botão.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-toggle], [data-test-toggle]");
+  if (!btn || !risk?.latest) return;
+  let sel;
+  if (btn.dataset.toggle) {
+    const name = btn.dataset.toggle;
+    openState[name] = !openState[name];
+    sel = `[data-toggle="${name}"]`;
+  } else {
+    const m = btn.dataset.testToggle;
+    if (openState.tests.has(m)) openState.tests.delete(m); else openState.tests.add(m);
+    sel = `[data-test-toggle="${m}"]`;
+  }
+  renderRisk();
+  $(sel)?.focus();
+});
+
+const viewBtns = document.querySelectorAll("[data-m23]");
+function setView(view) {
+  for (const b of viewBtns) b.setAttribute("aria-pressed", String(b.dataset.m23 === view));
+  for (const v of document.querySelectorAll(".m23-view")) v.hidden = v.dataset.view !== view;
+}
+for (const b of viewBtns) b.addEventListener("click", () => setView(b.dataset.m23));
+
+// ?vista=itub4|casos|textos|d64&tema=light|dark|system&leitura=beginner|advanced — para capturar cada vista direto.
+const params = new URLSearchParams(location.search);
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "itub4");
+setReading(params.get("leitura") === "advanced" ? "advanced" : "beginner");
+renderTextos();
+renderD64();
+await loadRisk();
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>

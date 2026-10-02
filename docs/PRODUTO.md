@@ -47,6 +47,12 @@ Consequência de arquitetura, não de interface: **todo número exibido carrega 
 linguagem clara, junto do dado.** Texto explicativo é conteúdo de primeira classe,
 versionado com a métrica que explica — não um glossário à parte.
 
+Desde o M2.3 as duas leituras existem: o visitante escolhe o nível no casco, e cada número traz a frase do nível. O
+texto mora no frontend, versionado no repositório — a frase e o cálculo mudam no mesmo commit, revisados na mesma PR —,
+e não no banco nem na API ([D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md)); o
+nível é do visitante, global, e o padrão é iniciante
+([D-152](decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)).
+
 | Leitura avançada | Leitura iniciante |
 |---|---|
 | "Volatilidade anualizada: 32%" | "Esta ação costuma variar bastante — oscilações de 30% para cima ou para baixo são esperadas em um ano normal." |
@@ -253,7 +259,11 @@ de valores mobiliários exigem autorização. A fronteira costuma ficar entre:
 - **recomendar** — o sistema diz o que comprar ou sugere composição de carteira
 
 "Montar carteira" atravessa essa linha com facilidade se a plataforma sugerir pesos.
-Desenhar do lado seguro agora custa nada. **Buscar parecer antes do Marco 2.**
+Desenhar do lado seguro agora custa nada. **Buscar parecer antes dos blocos que tocam composição ou peso de carteira**
+— o M2.2 e o que dele derivar —, não antes do Marco 2 inteiro: explicar o que já se mostra é informar
+([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)). Na carteira, o parecer segura o merge da
+implementação, não a spec nem o plano
+([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)).
 
 ---
 
@@ -278,7 +288,7 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Carteira: caminho barato ou caro | ✅ barato ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)) |
 | Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3 segue candidata |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
-| Parecer sobre fronteira CVM | Pendente; segura o merge das implementações da carteira (M2.2a e M2.2b), não as specs nem os planos ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
+| Parecer sobre fronteira CVM | Pendente, antes do merge da carteira — o M2.2 e o que dele derivar ([D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md), [D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
 
 **Resolvidos no M1.6a** (2026-09-28): o tema — o kit tem claro e escuro, pelos mesmos tokens

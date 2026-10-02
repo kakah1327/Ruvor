@@ -1519,6 +1519,72 @@ dois inteiros, `pg_advisory_xact_lock(classe, id)` (o molde de `apps/api/ondeman
 linha depois de pegar a trava. Se precisar mesmo de trava de linha, `select_for_update()` sem `of`
 numa consulta **sem junção**.
 
+## Filtrar por campo de `annotate` atrás de uma função tipada `QuerySet[Modelo]` reprova no `mypy`
+
+**Quando:** uma função auxiliar anota o queryset (`_with_has_risk`, `_with_has_prices` em `apps/api/views.py`) e
+devolve `QuerySet[Asset]`, e quem a chama filtra pelo campo anotado (`found.filter(has_risk=...)`).
+
+**Problema:** o plugin dos `django-stubs` só conhece os campos do modelo. A anotação existe em tempo de execução, mas o
+tipo de retorno `QuerySet[Asset]` a apaga, e o `mypy` estrito acusa o `filter` com um erro `misc` sobre o campo. Na T2
+do M1.7 a assinatura era literal do plano, e não dava para mudá-la.
+
+**Faça:** ponha `# type: ignore[misc]` **só nessa linha**, com um comentário dizendo que o campo vem da anotação (o
+molde está em `AssetListView.get`, `backend/apps/api/views.py`). Não alargue para `ignore_errors` no módulo, nem tire o tipo de retorno da função. Se a
+assinatura não for contrato, prefira anotar e filtrar na mesma função.
+
+## O efeito de montagem pode correr depois de o título aparecer
+
+**Quando:** num teste do Vitest com a Testing Library, ao contar pedidos (`vi.mocked(fetch).mock.calls`) logo depois
+de um `findBy…` de algo que a montagem desenha, como o título da tela "ativo não encontrado".
+
+**Problema:** o `findBy…` volta assim que o elemento aparece, e o pedido que sai do efeito de montagem do componente de
+dentro (a sugestão da caixa de página, no M1.7) pode não ter saído ainda. Contar nesse ponto vê 0 pedidos e reprova, ou
+passa por acaso, conforme a ordem dos efeitos. Na T6 do M1.7, o teste do 404 de `ativo.test.tsx` contava cedo demais.
+
+**Faça:** espere pelo efeito **visível** do pedido (`waitFor` dos atalhos da sugestão na tela) antes de contar, e
+confira a contagem exata de novo no `afterEach`, com tudo assentado.
+
+## `getByText` não acha frase com valor em reais
+
+**Quando:** ao procurar na tela, com o Testing Library, uma frase de `textos.ts` ou `avancado.ts` montada com um valor
+de `format/numbers.ts` em moeda (`R$ 100,00`).
+
+**Problema:** o `Intl.NumberFormat` em `pt-BR` põe um espaço inseparável (U+00A0) depois do `R$`. O normalizador padrão
+do Testing Library troca todo espaço do texto **da tela** por espaço comum, mas não mexe na string **procurada**, que
+continua com o U+00A0: `getByText(frase)` reprova com a frase visivelmente igual. No M2.3 (T7), a prova por seção do
+comportamento caiu assim.
+
+**Faça:** compare o `textContent` cru do elemento com a frase (`expect(el.textContent).toBe(frase)`), ou normalize os
+dois lados do mesmo jeito. Não troque o U+00A0 no formatador para o teste passar: ele é o que a tela mostra.
+
+## Iniciante que devolve união de literais trava a avançada pelo `Leitura<T>`
+
+**Quando:** ao escrever em `avancado.ts` a frase avançada de uma chave-função cuja iniciante, em `textos.ts`, devolve
+um ternário de duas strings literais sem tipo de retorno declarado.
+
+**Problema:** o TypeScript infere o retorno da iniciante como a união dos dois literais, e `Leitura<T>` (string vira
+string; função fica a mesma função) obriga a avançada a devolver **os mesmos literais** — qualquer outra frase não
+compila. No M2.3 (T13), quatro iniciantes de `fundamentos.*` estavam assim (`ebit_ttm`, `net_income_ttm`, `net_debt`,
+`equity_parent`).
+
+**Faça:** declare `: string` no retorno da iniciante em `textos.ts`. O texto, a aridade e o contrato de `Leitura<>`
+ficam iguais; não afrouxe o `Leitura<T>`, que é o que garante a mesma assinatura nos dois níveis.
+
+## O mockup aprovado não acompanha a emenda aprovada no portão
+
+**Quando:** ao conferir a tela contra um mockup do M2.3, ou ao aprovar num portão uma mudança de texto que o mockup
+não aplica em todas as vistas.
+
+**Problema:** o portão pode aprovar uma frase diferente da que o mockup mostra — a emenda de uma iniciante, ou a
+alternativa de uma proposta, desenhada numa vista só. O código segue a emenda, e o mockup fica com a frase antiga: no
+M2.3, o `comportamento.html` e o `fundamentos.html` mostram as iniciantes anteriores às emendas, e a vista `itub4` do
+`risco.html` aplica a proposta da D-64 que o portão não escolheu (vale a vista `d64`). Quem confere a tela contra o
+mockup acha divergência que não é defeito — ou, pior, "corrige" a tela para a frase velha.
+
+**Faça:** antes de conferir texto contra o mockup, leia as "Correções registradas na execução" do plano e o índice de
+[`docs/mockups/README.md`](mockups/README.md), que marca o que o mockup não reflete. Ao aprovar uma emenda no portão,
+registre no plano, no mesmo commit, qual vista do mockup fica para trás — ou atualize o mockup antes da implementação.
+
 ## A diferença de um ulp na soma some no passo seguinte, e a mutação da ordem sobrevive
 
 **Quando:** ao provar que um cálculo em `float` soma numa ordem fixa (a série da carteira do M2.2a

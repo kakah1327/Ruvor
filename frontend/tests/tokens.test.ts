@@ -430,6 +430,8 @@ const INTERACTIVE = [
   ".ruvor-table__toggle",
   // M1.6c (T3): o link de comunicado, que abre o documento na CVM.
   ".ruvor-doc__link",
+  // M2.3 (T7): o controle de recolher.
+  ".ruvor-collapsible__toggle",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -575,5 +577,36 @@ describe("RF-06 — a folha só estiliza classe", () => {
       .map((match) => match[1])
       .filter((name) => !/^\d/.test(name));
     expect(classes.filter((name) => !name.startsWith("ruvor-"))).toEqual([]);
+  });
+});
+
+// M2.3 (T7): o controle de recolher, do comportamento.html aprovado. Os estados do RF-03 que
+// ele tem: o hover (o sublinhado), o foco visível (no V-05, pela lista INTERACTIVE) e o aberto
+// (a seta girada pelo aria-expanded); não há disabled nem carregando.
+describe("M2.3 — o controle de recolher no kit", () => {
+  it("o hover sublinha o rótulo", () => {
+    expect(
+      ruleValue(
+        COMPONENTS_CSS,
+        ".ruvor-collapsible__toggle:hover span",
+        "text-decoration",
+      ),
+    ).toBe("underline");
+  });
+
+  it("aberto, a seta gira pelo aria-expanded, sem classe a mais", () => {
+    expect(
+      ruleValue(
+        COMPONENTS_CSS,
+        '.ruvor-collapsible__toggle[aria-expanded="true"] .ruvor-glyph',
+        "transform",
+      ),
+    ).toBe("rotate(90deg)");
+  });
+
+  it("o raiz separa o controle do que vem antes por uma régua de token", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-collapsible", "border-top")).toBe(
+      "1px solid var(--ruvor-table-rule)",
+    );
   });
 });
