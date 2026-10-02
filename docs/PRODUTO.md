@@ -121,7 +121,8 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 ### Marco 2 — vira plataforma
 
 - Usuários, autenticação, papéis, permissões
-- Carteira composta pelo usuário, com risco de carteira
+- Carteira composta pelo usuário, com risco de carteira — o backend é o M2.2a, pronto no ramo e
+  esperando o parecer da CVM para entrar ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)); as telas são o M2.2b
 - Camada explicativa iniciante/avançado como sistema
 - Camada 3 no regime de laboratório ([D-04](decisoes/D-04-dois-regimes-de-operacao.md),
   [D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
@@ -219,7 +220,8 @@ quando a outra cai, uma protege a outra.
 - **Caminho caro** — modelar explicitamente a relação entre os ativos. Exige família de
   modelos que o projeto não tem e o TCC não cobre.
 
-**Recomendação: caminho barato.** Ainda não formalizado.
+**Caminho barato, formalizado pela [D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)**: a série única, de pesos fixos rebalanceados a
+cada pregão, sobre a interseção das datas, nos nove modelos, sem mudar o motor.
 
 ### Horizonte longo é mais difícil de validar
 
@@ -236,7 +238,9 @@ Cada análise de carteira que dispara os modelos de ML gasta minutos de CPU dedi
 usuário custa centavos; mil usuários analisando carteiras diferentes por dia vira a maior
 linha da conta, e cresce linearmente — cada combinação de pesos é única.
 
-A spec do Marco 1 deve prever **cache agressivo e limite de análises pesadas por usuário**.
+A spec do Marco 1 deve prever **cache agressivo e limite de análises pesadas**. Na carteira do
+M2.2a, o limite é **por organização** (um cálculo por vez) **e global**
+(`RUVOR_PORTFOLIO_COMPUTE_MAX`), não por usuário ([D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)).
 
 ### Fronteira regulatória (CVM)
 
@@ -271,10 +275,10 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 
 | Tema | Situação |
 |---|---|
-| Carteira: caminho barato ou caro | Recomendação: barato. Não formalizado |
+| Carteira: caminho barato ou caro | ✅ barato ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)) |
 | Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3 segue candidata |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
-| Parecer sobre fronteira CVM | Pendente, antes do Marco 2 |
+| Parecer sobre fronteira CVM | Pendente; segura o merge das implementações da carteira (M2.2a e M2.2b), não as specs nem os planos ([D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md)) |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
 
 **Resolvidos no M1.6a** (2026-09-28): o tema — o kit tem claro e escuro, pelos mesmos tokens

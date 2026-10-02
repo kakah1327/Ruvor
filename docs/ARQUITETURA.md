@@ -183,7 +183,9 @@ contexto é posto pela autenticação do pedido (sessão e chave) e zerado pelo
 `OrganizationScopeMiddleware` no começo e no fim de cada pedido; dentro dos serviços, pelo próprio
 serviço, com `organization_scope(...)`. O gerente base do modelo é sem escopo, para o Django; a
 saída explícita sem escopo (`ApiKey.unscoped`) só em lugar nomeado, guardado por teste. A carteira
-do M2.2 só o aplica. O `user` é exceção permanente: os backends de
+do M2.2a só o aplica, nas cinco tabelas dela, e tem uma saída nomeada: o teto global de cálculos,
+`count_running_everywhere`, que conta execuções de todas as organizações e devolve só um inteiro
+([D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)). O `user` é exceção permanente: os backends de
 autenticação do Django alcançam o modelo por `_default_manager`, e a busca no login é anterior
 a saber a que organização a pessoa pertence — então o M2.1 isola a listagem de usuário por outro
 meio, e não pelo ORM ([D-41](decisoes/D-41-filtro-por-organizacao-na-primeira-tabela-privada.md)): toda
@@ -331,8 +333,10 @@ O modo A é **exceção de primeira consulta**, não a regra.
 ### A carteira é o caso realmente dinâmico
 
 Não há como pré-calcular: a combinação de pesos que o usuário montou nunca existiu. É onde o
-modo A vale de verdade, e onde o cache importa — mexer pouco nos pesos deve reaproveitar
-boa parte do trabalho.
+modo A vale de verdade. No caminho barato do M2.2a — uma série única de pesos fixos nos nove
+modelos, sem retratos —, **mexer nos pesos recalcula tudo**: a série nova é outra, e o treino
+também ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md), [D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)). O que se poupa é o recálculo da mesma
+composição com os mesmos preços, que o pedido recusa com `portfolio_risk_up_to_date`.
 
 Ver [D-18](decisoes/D-18-separacao-treino-previsao.md),
 [D-19](decisoes/D-19-cobertura-de-ativos-em-camadas.md).
