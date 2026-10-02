@@ -15,7 +15,8 @@
    * copiados para o <svg> de símbolos no início do <body>.
    *
    * Prefixos: ruvor- é o kit (components.css, intocado); sug- é o estilo local que a sugestão
-   * pede e que a T6 leva ao kit; mk- é a moldura do mockup (seletor, corpo montado à mão,
+   * pede e que a T6 leva ao kit (só .sug-more e .sug-chip-skeleton; nenhum e erro usam o
+   * .ruvor-search__empty do kit); mk- é a moldura do mockup (seletor, corpo montado à mão,
    * tabela dos textos) e não é tela.
    */
 
@@ -34,14 +35,6 @@
     width: 64px;
     height: 38px;
     border-radius: var(--ruvor-radius-sm);
-  }
-  /* Nenhum e erro: a frase no lugar dos atalhos, no painel do "sem resultado" da busca. */
-  .sug-msg {
-    padding: var(--ruvor-space-4) var(--ruvor-space-5);
-  }
-  .sug-msg p {
-    margin: var(--ruvor-space-1) 0 0;
-    color: var(--ruvor-text-muted);
   }
 
   /* --- Moldura do mockup: não é tela ------------------------------------------------ */
@@ -165,7 +158,7 @@
 
   <footer class="ruvor-footer">
     <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span>O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.</span></p>
-    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span>Fontes: catálogo de ativos da B3 e preços do Yahoo Finance.</span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span>Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.</span></p>
   </footer>
 </div>
 
@@ -190,29 +183,30 @@
     "busca.sugestaoTitulo": "ativos com risco calculado",
     "busca.sugestaoNota": "Os outros ativos do catálogo podem ter o risco calculado na página de cada um.",
     // Novos (M1.7).
-    "busca.sugestao.carregando": "Carregando os ativos com risco calculado.",
-    "busca.sugestao.erro": "A lista de ativos com risco calculado não carregou.",
-    "busca.sugestao.erroDica": "A busca continua funcionando: digite o código ou o nome do ativo.",
-    "busca.sugestao.nenhum": "Nenhum ativo tem o risco calculado ainda.",
-    "busca.sugestao.nenhumNota": "Os ativos do catálogo podem ter o risco calculado na página de cada um.",
-    "busca.sugestao.mais": function (n) { return n === 1 ? "e mais 1 ativo" : "e mais " + fmtInt(n) + " ativos"; }
+    "busca.sugestaoCarregando": "Carregando os ativos com risco calculado.",
+    "busca.sugestaoErro": "A lista de ativos com risco calculado não carregou.",
+    "busca.sugestaoErroDica": "Busque pelo código ou pelo nome do ativo, no campo acima.",
+    "busca.sugestaoNenhum": "Nenhum ativo tem o risco calculado ainda.",
+    "busca.sugestaoNenhumNota": "Os ativos do catálogo podem ter o risco calculado na página de cada um.",
+    "busca.sugestaoMais": function (n) { return n === 1 ? "e mais 1 ativo" : "e mais " + fmtInt(n) + " ativos"; }
   };
-  var NOVAS = ["busca.sugestao.carregando", "busca.sugestao.erro", "busca.sugestao.erroDica", "busca.sugestao.nenhum", "busca.sugestao.nenhumNota", "busca.sugestao.mais"];
+  var NOVAS = ["busca.sugestaoCarregando", "busca.sugestaoErro", "busca.sugestaoErroDica", "busca.sugestaoNenhum", "busca.sugestaoNenhumNota", "busca.sugestaoMais"];
 
   // ---------------------------------------------------------------- o dado montado à mão
   // Itens com os campos de AssetItemSerializer e has_risk (RF-03, RF-05). ticker, name,
   // trading_name, kind, status e has_prices são os de silver.asset hoje (consulta só leitura,
   // 2026-10-01); sector como a API o mostra depois do RF-07 ("Petróleo. Gás…" → "Petróleo, Gás…").
   // Os seis primeiros são o conjunto de has_risk de hoje (T0); os cinco extras são tickers
-  // reais do catálogo, com has_risk forçado em true só para o estado "count 11" — hoje eles
-  // não têm preço coletado, e por isso não teriam risco.
+  // reais do catálogo (ticker, nomes, kind e sector de silver.asset), mas o corpo deles é
+  // fictício: has_prices e has_risk em true só para o estado "count 11" — hoje eles não têm
+  // preço coletado nem risco.
   function item(ticker, name, trading_name, kind, sector, has_prices) {
     return { ticker: ticker, name: name, trading_name: trading_name, kind: kind, sector: sector, status: "active", has_prices: has_prices, has_risk: true };
   }
   var AALR3 = item("AALR3", "ALLIANÇA SAÚDE E PARTICIPAÇÕES S.A.", "ALLIAR", "stock", "Saúde", true);
-  var ABEV3 = item("ABEV3", "AMBEV S.A.", "AMBEV S/A", "stock", "Consumo não Cíclico", false);
-  var B3SA3 = item("B3SA3", "B3 S.A. - BRASIL. BOLSA. BALCÃO", "B3", "stock", "Financeiro", false);
-  var BBAS3 = item("BBAS3", "BCO BRASIL S.A.", "BRASIL", "stock", "Financeiro", false);
+  var ABEV3 = item("ABEV3", "AMBEV S.A.", "AMBEV S/A", "stock", "Consumo não Cíclico", true);
+  var B3SA3 = item("B3SA3", "B3 S.A. - BRASIL. BOLSA. BALCÃO", "B3", "stock", "Financeiro", true);
+  var BBAS3 = item("BBAS3", "BCO BRASIL S.A.", "BRASIL", "stock", "Financeiro", true);
   var BBDC4 = item("BBDC4", "BCO BRADESCO S.A.", "BRADESCO", "stock", "Financeiro", true);
   var IBOV  = item("IBOV", "Índice Bovespa", "IBOVESPA", "index", null, true);
   var ITUB4 = item("ITUB4", "ITAU UNIBANCO HOLDING S.A.", "ITAUUNIBANCO", "stock", "Financeiro", true);
@@ -228,8 +222,8 @@
   };
 
   var CASES = {
-    carregando: "o pedido GET /api/v1/assets?has_risk=true&limit=8 ainda não respondeu: o título fica, os atalhos viram esqueleto, e o leitor de tela ouve a frase",
-    erro: "o pedido respondeu erro (500, rede): a frase no lugar dos atalhos, sem botão; a caixa acima continua buscando",
+    carregando: "o pedido GET /api/v1/assets?has_risk=true&limit=8 ainda não respondeu: o título fica, os atalhos viram esqueleto (aria-busy), e a frase fica fora da vista, para o leitor de tela achar ao navegar; a sugestão é auxiliar e não tem região viva: nada é anunciado",
+    erro: "o pedido respondeu erro (500, rede): a frase no lugar dos atalhos, sem botão; de propósito, o erro não é anunciado ao leitor de tela (sem role=alert nem região viva: alerta ao abrir a página é ruído); a caixa acima continua aceitando o que se digita",
     nenhum: "count 0 (banco novo): nenhum ativo tem risco calculado",
     lista: "count 6 — o conjunto de has_risk de hoje (T0), na ordem do RF-02",
     mais: "count 11 (montado à mão): os oito da página e o \"e mais N\", N = count − 8 = 3, sem link"
@@ -277,7 +271,7 @@
 
     if (state.kind === "carregando") {
       box.setAttribute("aria-busy", "true");
-      box.appendChild(el("p", "ruvor-sr-only", T["busca.sugestao.carregando"]));
+      box.appendChild(el("p", "ruvor-sr-only", T["busca.sugestaoCarregando"]));
       var sk = el("ul", "ruvor-chips");
       sk.setAttribute("aria-hidden", "true");
       for (var i = 0; i < 6; i++) {
@@ -290,18 +284,18 @@
     }
 
     if (state.kind === "erro") {
-      var err = el("div", "ruvor-panel sug-msg");
-      err.appendChild(el("b", null, T["busca.sugestao.erro"]));
-      err.appendChild(el("p", null, T["busca.sugestao.erroDica"]));
+      var err = el("div", "ruvor-panel ruvor-search__empty");
+      err.appendChild(el("b", null, T["busca.sugestaoErro"]));
+      err.appendChild(el("p", null, T["busca.sugestaoErroDica"]));
       box.appendChild(err);
       return box;
     }
 
     var page = state.page;
     if (page.count === 0) {
-      var none = el("div", "ruvor-panel sug-msg");
-      none.appendChild(el("b", null, T["busca.sugestao.nenhum"]));
-      none.appendChild(el("p", null, T["busca.sugestao.nenhumNota"]));
+      var none = el("div", "ruvor-panel ruvor-search__empty");
+      none.appendChild(el("b", null, T["busca.sugestaoNenhum"]));
+      none.appendChild(el("p", null, T["busca.sugestaoNenhumNota"]));
       box.appendChild(none);
       return box;
     }
@@ -316,7 +310,7 @@
     });
     if (page.count > SUGGEST_LIMIT) {
       var liMore = el("li");
-      liMore.appendChild(el("span", "sug-more", T["busca.sugestao.mais"](page.count - SUGGEST_LIMIT)));
+      liMore.appendChild(el("span", "sug-more", T["busca.sugestaoMais"](page.count - SUGGEST_LIMIT)));
       ul.appendChild(liMore);
     }
     box.appendChild(ul);
