@@ -15,17 +15,16 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 ## Agora
 
 **Bloco:** M2.2a — Carteira (só o backend; as telas são o M2.2b, da `marco1`). Os três blocos
-anteriores fecharam: o M4.2 (PR #15), o M4.1 (PR #28) e o M2.1a (2026-09-30), este com a PR #29 aberta
-**Etapa:** spec do M2.2a aprovada pelo dono (2026-10-01); plano aprovado pelo dono (2026-10-01); PR de spec e plano aberta; **a PR de implementação só entra na `main` com o
+anteriores fecharam: o M4.2 (PR #15), o M4.1 (PR #28) e o M2.1a (PR #29)
+**Etapa:** spec do M2.2a aprovada pelo dono (2026-10-01); plano aprovado pelo dono (2026-10-01); spec e plano na `main` (PR #31); **T0 executada** (linha de base), a T1 é a próxima; **a PR de implementação só entra na `main` com o
 parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
-**Ramo:** `identidade/M2.2-carteira` (sobre o ramo da PR #29); `identidade/M2.1-identidade-e-acesso` (a PR #29)
+**Ramo:** `identidade/M2.2-carteira`, no worktree `.claude/worktrees/identidade+M2.2-carteira`
 
 ## Próximo passo
 
 1. ~~A PR #29 do M2.1a~~ — mesclada em 2026-10-01.
-2. A spec do M2.2a: portão do dono e a PR da spec, que **passa pela `marco1`**
-   — a cerca nova, o que a carteira lê de `apps/risk/` e o M2.2b nascendo na `marco1`. Depois, o
-   plano.
+2. ~~A spec e o plano do M2.2a~~ — aprovados e na `main` pela PR #31 (2026-10-01).
+   A implementação, da T1 à T8 do [plano](../planos/M2.2a-carteira.md).
 3. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
    para 401, na mesma rodada de revisão da PR dele.
 4. Pedir o parecer da CVM: sem ele, a implementação do M2.2a fica no ramo.
@@ -59,3 +58,4 @@ parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec
 | 2026-10-01 | PR #29 (M2.1a) na `main`. Spec do M2.2a: revisão 2 reprovou (1 grave: `select_for_update(of=...)` gera `FOR UPDATE OF "gold"."…"`, que o PostgreSQL recusa — reproduzido no `ruvor-web-1`; trocado pela trava consultiva da execução, `pg_advisory_xact_lock(7104, run_id)`, com releitura; 2 médios, 11 leves), absorvidos; **revisão 3 aprovou** (1 médio: o V-16 concorrente nas duas ordens; 6 leves), absorvidos. Verbete novo em aprendizados. A spec vai ao portão do dono |
 | 2026-10-01 | Spec do M2.2a aprovada pelo dono. Plano escrito, em rascunho: T0 a T8 — a app e as cinco tabelas; a série e o provedor; os serviços e as rotas da composição; o pedido e a leitura do risco; as tarefas e a conversão; 25 mutações; a execução real e o FECHA |
 | 2026-10-01 | Plano do M2.2a: revisão 1 reprovou (4 médios: a metade do RF-20 sem prova, `tests/test_celery_registro.py` fora da cerca, as mutações 5 e 12 que podiam sobreviver), a 2 reprovou (1 médio: o critério rodaria no checkout principal, não no worktree — agora contêiner avulso com `RUVOR_DB_NAME=ruvor_m22`), **a 3 aprovou** (2 leves). O plano vai ao portão do dono |
+| 2026-10-01 | PR #30 (M1.5c) e PR #31 (spec e plano do M2.2a) na `main`. **T0 do M2.2a executada:** ramo avançado à `main` `804cda4` sem conflito; a `main` não trouxe migration nova de `accounts` (`0006_report`) nem de `assets` (`0003_yahoo_chart_price_corporate_event`); imagem do `worker` reconstruída; banco `ruvor_m22` já existia, `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0; o teste de mentira em `tests/portfolios` apareceu na coleta do avulso. Linha de base: `1397 passed` em 14 min 45 s, `mypy` sem erros em 225 arquivos, `ruff check` e `ruff format --check` limpos |
