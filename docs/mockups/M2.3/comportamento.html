@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Comportamento nas duas leituras (mockup, M2.3)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.min.css">
+<style>
+  /*
+   * Mockup da seção Comportamento nas duas leituras (T6 do plano M2.3). Dado real do ITUB4,
+   * pedido a /api/v1/ pelo proxy do Vite. O desenho é o da seção aprovada no M1.6b (ativo.html)
+   * e implementada em frontend/src/components/BehaviorSection.tsx; o que muda é a frase pelo
+   * nível e o recolhimento da assimetria e da curtose (RF-06, RF-07).
+   *
+   * As frases avançadas copiam as afirmações de docs/mockups/M2.3/conferencia-comportamento.md;
+   * o que lá está como não ancorado no código não entra.
+   *
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal. Estilo local só com m23-:
+   *   - m23-collapsible: o CONTROLE DE RECOLHER, que nasce aqui (a T9 e a T12 o repetem; a T7 o
+   *     leva ao kit). Derivado da linha expansível da tabela (.ruvor-table__toggle, a seta que
+   *     gira com aria-expanded);
+   *   - m23-switches: o arranjo provisório da chave de tema e do alternador na barra — quem
+   *     decide o arranjo é o casco-e-preco.html (T3);
+   *   - m23-bar, m23-note, m23-textos, m23-states: a moldura do mockup, que não é tela.
+   */
+
+  /* --- As três regras de cor fixa da folha do uPlot, sobrepostas por token (RF-22 do M1.6b) --- */
+  .uplot .u-select { background: var(--ruvor-control-hover); }
+  .uplot.u-hz .u-cursor-x, .uplot.u-vt .u-cursor-y { border-right-color: var(--ruvor-border); }
+  .uplot.u-hz .u-cursor-y, .uplot.u-vt .u-cursor-x { border-bottom-color: var(--ruvor-border); }
+  .uplot { font-family: var(--ruvor-font-sans); }
+
+  /* --- O controle de recolher (proposta deste portão) --------------------------------- */
+  /* O raiz: uma régua fina separa o controle do que vem antes (no bloco Distribuição, o
+     histograma). Fechado, só o botão; aberto, o conteúdo logo abaixo dele. */
+  .m23-collapsible { display: flex; flex-direction: column; gap: var(--ruvor-space-4); padding-top: var(--ruvor-space-3); border-top: 1px solid var(--ruvor-table-rule); }
+  /* O botão: o .ruvor-table__toggle do kit — a seta à esquerda, que gira 90° aberto —, com o
+     alvo de toque mais alto (6 px acima e abaixo) e o sublinhado no hover, que a linha da
+     tabela não precisa porque a linha inteira reage. */
+  .m23-collapsible__toggle { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--ruvor-space-2); font: inherit; font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); color: var(--ruvor-ink); background: transparent; border: 0; padding: 6px 0; cursor: pointer; text-align: left; }
+  .m23-collapsible__toggle .ruvor-glyph { flex: none; transition: transform 0.15s; }
+  .m23-collapsible__toggle[aria-expanded="true"] .ruvor-glyph { transform: rotate(90deg); }
+  .m23-collapsible__toggle:hover span, .m23-collapsible__toggle.is-hover span { text-decoration: underline; text-underline-offset: 3px; }
+  .m23-collapsible__toggle:focus-visible, .m23-collapsible__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) { .m23-collapsible__toggle .ruvor-glyph { transition: none; } }
+
+  /* --- A chave de tema e o alternador na barra: arranjo PROVISÓRIO (o casco é da T3) --- */
+  .m23-switches { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--ruvor-space-2); }
+
+  /* --- Moldura do mockup: não é tela --------------------------------------------------- */
+  .m23-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .m23-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m23-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .m23-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .m23-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .m23-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .m23-view[hidden] { display: none; }
+  .m23-note { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  .m23-note b { color: var(--ruvor-ink); }
+  .m23-note p { margin: 0; }
+  .m23-note code { font-family: var(--ruvor-font-mono); }
+  .m23-note q { color: var(--ruvor-text); }
+  .m23-textos { table-layout: fixed; }
+  .m23-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .m23-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 22%; }
+  .m23-textos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 16%; }
+  .m23-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--ruvor-space-4); }
+  .m23-states figure { margin: 0; display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .m23-states figcaption { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  @media (max-width: 720px) {
+    .m23-bar { padding-inline: var(--ruvor-space-4); }
+    .m23-textos thead { display: none; }
+    .m23-textos tr { display: block; padding: var(--ruvor-space-2) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m23-textos td { display: block; width: auto !important; border: 0; padding: 2px 0; }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="m23-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.3 · comportamento · fora da tela</p>
+  <div class="m23-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-m23="itub4">ITUB4 ao vivo</button>
+    <button class="ruvor-btn" type="button" data-m23="textos">os textos</button>
+    <button class="ruvor-btn" type="button" data-m23="controle">o controle de recolher</button>
+  </div>
+  <p class="m23-group"><span>O tema e a leitura mudam na barra escura, como na tela.</span></p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="../M1.6b/busca.html" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="m23-switches">
+    <div class="ruvor-segmented" role="group" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+    <!-- O alternador: provisório nesta página (rótulos e lugar são do casco-e-preco.html, T3). -->
+    <div class="ruvor-segmented" role="group" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div>
+    <!-- A seção, com o dado real do ITUB4 -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m23-view" data-view="itub4" hidden>
+      <section class="ruvor-stack" id="sec-behavior" aria-labelledby="h-behavior">
+        <div class="ruvor-section-head">
+          <div>
+            <p class="ruvor-eyebrow" data-t="comportamento.sobrancelha"></p>
+            <h2 class="ruvor-h2" id="h-behavior" data-t="comportamento.titulo"></h2>
+          </div>
+          <span class="ruvor-tag ruvor-tag--evidence" data-asof hidden></span>
+        </div>
+        <p class="ruvor-sub" data-t="comportamento.intro"></p>
+        <div data-body aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>
+      </section>
+    </main>
+
+    <!-- Os textos: as 22 chaves nos dois níveis, com os exemplos de cada forma -->
+    <main class="ruvor-content ruvor-stack m23-view" data-view="textos" hidden>
+      <div class="m23-note" id="m23-textos-head"></div>
+      <div class="m23-note" data-ytd-note></div>
+      <section class="ruvor-panel"><table class="ruvor-table m23-textos"><thead><tr><th scope="col">chave</th><th scope="col">exemplo (argumentos)</th><th scope="col">iniciante (como está)</th><th scope="col">avançada (proposta)</th></tr></thead><tbody id="m23-textos-body"></tbody></table></section>
+    </main>
+
+    <!-- O controle de recolher: os estados, para o portão e para o kit (T7) -->
+    <main class="ruvor-content ruvor-stack m23-view" data-view="controle" hidden>
+      <div class="m23-note" id="m23-controle-note"></div>
+      <section class="ruvor-panel"><div class="ruvor-panel__body"><div class="m23-states" id="m23-states"></div></div></section>
+    </main>
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<script type="module">
+import uPlot from "https://cdn.jsdelivr.net/npm/uplot@1.6.32/dist/uPlot.esm.js";
+
+const TICKER = "ITUB4";
+
+// ---------------------------------------------------------------- formatação (pt-BR), a do M1.6b
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fPct1 = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fPctS = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: "exceptZero" });
+const fPct0S = NF({ style: "percent", maximumFractionDigits: 0, signDisplay: "exceptZero" });
+const fMoney = NF({ style: "currency", currency: "BRL" });
+const fInt = NF({ maximumFractionDigits: 0 });
+const fDec1 = NF({ minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fDec2 = NF({ minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const minus = (s) => s.replace(/^-/, "−");
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+
+// ---------------------------------------------------------------- os textos
+// A leitura iniciante: copiada de frontend/src/content/textos.ts como está hoje (aprovada no
+// M1.6b). Não muda neste bloco (spec, "Fora").
+const TEXTOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  // O alternador: provisório aqui; os rótulos são aprovados no portão da T3.
+  "casco.leitura.rotulo": "Leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "grafico.pontaInferior": "abaixo de −10%",
+  "grafico.pontaSuperior": "acima de +10%",
+  "grafico.faixa": (lo, hi) => `de ${lo} a ${hi}`,
+  "grafico.dicaBarra": (faixa, n) => `${faixa}: ${n} ${n === 1 ? "pregão" : "pregões"}`,
+  "grafico.legendaQueda": "dias de queda",
+  "grafico.legendaAlta": "dias de alta ou estáveis",
+  "grafico.resumoHistograma": (faixa, n, abaixo, acima) => `A faixa com mais pregões é ${faixa}, com ${n}. Nas pontas, ${abaixo} ${abaixo === 1 ? "pregão ficou" : "pregões ficaram"} abaixo de −10% e ${acima} acima de +10%.`,
+  "comportamento.sobrancelha": "O que já aconteceu",
+  "comportamento.titulo": "Comportamento",
+  "comportamento.ate": (d) => `até ${d}`,
+  "comportamento.intro": "Como a ação se comportou até aqui: quanto rendeu, quanto oscilou, quanto já caiu e como se move junto com o Ibovespa.",
+  "comportamento.bloco.retornos": "Retornos",
+  "comportamento.bloco.volatilidade": "Volatilidade",
+  "comportamento.bloco.queda": "Maior queda",
+  "comportamento.bloco.ibov": "Relação com o Ibovespa",
+  "comportamento.bloco.distribuicao": "Distribuição dos retornos diários",
+  "comportamento.bloco.proventos": "Proventos",
+  "comportamento.bloco.volume": "Volume",
+  "comportamento.nota.retornos": "Variação do preço ajustado, que já inclui proventos e desdobramentos.",
+  "comportamento.nota.ibov": (n) => `Calculado sobre ${n} pregões em comum com o Ibovespa.`,
+  "comportamento.nota.distribuicao": (n) => `Calculado sobre ${n} retornos diários dos últimos 60 meses.`,
+  "comportamento.nulo.janela": (n) => `a série é mais curta que ${n} meses`,
+  "comportamento.nulo.pregoes": (n) => `a série tem menos de ${n} pregões`,
+  "comportamento.nulo.naoRecuperou": "ainda não recuperou",
+  "comportamento.nulo.referencia": "o Ibovespa é a própria referência",
+  "comportamento.histogramaCurto": "A série é curta demais para a distribuição: ela pede 60 meses de pregões.",
+  "comportamento.rotulo.return_1m": "1 mês",
+  "comportamento.rotulo.return_3m": "3 meses",
+  "comportamento.rotulo.return_6m": "6 meses",
+  "comportamento.rotulo.return_12m": "12 meses",
+  "comportamento.rotulo.return_36m": "36 meses",
+  "comportamento.rotulo.return_60m": "60 meses",
+  "comportamento.rotulo.return_120m": "120 meses",
+  "comportamento.rotulo.return_ytd": "No ano",
+  "comportamento.rotulo.volatility_12m": "12 meses",
+  "comportamento.rotulo.volatility_60m": "60 meses",
+  "comportamento.rotulo.max_drawdown": "Do topo ao fundo",
+  "comportamento.rotulo.max_drawdown_recovery_sessions": "Pregões até recuperar",
+  "comportamento.rotulo.beta_60m": "Beta, 60 meses",
+  "comportamento.rotulo.correlation_60m": "Correlação, 60 meses",
+  "comportamento.rotulo.skewness": "Assimetria",
+  "comportamento.rotulo.excess_kurtosis": "Curtose em excesso",
+  "comportamento.rotulo.dividends_12m": "Por ação, 12 meses",
+  "comportamento.rotulo.dividend_payments_12m": "Pagamentos, 12 meses",
+  "comportamento.rotulo.dividend_yield_12m": "Sobre o preço, 12 meses",
+  "comportamento.rotulo.avg_volume_21d": "Média de 21 pregões",
+  "comportamento.rotulo.avg_volume_252d": "Média de 252 pregões",
+  "comportamento.return_1m": (x) => `No último mês, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_3m": (x) => `Nos últimos 3 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_6m": (x) => `Nos últimos 6 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_12m": (x) => `Nos últimos 12 meses, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_36m": (x) => `Nos últimos 3 anos, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_60m": (x) => `Nos últimos 5 anos, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_120m": (x) => `Nos últimos 10 anos, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.return_ytd": (x) => `Desde o primeiro pregão do ano, com os proventos: R$ 100 viraram ${x}.`,
+  "comportamento.volatility_12m": (v) => `O quanto o preço oscilou no último ano, em base anual: num ano como esse, variações de ${v} para cima ou para baixo são o normal.`,
+  "comportamento.volatility_60m": (v) => `A mesma medida nos últimos 5 anos, ${v}: comparada com a de 12 meses, mostra se o último ano foi mais calmo ou mais agitado que o habitual.`,
+  "comportamento.max_drawdown": (queda, topo, fundo, desde, volta) => `A maior queda do preço ajustado desde ${desde}: de ${topo} a ${fundo}, caiu ${queda}. ${volta ? `Voltou ao topo anterior em ${volta}.` : "Ainda não voltou ao topo anterior."}`,
+  "comportamento.max_drawdown_recovery_sessions": (anos) => `Pregões entre o fundo e a volta ao topo anterior — cerca de ${anos} anos de bolsa.`,
+  "comportamento.beta_60m": (b, oposta) => `Nos últimos 5 anos, quando o Ibovespa subiu ou caiu 1%, a ação se moveu em média ${b} ${oposta ? "na direção oposta" : "na mesma direção"}.`,
+  "comportamento.correlation_60m": (c) => `De −1 a 1, o quanto os movimentos diários da ação e do Ibovespa andam juntos: perto de 1, juntos; perto de 0, sem relação; abaixo de 0, em sentidos opostos. Aqui, ${c}.`,
+  "comportamento.histograma": "Quantos pregões dos últimos 60 meses tiveram cada tamanho de retorno diário. Cada barra é uma faixa de 0,5 ponto, em retorno logarítmico — que, abaixo de 10%, quase coincide com a variação percentual. As barras dos dias de queda têm cor própria, e as duas pontas juntam tudo o que passou de 10% para baixo ou para cima.",
+  "comportamento.skewness": (s, sinal) => sinal < 0
+    ? `Negativa, como aqui (${s}), quer dizer que as quedas fortes foram mais frequentes que as altas fortes do mesmo tamanho.`
+    : sinal > 0
+      ? `Positiva, como aqui (${s}), quer dizer que as altas fortes foram mais frequentes que as quedas fortes do mesmo tamanho.`
+      : `Zero, como aqui, quer dizer que altas e quedas fortes do mesmo tamanho apareceram na mesma medida.`,
+  "comportamento.excess_kurtosis": (k, sinal) => sinal > 0
+    ? `Acima de zero, como aqui (${k}), os dias extremos — de alta ou de queda — apareceram mais vezes do que a curva normal prevê.`
+    : `Em zero ou abaixo, como aqui (${k}), os dias extremos apareceram com a frequência que a curva normal prevê, ou menos.`,
+  "comportamento.dividends_12m": "Soma dos proventos pagos por ação nos últimos 12 meses.",
+  "comportamento.dividend_payments_12m": "Quantas vezes a companhia pagou proventos nos últimos 12 meses.",
+  "comportamento.dividend_yield_12m": (d, x) => `Os proventos de 12 meses divididos pelo fechamento de ${d}: a cada R$ 100 em ações, ${x} em proventos.`,
+  "comportamento.avg_volume_21d": "Quantas ações trocaram de mão por pregão, em média, no último mês.",
+  "comportamento.avg_volume_252d": "A mesma média no último ano: comparada com a do mês, mostra se o interesse recente está acima ou abaixo do habitual.",
+  "comportamento.unidade.volume": (m) => `${m} milhões`,
+
+  // NOVO neste portão — o rótulo do controle de recolher (RF-07, RF-10: vai a textos.ts na T7).
+  // Um rótulo só, nos dois estados: o aberto e o fechado são ditos pela seta e pelo aria-expanded.
+  "comportamento.momentos.abrir": "Ver a assimetria e a curtose",
+};
+
+// A leitura avançada (RF-05): as 22 chaves comportamento.* do RF-04, a mesma chave e os mesmos
+// parâmetros, na mesma ordem, da iniciante. Cada afirmação copia a de
+// docs/mockups/M2.3/conferencia-comportamento.md, onde está o caminho:linha que a confere.
+const TEXTOS_AVANCADOS = {
+  "comportamento.return_1m": (x) => `Retorno simples, não logarítmico, do preço ajustado na janela de 1 mês de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. O primeiro pregão é o último em ou antes da data do último pregão menos 1 mês. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_3m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 3 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_6m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 6 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_12m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 12 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_36m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 36 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_60m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 60 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_120m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 120 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. Sem pregão em ou antes do início da janela, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_ytd": (x) => `Retorno simples do preço ajustado desde o fechamento do último pregão do ano anterior até o último pregão — não desde o primeiro pregão do ano corrente. Sem pregão no ano anterior, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.volatility_12m": (v) => `Desvio-padrão amostral (divisor n − 1) dos retornos logarítmicos diários — o logaritmo do fechamento ajustado sobre o do pregão anterior — na janela de 12 meses de calendário, vezes √252 para a base anual: ${v}. Fica de fora o retorno do primeiro pregão da janela, que mede o movimento anterior a ela; com menos de 2 retornos, o número é nulo.`,
+  "comportamento.volatility_60m": (v) => `O mesmo desvio-padrão amostral (divisor n − 1) dos retornos logarítmicos diários, na janela de 60 meses de calendário, vezes √252: ${v}.`,
+  "comportamento.max_drawdown": (queda, topo, fundo, desde, volta) => `A maior queda da série inteira do preço ajustado, desde ${desde}: a razão mais negativa entre o fechamento ajustado de um pregão e o topo anterior a ele, menos 1 — do topo de ${topo} ao fundo de ${fundo}, ${queda}. No empate, ficam o primeiro topo de um platô e a primeira queda de mesma profundidade. ${volta ? `A volta é o primeiro pregão depois do fundo cujo fechamento ajustado alcança o do topo: ${volta}.` : "Nenhum pregão depois do fundo alcançou o fechamento ajustado do topo: a volta nula é informação, não falta de histórico."}`,
+  "comportamento.max_drawdown_recovery_sessions": (anos) => `Pregões contados do fundo, exclusive, à volta ao topo, inclusive — fundo no pregão 5 e volta no 8 dão 3. Divididos por 252, o ano de bolsa, dão ${anos} anos.`,
+  "comportamento.beta_60m": (b, oposta) => `Inclinação da regressão linear por mínimos quadrados dos retornos logarítmicos diários da ação sobre os do Ibovespa, na janela de 60 meses de calendário da ação; cada retorno se emparelha com o do índice na mesma data, e o par só vale com o do índice não nulo. Com menos de 30 pares, nulo. Inclinação ${oposta ? "negativa" : "positiva ou nula"}: ${b} de retorno logarítmico da ação para cada 1% do índice, em média.`,
+  "comportamento.correlation_60m": (c) => `Coeficiente de correlação de Pearson entre os retornos logarítmicos diários da ação e os do Ibovespa, sobre os mesmos pares do beta: 60 meses de calendário, emparelhados por data, mínimo de 30. Aqui, ${c}.`,
+  "comportamento.histograma": "Contagem dos retornos logarítmicos diários da janela de 60 meses em 42 baldes: 40 de largura 0,005 (0,5 ponto), de −0,10 a +0,10, fechados à esquerda e abertos à direita, mais as duas pontas abertas — abaixo de −0,10 e a partir de +0,10. Têm a cor de queda os baldes cujo limite de cima não passa de zero; o dia de retorno exatamente zero cai no balde [0; 0,005), que tem a cor de alta.",
+  "comportamento.skewness": (s, sinal) => `Assimetria pelo estimador enviesado g1: o terceiro momento central, com divisor n, sobre o desvio-padrão populacional (divisor n) ao cubo, nos retornos logarítmicos diários da janela de 60 meses. Nula abaixo de 4 retornos ou com desvio zero. ${sinal < 0 ? `Aqui, ${s}: negativa.` : sinal > 0 ? `Aqui, ${s}: positiva.` : "Aqui, exatamente zero."}`,
+  "comportamento.excess_kurtosis": (k, sinal) => `Curtose em excesso pelo estimador enviesado g2: o quarto momento central, com divisor n, sobre o desvio-padrão populacional à quarta, menos 3 — zero é a curva normal. Mesma janela de 60 meses e mesmos mínimos da assimetria. Aqui, ${k}: ${sinal > 0 ? "acima de zero" : "zero ou abaixo"}.`,
+  "comportamento.dividends_12m": "Soma dos valores dos eventos de provento com data entre a do último pregão menos 12 meses de calendário e a do último pregão, inclusive nos dois extremos. Evento sem valor fica de fora; sem pagamento, a soma é zero, não nula.",
+  "comportamento.dividend_payments_12m": "Quantidade dos mesmos eventos de provento da janela de 12 meses de calendário, inclusive nos dois extremos — só os que têm valor.",
+  "comportamento.dividend_yield_12m": (d, x) => `A soma de 12 meses dos proventos dividida pelo fechamento não ajustado de ${d}, o último pregão — nunca pelo ajustado. R$ 100 × o rendimento = ${x}.`,
+  "comportamento.avg_volume_21d": "Média aritmética do volume dos últimos 21 pregões da série — contagem de pregões, não de meses —, com o volume de cada pregão como vem do Yahoo Finance. Com menos de 21 pregões, o número é nulo, nunca uma média parcial.",
+  "comportamento.avg_volume_252d": "A mesma média aritmética do volume, sobre os últimos 252 pregões da série. Com menos de 252 pregões, nula — nunca uma média parcial.",
+};
+
+// Os argumentos de exemplo de cada chave-função avançada, cobrindo os ramos dela (V-07): o que a
+// T7 leva a EXEMPLOS_AVANCADOS em frontend/tests/exemplos.ts. Os valores imitam os da tela (a
+// forma de BehaviorSection.tsx); o primeiro de cada um é o do ITUB4 em 01/10/2026.
+const EXEMPLOS_AVANCADOS = {
+  "comportamento.return_1m": [["R$ 110,75"]],
+  "comportamento.return_3m": [["R$ 104,16"]],
+  "comportamento.return_6m": [["R$ 101,90"]],
+  "comportamento.return_12m": [["R$ 128,19"]],
+  "comportamento.return_36m": [["R$ 231,07"]],
+  "comportamento.return_60m": [["R$ 231,82"]],
+  "comportamento.return_120m": [["R$ 413,95"]],
+  "comportamento.return_ytd": [["R$ 114,98"]],
+  "comportamento.volatility_12m": [["24,5%"]],
+  "comportamento.volatility_60m": [["24,9%"]],
+  "comportamento.max_drawdown": [["44,3%", "02/01/2020", "23/03/2020", "22/09/2016", "13/12/2023"], ["61,8%", "18/05/2021", "04/11/2022", "22/09/2016", null]],
+  "comportamento.max_drawdown_recovery_sessions": [["3,7"]],
+  "comportamento.beta_60m": [["1,01%", false], ["0,18%", true]],
+  "comportamento.correlation_60m": [["0,70"], ["−0,12"]],
+  "comportamento.skewness": [["−1,44", -1], ["0,37", 1], ["0,00", 0]],
+  "comportamento.excess_kurtosis": [["20,93", 1], ["−0,41", -1], ["0,00", 0]],
+  "comportamento.dividend_yield_12m": [["01/10/2026", "R$ 7,06"]],
+};
+const RAMO = {
+  "comportamento.max_drawdown": ["volta preenchida (ITUB4)", "volta nula"],
+  "comportamento.beta_60m": ["oposta = false (ITUB4)", "oposta = true"],
+  "comportamento.correlation_60m": ["ITUB4", "negativa"],
+  "comportamento.skewness": ["sinal < 0 (ITUB4)", "sinal > 0", "sinal = 0"],
+  "comportamento.excess_kurtosis": ["sinal > 0 (ITUB4)", "sinal < 0", "sinal = 0"],
+};
+
+// ---------------------------------------------------------------- o nível
+const root = document.documentElement;
+let reading = "beginner";
+const T = (k, ...a) => { const v = TEXTOS[k]; if (v === undefined) throw new Error(`texto sem chave: ${k}`); return typeof v === "function" ? v(...a) : v; };
+// textFor: a frase do nível corrente — a avançada substitui a iniciante (D-152), com os mesmos argumentos.
+const P = (k, ...a) => {
+  const v = reading === "advanced" && k in TEXTOS_AVANCADOS ? TEXTOS_AVANCADOS[k] : TEXTOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph ${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const why = (text) => `<p class="ruvor-note">${esc(text)}</p>`;
+const tok = (name) => getComputedStyle(root).getPropertyValue(`--ruvor-${name}`).trim();
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- o controle de recolher
+// O molde do Collapsible.tsx do plano: aberto por padrão no avançado, fechado no iniciante;
+// trocar o nível reaplica o padrão; abrir não é lembrado. O conteúdo fechado não é desenhado
+// (fora da árvore acessível e do fluxo), e o aria-controls aponta para o id que só existe aberto.
+const openState = { moments: false };
+function collapsible(name, label, inner, open, id = `m23-${name}-body`) {
+  return `<div class="m23-collapsible" data-collapsible="${name}" data-open="${open}">
+    <button class="m23-collapsible__toggle" type="button" aria-expanded="${open}" aria-controls="${id}" data-toggle="${name}">${glyph("i-caret-right")}<span>${esc(label)}</span></button>
+    ${open ? `<div id="${id}">${inner}</div>` : ""}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- gráficos (uPlot), o do M1.6b
+const charts = new Map();
+function colors() {
+  return { evidence: tok("evidence"), critical: tok("critical"), surface: tok("surface"), ink: tok("ink"),
+    muted: tok("text-muted"), rule: tok("table-rule"), font: `${tok("type-micro-size")} ${tok("font-sans")}` };
+}
+function axis(c, extra = {}) {
+  return { stroke: c.muted, grid: { stroke: c.rule, width: 1 }, ticks: { stroke: c.rule, width: 1 }, font: c.font, ...extra };
+}
+function binRange(b) {
+  if (b.lower_bound == null) return T("grafico.pontaInferior");
+  if (b.upper_bound == null) return T("grafico.pontaSuperior");
+  return T("grafico.faixa", minus(fPct1.format(Number(b.lower_bound))), minus(fPct1.format(Number(b.upper_bound))));
+}
+function drawHistogram(bins) {
+  const xs = bins.map((b) => b.bin_index);
+  const isNeg = (b) => b.upper_bound != null && Number(b.upper_bound) <= 0;
+  const neg = bins.map((b) => (isNeg(b) ? b.count : null));
+  const pos = bins.map((b) => (isNeg(b) ? null : b.count));
+  let top = bins[0];
+  for (const b of bins) if (b.count > top.count) top = b;
+  $("#resumo-hist").textContent = T("grafico.resumoHistograma", binRange(top), fInt.format(top.count), bins[0].count, bins[bins.length - 1].count);
+  const TICKS = [0.5, 10.5, 20.5, 30.5, 40.5];
+  const TICK_V = [-0.1, -0.05, 0, 0.05, 0.1];
+  let u = null;
+  const make = () => {
+    const box = $("#chart-hist");
+    if (!box) return;
+    u?.destroy(); box.replaceChildren();
+    const c = colors();
+    const bars = uPlot.paths.bars({ size: [0.86, Infinity], gap: 1 });
+    const tip = document.createElement("div");
+    tip.className = "ruvor-chart__tip"; tip.hidden = true; tip.setAttribute("aria-hidden", "true");
+    u = new uPlot({
+      width: box.clientWidth, height: 220,
+      legend: { show: false },
+      cursor: { points: { stroke: c.ink, fill: c.surface, size: 7 }, drag: { x: false, y: false } },
+      scales: { x: { time: false, range: [-0.5, bins.length - 0.5] }, y: { range: (self, mn, mx) => [0, mx * 1.08] } },
+      axes: [
+        axis(c, { splits: () => TICKS, values: () => TICK_V.map((v) => minus(fPct0S.format(v))) }),
+        axis(c, { size: 48, values: (self, splits) => splits.map((v) => fInt.format(v)) }),
+      ],
+      series: [{},
+        { stroke: c.critical, fill: c.critical, paths: bars, points: { show: false, stroke: c.critical, fill: c.surface } },
+        { stroke: c.evidence, fill: c.evidence, paths: bars, points: { show: false, stroke: c.evidence, fill: c.surface } }],
+      hooks: {
+        setCursor: [(self) => {
+          const i = self.cursor.idx;
+          if (i == null || self.cursor.left < 0) { tip.hidden = true; return; }
+          tip.textContent = T("grafico.dicaBarra", binRange(bins[i]), bins[i].count);
+          tip.style.left = `${self.valToPos(i, "x")}px`;
+          tip.style.top = `${self.valToPos(bins[i].count, "y")}px`;
+          tip.hidden = false;
+        }],
+      },
+    }, [xs, neg, pos], box);
+    u.over.appendChild(tip);
+  };
+  charts.set("hist", make);
+  make();
+  new ResizeObserver(() => u && $("#chart-hist") && u.setSize({ width: $("#chart-hist").clientWidth, height: 220 })).observe($("#chart-hist"));
+}
+
+// ---------------------------------------------------------------- a seção (o desenho de BehaviorSection.tsx)
+const RETURNS = [["return_1m", 1], ["return_3m", 3], ["return_6m", 6], ["return_12m", 12], ["return_36m", 36], ["return_60m", 60], ["return_120m", 120], ["return_ytd", null]];
+function stat(key, value, phrase) {
+  return `<div class="ruvor-stat" data-field="${key}"><span class="ruvor-stat__label">${esc(T(`comportamento.rotulo.${key}`))}</span><span class="ruvor-stat__value ruvor-num">${esc(value)}</span>${phrase ? why(phrase) : ""}</div>`;
+}
+function block(titleKey, inner, note, wide = false, extra = "") {
+  return `<section class="ruvor-panel${wide ? " ruvor-blocks__wide" : ""}"><div class="ruvor-panel__head"><h3 class="ruvor-h3">${esc(T(titleKey))}</h3></div><div class="ruvor-panel__body">${inner}${note ? `<p class="ruvor-note ruvor-panel__note">${esc(note)}</p>` : ""}</div>${extra}</section>`;
+}
+const signedDec = (v) => minus(fDec2.format(v));
+
+let metric = null; // a resposta guardada: trocar o nível não pede nada à API (RF-03)
+
+function momentsHtml(m) {
+  const N = (k) => (m[k] == null ? null : Number(m[k]));
+  const sk = N("skewness"), ku = N("excess_kurtosis");
+  const inner = `<div class="ruvor-stats">${
+    (sk == null ? stat("skewness", "—", T("comportamento.nulo.janela", 60)) : stat("skewness", signedDec(sk), P("comportamento.skewness", signedDec(sk), Math.sign(sk))))
+    + (ku == null ? stat("excess_kurtosis", "—", T("comportamento.nulo.janela", 60)) : stat("excess_kurtosis", signedDec(ku), P("comportamento.excess_kurtosis", signedDec(ku), Math.sign(ku))))}</div>`;
+  return collapsible("moments", T("comportamento.momentos.abrir"), inner, openState.moments);
+}
+
+function ytdNote() {
+  const x = metric ? fMoney.format(100 * (1 + Number(metric.return_ytd))) : "R$ 114,98";
+  const proposta = (v) => `Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100 viraram ${v}.`;
+  return `<p><b>Nota do mockup · não é tela · para o portão: a iniciante de <code>comportamento.return_ytd</code> contradiz o cálculo.</b></p>
+    <p>Como está (<code>frontend/src/content/textos.ts:216</code>), e como esta página a mostra na leitura iniciante: <q>${esc(TEXTOS["comportamento.return_ytd"](x))}</q></p>
+    <p>O cálculo parte do <b>fechamento do último pregão do ano anterior</b>, não do primeiro pregão do ano (<code>backend/apps/analytics/metrics.py:114</code>, <code>:116</code>, <code>:122</code>; conferência, divergência 1). A avançada já segue o código.</p>
+    <p>Proposta de correção da iniciante, mesma chave e mesmo argumento: <q>${esc(proposta(x))}</q></p>
+    <p>A decisão é do dono. A spec põe "mudar o que já está escrito na leitura iniciante" fora do bloco, com exceção só para <code>risco.veredito</code> e <code>risco.naoRejeitados</code>: aceitar a correção é uma segunda exceção, a registrar.</p>`;
+}
+
+function renderBehavior() {
+  const sec = $("#sec-behavior"), host = $("[data-body]", sec);
+  const m = metric;
+  const asof = $("[data-asof]", sec);
+  asof.hidden = false; asof.textContent = T("comportamento.ate", fDate(m.as_of_date));
+  const N = (k) => (m[k] == null ? null : Number(m[k]));
+  const x100 = (r) => fMoney.format(100 * (1 + r));
+
+  const rets = RETURNS.map(([k, months]) => {
+    const r = N(k);
+    if (r == null) return stat(k, "—", months ? T("comportamento.nulo.janela", months) : "");
+    return stat(k, minus(fPctS.format(r)), P(`comportamento.${k}`, x100(r)));
+  }).join("");
+
+  const vols = ["volatility_12m", "volatility_60m"].map((k) => {
+    const v = N(k);
+    return v == null ? stat(k, "—", T("comportamento.nulo.janela", k === "volatility_12m" ? 12 : 60)) : stat(k, fPct1.format(v), P(`comportamento.${k}`, fPct1.format(v)));
+  }).join("");
+
+  const dd = N("max_drawdown");
+  const rs = m.max_drawdown_recovery_sessions;
+  const drawdown = stat("max_drawdown", minus(fPct1.format(dd)), P("comportamento.max_drawdown", fPct1.format(Math.abs(dd)), fDate(m.max_drawdown_peak_date), fDate(m.max_drawdown_trough_date), fDate(m.first_price_date), m.max_drawdown_recovery_date ? fDate(m.max_drawdown_recovery_date) : null))
+    + (rs == null ? stat("max_drawdown_recovery_sessions", "—", T("comportamento.nulo.naoRecuperou"))
+                  : stat("max_drawdown_recovery_sessions", fInt.format(rs), P("comportamento.max_drawdown_recovery_sessions", fDec1.format(rs / 252))));
+
+  const b = N("beta_60m"), c = N("correlation_60m");
+  const ibov = (b == null ? stat("beta_60m", "—", T("comportamento.nulo.janela", 60))
+                          : stat("beta_60m", signedDec(b), P("comportamento.beta_60m", `${fDec2.format(Math.abs(b))}%`, b < 0)))
+    + (c == null ? stat("correlation_60m", "—", T("comportamento.nulo.janela", 60))
+                 : stat("correlation_60m", signedDec(c), P("comportamento.correlation_60m", signedDec(c))));
+
+  const dy = N("dividend_yield_12m");
+  const divs = stat("dividends_12m", fMoney.format(N("dividends_12m")), P("comportamento.dividends_12m"))
+    + stat("dividend_payments_12m", fInt.format(m.dividend_payments_12m), P("comportamento.dividend_payments_12m"))
+    + stat("dividend_yield_12m", fPct1.format(dy), P("comportamento.dividend_yield_12m", fDate(m.as_of_date), fMoney.format(100 * dy)));
+
+  const vol = ["avg_volume_21d", "avg_volume_252d"].map((k) => {
+    const v = N(k);
+    return v == null ? stat(k, "—", T("comportamento.nulo.pregoes", k === "avg_volume_21d" ? 21 : 252)) : stat(k, T("comportamento.unidade.volume", fDec1.format(v / 1e6)), P(`comportamento.${k}`));
+  }).join("");
+
+  // O histograma fica aberto nos dois níveis (RF-06); só a assimetria e a curtose recolhem.
+  const hist = m.statistical_observations == null
+    ? `<p class="ruvor-muted">${esc(T("comportamento.histogramaCurto"))}</p>`
+    : `<div class="ruvor-stack">${why(P("comportamento.histograma"))}
+       <div>
+         <div class="ruvor-chart__bar">
+           <div class="ruvor-legend" aria-hidden="true"><span><i class="ruvor-legend__swatch ruvor-legend__swatch--critical"></i>${esc(T("grafico.legendaQueda"))}</span><span><i class="ruvor-legend__swatch ruvor-legend__swatch--evidence"></i>${esc(T("grafico.legendaAlta"))}</span></div>
+         </div>
+         <div class="ruvor-chart" id="chart-hist" role="img" aria-describedby="resumo-hist"></div>
+         <div class="ruvor-chart__ends" aria-hidden="true"><span>← ${esc(T("grafico.pontaInferior"))}</span><span>${esc(T("grafico.pontaSuperior"))} →</span></div>
+         <p class="ruvor-note ruvor-chart__summary" id="resumo-hist"></p>
+       </div>
+       <div data-moments-host>${momentsHtml(m)}</div></div>`;
+
+  host.removeAttribute("aria-busy");
+  host.innerHTML = `<div class="ruvor-blocks">
+    ${block("comportamento.bloco.retornos", `<div class="ruvor-stats">${rets}</div>`, T("comportamento.nota.retornos"), true,
+      `<div class="ruvor-panel__body" style="padding-top: 0"><div class="m23-note">${ytdNote()}</div></div>`)}
+    ${block("comportamento.bloco.volatilidade", `<div class="ruvor-stats">${vols}</div>`)}
+    ${block("comportamento.bloco.queda", `<div class="ruvor-stats">${drawdown}</div>`)}
+    ${block("comportamento.bloco.ibov", `<div class="ruvor-stats">${ibov}</div>`, m.benchmark_observations == null ? null : T("comportamento.nota.ibov", fInt.format(m.benchmark_observations)))}
+    ${block("comportamento.bloco.proventos", `<div class="ruvor-stats">${divs}</div>`)}
+    ${block("comportamento.bloco.distribuicao", hist, m.statistical_observations == null ? null : T("comportamento.nota.distribuicao", fInt.format(m.statistical_observations)), true)}
+    ${block("comportamento.bloco.volume", `<div class="ruvor-stats">${vol}</div>`, null, true)}
+  </div>`;
+  if (m.statistical_observations != null) drawHistogram(m.histogram);
+}
+
+// Abrir e fechar: só o recolhível se redesenha (o histograma fica).
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-toggle]");
+  if (!btn || !metric || btn.closest("#m23-states")) return;
+  const name = btn.dataset.toggle;
+  openState[name] = !openState[name];
+  const hostM = $("[data-moments-host]");
+  hostM.innerHTML = momentsHtml(metric);
+  $("[data-toggle]", hostM).focus();
+});
+
+async function loadBehavior() {
+  const host = $("#sec-behavior [data-body]");
+  try {
+    const r = await fetch(`/api/v1/assets/${TICKER}/metrics`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    metric = (await r.json()).metric;
+  } catch {
+    host.removeAttribute("aria-busy");
+    host.innerHTML = `<div class="ruvor-callout ruvor-callout--critical" role="alert">${esc(T("ativo.erroSecao"))}</div>`;
+    return;
+  }
+  renderBehavior();
+  renderTextos();
+}
+
+// ---------------------------------------------------------------- os textos
+function renderTextos() {
+  $("#m23-textos-head").innerHTML = `<p><b>As 22 chaves <code>comportamento.*</code> do RF-04, nas duas leituras.</b> A iniciante é a de <code>textos.ts</code>, como está; a avançada é a proposta deste portão, com a mesma chave e os mesmos argumentos (RF-05). Cada afirmação da avançada copia a de <code>docs/mockups/M2.3/conferencia-comportamento.md</code>, onde está o <code>caminho:linha</code> que a confere; o que a conferência marca como não ancorado (o que o ajuste do Yahoo inclui, a natureza da data do provento, se o valor do provento é ajustado, a unidade do volume) não entra.</p>
+    <p>Chave-função: uma linha por exemplo de <code>EXEMPLOS_AVANCADOS</code>, cobrindo os ramos da avançada; a coluna da iniciante mostra a iniciante com os mesmos argumentos. Chave de texto: uma linha.</p>
+    <p>Rótulo novo do controle de recolher: <code>comportamento.momentos.abrir</code> = <q>${esc(TEXTOS["comportamento.momentos.abrir"])}</q> (o mesmo nos dois níveis e nos dois estados).</p>`;
+  $("[data-ytd-note]").innerHTML = ytdNote();
+  const rows = [];
+  for (const k of Object.keys(TEXTOS_AVANCADOS)) {
+    const av = TEXTOS_AVANCADOS[k], ini = TEXTOS[k];
+    if (typeof av !== typeof ini || (typeof av === "function" && av.length !== ini.length)) throw new Error(`assinatura diverge: ${k}`);
+    if (typeof av === "function") {
+      const exs = EXEMPLOS_AVANCADOS[k];
+      if (!exs) throw new Error(`sem exemplo: ${k}`);
+      exs.forEach((a, i) => rows.push(`<tr><td>${esc(k)}</td><td>${esc((RAMO[k]?.[i] ? `${RAMO[k][i]}: ` : "") + JSON.stringify(a))}</td><td>${esc(ini(...a))}</td><td>${esc(av(...a))}</td></tr>`));
+    } else {
+      rows.push(`<tr><td>${esc(k)}</td><td>texto</td><td>${esc(ini)}</td><td>${esc(av)}</td></tr>`);
+    }
+  }
+  if (Object.keys(TEXTOS_AVANCADOS).length !== 22) throw new Error("as chaves avançadas não são 22");
+  $("#m23-textos-body").innerHTML = rows.join("");
+}
+
+// ---------------------------------------------------------------- o controle: os estados
+function renderControle() {
+  $("#m23-controle-note").innerHTML = `<p><b>O controle de recolher — nasce neste portão; a T9 (a tabela dos nove modelos, a trilha) e a T12 o repetem, e a T7 o leva ao kit.</b></p>
+    <p>Derivado da linha expansível da tabela do kit (<code>.ruvor-table__toggle</code>, <code>brand/ruvor/components.css</code>): botão sem moldura, na cor de tinta, com a seta à esquerda que gira 90° quando <code>aria-expanded="true"</code>. O que acrescenta: a régua fina acima, que separa o controle do conteúdo anterior; 6 px de respiro acima e abaixo, para o alvo de toque; o sublinhado no hover, porque fora da tabela não há a linha inteira reagindo.</p>
+    <p>O rótulo é um só nos dois estados (o <code>Collapsible</code> do plano recebe um <code>label</code>): aberto ou fechado é dito pela seta e pelo <code>aria-expanded</code>. O conteúdo fechado não é desenhado; o <code>aria-controls</code> aponta para o id que só existe aberto (escolha registrada no plano). O raiz leva <code>data-collapsible</code> e <code>data-open</code>. Padrão: fechado na iniciante, aberto na avançada; trocar a leitura reaplica o padrão; abrir não é lembrado.</p>
+    <p>Os estados abaixo são forçados por classe de moldura (<code>is-hover</code>, <code>is-focus</code>), como na vitrine do kit; troque o tema na barra para ver os dois.</p>`;
+  const label = TEXTOS["comportamento.momentos.abrir"];
+  const sample = `<div class="ruvor-stats">${stat("skewness", "−1,44", TEXTOS["comportamento.skewness"]("−1,44", -1))}</div>`;
+  const fig = (cap, html) => `<figure><figcaption>${esc(cap)}</figcaption>${html}</figure>`;
+  const force = (html, cls) => html.replace('class="m23-collapsible__toggle"', `class="m23-collapsible__toggle ${cls}"`);
+  $("#m23-states").innerHTML = [
+    fig("fechado · repouso", collapsible("moments", label, "", false, "m23-s1")),
+    fig("fechado · hover", force(collapsible("moments", label, "", false, "m23-s2"), "is-hover")),
+    fig("fechado · foco do teclado", force(collapsible("moments", label, "", false, "m23-s3"), "is-focus")),
+    fig("aberto", collapsible("moments", label, sample, true, "m23-s4")),
+  ].join("");
+}
+
+// ---------------------------------------------------------------- tema, leitura e vista
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(theme) {
+  if (theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme));
+  for (const make of charts.values()) make();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { for (const make of charts.values()) make(); });
+
+const readingBtns = document.querySelectorAll("[data-set-reading]");
+function setReading(r) {
+  reading = r;
+  root.setAttribute("data-reading", r);
+  for (const b of readingBtns) b.setAttribute("aria-pressed", String(b.dataset.setReading === r));
+  // Trocar o nível reaplica o padrão de cada recolhível (RF-07): iniciante fecha, avançada abre.
+  openState.moments = r === "advanced";
+  if (metric) renderBehavior();
+}
+for (const b of readingBtns) b.addEventListener("click", () => setReading(b.dataset.setReading));
+
+const viewBtns = document.querySelectorAll("[data-m23]");
+function setView(view) {
+  for (const b of viewBtns) b.setAttribute("aria-pressed", String(b.dataset.m23 === view));
+  for (const v of document.querySelectorAll(".m23-view")) v.hidden = v.dataset.view !== view;
+  if (view === "itub4") for (const make of charts.values()) make();
+}
+for (const b of viewBtns) b.addEventListener("click", () => setView(b.dataset.m23));
+
+// ?vista=itub4|textos|controle&tema=light|dark|system&leitura=beginner|advanced&abrir=1 — para capturar cada vista direto.
+const params = new URLSearchParams(location.search);
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "itub4");
+setReading(params.get("leitura") === "advanced" ? "advanced" : "beginner");
+if (params.get("abrir") === "1") openState.moments = true;
+renderControle();
+await loadBehavior();
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>
