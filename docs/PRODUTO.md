@@ -182,6 +182,12 @@ O período 2015–2024 contém a COVID, a recessão de 2015–16 e o ciclo de ju
 responder: *"esta carteira teria perdido 38% em março de 2020"*. Custo quase zero, altíssimo
 poder de comunicação, e é o formato mais fácil de entender para quem não é do mercado.
 
+**Entrou no M3.3 (2026-10-02)**, só do ativo e só com preço: quatro episódios curados — a delação da
+JBS, a greve dos caminhoneiros, a chegada da covid e a alta dos juros —, cada um com o retorno do início ao
+fim, a maior queda dentro dele e os pregões até recuperar, e o Ibovespa lado a lado no mesmo recorte
+([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a [D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)). O estresse da
+*carteira* ("esta carteira teria perdido…") segue candidato.
+
 ### 5.4 Expected Shortfall
 
 O TCC está ancorado em **Basileia II (2004)**, onde o VaR é a medida oficial. Basileia III
@@ -286,7 +292,7 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Tema | Situação |
 |---|---|
 | Carteira: caminho barato ou caro | ✅ barato ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)) |
-| Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3 segue candidata |
+| Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3, do ativo, entrou depois, no M3.3 ([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md)) |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
 | Parecer sobre fronteira CVM | Pendente, só antes de comercializar ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)) |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |

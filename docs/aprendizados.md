@@ -1598,3 +1598,33 @@ número que o teste compara. Necessário, não suficiente.
 **Faça:** afirme a pré-condição sobre o **mesmo número que o teste compara** — aqui,
 `1.0 * (1 + soma_inversa) != I_2` —, e escolha os dados até ela valer (com `R ≈ −0,08`, a
 diferença sobrevive). Exerça a mutação antes de confiar no teste.
+
+## Máquina nova: o `.wslconfig` não vem no clone, e `gold` se refaz em quase uma hora
+
+**Quando:** ao subir o projeto numa máquina que nunca o rodou, ou depois de reinstalar o Docker Desktop.
+
+**Problema:** o teto de 8 GB do WSL (ver "um comando pesado por vez", acima) mora em `%USERPROFILE%\.wslconfig`, fora do
+repositório: a máquina nova sobe sem ele, e o `worker` volta a poder esgotar a RAM do Windows. E o banco começa vazio —
+a desinstalação do Docker Desktop apaga o `docker_data.vhdx`, com as imagens e o volume `pgdata` juntos —, e o que
+está em `gold` não se copia: se refaz. Medido em 2026-10-02, numa máquina de 15,7 GB: o build das imagens em ~4 min; o
+`compute_risk` do zero dos quatro ativos do Marco 1 em **52 min** (870 s o IBOV, 1.012 s o ITUB4); o
+`import_fundamentals` em ~7 min; o `import_disclosures` em ~4 min.
+
+**Faça:** antes do primeiro `compute_risk`, crie o `.wslconfig` com `[wsl2]` e `memory=8GB`, rode `wsl --shutdown` e
+reabra o Docker Desktop; confira com `docker run --rm busybox grep MemTotal /proc/meminfo` (~8 GB). Depois, a ordem do
+README: `migrate`, `import_assets`, `import_prices PETR4 VALE3 ITUB4 IBOV`, `compute_metrics`, `compute_risk` sozinho,
+e só então `import_fundamentals`, `compute_fundamentals` e `import_disclosures`. O Docker Desktop pode estar instalado
+por usuário, em `%LOCALAPPDATA%\Programs\DockerDesktop`, e não em `C:\Program Files`.
+
+## O tempo do RF-24 depende da máquina e do aquecimento
+
+**Quando:** ao ler a conferência "a segunda carga do ITUB4 até `data-ready` em até 2 s" do `capturas.mjs`.
+
+**Problema:** a conferência mede o servidor de desenvolvimento — o Vite e o `runserver`, com o código montado do
+Windows —, não a aplicação. No M1.6b, ficou em 312 ms; no M3.3, noutra máquina, a primeira rodada depois do build deu
+**3.514 ms** e reprovou, e a segunda, sem mudança nenhuma, **1.469 ms**. Cada rota sozinha respondia em 20 a 45 ms; o
+tempo vem dos 14 pedidos em paralelo pelo proxy.
+
+**Faça:** com ela reprovando sozinha, meça as rotas uma a uma (`curl -w '%{time_total}'`) antes de suspeitar do bloco,
+rode o roteiro de novo e relate as duas rodadas. Mutação de texto literal, do mesmo jeito: escreva o trecho mutado
+**depois** do `biome check --write` ou do `ruff format`, que reformatam e deixam a mutação sem casar.

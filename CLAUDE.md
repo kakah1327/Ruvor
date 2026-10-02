@@ -135,7 +135,9 @@ M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechad
 cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M1.7
 a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão da página inicial vem da API
 (`has_risk`) e a classificação da B3 sai da API com vírgula. Desde o M2.3 há a
-**camada explicativa**: as duas leituras, iniciante e avançada, escolhidas no casco.
+**camada explicativa**: as duas leituras, iniciante e avançada, escolhidas no casco. Desde o M3.3, o
+**estresse histórico**: o ativo e o Ibovespa lado a lado nos quatro episódios da D-147, em `gold.stress_episode`, pelo
+`/metrics` e no bloco "Em momentos de estresse" da tela.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
   modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
@@ -200,7 +202,7 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1711 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1747 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` — e a
@@ -209,11 +211,11 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   `core.portfolio`, `core.portfolio_version` e `core.portfolio_holding`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
-  `silver.disclosure`, e as nove tabelas da `gold`, `gold.behavior_metric`,
-  `gold.return_histogram_bin`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
+  `silver.disclosure`, e as dez tabelas da `gold`, `gold.behavior_metric`,
+  `gold.return_histogram_bin`, `gold.stress_episode`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
   `gold.fundamental_indicator`, `gold.peer_comparison`, `gold.portfolio_risk_run` e
   `gold.portfolio_risk_result`, mais `core.compute_request`,
-  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — trinta e sete ao todo. O `AUTH_USER_MODEL`
+  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — trinta e oito ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail, **sem diferença de caixa**
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
   [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem
@@ -235,8 +237,11 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   logarítmico ([D-50](docs/decisoes/D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md) a
   [D-54](docs/decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md)); `manage.py
   compute_metrics` lê `silver` e escreve em `gold`, por ativo e em transação, a linha imutável
-  de métricas de comportamento mais os 42 baldes do histograma de retornos
-  ([D-55](docs/decisoes/D-55-metrica-de-comportamento-e-imutavel.md) a
+  de métricas de comportamento mais os 42 baldes do histograma de retornos e, desde o M3.3, os
+  quatro episódios de estresse da D-147 (`apps/analytics/stress.py`, só biblioteca padrão), no
+  mesmo `atomic` ([D-146](docs/decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a
+  [D-148](docs/decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md);
+  [D-55](docs/decisoes/D-55-metrica-de-comportamento-e-imutavel.md) a
   [D-60](docs/decisoes/D-60-metrica-descritiva-sem-manifesto-restringe-a-d-15.md)). **`gold`
   deixou de estar vazio no M1.3**; o cálculo da camada 2 usa só a biblioteca padrão.
   `manage.py compute_risk` roda os nove modelos de VaR sobre `silver.price` e grava em `gold`
@@ -282,7 +287,7 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
   ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
   [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
-  entradas. 1217 testes.
+  entradas. 1263 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
