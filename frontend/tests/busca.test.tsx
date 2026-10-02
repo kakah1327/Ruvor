@@ -3,6 +3,12 @@
  * consulta anterior; as três tags; o teclado (setas, Enter, Esc); "mostrar mais" pelo
  * `offset`; vazio, sem resultado e erro; e a lista suspensa da barra (RF-02), com 8.
  *
+ * E V-09 do M1.7 (RF-10, RF-11, RF-13): a sugestão da caixa vazia vem de
+ * `GET /api/v1/assets?has_risk=true&limit=8`, com os estados do mockup, **um** pedido por
+ * montagem do `SearchBox` de página, e a resposta atrasada do primeiro efeito do `StrictMode`
+ * descartada. O pedido da sugestão vai para `suggestionCalls`, à parte das consultas da busca
+ * em `calls`.
+ *
  * O `fetch` é um duplo que **ignora o `AbortSignal`** e só responde quando o teste manda:
  * assim a resposta da consulta antiga chega depois da nova, como na rede de verdade.
  * Só o `setTimeout` é falso — as promessas correm de verdade, e `flush` as esvazia.
@@ -15,11 +21,11 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import { StrictMode } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "../src/App";
 import type { AssetItem, AssetPage } from "../src/api/types";
-import { SUGESTOES } from "../src/content/sugestoes";
 import { TEXTOS } from "../src/content/textos";
 
 // A rota do ativo monta a tela do ativo, que importa o uPlot; o uPlot pede `matchMedia` já
@@ -35,6 +41,11 @@ type Call = {
 };
 
 let calls: Call[] = [];
+/** Os pedidos da sugestão (RF-10), casados pelo endereço exato. */
+let suggestionCalls: Call[] = [];
+
+/** O pedido da sugestão, literal: o contrato do RF-10. */
+const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
 
 function fakeResponse(status: number, body: unknown): Response {
   return {
@@ -47,12 +58,13 @@ function fakeResponse(status: number, body: unknown): Response {
 /** O duplo de `fetch`: guarda cada pedido e **não olha o `signal`** do `init`. */
 function stubFetch(): void {
   calls = [];
+  suggestionCalls = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(
       (url: string, _init?: RequestInit) =>
         new Promise<Response>((resolve) => {
-          calls.push({
+          (url === SUGGESTION_URL ? suggestionCalls : calls).push({
             url,
             respond: (body) => resolve(fakeResponse(200, body)),
             fail: (status) =>
@@ -76,6 +88,7 @@ function asset(ticker: string, over: Partial<AssetItem> = {}): AssetItem {
     sector: "Setor de teste",
     status: "active",
     has_prices: true,
+    has_risk: true,
     ...over,
   };
 }
@@ -103,6 +116,17 @@ async function wait(ms: number): Promise<void> {
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);
+  return router;
+}
+
+/** Como o `main.tsx`: dentro do `StrictMode`, que roda o efeito de montagem duas vezes. */
+function renderStrictAt(path: string) {
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
+  render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  );
   return router;
 }
 
@@ -406,17 +430,12 @@ describe("mostrar mais", () => {
 });
 
 describe("os estados da página inicial", () => {
-  it("vazio: a sugestão fixa, cada uma um link para o ativo, sem consultar", async () => {
+  it("vazio: a sugestão vinda da API, sem consultar a busca", async () => {
     renderAt("/");
-    const suggest = screen.getByRole("region", {
-      name: TEXTOS["busca.sugestaoTitulo"],
-    });
-    const links = within(suggest).getAllByRole("link");
-    expect(links.map((link) => link.textContent)).toEqual([...SUGESTOES]);
-    expect(links.map((link) => link.getAttribute("href"))).toEqual(
-      SUGESTOES.map((ticker) => `/ativos/${ticker}`),
-    );
-    expect(within(suggest).getByText(TEXTOS["busca.sugestaoNota"])).toBeDefined();
+    expect(suggestionCalls).toHaveLength(1);
+    suggestionCalls[0].respond(page([asset("ITUB4"), asset("PETR4")]));
+    await flush();
+    expect(within(suggest()).getAllByRole("link")).toHaveLength(2);
     await wait(1000);
     expect(calls).toHaveLength(0);
   });
@@ -469,6 +488,198 @@ describe("os estados da página inicial", () => {
     await typeAndWait(pageInput(), "pet");
     await flush();
     expect(screen.getByRole("alert")).toBeDefined();
+  });
+});
+
+/** A sugestão da caixa vazia: a região com o título. */
+function suggest(): HTMLElement {
+  return screen.getByRole("region", { name: TEXTOS["busca.sugestaoTitulo"] });
+}
+
+function chips(): string[] {
+  return within(suggest())
+    .queryAllByRole("link")
+    .map((link) => link.textContent ?? "");
+}
+
+const SIX = ["AALR3", "BBDC4", "IBOV", "ITUB4", "PETR4", "VALE3"];
+const ELEVEN_FIRST_PAGE = [
+  "AALR3",
+  "ABEV3",
+  "B3SA3",
+  "BBAS3",
+  "BBDC4",
+  "IBOV",
+  "ITUB4",
+  "PETR4",
+];
+
+function suggestionPage(tickers: string[], count = tickers.length): AssetPage {
+  return { count, limit: 8, offset: 0, results: tickers.map((t) => asset(t)) };
+}
+
+describe("V-09 do M1.7 — a sugestão vinda da API (RF-10 a RF-13)", () => {
+  it("a página inicial pede has_risk=true&limit=8 e mostra a resposta, na ordem, cada um um link", async () => {
+    renderAt("/");
+    expect(suggestionCalls.map((call) => call.url)).toEqual([SUGGESTION_URL]);
+    suggestionCalls[0].respond(suggestionPage(SIX));
+    await flush();
+
+    expect(chips()).toEqual(SIX);
+    expect(
+      within(suggest())
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(SIX.map((ticker) => `/ativos/${ticker}`));
+    expect(within(suggest()).getByText(TEXTOS["busca.sugestaoNota"])).toBeDefined();
+    expect(within(suggest()).queryByText(/e mais/)).toBeNull();
+    expect(suggest().hasAttribute("aria-busy")).toBe(false);
+  });
+
+  it("carregando: o título, a frase fora da vista e os atalhos em esqueleto", () => {
+    renderAt("/");
+    const region = suggest();
+    expect(region.getAttribute("aria-busy")).toBe("true");
+    const phrase = within(region).getByText(TEXTOS["busca.sugestaoCarregando"]);
+    expect(phrase.className).toBe("ruvor-sr-only");
+    const skeletons = region.querySelectorAll(".ruvor-skeleton.ruvor-skeleton--chip");
+    expect(skeletons).toHaveLength(6);
+    expect(skeletons[0].closest("ul")?.getAttribute("aria-hidden")).toBe("true");
+    expect(within(region).queryAllByRole("link")).toHaveLength(0);
+    expect(within(region).queryByText(TEXTOS["busca.sugestaoNota"])).toBeNull();
+  });
+
+  it("erro: a frase e a dica no painel, sem botão nem alerta, e a caixa continua buscando", async () => {
+    renderAt("/");
+    suggestionCalls[0].fail(500);
+    await flush();
+
+    const region = suggest();
+    const panel = within(region).getByText(TEXTOS["busca.sugestaoErro"]).parentElement;
+    expect(panel?.className).toBe("ruvor-panel ruvor-search__empty");
+    expect(
+      within(panel as HTMLElement).getByText(TEXTOS["busca.sugestaoErroDica"]),
+    ).toBeDefined();
+    expect(within(region).queryAllByRole("button")).toHaveLength(0);
+    expect(within(region).queryAllByRole("link")).toHaveLength(0);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(region.querySelector("[aria-live]")).toBeNull();
+    expect(region.hasAttribute("aria-busy")).toBe(false);
+
+    await typeAndWait(pageInput(), "pet");
+    expect(query(calls[0].url).get("q")).toBe("pet");
+    calls[0].respond(page([asset("PETR4")]));
+    await flush();
+    expect(tickers()).toEqual(["PETR4"]);
+  });
+
+  it("erro de rede também é o erro da sugestão", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      }),
+    );
+    renderAt("/");
+    await flush();
+    expect(within(suggest()).getByText(TEXTOS["busca.sugestaoErro"])).toBeDefined();
+  });
+
+  it("nenhum ativo com risco (count 0): a frase e a nota do mockup, sem atalho", async () => {
+    renderAt("/");
+    suggestionCalls[0].respond(suggestionPage([], 0));
+    await flush();
+
+    const region = suggest();
+    const panel = within(region).getByText(
+      TEXTOS["busca.sugestaoNenhum"],
+    ).parentElement;
+    expect(panel?.className).toBe("ruvor-panel ruvor-search__empty");
+    expect(
+      within(panel as HTMLElement).getByText(TEXTOS["busca.sugestaoNenhumNota"]),
+    ).toBeDefined();
+    expect(within(region).queryAllByRole("link")).toHaveLength(0);
+    expect(within(region).queryByText(TEXTOS["busca.sugestaoNota"])).toBeNull();
+  });
+
+  it('count 11: os oito da página e o "e mais 3", sem link', async () => {
+    renderAt("/");
+    suggestionCalls[0].respond(suggestionPage(ELEVEN_FIRST_PAGE, 11));
+    await flush();
+
+    expect(chips()).toEqual(ELEVEN_FIRST_PAGE);
+    const more = within(suggest()).getByText(TEXTOS["busca.sugestaoMais"](3));
+    expect(more.textContent).toBe("e mais 3 ativos");
+    // Os outros ramos, como na tabela de textos do mockup.
+    expect(TEXTOS["busca.sugestaoMais"](1)).toBe("e mais 1 ativo");
+    expect(TEXTOS["busca.sugestaoMais"](1234)).toBe("e mais 1.234 ativos");
+    expect(more.className).toBe("ruvor-chips__more");
+    expect(more.closest("a")).toBeNull();
+    expect(more.closest("ul")?.className).toBe("ruvor-chips");
+    expect(within(suggest()).getByText(TEXTOS["busca.sugestaoNota"])).toBeDefined();
+  });
+
+  it('count 8: os oito, sem o "e mais"', async () => {
+    renderAt("/");
+    suggestionCalls[0].respond(suggestionPage(ELEVEN_FIRST_PAGE, 8));
+    await flush();
+    expect(chips()).toEqual(ELEVEN_FIRST_PAGE);
+    expect(within(suggest()).queryByText(/e mais/)).toBeNull();
+    expect(suggest().querySelector(".ruvor-chips__more")).toBeNull();
+  });
+
+  it("um pedido por montagem: digitar, apagar e voltar ao vazio mostra a resposta guardada", async () => {
+    renderAt("/");
+    suggestionCalls[0].respond(suggestionPage(SIX));
+    await flush();
+
+    await typeAndWait(pageInput(), "pet");
+    calls[0].respond(page([asset("PETR4")]));
+    await flush();
+    expect(
+      screen.queryByRole("region", { name: TEXTOS["busca.sugestaoTitulo"] }),
+    ).toBeNull();
+
+    fireEvent.keyDown(pageInput(), { key: "Escape" });
+    await flush();
+    expect(chips()).toEqual(SIX);
+
+    await typeAndWait(pageInput(), "vale");
+    fireEvent.click(screen.getByRole("button", { name: TEXTOS["busca.limpar"] }));
+    await wait(1000);
+    await flush();
+    expect(chips()).toEqual(SIX);
+    expect(suggestionCalls).toHaveLength(1);
+  });
+
+  it.each([
+    ["com erro", (call: Call) => call.fail(500)],
+    ["com outra lista", (call: Call) => call.respond(suggestionPage(["WEGE3"]))],
+  ])(
+    "StrictMode: o pedido do primeiro efeito, resolvido depois %s, é descartado",
+    async (_caso, late) => {
+      renderStrictAt("/");
+      // O StrictMode monta, desmonta e monta de novo: dois pedidos.
+      expect(suggestionCalls).toHaveLength(2);
+
+      // O segundo responde A; o primeiro, ainda pendente, resolve depois.
+      suggestionCalls[1].respond(suggestionPage(SIX));
+      await flush();
+      expect(chips()).toEqual(SIX);
+
+      late(suggestionCalls[0]);
+      await flush();
+      expect(chips()).toEqual(SIX);
+      expect(within(suggest()).queryByText(TEXTOS["busca.sugestaoErro"])).toBeNull();
+    },
+  );
+
+  it("a barra, fora da página inicial, não pede a sugestão", async () => {
+    renderAt("/qualquer-coisa");
+    await wait(1000);
+    await flush();
+    expect(suggestionCalls).toHaveLength(0);
+    expect(calls).toHaveLength(0);
   });
 });
 

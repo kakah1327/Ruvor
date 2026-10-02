@@ -21,6 +21,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.assets.b3 import Page
+from apps.assets.classification import unknown_dotted
 from apps.assets.conform import ConformedAsset, conform_company, is_company
 from apps.assets.models import Asset, B3CompanyDetail, B3CompanyListing, CollectionRun
 
@@ -69,7 +70,12 @@ class Listing:
 
 @dataclass(frozen=True)
 class ImportReport:
-    """As contagens de uma coleta que terminou `ok` (RF-13)."""
+    """As contagens de uma coleta que terminou `ok` (RF-13).
+
+    `dotted_outside_table` sao os textos de classificacao com ponto fora das duas listas da
+    D-144 (M1.7, RF-09), distintos e em ordem alfabetica: o sinal para a tabela ganhar uma
+    linha. Nao reprova a coleta. Tem padrao para as construcoes que nao o passam.
+    """
 
     listed: int
     pages: int
@@ -82,24 +88,30 @@ class ImportReport:
     empty_details: int
     quoted_without_code: int
     odd_classifications: int
+    dotted_outside_table: tuple[str, ...] = ()
 
     def render(self) -> str:
-        return "\n".join(
-            [
-                f"listagem: {self.listed} companhias em {self.pages} paginas",
-                f"consultadas (type=1): {self.consulted}",
-                (
-                    f"acoes conformadas: {self.conformed} (criadas {self.created}, "
-                    f"alteradas {self.updated}, inativadas {self.inactivated}, "
-                    f"reativadas {self.reactivated})"
-                ),
-                (
-                    f"casos de borda: detalhe vazio {self.empty_details}, "
-                    f"hasQuotation=S sem codigo de acao {self.quoted_without_code}, "
-                    f"classificacao fora de tres partes {self.odd_classifications}"
-                ),
-            ]
-        )
+        lines = [
+            f"listagem: {self.listed} companhias em {self.pages} paginas",
+            f"consultadas (type=1): {self.consulted}",
+            (
+                f"acoes conformadas: {self.conformed} (criadas {self.created}, "
+                f"alteradas {self.updated}, inativadas {self.inactivated}, "
+                f"reativadas {self.reactivated})"
+            ),
+            (
+                f"casos de borda: detalhe vazio {self.empty_details}, "
+                f"hasQuotation=S sem codigo de acao {self.quoted_without_code}, "
+                f"classificacao fora de tres partes {self.odd_classifications}"
+            ),
+            (
+                "classificacao com ponto fora da tabela: "
+                f"{len(self.dotted_outside_table)}"
+            ),
+        ]
+        if self.dotted_outside_table:
+            lines.append(f"  {'; '.join(self.dotted_outside_table)}")
+        return "\n".join(lines)
 
 
 def run_import(source: CompanySource) -> ImportReport:
@@ -259,4 +271,11 @@ def _conform(
         empty_details=empty_details,
         quoted_without_code=quoted_without_code,
         odd_classifications=odd_classifications,
+        dotted_outside_table=tuple(
+            unknown_dotted(
+                text
+                for asset in conformed.values()
+                for text in (asset.sector, asset.subsector, asset.segment)
+            )
+        ),
     )

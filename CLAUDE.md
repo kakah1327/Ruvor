@@ -130,7 +130,9 @@ M4.2 a API tem **chave pessoal de leitura**, **taxa em toda rota**, o **esquema 
 **filtro automático por organização**, e desde o M4.1, **relatórios** de risco guardados para sempre,
 com SHA-256. Desde o
 M1.6b existem as **telas**: a busca e a tela do ativo — o Marco 1 está fechado —, e desde o M1.6c a tela tem as
-cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M2.3 há a
+cinco camadas, com os fundamentos, a posição entre os pares e os comunicados da companhia à CVM. Desde o M1.7
+a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão da página inicial vem da API
+(`has_risk`) e a classificação da B3 sai da API com vírgula. Desde o M2.3 há a
 **camada explicativa**: as duas leituras, iniciante e avançada, escolhidas no casco.
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
@@ -146,7 +148,9 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
 - `backend/` — projeto Django com seis apps, `apps/accounts`, `apps/assets`,
   `apps/analytics`, `apps/risk`, `apps/fundamentals` e `apps/api`. `GET /health` e a API em
   `/api/v1/`, no formato da [D-86](docs/decisoes/D-86-convencoes-da-api-http.md): seis rotas de
-  leitura — a busca no catálogo e, por ativo, identidade, preços, eventos, métricas e risco — e o
+  leitura — a busca no catálogo, sem diferença de caixa nem de acento no nome e no nome de pregão,
+  pelo lookup `unaccent` ([D-143](docs/decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)), com
+  o campo e o filtro `has_risk` (a execução fechada mais recente `ok` ou `partial`), e, por ativo, identidade, preços, eventos, métricas e risco — e o
   `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
   pedido aberto por ativo em `core.compute_request`, teto global e expiração
   ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
@@ -185,10 +189,11 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1397 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1456 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
-  `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` —,
+  `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` — e a
+  extensão `unaccent` (`apps/assets/migrations/0004_unaccent.py`; o banco de produção precisa dela),
   as tabelas `core.organization`, `core.user`, `core.compute_request`, `core.api_key` e `core.report`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
@@ -209,7 +214,10 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   a [D-107](docs/decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)). `manage.py
   import_assets` consulta a B3 e conforma o catálogo de ações em `silver.asset`
   ([D-47](docs/decisoes/D-47-fonte-do-catalogo-e-o-site-da-b3.md),
-  [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md));
+  [D-48](docs/decisoes/D-48-catalogo-em-silver-por-ticker-atualizado-por-coleta.md)) — a
+  classificação fica em `silver` como a B3 a entrega, com ponto no lugar da vírgula, e a API a corrige na
+  saída pela tabela fechada de `apps/assets/classification.py`; o relatório da coleta conta o texto com
+  ponto fora dela ([D-144](docs/decisoes/D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md));
   `manage.py import_prices` consulta o Yahoo e conforma dez anos de preços com retorno
   logarítmico ([D-50](docs/decisoes/D-50-preco-vem-do-chart-v8-do-yahoo-por-http-direto.md) a
   [D-54](docs/decisoes/D-54-transacao-por-ativo-restringe-a-d-48.md)); `manage.py
@@ -249,7 +257,9 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
 - `frontend/` — React em TypeScript estrito, Vite, Vitest, `react-router` e o **uPlot** nos
   gráficos ([D-94](docs/decisoes/D-94-os-graficos-sao-do-uplot.md)). As rotas `/` (a busca) e
   `/ativos/{ticker}` (a tela do ativo, com o risco, o pedido de cálculo e o acompanhamento), dentro do
-  casco (`components/Shell.tsx`); consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
+  casco (`components/Shell.tsx`); a caixa de busca **de página** — a `/` e a tela "ativo não
+  encontrado" — pede a sugestão à API (`has_risk=true&limit=8`) uma vez por montagem, e a da barra não
+  pede; consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
   `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
   `src/content/`** (copiado dos mockups aprovados), e varreduras reprovam cor literal, texto literal
   em `.tsx` (pela árvore sintática, com `@babel/parser`) e vocabulário de recomendação. Desde o M2.3, **duas
@@ -259,7 +269,7 @@ cinco camadas, com os fundamentos, a posição entre os pares e os comunicados d
   método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
   ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
   [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
-  entradas. 1206 testes.
+  entradas. 1217 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,

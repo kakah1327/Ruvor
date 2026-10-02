@@ -79,9 +79,9 @@ const NO_PEER: PeerIndicator = { median: null, percentile: null, count: null };
 
 const PETR4_PEERS: Peers = {
   peer_level: "segment",
-  group_sector: "Petróleo. Gás e Biocombustíveis",
-  group_subsector: "Petróleo. Gás e Biocombustíveis",
-  group_segment: "Exploração. Refino e Distribuição",
+  group_sector: "Petróleo, Gás e Biocombustíveis",
+  group_subsector: "Petróleo, Gás e Biocombustíveis",
+  group_segment: "Exploração, Refino e Distribuição",
   roe: { median: "0.1125889984", percentile: "1.0000", count: 7 },
   net_margin: { median: "0.0134853183", percentile: "1.0000", count: 8 },
   ebit_margin: { median: "0.1343001814", percentile: "1.0000", count: 8 },
@@ -119,11 +119,11 @@ const ASSET: AssetDetail = {
   name: "PETROLEO BRASILEIRO S.A. PETROBRAS",
   trading_name: "PETROBRAS",
   kind: "stock",
-  sector: "Petróleo. Gás e Biocombustíveis",
+  sector: "Petróleo, Gás e Biocombustíveis",
   status: "active",
   has_prices: true,
-  subsector: "Petróleo. Gás e Biocombustíveis",
-  segment: "Exploração. Refino e Distribuição",
+  subsector: "Petróleo, Gás e Biocombustíveis",
+  segment: "Exploração, Refino e Distribuição",
   listing_segment: "N2",
   last_price: { date: "2026-09-28", close: "48.720001", adj_close: "48.720001" },
 };
@@ -671,7 +671,7 @@ describe("V-08 — os pares", () => {
     const s = mount(ok(body({})));
     const aviso = s.querySelector(".ruvor-state--notice");
     expect(aviso?.querySelector(".ruvor-state__title")?.textContent).toBe(
-      TEXTOS["fundamentos.pares.segmento"]("Exploração. Refino e Distribuição"),
+      TEXTOS["fundamentos.pares.segmento"]("Exploração, Refino e Distribuição"),
     );
     expect(aviso?.querySelector(".ruvor-state__text")?.textContent).toBe(
       TEXTOS["fundamentos.pares.leitura"],
@@ -793,7 +793,7 @@ describe("V-08 — os pares", () => {
     const s = mount(ok(body({}, sub)));
     expect(
       s.querySelector(".ruvor-state--notice .ruvor-state__title")?.textContent,
-    ).toBe(TEXTOS["fundamentos.pares.subsetor"]("Petróleo. Gás e Biocombustíveis"));
+    ).toBe(TEXTOS["fundamentos.pares.subsetor"]("Petróleo, Gás e Biocombustíveis"));
   });
 
   it("o nível none: a frase no topo, e cada indicador sem comparação", () => {

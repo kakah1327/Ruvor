@@ -55,6 +55,15 @@ export const TEXTOS = {
   "busca.sugestaoTitulo": "ativos com risco calculado",
   "busca.sugestaoNota":
     "Os outros ativos do catálogo podem ter o risco calculado na página de cada um.",
+  // A sugestão vinda da API (M1.7, RF-10 e RF-11): do objeto `T` do busca-sugestao.html.
+  "busca.sugestaoCarregando": "Carregando os ativos com risco calculado.",
+  "busca.sugestaoErro": "A lista de ativos com risco calculado não carregou.",
+  "busca.sugestaoErroDica": "Busque pelo código ou pelo nome do ativo, no campo acima.",
+  "busca.sugestaoNenhum": "Nenhum ativo tem o risco calculado ainda.",
+  "busca.sugestaoNenhumNota":
+    "Os ativos do catálogo podem ter o risco calculado na página de cada um.",
+  "busca.sugestaoMais": (n: number) =>
+    n === 1 ? "e mais 1 ativo" : `e mais ${formatInteger(n)} ativos`,
   "busca.contagem": (n: number, q: string) =>
     `${n === 1 ? "1 ativo" : `${formatInteger(n)} ativos`} para “${q}”`,
   "busca.mostrando": (a: number, n: number) =>

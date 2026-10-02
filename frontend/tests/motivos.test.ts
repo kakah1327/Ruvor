@@ -12,8 +12,8 @@
 import { describe, expect, it } from "vitest";
 
 import { MOTIVOS_CONHECIDOS, traduzirMotivo } from "../src/content/motivos";
-import { MIN_SESSIONS } from "../src/content/sugestoes";
 import { TEXTOS } from "../src/content/textos";
+import { MIN_SESSIONS } from "../src/risk/config";
 
 // A lista fechada do RF-18, com `N` no lugar do número.
 const LISTA = [
