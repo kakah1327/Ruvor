@@ -506,11 +506,11 @@ export const TEXTOS = {
   // fundamentos.<campo> — a frase de cada número presente (D-97). negativo: boolean.
   "fundamentos.revenue_ttm":
     "O que a companhia vendeu nos últimos 12 meses, descontados os impostos sobre a venda, as devoluções e os abatimentos.",
-  "fundamentos.ebit_ttm": (negativo: boolean) =>
+  "fundamentos.ebit_ttm": (negativo: boolean): string =>
     negativo
       ? "Negativo: a operação deu prejuízo nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro."
       : "O que a operação rendeu nos últimos 12 meses, antes dos juros e dos impostos sobre o lucro.",
-  "fundamentos.net_income_ttm": (negativo: boolean) =>
+  "fundamentos.net_income_ttm": (negativo: boolean): string =>
     negativo
       ? "Negativo: nos últimos 12 meses, custos, juros e impostos passaram do que a companhia vendeu, e ela teve prejuízo."
       : "O que sobrou para os acionistas da companhia nos últimos 12 meses, depois de custos, juros e impostos.",
@@ -530,7 +530,7 @@ export const TEXTOS = {
   "fundamentos.gross_debt":
     "Os empréstimos e financiamentos, de curto e de longo prazo, incluindo o arrendamento — os aluguéis de longo prazo que o balanço conta como dívida.",
   "fundamentos.cash": "O dinheiro em caixa mais as aplicações financeiras.",
-  "fundamentos.net_debt": (negativo: boolean) =>
+  "fundamentos.net_debt": (negativo: boolean): string =>
     negativo
       ? "Negativa: o caixa é maior que a dívida bruta."
       : "A dívida bruta menos o caixa: o que restaria de dívida se todo o caixa fosse usado para pagá-la.",
@@ -557,7 +557,7 @@ export const TEXTOS = {
       : `O preço dividido pelo lucro por ação, com o fechamento de ${data}, ${preco}: o preço equivale a ${x} anos do lucro dos últimos 12 meses.`,
   "fundamentos.pb": (data: string, preco: string, x: string) =>
     `O preço dividido pelo patrimônio por ação, com o fechamento de ${data}, ${preco}: a bolsa paga ${x} vezes o valor que o balanço dá a cada ação.`,
-  "fundamentos.equity_parent": (negativo: boolean) =>
+  "fundamentos.equity_parent": (negativo: boolean): string =>
     negativo
       ? "Negativo: a companhia deve mais do que tem, descontada a parte dos sócios de fora nas controladas."
       : "O que é dos acionistas da companhia: tudo o que ela tem, menos o que deve e a parte dos sócios de fora nas controladas.",
@@ -611,9 +611,11 @@ export const TEXTOS = {
   // posicao(k, n − 1) — k = round(percentile × (n − 1)), n = count
   "fundamentos.pares.posicao": (k: string, outras: string) =>
     `Acima de ${k} das outras ${outras} companhias do grupo com este indicador calculado.`,
-  // abaixoDeTodas(n − 1) — no lugar de posicao quando k = 0 (ajuste do portão, 2026-09-29)
+  // abaixoDeTodas(n − 1) — no lugar de posicao quando k = 0 (ajuste do portão, 2026-09-29).
+  // "Nenhuma … tem número menor", não "abaixo de todas": o percentil conta só os estritamente
+  // menores, e o empate no menor valor também dá k = 0 (terceira exceção ao "Fora" do M2.3).
   "fundamentos.pares.abaixoDeTodas": (outras: string) =>
-    `Abaixo de todas as outras ${outras} companhias do grupo com este indicador calculado.`,
+    `Nenhuma das outras ${outras} companhias do grupo com este indicador calculado tem número menor.`,
   "fundamentos.pares.mediana": (m: string) => `Mediana do grupo: ${m}.`,
   "fundamentos.pares.semComparacao": "Sem comparação para este indicador.",
 

@@ -9,7 +9,11 @@
  *   2 de 3); a mediana; o nível subsetor e `none`; indicador sem comparação; `peers: null`;
  *   nenhuma palavra proibida;
  * - as marcas da execução real: `data-section`, `data-state`, `data-null-reason`,
- *   `data-peer-k` e `data-peer-n`.
+ *   `data-peer-k` e `data-peer-n`;
+ * - M2.3 (T13): os fundamentos nos dois níveis — a prova por seção das 22 chaves no avançado,
+ *   com a fixture do PETR4 e as próprias dos ramos que ele não exercita (V-04); a frase do nulo
+ *   igual nos dois níveis; e a regra `pior`/`piores` também no avançado e sobre os
+ *   `EXEMPLOS_AVANCADOS` das chaves `fundamentos.*` (V-07, RF-09).
  *
  * A seção recebe os `Load` por prop: o teste a monta direto, sem rede.
  */
@@ -26,11 +30,18 @@ import type {
   Peers,
 } from "../src/api/types";
 import { FundamentalsSection } from "../src/components/FundamentalsSection";
+import { LEITURA_KEYS, TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { REASON_NULLS } from "../src/content/nulos";
 import { TEXTOS } from "../src/content/textos";
 import { formatCompactCurrency } from "../src/format/numbers";
+import type { Reading } from "../src/reading";
+import { EXEMPLOS_AVANCADOS } from "./exemplos";
+import { comNivel, limparNivel } from "./nivel";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  limparNivel();
+});
 
 // ---------------------------------------------------------------- os dados
 
@@ -612,6 +623,47 @@ describe("V-07 — os valores em reais (formatCompactCurrency)", () => {
   });
 });
 
+// ---------------------------------------------------------------- os ramos do M2.3
+
+/** As palavras de `vocabulario.test.ts` mais a regra própria da seção: `pior`, `piores`. */
+const PROIBIDAS_FUNDAMENTOS =
+  /(?<![\p{L}\p{N}_])(melhor|melhores|pior|piores|recomendado|recomendada|recomendados|recomendadas|recomendamos|confiável|confiáveis)(?![\p{L}\p{N}_])/iu;
+
+// Os ramos negativos, que o PETR4 não tem (os valores do caso "V-07 — os negativos").
+const NEGATIVOS: Partial<Indicator> = {
+  net_income_ttm: "-2104000000.00",
+  ebit_ttm: "-310000000.00",
+  net_margin: "-0.0421000000",
+  ebit_margin: "-0.0062000000",
+  roe: "-0.0612000000",
+  eps: "-0.422500",
+  pe: "-28.757396",
+  close: "12.150000",
+  pb: "1.050000",
+  bvps: "11.571429",
+  net_debt: "-8200000000.00",
+  net_debt_to_equity: "-0.2400000000",
+  gross_debt: "5100000000.00",
+  cash: "13300000000.00",
+  equity_parent: "34380000000.00",
+  shares_total: 4980000000,
+};
+
+// O patrimônio negativo: sem ROE, sem dívida líquida sobre o patrimônio e sem P/VP.
+const PATRIMONIO_NEGATIVO: Partial<Indicator> = {
+  equity_parent: "-1500000000.00",
+  bvps: "-0.116381",
+  roe: null,
+  net_debt_to_equity: null,
+  pb: null,
+};
+
+// O valor de mercado presente, que no PETR4 é nulo (missing_class_price).
+const VALOR_DE_MERCADO: Partial<Indicator> = {
+  market_cap: "626283512000.00",
+  market_cap_missing: null,
+};
+
 // ---------------------------------------------------------------- V-08
 
 describe("V-08 — os pares", () => {
@@ -667,7 +719,7 @@ describe("V-08 — os pares", () => {
     );
   });
 
-  it("k = 0: abaixo de todas as outras", () => {
+  it("k = 0: nenhuma das outras tem número menor", () => {
     const k0: Peers = {
       ...PETR4_PEERS,
       roe: { median: "0.1125889984", percentile: "0.0000", count: 8 },
@@ -680,6 +732,14 @@ describe("V-08 — os pares", () => {
       `${TEXTOS["fundamentos.pares.abaixoDeTodas"]("7")} ${TEXTOS["fundamentos.pares.mediana"]("11,3%")}`,
     );
     expect(roe?.textContent).not.toContain("Acima de 0");
+  });
+
+  it("k = 0: a iniciante emendada no portão da T12 do M2.3, literal", () => {
+    // Terceira exceção ao "Fora" da spec do M2.3: não "abaixo de todas", que é falso com
+    // empate no menor valor (o percentil conta só os estritamente menores).
+    expect(TEXTOS["fundamentos.pares.abaixoDeTodas"]("3")).toBe(
+      "Nenhuma das outras 3 companhias do grupo com este indicador calculado tem número menor.",
+    );
   });
 
   it("a mediana do P/L em vezes", () => {
@@ -762,21 +822,51 @@ describe("V-08 — os pares", () => {
     expect(s.getAttribute("data-state")).toBe("ready");
   });
 
-  it("nenhuma palavra proibida na seção, em nenhum caso", () => {
-    const PROIBIDAS =
-      /(?<![\p{L}\p{N}_])(melhor|melhores|pior|piores|recomendado|recomendada|recomendados|recomendadas|recomendamos|confiável|confiáveis)(?![\p{L}\p{N}_])/iu;
-    const k0: Peers = {
-      ...PETR4_PEERS,
-      roe: { median: "0.1125889984", percentile: "0.0000", count: 8 },
-    };
-    const casos = [
-      mount(ok(body({}))),
-      mount(ok(body({}, k0))),
-      mount(ok(body({}, { ...PETR4_PEERS, peer_level: "subsector" }))),
-      mount(ok(body({}, null))),
-      mount(ok({ ticker: "ITUB4", indicator: ITUB4, peers: PETR4_PEERS })),
-    ];
-    for (const s of casos) expect(s.textContent ?? "").not.toMatch(PROIBIDAS);
+  // RF-09 do M2.3: a regra vale nos dois níveis — a seção montada também no avançado, com os
+  // ramos negativos e o valor de mercado presente.
+  it.each<Reading>(["beginner", "advanced"])(
+    "nenhuma palavra proibida na seção, em nenhum caso (%s)",
+    (reading) => {
+      comNivel(reading);
+      const k0: Peers = {
+        ...PETR4_PEERS,
+        roe: { median: "0.1125889984", percentile: "0.0000", count: 8 },
+      };
+      const casos = [
+        mount(ok(body({}))),
+        mount(ok(body({}, k0))),
+        mount(ok(body({}, { ...PETR4_PEERS, peer_level: "subsector" }))),
+        mount(ok(body({}, null))),
+        mount(ok({ ticker: "ITUB4", indicator: ITUB4, peers: PETR4_PEERS })),
+        mount(ok(body(NEGATIVOS))),
+        mount(ok(body(PATRIMONIO_NEGATIVO))),
+        mount(ok(body(VALOR_DE_MERCADO))),
+      ];
+      for (const s of casos)
+        expect(s.textContent ?? "").not.toMatch(PROIBIDAS_FUNDAMENTOS);
+    },
+  );
+
+  it("nenhuma palavra proibida nas avançadas fundamentos.*, por EXEMPLOS_AVANCADOS", () => {
+    const entradas = (
+      Object.entries(TEXTOS_AVANCADOS) as Array<[string, unknown]>
+    ).filter(([k]) => k.startsWith("fundamentos."));
+    expect(entradas).toHaveLength(22);
+    const achados: string[] = [];
+    for (const [chave, valor] of entradas) {
+      const saidas =
+        typeof valor === "string"
+          ? [valor]
+          : (EXEMPLOS_AVANCADOS[chave] ?? []).map((args) =>
+              (valor as (...a: unknown[]) => string)(...args),
+            );
+      expect(saidas.length, chave).toBeGreaterThan(0);
+      for (const saida of saidas) {
+        const m = PROIBIDAS_FUNDAMENTOS.exec(saida);
+        if (m !== null) achados.push(`${chave}: ${m[0]}`);
+      }
+    }
+    expect(achados).toEqual([]);
   });
 });
 
@@ -799,6 +889,245 @@ describe("V-02 do M1.6d — nenhuma região viva embrulha o corpo", () => {
     const s = mount(LOADING);
     expect(within(s).getByRole("status").textContent).toContain(
       TEXTOS["fundamentos.carregando"],
+    );
+  });
+});
+
+// ---------------------------------------------------------------- M2.3, os dois níveis
+
+type PhraseSource = Readonly<Record<string, unknown>>;
+
+/** A frase de uma chave num dos dois módulos, com os argumentos (chave de texto: sem argumento). */
+function phraseFrom(
+  source: PhraseSource,
+  key: string,
+  args: readonly unknown[],
+): string {
+  const entry = source[key];
+  if (typeof entry === "function")
+    return (entry as (...a: unknown[]) => string)(...args);
+  if (typeof entry === "string") return entry;
+  throw new Error(`sem entrada: ${key}`);
+}
+
+/**
+ * Se a frase está numa nota da seção. A posição e a mediana dividem uma nota (`posição
+ * mediana`), por isso a busca é por trecho; o espaço não separável do Intl é normalizado.
+ */
+function sectionHas(section: HTMLElement, text: string): boolean {
+  return [...section.querySelectorAll(".ruvor-note")].some((n) =>
+    normalize(n.textContent ?? "").includes(normalize(text)),
+  );
+}
+
+type Case = {
+  name: string;
+  mount: () => HTMLElement;
+  keys: Array<[key: string, args: readonly unknown[]]>;
+};
+
+const K0: Peers = {
+  ...PETR4_PEERS,
+  roe: { median: "0.1125889984", percentile: "0.0000", count: 8 },
+};
+
+/**
+ * As 22 chaves `fundamentos.*` da lista do RF-04, com os argumentos que cada fixture produz.
+ * O PETR4 exercita 19. Ficam para fixtures próprias, porque ele não as tem: `fundamentos.close`
+ * (o preço do mesmo dia: no PETR4 o preço é anterior ao último pregão, e sai `closeOutraData`),
+ * `fundamentos.market_cap` (nulo no PETR4, por `missing_class_price`) e
+ * `fundamentos.pares.abaixoDeTodas` (nenhum indicador do PETR4 tem k = 0). Os ramos negativos,
+ * que o PETR4 também não tem, vêm de `NEGATIVOS` e `PATRIMONIO_NEGATIVO`.
+ */
+const CASES: Case[] = [
+  {
+    name: "PETR4",
+    mount: () => mount(ok(body({}))),
+    keys: [
+      ["fundamentos.revenue_ttm", []],
+      ["fundamentos.ebit_ttm", [false]],
+      ["fundamentos.net_income_ttm", [false]],
+      ["fundamentos.net_margin", ["R$ 24,32", false]],
+      ["fundamentos.ebit_margin", ["R$ 33,86", false]],
+      ["fundamentos.roe", ["R$ 27,73", false]],
+      ["fundamentos.gross_debt", []],
+      ["fundamentos.cash", []],
+      ["fundamentos.net_debt", [false]],
+      ["fundamentos.net_debt_to_equity", ["R$ 65,03", false]],
+      ["fundamentos.closeOutraData", ["25/09/2026", "28/09/2026"]],
+      ["fundamentos.eps", ["12.888.732.761", false]],
+      ["fundamentos.bvps", ["12.888.732.761"]],
+      ["fundamentos.pe", ["25/09/2026", "R$ 48,07", "4,6", false]],
+      ["fundamentos.pb", ["25/09/2026", "R$ 48,07", "1,29"]],
+      ["fundamentos.equity_parent", [false]],
+      ["fundamentos.total_assets", []],
+      ["fundamentos.pares.posicao", ["6", "6"]],
+      ["fundamentos.pares.posicao", ["3", "6"]],
+      ["fundamentos.pares.posicao", ["7", "7"]],
+      ["fundamentos.pares.mediana", ["11,3%"]],
+      ["fundamentos.pares.mediana", ["65,0%"]],
+      ["fundamentos.pares.mediana", ["1,3%"]],
+      ["fundamentos.pares.mediana", ["13,4%"]],
+    ],
+  },
+  {
+    name: "o preço do mesmo dia",
+    mount: () =>
+      mount(
+        ok(body({})),
+        ok({
+          ...ASSET,
+          last_price: { date: "2026-09-25", close: "48.07", adj_close: "48.07" },
+        }),
+      ),
+    keys: [["fundamentos.close", ["25/09/2026"]]],
+  },
+  {
+    name: "o valor de mercado presente",
+    mount: () => mount(ok(body(VALOR_DE_MERCADO))),
+    keys: [["fundamentos.market_cap", []]],
+  },
+  {
+    name: "k = 0 no ROE",
+    mount: () => mount(ok(body({ roe: "0.0310000000" }, K0))),
+    keys: [
+      ["fundamentos.pares.abaixoDeTodas", ["7"]],
+      ["fundamentos.pares.mediana", ["11,3%"]],
+    ],
+  },
+  {
+    name: "os negativos",
+    mount: () => mount(ok(body(NEGATIVOS))),
+    keys: [
+      ["fundamentos.ebit_ttm", [true]],
+      ["fundamentos.net_income_ttm", [true]],
+      ["fundamentos.net_margin", ["R$ 4,21", true]],
+      ["fundamentos.ebit_margin", ["R$ 0,62", true]],
+      ["fundamentos.roe", ["R$ 6,12", true]],
+      ["fundamentos.net_debt", [true]],
+      ["fundamentos.net_debt_to_equity", ["R$ 24,00", true]],
+      ["fundamentos.eps", ["4.980.000.000", true]],
+      ["fundamentos.pe", ["25/09/2026", "R$ 12,15", "−28,8", true]],
+      ["fundamentos.pb", ["25/09/2026", "R$ 12,15", "1,05"]],
+    ],
+  },
+  {
+    name: "o patrimônio negativo",
+    mount: () => mount(ok(body(PATRIMONIO_NEGATIVO))),
+    keys: [["fundamentos.equity_parent", [true]]],
+  },
+];
+
+describe("M2.3 — os fundamentos nos dois níveis (V-04)", () => {
+  it("os casos cobrem as 22 chaves fundamentos.* do RF-04, todas com avançada", () => {
+    const cobertas = new Set(CASES.flatMap((c) => c.keys.map(([key]) => key)));
+    const daLista = (LEITURA_KEYS as readonly string[]).filter((k) =>
+      k.startsWith("fundamentos."),
+    );
+    expect(daLista).toHaveLength(22);
+    expect([...cobertas].sort()).toEqual([...daLista].sort());
+  });
+
+  it.each(CASES.map((c) => [c.name, c] as const))(
+    "a prova por seção no avançado (%s): cada chave na avançada, nunca na iniciante",
+    (_nome, c) => {
+      comNivel("advanced");
+      const s = c.mount();
+      const ausentes: string[] = [];
+      const presentes: string[] = [];
+      for (const [key, args] of c.keys) {
+        if (!sectionHas(s, phraseFrom(TEXTOS_AVANCADOS, key, args))) ausentes.push(key);
+        if (sectionHas(s, phraseFrom(TEXTOS, key, args))) presentes.push(key);
+      }
+      expect(ausentes, "avançada ausente").toEqual([]);
+      expect(presentes, "iniciante presente").toEqual([]);
+    },
+  );
+
+  it.each(CASES.map((c) => [c.name, c] as const))(
+    "no iniciante (%s): as iniciantes, e nenhuma avançada",
+    (_nome, c) => {
+      comNivel("beginner");
+      const s = c.mount();
+      const ausentes: string[] = [];
+      const presentes: string[] = [];
+      for (const [key, args] of c.keys) {
+        if (!sectionHas(s, phraseFrom(TEXTOS, key, args))) ausentes.push(key);
+        if (sectionHas(s, phraseFrom(TEXTOS_AVANCADOS, key, args))) presentes.push(key);
+      }
+      expect(ausentes, "iniciante ausente").toEqual([]);
+      expect(presentes, "avançada presente").toEqual([]);
+    },
+  );
+
+  it("o ROE no avançado: a avançada (uma chave de função)", () => {
+    comNivel("advanced");
+    const s = mount(ok(body({})));
+    expect(normalize(phraseOf(s, "roe"))).toBe(
+      normalize(TEXTOS_AVANCADOS["fundamentos.roe"]("R$ 27,73", false)),
+    );
+  });
+
+  it("a receita no avançado: a avançada (uma chave de texto)", () => {
+    comNivel("advanced");
+    expect(phraseOf(mount(ok(body({}))), "revenue_ttm")).toBe(
+      TEXTOS_AVANCADOS["fundamentos.revenue_ttm"],
+    );
+  });
+
+  it("o valor exibido é o mesmo nos dois níveis", () => {
+    const valores = (reading: Reading) => {
+      comNivel(reading);
+      const s = mount(ok(body({})));
+      const vistos = [...s.querySelectorAll(".ruvor-stat")].map((e) => {
+        const campo = e.getAttribute("data-field") ?? "";
+        return [campo, visibleValue(s, campo), srValue(s, campo)];
+      });
+      const pares = [...s.querySelectorAll("[data-peer-k]")].map((e) => [
+        e.getAttribute("data-peer-k"),
+        e.getAttribute("data-peer-n"),
+      ]);
+      cleanup();
+      return { vistos, pares };
+    };
+    const iniciante = valores("beginner");
+    const avancada = valores("advanced");
+    expect(iniciante.vistos).toHaveLength(18);
+    expect(avancada).toEqual(iniciante);
+  });
+});
+
+describe("M2.3 — a frase do nulo é a mesma nos dois níveis (RF-05)", () => {
+  it.each<Reading>(["beginner", "advanced"])("%s", (reading) => {
+    comNivel(reading);
+    // O PETR4: o valor de mercado nulo por missing_class_price.
+    const petr4 = mount(ok(body({})));
+    expect(phraseOf(petr4, "market_cap")).toBe(
+      TEXTOS["fundamentos.nulo.valorMercado.missing_class_price"],
+    );
+    // O banco: os nulos do plano de contas.
+    const banco = mount(ok({ ticker: "ITUB4", indicator: ITUB4, peers: PETR4_PEERS }));
+    expect(phraseOf(banco, "revenue_ttm")).toBe(
+      TEXTOS["fundamentos.nulo.planoFinanceiro"],
+    );
+    // Um motivo por ação, e a genérica.
+    const semPreco = mount(
+      ok(
+        body({
+          price_date: null,
+          close: null,
+          pe: null,
+          pb: null,
+          per_share_missing: "no_price",
+          roe: null,
+        }),
+      ),
+    );
+    expect(phraseOf(semPreco, "pe")).toBe(TEXTOS["fundamentos.nulo.porAcao.no_price"]);
+    expect(phraseOf(semPreco, "roe")).toBe(TEXTOS["fundamentos.nulo.generico"]);
+    // O rótulo e o "sem comparação" também não mudam.
+    expect(peerOf(petr4, "pe")?.textContent).toContain(
+      TEXTOS["fundamentos.pares.semComparacao"],
     );
   });
 });

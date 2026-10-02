@@ -271,4 +271,47 @@ export const EXEMPLOS_AVANCADOS: Readonly<
     ["0,082", true],
     ["< 0,001", false],
   ],
+  // Os fundamentos (T13): o `EXEMPLOS_AVANCADOS` do `fundamentos.html`, cobrindo os ramos da
+  // avançada; o primeiro de cada um é o do PETR4 no cálculo de 28/09/2026 (o de
+  // `abaixoDeTodas`, o da VALE3), e os do ramo negativo, inventados — o PETR4 não tem número
+  // negativo. As chaves de texto não entram.
+  "fundamentos.ebit_ttm": [[false], [true]],
+  "fundamentos.net_income_ttm": [[false], [true]],
+  "fundamentos.net_margin": [
+    ["R$ 24,32", false],
+    ["R$ 4,21", true],
+  ],
+  "fundamentos.ebit_margin": [
+    ["R$ 33,86", false],
+    ["R$ 2,10", true],
+  ],
+  "fundamentos.roe": [
+    ["R$ 27,73", false],
+    ["R$ 6,12", true],
+  ],
+  "fundamentos.net_debt": [[false], [true]],
+  "fundamentos.net_debt_to_equity": [
+    ["R$ 65,03", false],
+    ["R$ 12,40", true],
+  ],
+  "fundamentos.close": [["25/09/2026"]],
+  "fundamentos.closeOutraData": [["25/09/2026", "01/10/2026"]],
+  "fundamentos.eps": [
+    ["12.888.732.761", false],
+    ["4.980.000.000", true],
+  ],
+  "fundamentos.bvps": [["12.888.732.761"]],
+  "fundamentos.pe": [
+    ["25/09/2026", "R$ 48,07", "4,6", false],
+    ["25/09/2026", "R$ 12,15", "−28,7", true],
+  ],
+  "fundamentos.pb": [["25/09/2026", "R$ 48,07", "1,29"]],
+  "fundamentos.equity_parent": [[false], [true]],
+  "fundamentos.pares.posicao": [
+    // k ≥ 1: o ROE e a dívida líquida sobre o patrimônio (PETR4).
+    ["6", "6"],
+    ["3", "6"],
+  ],
+  "fundamentos.pares.abaixoDeTodas": [["3"]],
+  "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
 };

@@ -14,7 +14,9 @@
  * afirmações são as de `conferencia-comportamento.md`. `risco.*`: do `risco.html` (T9),
  * literais — com a alternativa da D-64 aprovada no portão, a expressão única "não do número de
  * hoje" em `risco.veredito` e nos ramos k ≥ 1 e k = 0 de `risco.naoRejeitados` (as constantes
- * da vista `d64`); as afirmações são as de `conferencia-risco.md`.
+ * da vista `d64`); as afirmações são as de `conferencia-risco.md`. `fundamentos.*`: do
+ * `fundamentos.html` (T12), literais; as afirmações são as de `conferencia-fundamentos.md`.
+ * Com eles, `LEITURA_KEYS` são as 55 do RF-04.
  */
 import type { TEXTOS, TextoKey } from "./textos";
 
@@ -59,6 +61,30 @@ export const LEITURA_KEYS = [
   "risco.kupiec",
   "risco.christoffersen",
   "risco.dq",
+  // Os fundamentos (T13): os 18 números e a variante do preço…
+  "fundamentos.revenue_ttm",
+  "fundamentos.ebit_ttm",
+  "fundamentos.net_income_ttm",
+  "fundamentos.net_margin",
+  "fundamentos.ebit_margin",
+  "fundamentos.roe",
+  "fundamentos.gross_debt",
+  "fundamentos.cash",
+  "fundamentos.net_debt",
+  "fundamentos.net_debt_to_equity",
+  "fundamentos.close",
+  "fundamentos.eps",
+  "fundamentos.bvps",
+  "fundamentos.pe",
+  "fundamentos.pb",
+  "fundamentos.equity_parent",
+  "fundamentos.total_assets",
+  "fundamentos.market_cap",
+  "fundamentos.closeOutraData",
+  // …e a posição entre os pares.
+  "fundamentos.pares.posicao",
+  "fundamentos.pares.abaixoDeTodas",
+  "fundamentos.pares.mediana",
 ] as const satisfies readonly TextoKey[];
 
 export type LeituraKey = (typeof LEITURA_KEYS)[number];
@@ -173,6 +199,52 @@ export const TEXTOS_AVANCADOS: {
     `Teste de independência de Christoffersen: numa cadeia de Markov de 1ª ordem, compara a chance de violar no dia seguinte a uma violação com a de violar no dia seguinte a um dia sem violação, contra uma qui-quadrado com 1 grau de liberdade; o p-valor é o da independência. Aqui, ${p}: a independência ${ok ? "não é rejeitada" : "é rejeitada"}.`,
   "risco.dq": (p: string, ok: boolean) =>
     `Teste de quantil dinâmico: regride a violação de cada dia (1 ou 0), menos a taxa esperada, sobre uma constante, as violações dos quatro dias anteriores e o VaR do dia, e testa se todos os coeficientes são zero, contra uma qui-quadrado com 6 graus de liberdade. Pega ao mesmo tempo taxa errada e violações previsíveis. Passa com p-valor acima de 0,05 e fica fora do veredito. Aqui, ${p}: coeficientes nulos ${ok ? "não rejeitados" : "rejeitados"}.`,
+  // Os fundamentos (T13): do `fundamentos.html` aprovado, literais; as afirmações são as de
+  // `conferencia-fundamentos.md`. A frase do nulo não tem avançada: é a mesma nos dois níveis.
+  "fundamentos.revenue_ttm":
+    "A conta 3.01 da demonstração do resultado, somada nos quatro balanços mais recentes, cada um reduzido ao próprio trimestre — o quarto trimestre é o anual menos o acumulado até o trimestre anterior. Os quatro têm de ser trimestres seguidos, de 88 a 93 dias entre uma data e a outra; senão, não há número. Só no plano de contas geral: banco, seguradora e plano não reconhecido ficam sem valor.",
+  "fundamentos.ebit_ttm": (negativo: boolean) =>
+    `A linha "Resultado Antes do Resultado Financeiro e dos Tributos" da demonstração do resultado, achada pela descrição, somada nos mesmos quatro trimestres da receita; só no plano de contas geral.${negativo ? " Abaixo de zero: nos 12 meses, o resultado antes do financeiro e dos tributos foi negativo." : ""}`,
+  "fundamentos.net_income_ttm": (negativo: boolean) =>
+    `O lucro atribuído aos sócios da controladora — no balanço consolidado, a parte do lucro que cabe a eles; no individual, o lucro do período —, somado nos mesmos quatro trimestres. Calculado em todo plano de contas, banco e seguradora inclusive.${negativo ? " Abaixo de zero: prejuízo da controladora nos 12 meses." : ""}`,
+  "fundamentos.net_margin": (x: string, negativo: boolean) =>
+    `O lucro de 12 meses da controladora dividido pela receita de 12 meses; sem valor quando a receita falta ou não é positiva. ${negativo ? `Negativa porque o lucro foi prejuízo: ${x} de prejuízo a cada R$ 100 de receita.` : `${x} de lucro a cada R$ 100 de receita.`}`,
+  "fundamentos.ebit_margin": (x: string, negativo: boolean) =>
+    `O EBIT de 12 meses dividido pela mesma receita de 12 meses, com a mesma exigência de receita positiva. ${negativo ? `Negativa porque o EBIT foi negativo: ${x} abaixo de zero a cada R$ 100 de receita.` : `${x} de EBIT a cada R$ 100 de receita.`}`,
+  "fundamentos.roe": (x: string, negativo: boolean) =>
+    `O lucro de 12 meses da controladora dividido pelo patrimônio da controladora na data do balanço mais recente — a posição daquele dia, não a média do período; sem valor quando o patrimônio falta ou não é positivo. ${negativo ? `Negativo porque o lucro foi prejuízo: ${x} de prejuízo a cada R$ 100 de patrimônio.` : `${x} de lucro a cada R$ 100 de patrimônio.`}`,
+  "fundamentos.gross_debt":
+    'A soma das linhas "Empréstimos e Financiamentos" logo abaixo do passivo circulante e do passivo não circulante, na data do balanço mais recente; só no plano de contas geral.',
+  "fundamentos.cash":
+    'A soma das linhas "Caixa e Equivalentes de Caixa" e "Aplicações Financeiras" logo abaixo do ativo circulante, na data do balanço; a aplicação de longo prazo não entra. Só no plano de contas geral.',
+  "fundamentos.net_debt": (negativo: boolean) =>
+    `A dívida bruta menos o caixa e aplicações, os dois na mesma data; sem valor se um dos dois falta.${negativo ? " Negativa: o caixa e as aplicações do circulante passam da dívida bruta." : ""}`,
+  "fundamentos.net_debt_to_equity": (x: string, negativo: boolean) =>
+    `A dívida líquida dividida pelo patrimônio da controladora, os dois na data do balanço; sem valor com o patrimônio não positivo. ${negativo ? "Negativa porque a dívida líquida é negativa: o caixa e as aplicações passam da dívida." : `${x} de dívida líquida a cada R$ 100 de patrimônio.`}`,
+  "fundamentos.close": (data: string) =>
+    `O fechamento sem ajuste por proventos do pregão de ${data}, como o Yahoo Finance o informa: o último pregão entre 10 dias corridos antes do dia do cálculo e o próprio dia. É o preço do P/L e do P/VP.`,
+  "fundamentos.closeOutraData": (data: string, ultimo: string) =>
+    `O fechamento sem ajuste por proventos do pregão de ${data}, como o Yahoo Finance o informa — o último entre 10 dias corridos antes do dia do cálculo e o próprio dia —, e não o do último pregão coletado, ${ultimo}: os fundamentos são calculados por agenda semanal, não a cada pregão. É o preço do P/L e do P/VP.`,
+  "fundamentos.eps": (acoes: string, negativo: boolean) =>
+    `O lucro de 12 meses da controladora dividido por ${acoes} ações: as ordinárias mais as preferenciais do balanço mais recente, cada classe sem as ações em tesouraria. A escala — unidades ou milhares — é a que deixa o lucro acumulado no exercício desse balanço, dividido pelas ações, mais perto do lucro por ação básico que a companhia declara para o mesmo período; aceita só a menos de um fator 2 dele.${negativo ? " Negativo porque o lucro de 12 meses foi prejuízo." : ""}`,
+  "fundamentos.bvps": (acoes: string) =>
+    `O patrimônio da controladora na data do balanço dividido pelas mesmas ${acoes} ações, ordinárias mais preferenciais, sem as de tesouraria.`,
+  "fundamentos.pe": (data: string, preco: string, x: string, negativo: boolean) =>
+    `O fechamento de ${data}, ${preco}, dividido pelo lucro por ação de 12 meses; sem valor com o lucro por ação zero ou ausente. ${negativo ? `Negativo porque o lucro por ação é negativo: o quociente, ${x}, existe, mas não é um número de anos.` : `Aqui, ${x} (o destaque tem duas casas): o preço equivale a ${x} vezes o lucro por ação de 12 meses.`}`,
+  "fundamentos.pb": (data: string, preco: string, x: string) =>
+    `O fechamento de ${data}, ${preco}, dividido pelo patrimônio por ação: ${x}. Sem valor quando o patrimônio por ação não é positivo — por isso nunca é negativo.`,
+  "fundamentos.equity_parent": (negativo: boolean) =>
+    `No balanço consolidado, a linha "Patrimônio Líquido Atribuído ao Controlador", quando existe; senão, o patrimônio líquido menos a participação dos acionistas não controladores. No individual, o patrimônio líquido. Na data do balanço mais recente.${negativo ? " Abaixo de zero: com ele não positivo, o ROE, a dívida líquida sobre o patrimônio e o P/VP ficam sem valor." : ""}`,
+  "fundamentos.total_assets":
+    "O ativo total — a linha de topo do balanço patrimonial ativo —, na data do balanço mais recente; calculado em todo plano de contas.",
+  "fundamentos.market_cap":
+    "Para cada classe com ações, ordinária e preferencial, o fechamento sem ajuste do único código ativo da classe, da mesma janela de 10 dias do preço usado — final 3 na ordinária, de 4 a 8 na preferencial; a unit nunca entra —, vezes a quantidade da classe no balanço mais recente, sem as de tesouraria, e as classes somadas. Sem valor se falta o preço de uma das classes ou se uma classe tem mais de um código.",
+  "fundamentos.pares.posicao": (k: string, outras: string) =>
+    `Percentil: a fração das outras companhias do grupo com o indicador calculado cujo valor é estritamente menor — aqui, ${k} das ${outras}; empate não conta.`,
+  "fundamentos.pares.abaixoDeTodas": (outras: string) =>
+    `Percentil zero: nenhuma das outras ${outras} companhias do grupo com o indicador calculado tem valor estritamente menor; a que tiver o mesmo valor está empatada, não acima.`,
+  "fundamentos.pares.mediana": (m: string) =>
+    `Mediana do grupo, esta companhia inclusa, um valor por companhia (com número par, a média dos dois do meio): ${m}.`,
 };
 
 /**

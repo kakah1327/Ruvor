@@ -1095,6 +1095,14 @@ describe("RF-10 — o comportamento, formatado em pt-BR, e V-14: a frase junto d
     expect(EXPECTED).toHaveLength(21);
   });
 
+  it("o retorno no ano: a iniciante emendada no portão da T6 do M2.3, literal", () => {
+    // Segunda exceção ao "Fora" da spec do M2.3: o cálculo parte do fechamento do último
+    // pregão antes do ano corrente, não do primeiro pregão do ano.
+    expect(TEXTOS["comportamento.return_ytd"]("R$ 114,98")).toBe(
+      "Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100 viraram R$ 114,98.",
+    );
+  });
+
   it.each(EXPECTED)("%s: %s, com a frase", async (field, value, phrase) => {
     renderAsset();
     await loaded();

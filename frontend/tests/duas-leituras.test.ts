@@ -6,10 +6,8 @@
  * `TEXTOS_AVANCADOS` com o mesmo tipo da iniciante (texto, ou função com o mesmo
  * `Function.length`), e o módulo avançado não tem chave fora de `LEITURA_KEYS`.
  *
- * A falha silenciosa é a chave que nunca ganha avançada e ninguém nota: `PENDENTES` diz quais
- * ainda não têm, e `AS_55 − LEITURA_KEYS` tem de ser exatamente ela — nem mais, nem menos. Cada
- * tarefa de seção tira as suas de `PENDENTES`; a T13 apaga a constante e confere `LEITURA_KEYS`
- * igual a `AS_55`.
+ * A falha silenciosa é a chave que nunca ganha avançada e ninguém nota: com as quatro seções
+ * escritas (T4, T7, T10, T13), `LEITURA_KEYS` é exatamente `AS_55` — nem mais, nem menos.
  */
 import { describe, expect, it } from "vitest";
 
@@ -80,32 +78,6 @@ const AS_55 = [
   "fundamentos.pares.mediana",
 ] as const satisfies readonly TextoKey[];
 
-// As chaves de AS_55 ainda sem frase avançada. Nasce com as 55; cada seção tira as suas.
-const PENDENTES = [
-  "fundamentos.revenue_ttm",
-  "fundamentos.ebit_ttm",
-  "fundamentos.net_income_ttm",
-  "fundamentos.net_margin",
-  "fundamentos.ebit_margin",
-  "fundamentos.roe",
-  "fundamentos.gross_debt",
-  "fundamentos.cash",
-  "fundamentos.net_debt",
-  "fundamentos.net_debt_to_equity",
-  "fundamentos.close",
-  "fundamentos.eps",
-  "fundamentos.bvps",
-  "fundamentos.pe",
-  "fundamentos.pb",
-  "fundamentos.equity_parent",
-  "fundamentos.total_assets",
-  "fundamentos.market_cap",
-  "fundamentos.closeOutraData",
-  "fundamentos.pares.posicao",
-  "fundamentos.pares.abaixoDeTodas",
-  "fundamentos.pares.mediana",
-] as const satisfies readonly TextoKey[];
-
 const ordenada = (chaves: readonly string[]): string[] => [...chaves].sort();
 
 describe("V-02 — a lista fechada das duas leituras", () => {
@@ -120,11 +92,8 @@ describe("V-02 — a lista fechada das duas leituras", () => {
     expect(chaves.filter((k) => !(AS_55 as readonly string[]).includes(k))).toEqual([]);
   });
 
-  it("AS_55 − LEITURA_KEYS é exatamente PENDENTES", () => {
-    const comAvancada: readonly string[] = LEITURA_KEYS;
-    const faltam = AS_55.filter((k) => !comAvancada.includes(k));
-    expect(new Set(PENDENTES).size).toBe(PENDENTES.length);
-    expect(ordenada(faltam)).toEqual(ordenada(PENDENTES));
+  it("LEITURA_KEYS é exatamente AS_55: toda chave do RF-04 tem avançada", () => {
+    expect(ordenada(LEITURA_KEYS)).toEqual(ordenada(AS_55));
   });
 
   it("o módulo avançado tem exatamente as chaves de LEITURA_KEYS", () => {
