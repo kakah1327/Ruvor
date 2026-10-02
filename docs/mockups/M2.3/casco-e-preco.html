@@ -18,8 +18,9 @@
    * O que é novo, e o portão aprova:
    *   - o alternador de leitura (Iniciante / Avançada) na barra, ao lado da chave de tema, no
    *     molde dela (.ruvor-segmented): m23-prefs junta as duas chaves no terceiro lugar da
-   *     grade da barra, e, até 720 px, o alternador desce para a segunda linha, embaixo da
-   *     chave de tema, e a busca vai para a terceira (RF-11);
+   *     grade da barra, e, até 720 px, o alternador fica na primeira linha, ao lado da marca, a
+   *     chave de tema desce para a segunda, à direita, e a busca vai para a terceira — a ordem
+   *     visual igual à do DOM e à de 1440 (RF-11);
    *   - as frases avançadas de ativo.ultimoFechamento e ativo.precoAjustado, copiadas de
    *     docs/mockups/M2.3/conferencia-casco.md, no lugar da iniciante (D-152).
    * O menu de conta do M2.1b não está aprovado (T0 do plano): a barra não o mostra.
@@ -37,11 +38,11 @@
   /* --- NOVO: as duas chaves da barra, a de leitura antes da de tema ----------------- */
   .m23-prefs { display: flex; align-items: center; gap: var(--ruvor-space-3); justify-self: end; }
   @media (max-width: 720px) {
-    /* Na barra de duas colunas do kit: marca e tema na primeira linha, o alternador na
-       segunda, alinhado com o tema, e a busca (quando há) na terceira. */
+    /* Na barra de duas colunas do kit: marca e alternador na primeira linha, o tema na
+       segunda, à direita, e a busca (quando há) na terceira: a ordem do DOM. */
     .m23-prefs { display: contents; }
-    .m23-prefs > [data-switch="theme"] { grid-column: 2; grid-row: 1; justify-self: end; }
-    .m23-prefs > [data-switch="reading"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+    .m23-prefs > [data-switch="reading"] { grid-column: 2; grid-row: 1; justify-self: end; }
+    .m23-prefs > [data-switch="theme"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
     .ruvor-topbar .ruvor-topbar__search { grid-row: 3; }
   }
 
@@ -169,7 +170,7 @@
 
     <!-- 360 px: a própria página em moldura estreita, no nível e no tema escolhidos. -->
     <div class="mk-view mk-pad" data-view="estreito" hidden>
-      <p class="mk-tail">Moldura: a mesma página em 360 px de largura, sem a barra do mockup. Até 720 px a barra do kit tem duas colunas; o alternador desce para a segunda linha, embaixo da chave de tema, e a busca vai para a terceira. Nada rola na horizontal (RF-11).</p>
+      <p class="mk-tail">Moldura: a mesma página em 360 px de largura, sem a barra do mockup. Até 720 px a barra do kit tem duas colunas; o alternador fica na primeira linha, ao lado da marca, a chave de tema desce para a segunda, à direita, e a busca vai para a terceira — a ordem do DOM e a de 1440. Nada rola na horizontal (RF-11).</p>
       <div class="mk-frames" data-frames></div>
     </div>
 
@@ -188,10 +189,10 @@
         <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
         <div class="ruvor-panel__body">
           <ul class="mk-notes">
-            <li>As duas avançadas dizem o que o código mostra, e só isso. Duas afirmações ficam de fora porque não se ancoram no código (o fim da conferência): <b>o que o ajustado corrige</b> — a avançada diz "o ajustado que o Yahoo devolve", sem prometer a fórmula do ajuste —, e <b>o close "como foi negociado"</b> — a avançada diz "como a fonte o devolve". Afirmar mais pede conferir a fonte.</li>
-            <li>As avançadas usam os nomes do cálculo (<code>close</code>, <code>adj_close</code>, <code>silver.price</code>, <code>chart v8</code>, <code>indicators.adjclose</code>, a fórmula do log-retorno) como a conferência os escreve. O portão decide se a frase da tela os mantém ou os troca por palavras.</li>
+            <li>As duas avançadas dizem o que o código mostra, e só isso. Duas afirmações ficam de fora porque não se ancoram no código (o fim da conferência): <b>o que o ajustado corrige</b> — a avançada diz "fechamento ajustado como o Yahoo Finance o informa", sem prometer a fórmula do ajuste —, e <b>o fechamento "como foi negociado"</b> — a avançada diz "como o Yahoo Finance o informa". Afirmar mais pede conferir a fonte.</li>
+            <li>As avançadas dizem em palavras o que a conferência afirma com os nomes do cálculo (<code>close</code>, <code>adj_close</code>, <code>silver.price</code>, o <code>chart</code> do Yahoo, a fórmula do log-retorno): a revisão do mockup pediu a frase sem nomes internos. A conferência guarda o <code>caminho:linha</code> de cada afirmação, e a janela (do primeiro pregão coletado ao último; a primeira coleta pede dez anos) está na frase do preço ajustado.</li>
             <li>O valor do último fechamento, a série do gráfico, o resumo do gráfico e a tabela de proventos são os mesmos nos dois níveis: o nível muda só as duas frases (D-152). Na seção Preço e proventos nada é recolhido (RF-06).</li>
-            <li>O alternador fica à esquerda da chave de tema. O menu de conta do M2.1b, que entra antes do tema, não está aprovado e não aparece; quando entrar, a barra em 360 px se refaz no mockup dele.</li>
+            <li>O alternador fica à esquerda da chave de tema em 1440, e na primeira linha, ao lado da marca, em 360. O menu de conta do M2.1b, que entra antes do tema, não está aprovado e não aparece; quando entrar, a barra em 360 px se refaz no mockup dele.</li>
             <li>O rótulo do grupo, "Nível de leitura", só é lido pelo leitor de tela, como o "Tema" da chave ao lado.</li>
           </ul>
         </div>
@@ -283,12 +284,12 @@ const TEXTOS = {
 };
 
 // NOVOS em avancado.ts: as frases avançadas das duas chaves, mesma chave e mesma assinatura
-// da iniciante (RF-05). As afirmações são as de conferencia-casco.md, literais; a data entra
-// onde a afirmação diz "na data mostrada", e as duas linhas de ativo.precoAjustado (a linha do
+// da iniciante (RF-05). As afirmações são as de conferencia-casco.md, em palavras, sem os nomes
+// internos (redação da revisão do mockup); as duas linhas de ativo.precoAjustado (a linha do
 // gráfico e a série que vai aos modelos) viram uma frase só, porque a chave é texto, sem ramo.
 const TEXTOS_AVANCADOS = {
-  "ativo.ultimoFechamento": (data) => `O valor é o close do pregão mais recente guardado em silver.price para o ativo, o de ${data}: o fechamento do chart v8 do Yahoo como a fonte o devolve, sem o ajuste por proventos que vai para o ajustado. A data do pregão é a do fuso da bolsa, não UTC.`,
-  "ativo.precoAjustado": "A linha é o adj_close, o fechamento ajustado que o Yahoo devolve em indicators.adjclose — o Ruvor não o recalcula a partir do close e dos eventos. A coleta pede os eventos de dividendos e desdobramentos junto com a série, e quando chega um evento ainda não guardado a série inteira é pedida de novo, porque o ajustado de todo o passado muda. O retorno diário é o logaritmo da razão entre dois ajustados consecutivos, ln(adj_close_t / adj_close_{t-1}), sobre a série guardada. É o ajustado — não o close — que vai aos modelos de risco: o motor recebe o adj_close na coluna que ele lê como preço e tira dela o log-retorno.",
+  "ativo.ultimoFechamento": (data) => `O fechamento do pregão de ${data}, o mais recente coletado, como o Yahoo Finance o informa — sem o ajuste por proventos do preço ajustado. A data é a do pregão no fuso da bolsa.`,
+  "ativo.precoAjustado": "Fechamento ajustado como o Yahoo Finance o informa; o Ruvor não refaz o ajuste. A série vai do primeiro pregão coletado — a primeira coleta pede dez anos — até o último, e é pedida de novo inteira quando chega provento ou desdobramento novo, porque o ajuste muda todo o passado. Dela sai o retorno diário, o logaritmo da razão entre o fechamento ajustado e o do pregão anterior, que é o que vai aos modelos de risco.",
 };
 
 // O registro de exemplos (o molde do EXEMPLOS do M1.6c): os argumentos de cada chave-função.
