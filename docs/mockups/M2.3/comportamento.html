@@ -21,8 +21,9 @@
    *   - m23-collapsible: o CONTROLE DE RECOLHER, que nasce aqui (a T9 e a T12 o repetem; a T7 o
    *     leva ao kit). Derivado da linha expansível da tabela (.ruvor-table__toggle, a seta que
    *     gira com aria-expanded);
-   *   - m23-switches: o arranjo provisório da chave de tema e do alternador na barra — quem
-   *     decide o arranjo é o casco-e-preco.html (T3);
+   *   - m23-prefs: a barra com as duas chaves, copiada do casco-e-preco.html (T3) revisado — o
+   *     alternador antes do tema no DOM e em 1440; até 720 px, o alternador na 1ª linha, ao lado
+   *     da marca, o tema na 2ª, à direita, e a busca na 3ª;
    *   - m23-bar, m23-note, m23-textos, m23-states: a moldura do mockup, que não é tela.
    */
 
@@ -47,7 +48,13 @@
   @media (prefers-reduced-motion: reduce) { .m23-collapsible__toggle .ruvor-glyph { transition: none; } }
 
   /* --- A chave de tema e o alternador na barra: arranjo PROVISÓRIO (o casco é da T3) --- */
-  .m23-switches { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: var(--ruvor-space-2); }
+  .m23-prefs { display: flex; align-items: center; gap: var(--ruvor-space-3); justify-self: end; }
+  @media (max-width: 720px) {
+    .m23-prefs { display: contents; }
+    .m23-prefs > [data-switch="reading"] { grid-column: 2; grid-row: 1; justify-self: end; }
+    .m23-prefs > [data-switch="theme"] { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+    .ruvor-topbar .ruvor-topbar__search { grid-row: 3; }
+  }
 
   /* --- Moldura do mockup: não é tela --------------------------------------------------- */
   .m23-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
@@ -108,16 +115,16 @@
       <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
     </div>
   </div>
-  <div class="m23-switches">
-    <div class="ruvor-segmented" role="group" data-t-aria="casco.tema.rotulo">
+  <!-- A barra do casco-e-preco.html (T3): a chave de leitura antes da de tema (RF-01). -->
+  <div class="m23-prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
       <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
       <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
       <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
-    </div>
-    <!-- O alternador: provisório nesta página (rótulos e lugar são do casco-e-preco.html, T3). -->
-    <div class="ruvor-segmented" role="group" data-t-aria="casco.leitura.rotulo">
-      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
-      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
     </div>
   </div>
 </header>
@@ -188,8 +195,8 @@ const TEXTOS = {
   "casco.tema.claro": "Claro",
   "casco.tema.escuro": "Escuro",
   "casco.tema.sistema": "Sistema",
-  // O alternador: provisório aqui; os rótulos são aprovados no portão da T3.
-  "casco.leitura.rotulo": "Leitura",
+  // O alternador: os rótulos do casco-e-preco.html (T3).
+  "casco.leitura.rotulo": "Nível de leitura",
   "casco.leitura.iniciante": "Iniciante",
   "casco.leitura.avancada": "Avançada",
   "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
@@ -281,26 +288,26 @@ const TEXTOS = {
 // parâmetros, na mesma ordem, da iniciante. Cada afirmação copia a de
 // docs/mockups/M2.3/conferencia-comportamento.md, onde está o caminho:linha que a confere.
 const TEXTOS_AVANCADOS = {
-  "comportamento.return_1m": (x) => `Retorno simples, não logarítmico, do preço ajustado na janela de 1 mês de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. O primeiro pregão é o último em ou antes da data do último pregão menos 1 mês. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_3m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 3 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_6m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 6 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_12m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 12 meses de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_36m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 36 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_60m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 60 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_120m": (x) => `O mesmo retorno simples do preço ajustado, na janela de 120 meses de calendário — acumulado no período, não anualizado: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. Sem pregão em ou antes do início da janela, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.return_ytd": (x) => `Retorno simples do preço ajustado desde o fechamento do último pregão do ano anterior até o último pregão — não desde o primeiro pregão do ano corrente. Sem pregão no ano anterior, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
-  "comportamento.volatility_12m": (v) => `Desvio-padrão amostral (divisor n − 1) dos retornos logarítmicos diários — o logaritmo do fechamento ajustado sobre o do pregão anterior — na janela de 12 meses de calendário, vezes √252 para a base anual: ${v}. Fica de fora o retorno do primeiro pregão da janela, que mede o movimento anterior a ela; com menos de 2 retornos, o número é nulo.`,
+  "comportamento.return_1m": (x) => `Retorno simples, não logarítmico, do fechamento ajustado que o Yahoo Finance informa, na janela de 1 mês de calendário: o fechamento ajustado do último pregão sobre o do primeiro pregão da janela, menos 1. A janela começa no último pregão em ou antes de um mês de calendário antes do último pregão. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_3m": (x) => `O mesmo cálculo, na janela de 3 meses de calendário. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_6m": (x) => `O mesmo cálculo, na janela de 6 meses de calendário. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_12m": (x) => `O mesmo cálculo, na janela de 12 meses de calendário. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_36m": (x) => `O mesmo cálculo, na janela de 36 meses de calendário, acumulado, não anualizado. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_60m": (x) => `O mesmo cálculo, na janela de 60 meses de calendário, acumulado, não anualizado. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_120m": (x) => `O mesmo cálculo, na janela de 120 meses de calendário, acumulado, não anualizado. Sem pregão em ou antes do início da janela, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.return_ytd": (x) => `Retorno simples do preço ajustado desde o fechamento do último pregão antes do ano corrente (em regra, o do ano anterior) até o último pregão — não desde o primeiro pregão do ano corrente. Sem pregão antes do ano corrente, o número é nulo. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.volatility_12m": (v) => `Desvio-padrão amostral (divisor n − 1) dos retornos logarítmicos diários — o logaritmo da razão entre o fechamento ajustado e o do pregão anterior — na janela de 12 meses de calendário, vezes √252 para a base anual: ${v}. Fica de fora o retorno do primeiro pregão da janela, que mede o movimento anterior a ela; com menos de 2 retornos, o número é nulo.`,
   "comportamento.volatility_60m": (v) => `O mesmo desvio-padrão amostral (divisor n − 1) dos retornos logarítmicos diários, na janela de 60 meses de calendário, vezes √252: ${v}.`,
-  "comportamento.max_drawdown": (queda, topo, fundo, desde, volta) => `A maior queda da série inteira do preço ajustado, desde ${desde}: a razão mais negativa entre o fechamento ajustado de um pregão e o topo anterior a ele, menos 1 — do topo de ${topo} ao fundo de ${fundo}, ${queda}. No empate, ficam o primeiro topo de um platô e a primeira queda de mesma profundidade. ${volta ? `A volta é o primeiro pregão depois do fundo cujo fechamento ajustado alcança o do topo: ${volta}.` : "Nenhum pregão depois do fundo alcançou o fechamento ajustado do topo: a volta nula é informação, não falta de histórico."}`,
-  "comportamento.max_drawdown_recovery_sessions": (anos) => `Pregões contados do fundo, exclusive, à volta ao topo, inclusive — fundo no pregão 5 e volta no 8 dão 3. Divididos por 252, o ano de bolsa, dão ${anos} anos.`,
-  "comportamento.beta_60m": (b, oposta) => `Inclinação da regressão linear por mínimos quadrados dos retornos logarítmicos diários da ação sobre os do Ibovespa, na janela de 60 meses de calendário da ação; cada retorno se emparelha com o do índice na mesma data, e o par só vale com o do índice não nulo. Com menos de 30 pares, nulo. Inclinação ${oposta ? "negativa" : "positiva ou nula"}: ${b} de retorno logarítmico da ação para cada 1% do índice, em média.`,
+  "comportamento.max_drawdown": (queda, topo, fundo, desde, volta) => `A maior queda da série inteira do fechamento ajustado que o Yahoo Finance informa, desde ${desde}: a razão mais negativa entre o fechamento ajustado de um pregão e o topo anterior a ele, menos 1 — do topo de ${topo} ao fundo de ${fundo}, uma queda de ${queda}. No empate, ficam o primeiro topo de um platô e a primeira queda de mesma profundidade. ${volta ? `A volta é o primeiro pregão depois do fundo cujo fechamento ajustado alcança o do topo: ${volta}.` : "Nenhum pregão depois do fundo alcançou o fechamento ajustado do topo: a volta nula é informação, não falta de histórico."}`,
+  "comportamento.max_drawdown_recovery_sessions": (anos) => `Pregões contados do fundo, exclusive, à volta ao topo, inclusive — fundo no pregão 5 e volta no 8 dão 3. Divididos por 252, o ano de bolsa, dão cerca de ${anos} anos.`,
+  "comportamento.beta_60m": (b, oposta) => `Inclinação da regressão linear por mínimos quadrados dos retornos logarítmicos diários da ação sobre os do Ibovespa, na janela de 60 meses de calendário da ação; cada retorno se emparelha com o do índice na mesma data, e o par só vale com o do índice não nulo. Com menos de 30 pares, nulo. Inclinação ${oposta ? "negativa" : "positiva ou nula"}: ${b} de retorno logarítmico da ação para cada 1% de retorno logarítmico do índice, em média.`,
   "comportamento.correlation_60m": (c) => `Coeficiente de correlação de Pearson entre os retornos logarítmicos diários da ação e os do Ibovespa, sobre os mesmos pares do beta: 60 meses de calendário, emparelhados por data, mínimo de 30. Aqui, ${c}.`,
-  "comportamento.histograma": "Contagem dos retornos logarítmicos diários da janela de 60 meses em 42 baldes: 40 de largura 0,005 (0,5 ponto), de −0,10 a +0,10, fechados à esquerda e abertos à direita, mais as duas pontas abertas — abaixo de −0,10 e a partir de +0,10. Têm a cor de queda os baldes cujo limite de cima não passa de zero; o dia de retorno exatamente zero cai no balde [0; 0,005), que tem a cor de alta.",
+  "comportamento.histograma": "Contagem dos retornos logarítmicos diários da janela de 60 meses de calendário em 42 baldes: 40 de largura 0,005 (0,5 ponto), de −0,10 a +0,10, fechados à esquerda e abertos à direita, mais as duas pontas abertas — abaixo de −0,10 e a partir de +0,10. Têm a cor de queda os baldes cujo limite de cima não passa de zero; o dia de retorno exatamente zero cai no balde [0; 0,005), que tem a cor de alta.",
   "comportamento.skewness": (s, sinal) => `Assimetria pelo estimador enviesado g1: o terceiro momento central, com divisor n, sobre o desvio-padrão populacional (divisor n) ao cubo, nos retornos logarítmicos diários da janela de 60 meses. Nula abaixo de 4 retornos ou com desvio zero. ${sinal < 0 ? `Aqui, ${s}: negativa.` : sinal > 0 ? `Aqui, ${s}: positiva.` : "Aqui, exatamente zero."}`,
   "comportamento.excess_kurtosis": (k, sinal) => `Curtose em excesso pelo estimador enviesado g2: o quarto momento central, com divisor n, sobre o desvio-padrão populacional à quarta, menos 3 — zero é a curva normal. Mesma janela de 60 meses e mesmos mínimos da assimetria. Aqui, ${k}: ${sinal > 0 ? "acima de zero" : "zero ou abaixo"}.`,
-  "comportamento.dividends_12m": "Soma dos valores dos eventos de provento com data entre a do último pregão menos 12 meses de calendário e a do último pregão, inclusive nos dois extremos. Evento sem valor fica de fora; sem pagamento, a soma é zero, não nula.",
-  "comportamento.dividend_payments_12m": "Quantidade dos mesmos eventos de provento da janela de 12 meses de calendário, inclusive nos dois extremos — só os que têm valor.",
-  "comportamento.dividend_yield_12m": (d, x) => `A soma de 12 meses dos proventos dividida pelo fechamento não ajustado de ${d}, o último pregão — nunca pelo ajustado. R$ 100 × o rendimento = ${x}.`,
+  "comportamento.dividends_12m": "Soma dos valores dos eventos de dividendo que o Yahoo Finance informa, com data entre a do último pregão menos 12 meses de calendário e a do último pregão, inclusive nos dois extremos. Evento sem valor fica de fora; sem pagamento, a soma é zero, não nula.",
+  "comportamento.dividend_payments_12m": "Quantidade dos mesmos eventos de dividendo que o Yahoo Finance informa, na janela de 12 meses de calendário, inclusive nos dois extremos — só os que têm valor.",
+  "comportamento.dividend_yield_12m": (d, x) => `A soma de 12 meses dos proventos dividida pelo fechamento não ajustado de ${d}, o último pregão. R$ 100 × o rendimento = ${x}.`,
   "comportamento.avg_volume_21d": "Média aritmética do volume dos últimos 21 pregões da série — contagem de pregões, não de meses —, com o volume de cada pregão como vem do Yahoo Finance. Com menos de 21 pregões, o número é nulo, nunca uma média parcial.",
   "comportamento.avg_volume_252d": "A mesma média aritmética do volume, sobre os últimos 252 pregões da série. Com menos de 252 pregões, nula — nunca uma média parcial.",
 };
@@ -458,9 +465,9 @@ function ytdNote() {
   const proposta = (v) => `Desde o fechamento do último pregão do ano passado, com os proventos: R$ 100 viraram ${v}.`;
   return `<p><b>Nota do mockup · não é tela · para o portão: a iniciante de <code>comportamento.return_ytd</code> contradiz o cálculo.</b></p>
     <p>Como está (<code>frontend/src/content/textos.ts:216</code>), e como esta página a mostra na leitura iniciante: <q>${esc(TEXTOS["comportamento.return_ytd"](x))}</q></p>
-    <p>O cálculo parte do <b>fechamento do último pregão do ano anterior</b>, não do primeiro pregão do ano (<code>backend/apps/analytics/metrics.py:114</code>, <code>:116</code>, <code>:122</code>; conferência, divergência 1). A avançada já segue o código.</p>
+    <p>O cálculo parte do <b>fechamento do último pregão antes do ano corrente</b> — em regra, o do ano anterior —, não do primeiro pregão do ano (<code>backend/apps/analytics/metrics.py:119-126</code>; conferência, divergência 1). A avançada já segue o código.</p>
     <p>Proposta de correção da iniciante, mesma chave e mesmo argumento: <q>${esc(proposta(x))}</q></p>
-    <p>A decisão é do dono. A spec põe "mudar o que já está escrito na leitura iniciante" fora do bloco, com exceção só para <code>risco.veredito</code> e <code>risco.naoRejeitados</code>: aceitar a correção é uma segunda exceção, a registrar.</p>`;
+    <p>A decisão é do dono. A spec põe "mudar o que já está escrito na leitura iniciante" fora do bloco, com exceção só para <code>risco.veredito</code> e <code>risco.naoRejeitados</code>: aceitar a correção é uma <b>emenda ao "Fora" da spec</b>, que é contrato aprovado — não basta registrar: a spec muda, com a aprovação do dono, antes de a T7 tocar a iniciante.</p>`;
 }
 
 function renderBehavior() {
@@ -489,9 +496,11 @@ function renderBehavior() {
                   : stat("max_drawdown_recovery_sessions", fInt.format(rs), P("comportamento.max_drawdown_recovery_sessions", fDec1.format(rs / 252))));
 
   const b = N("beta_60m"), c = N("correlation_60m");
-  const ibov = (b == null ? stat("beta_60m", "—", T("comportamento.nulo.janela", 60))
+  // No próprio Ibovespa, o nulo do beta e da correlação é identidade (BehaviorSection.tsx:183-185).
+  const benchNull = TICKER === "IBOV" ? T("comportamento.nulo.referencia") : T("comportamento.nulo.janela", 60);
+  const ibov = (b == null ? stat("beta_60m", "—", benchNull)
                           : stat("beta_60m", signedDec(b), P("comportamento.beta_60m", `${fDec2.format(Math.abs(b))}%`, b < 0)))
-    + (c == null ? stat("correlation_60m", "—", T("comportamento.nulo.janela", 60))
+    + (c == null ? stat("correlation_60m", "—", benchNull)
                  : stat("correlation_60m", signedDec(c), P("comportamento.correlation_60m", signedDec(c))));
 
   const dy = N("dividend_yield_12m");
@@ -505,8 +514,11 @@ function renderBehavior() {
   }).join("");
 
   // O histograma fica aberto nos dois níveis (RF-06); só a assimetria e a curtose recolhem.
+  // Com a série curta, a frase no lugar do gráfico, e o recolhível continua, com os nulos
+  // dentro (BehaviorSection.tsx:316-350).
   const hist = m.statistical_observations == null
-    ? `<p class="ruvor-muted">${esc(T("comportamento.histogramaCurto"))}</p>`
+    ? `<div class="ruvor-stack"><p class="ruvor-muted">${esc(T("comportamento.histogramaCurto"))}</p>
+       <div data-moments-host>${momentsHtml(m)}</div></div>`
     : `<div class="ruvor-stack">${why(P("comportamento.histograma"))}
        <div>
          <div class="ruvor-chart__bar">
@@ -562,7 +574,7 @@ async function loadBehavior() {
 function renderTextos() {
   $("#m23-textos-head").innerHTML = `<p><b>As 22 chaves <code>comportamento.*</code> do RF-04, nas duas leituras.</b> A iniciante é a de <code>textos.ts</code>, como está; a avançada é a proposta deste portão, com a mesma chave e os mesmos argumentos (RF-05). Cada afirmação da avançada copia a de <code>docs/mockups/M2.3/conferencia-comportamento.md</code>, onde está o <code>caminho:linha</code> que a confere; o que a conferência marca como não ancorado (o que o ajuste do Yahoo inclui, a natureza da data do provento, se o valor do provento é ajustado, a unidade do volume) não entra.</p>
     <p>Chave-função: uma linha por exemplo de <code>EXEMPLOS_AVANCADOS</code>, cobrindo os ramos da avançada; a coluna da iniciante mostra a iniciante com os mesmos argumentos. Chave de texto: uma linha.</p>
-    <p>Rótulo novo do controle de recolher: <code>comportamento.momentos.abrir</code> = <q>${esc(TEXTOS["comportamento.momentos.abrir"])}</q> (o mesmo nos dois níveis e nos dois estados).</p>`;
+    <p>Rótulo novo do controle de recolher: <code>comportamento.momentos.abrir</code> = <q>${esc(TEXTOS["comportamento.momentos.abrir"])}</q> (o mesmo nos dois níveis e nos dois estados); alternativa neutra para o portão: <q>Assimetria e curtose</q>.</p>`;
   $("[data-ytd-note]").innerHTML = ytdNote();
   const rows = [];
   for (const k of Object.keys(TEXTOS_AVANCADOS)) {
@@ -585,6 +597,8 @@ function renderControle() {
   $("#m23-controle-note").innerHTML = `<p><b>O controle de recolher — nasce neste portão; a T9 (a tabela dos nove modelos, a trilha) e a T12 o repetem, e a T7 o leva ao kit.</b></p>
     <p>Derivado da linha expansível da tabela do kit (<code>.ruvor-table__toggle</code>, <code>brand/ruvor/components.css</code>): botão sem moldura, na cor de tinta, com a seta à esquerda que gira 90° quando <code>aria-expanded="true"</code>. O que acrescenta: a régua fina acima, que separa o controle do conteúdo anterior; 6 px de respiro acima e abaixo, para o alvo de toque; o sublinhado no hover, porque fora da tabela não há a linha inteira reagindo.</p>
     <p>O rótulo é um só nos dois estados (o <code>Collapsible</code> do plano recebe um <code>label</code>): aberto ou fechado é dito pela seta e pelo <code>aria-expanded</code>. O conteúdo fechado não é desenhado; o <code>aria-controls</code> aponta para o id que só existe aberto (escolha registrada no plano). O raiz leva <code>data-collapsible</code> e <code>data-open</code>. Padrão: fechado na iniciante, aberto na avançada; trocar a leitura reaplica o padrão; abrir não é lembrado.</p>
+    <p><b>Rótulo, para o portão escolher:</b> <q>${esc(TEXTOS["comportamento.momentos.abrir"])}</q> (o proposto, com verbo, como o exemplo do RF-07) ou a alternativa neutra <q>Assimetria e curtose</q>, que lê igual aberto e fechado.</p>
+    <p><b>Série curta, para a T7:</b> sem a distribuição (<code>statistical_observations</code> nulo), a frase <code>comportamento.histogramaCurto</code> fica no lugar do gráfico e o recolhível continua existindo, com a assimetria e a curtose nulas dentro (<q>—</q> e <code>comportamento.nulo.janela</code>), como em <code>BehaviorSection.tsx:316-350</code>; o ITUB4 não tem esse estado, e esta página o desenha pelo mesmo caminho. No IBOV, o beta e a correlação nulos usam <code>comportamento.nulo.referencia</code>.</p>
     <p>Os estados abaixo são forçados por classe de moldura (<code>is-hover</code>, <code>is-focus</code>), como na vitrine do kit; troque o tema na barra para ver os dois.</p>`;
   const label = TEXTOS["comportamento.momentos.abrir"];
   const sample = `<div class="ruvor-stats">${stat("skewness", "−1,44", TEXTOS["comportamento.skewness"]("−1,44", -1))}</div>`;
