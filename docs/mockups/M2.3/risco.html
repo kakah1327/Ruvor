@@ -346,17 +346,17 @@ const INICIANTE = { ...TEXTOS, ...INICIANTE_PROPOSTA };
 // parâmetros, na mesma ordem, da iniciante. Cada afirmação copia a de
 // docs/mockups/M2.3/conferencia-risco.md, onde está o caminho:linha que a confere.
 const TEXTOS_AVANCADOS = {
-  "risco.perda95": "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito; o número mostrado é o último ponto da série de VaR de cada um, convertido em perda percentual simples, 1 − e^(−VaR).",
-  "risco.perda99": "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, mostrado da mesma forma, como perda simples do último ponto da série de cada modelo.",
+  "risco.perda95": "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito; o número mostrado é, nos três tradicionais — histórico, paramétrico e Monte Carlo —, o quantil estimado uma vez sobre os 252 primeiros retornos da série e repetido no teste inteiro; nos outros seis, o do último pregão. Vai à tela como perda percentual simples, 1 − e^(−VaR).",
+  "risco.perda99": "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, com a mesma janela por família e mostrado da mesma forma.",
   "risco.discordancia": (min, max, n, total, _cadaN, unico) => {
     if (n === 0)
       return "Nenhum dos nove produziu VaR neste nível: o cálculo falhou em todos, e não há faixa.";
     if (n === 1)
-      return `Só um modelo produziu VaR neste nível: ${unico} é o último ponto da série dele, convertido em perda simples. Sem um segundo, não há faixa.`;
+      return `Só um modelo produziu VaR neste nível: ${unico} é o dele, tomado e convertido como na perda acima. Sem um segundo, não há faixa.`;
     const quem = n === total
       ? "Os nove modelos produziram VaR neste nível"
       : `${n} de ${total} modelos produziram VaR neste nível; ${total - n === 1 ? "o outro não: o cálculo dele falhou ou ele ficou" : `os outros ${total - n} não: o cálculo falhou ou eles ficaram`} sem resultado nesta execução`;
-    return `${quem}. A faixa vai da menor perda entre eles, ${min}, à maior, ${max} — cada uma o último ponto da série do modelo, convertido em perda simples. A largura mede o quanto os métodos discordam; não diz qual extremo está certo.`;
+    return `${quem}. A faixa vai da menor perda entre eles, ${min}, à maior, ${max}, cada uma tomada e convertida como na perda acima. A largura mede o quanto os números mostrados pelos métodos diferem entre si; não diz qual extremo está certo.`;
   },
   "risco.naoRejeitados": (k, julgados, total) => {
     const faltam = total - julgados;
@@ -366,24 +366,24 @@ const TEXTOS_AVANCADOS = {
     if (julgados === 0)
       return "Nenhum modelo pôde ser julgado neste nível: o cálculo falhou em todos, e falha não é reprovação.";
     if (k === 0)
-      return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o último ponto: o veredito não garante o número de hoje, nem para mais nem para menos.${semVeredito}`;
+      return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o número exibido: o veredito não garante o número de hoje, nem para mais nem para menos.${semVeredito}`;
     const quem = k === 1 ? `1 dos ${julgados} modelos julgados tem` : `${k} dos ${julgados} modelos julgados têm`;
-    return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o último ponto — o veredito não garante o número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
+    return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira, não o número exibido — o veredito não garante o número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
   },
-  "risco.veredito": "Veredito por modelo e por nível: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ fica fora. Os testes avaliam a série de VaR do período de teste — todos os retornos depois dos 252 primeiros, o treino —, não o último ponto exibido: falam do passado do modelo, não de quanto o número de hoje está certo.",
+  "risco.veredito": "Veredito por modelo e por nível: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ fica fora. Os testes avaliam a série de VaR do período de teste, não o número exibido: falam do passado do modelo, não de quanto o número de hoje está certo.",
   "risco.violacoes": (v, e, cadaN, kupiecOk) =>
-    `${v} ${v === "1" ? "violação" : "violações"} — dias do período de teste em que o retorno logarítmico ficou abaixo de −VaR do dia — para ${e} esperadas, os dias de teste divididos por ${cadaN}.${kupiecOk ? "" : " Longe o bastante do esperado para o Kupiec rejeitar: acima, o VaR subestimou a cauda; abaixo, superestimou."}`,
+    `${v === "1" ? "1 violação — dia" : `${v} violações — dias`} do período de teste em que o retorno logarítmico ficou abaixo de −VaR do dia — para ${e} esperadas, os dias de teste divididos por ${cadaN}.${kupiecOk ? "" : " Longe o bastante do esperado para o Kupiec rejeitar: acima, o VaR subestimou a cauda; abaixo, superestimou."}`,
   "risco.kupiec": (p, ok) =>
-    `Teste de proporção de falhas de Kupiec (1995): razão de verossimilhança entre a taxa de violações observada e a esperada, contra uma qui-quadrado com 1 grau de liberdade; testa a cobertura incondicional. Passa com p-valor acima de 0,05. Aqui, ${p}: a cobertura correta ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+    `Teste de proporção de falhas de Kupiec (1995): razão de verossimilhança entre a taxa de violações observada e a esperada, contra uma qui-quadrado com 1 grau de liberdade; testa a cobertura incondicional. Aqui, ${p}: a cobertura correta ${ok ? "não é rejeitada" : "é rejeitada"}.`,
   "risco.christoffersen": (p, ok) =>
-    `Teste de independência de Christoffersen (1998): numa cadeia de Markov de 1ª ordem, compara a chance de violar no dia seguinte a uma violação com a de violar no dia seguinte a um dia sem violação, contra uma qui-quadrado com 1 grau de liberdade. O p-valor é o da independência; o da cobertura condicional não é mostrado. Passa com p-valor acima de 0,05. Aqui, ${p}: a independência ${ok ? "não é rejeitada" : "é rejeitada"}.`,
+    `Teste de independência de Christoffersen: numa cadeia de Markov de 1ª ordem, compara a chance de violar no dia seguinte a uma violação com a de violar no dia seguinte a um dia sem violação, contra uma qui-quadrado com 1 grau de liberdade; o p-valor é o da independência. Aqui, ${p}: a independência ${ok ? "não é rejeitada" : "é rejeitada"}.`,
   "risco.dq": (p, ok) =>
-    `Teste de quantil dinâmico de Engle e Manganelli (2004): regride a violação de cada dia (1 ou 0), menos a taxa esperada, sobre uma constante, as violações dos quatro dias anteriores e o VaR do dia, e testa se todos os coeficientes são zero, contra uma qui-quadrado com 6 graus de liberdade. Pega ao mesmo tempo taxa errada e violações previsíveis. Passa com p-valor acima de 0,05 e fica fora do veredito. Aqui, ${p}: coeficientes nulos ${ok ? "não rejeitados" : "rejeitados"}.`,
+    `Teste de quantil dinâmico: regride a violação de cada dia (1 ou 0), menos a taxa esperada, sobre uma constante, as violações dos quatro dias anteriores e o VaR do dia, e testa se todos os coeficientes são zero, contra uma qui-quadrado com 6 graus de liberdade. Pega ao mesmo tempo taxa errada e violações previsíveis; fica fora do veredito. Aqui, ${p}: coeficientes nulos ${ok ? "não rejeitados" : "rejeitados"}.`,
 };
 
 // A risco.tabela.intro na avançada (RF-06, "O texto que manda abrir"): proposta de entrada
 // própria, como texto de bloco, FORA da contagem das 55. A decisão é do portão.
-const INTRO_AVANCADA = "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam uma escala só nas duas colunas, a da maior perda da tabela. Os testes de cada modelo, nos dois níveis, vêm abertos abaixo da linha dele.";
+const INTRO_AVANCADA = "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam uma escala só nas duas colunas; a escala é a da maior perda da tabela. Os testes de cada modelo, nos dois níveis, vêm abertos abaixo da linha dele.";
 
 // Os argumentos de exemplo de cada chave-função avançada, cobrindo os ramos dela (V-07): o que a
 // T10 leva a EXEMPLOS_AVANCADOS em frontend/tests/exemplos.ts. Os valores imitam os da tela; os
@@ -708,11 +708,21 @@ function renderD64() {
   const altK1 = TEXTOS["risco.naoRejeitados"](6, 9, 9).replace("O veredito fala do comportamento de cada modelo no período de teste — não garante o número de hoje —, e passar", "O veredito fala do comportamento de cada modelo no período de teste, não do número de hoje; e passar");
   const altK0 = TEXTOS["risco.naoRejeitados"](0, 9, 9) + " O veredito fala desse período, não do número de hoje.";
   const m = (s) => esc(s).replace(ALT, `<mark class="m23-expr">${ALT}</mark>`);
+  // As três avançadas que a alternativa pediria, derivadas das propostas por troca de um trecho —
+  // a troca que não casar derruba a página, para o texto mostrado ser sempre o literal.
+  const swap = (text, from, to) => { if (!text.includes(from)) throw new Error(`alternativa: trecho ausente: ${from}`); return text.replace(from, to); };
+  const altAvVeredito = swap(TEXTOS_AVANCADOS["risco.veredito"], ", não o número exibido: falam do passado do modelo, não de quanto o número de hoje está certo.", ": falam do passado do modelo, não do número de hoje.");
+  const altAvK1 = swap(TEXTOS_AVANCADOS["risco.naoRejeitados"](6, 9, 9), "Os testes avaliam essa série inteira, não o número exibido — o veredito não garante o número de hoje.", "Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.");
+  const altAvK0 = swap(TEXTOS_AVANCADOS["risco.naoRejeitados"](0, 9, 9), "Os testes avaliam essa série inteira, não o número exibido: o veredito não garante o número de hoje, nem para mais nem para menos.", "Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.");
   $("#m23-d64-alt").innerHTML = `<p><b>Nota de portão · a alternativa da conferência: uma expressão só, <q>${ALT}</q>, para as duas chaves.</b> Lê bem nos três ramos exigidos — inclusive no <code>k = 0</code>, onde <q>não garante</q> soa estranho —, e custa mudar as <b>três</b> iniciantes exigidas, não uma. Como ficariam:</p>
     <ul><li><code>risco.veredito</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altVeredito)}</q></li>
     <li><code>risco.naoRejeitados</code>, <code>k ≥ 1</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altK1)}</q></li>
     <li><code>risco.naoRejeitados</code>, <code>k = 0</code> (<span class="ruvor-tag ruvor-tag--review">muda</span>): <q>${m(altK0)}</q></li></ul>
-    <p>Na avançada, a troca é a mesma: <q>não de quanto o número de hoje está certo</q> e <q>o veredito não garante o número de hoje</q> viram <q>não do número de hoje</q> (por exemplo, <q>… não o último ponto: o veredito fala do passado do modelo, não do número de hoje.</q>). Nenhuma das duas propostas usa palavra da varredura de vocabulário nem sugere ação (D-153). <b>O portão escolhe uma das duas</b>; o <code>d64.test.ts</code> da T10 escreve a escolhida, literal.</p>`;
+    <p><b>As três avançadas que a alternativa pediria</b> (no lugar das propostas; o resto da frase não muda):</p>
+    <ul><li><code>risco.veredito</code>: <q>${m(altAvVeredito)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k ≥ 1</code> (exemplo <code>[6,9,9]</code>): <q>${m(altAvK1)}</q></li>
+    <li><code>risco.naoRejeitados</code>, <code>k = 0</code> (exemplo <code>[0,9,9]</code>): <q>${m(altAvK0)}</q></li></ul>
+    <p>Nenhuma das duas propostas usa palavra da varredura de vocabulário nem sugere ação (D-153). <b>O portão escolhe uma das duas</b>; o <code>d64.test.ts</code> da T10 escreve a escolhida, literal.</p>`;
 }
 
 // ---------------------------------------------------------------- tema, leitura e vista
