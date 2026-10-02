@@ -187,8 +187,8 @@ def search_assets(q: str) -> QuerySet[Asset]:
     return (
         assets.filter(
             Q(ticker__startswith=upper)
-            | Q(name__icontains=q)
-            | Q(trading_name__icontains=q)
+            | Q(name__unaccent__icontains=q)
+            | Q(trading_name__unaccent__icontains=q)
         )
         .annotate(
             search_group=Case(
