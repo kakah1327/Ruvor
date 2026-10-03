@@ -19,10 +19,11 @@
    *     de tema (a proposta deste portão; a spec dizia "antes da chave de tema" quando só havia
    *     o tema), separado das duas chaves por um fio;
    *   - os três estados do lugar: carregando (vazio, com o espaço reservado), anônimo ("Entrar")
-   *     e logado (o botão de conta, com o nome e as iniciais; em até 720 px, só as iniciais);
+   *     e logado (o botão de conta, com o nome e as iniciais; abaixo de 1024 px, só as
+   *     iniciais), num lugar de LARGURA FIXA nos três estados — nenhuma troca move as chaves;
    *   - o menu aberto: nome, e-mail, organização (ou "Conta pessoal"), Trocar a senha, Usuários
-   *     da organização (só admin em organização não pessoal) e Sair;
-   *   - o arranjo em até 720 px com as três peças, sem rolagem horizontal: o alternador na
+   *     da organização (só admin em organização não pessoal) e Sair; e o Sair que falhou;
+   *   - o arranjo em até 840 px (o ponto de quebra da barra passa de 720 a 840 px) com as três peças, sem rolagem horizontal: o alternador na
    *     primeira linha, ao lado da marca; a chave de tema e a conta juntas na segunda, à
    *     direita, a conta por último; a busca na terceira — a mesma altura de hoje;
    *   - o convite a entrar para calcular no lugar do botão (E7 e E8, anônimo);
@@ -34,16 +35,23 @@
    */
 
   /* --- NOVO: o lugar da conta, por último em .ruvor-topbar__prefs ---------------------- */
+  /* A LARGURA É FIXA nos três estados (carregando, anônimo, logado): nenhuma troca de estado
+     move as chaves. 200 px a partir de 1024 px (o nome, até 18ch, as iniciais e a seta);
+     abaixo disso, só as iniciais, e o lugar tem a largura do "Entrar" (72 px). O "Entrar" e
+     o botão ficam alinhados à direita dentro dele. */
   .m21b-slot {
-    position: relative;
+    box-sizing: border-box;
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    width: 200px;
     min-height: 30px;           /* a altura do avatar: carregando não muda a barra */
-    min-width: 64px;            /* a largura do "Entrar": anônimo não empurra as chaves */
     padding-left: var(--ruvor-space-3);
     border-left: 1px solid var(--ruvor-topbar-control);
   }
+  /* O menu se ancora na barra, não no botão: começa logo abaixo dela, sem a sobrepor. */
+  .ruvor-topbar.m21b-bar { position: relative; }
 
   /* Anônimo: o "Entrar" no molde das chaves da barra (o contorno de .ruvor-segmented). */
   .m21b-signin {
@@ -68,13 +76,15 @@
     background: transparent;
     border: 0;
     border-radius: var(--ruvor-radius-sm);
-    padding: 2px 4px;
-    margin: -2px -4px;
+    padding: 0;
+    width: 100%;                /* a marca data-part="conta" tem a largura fixa do lugar */
+    min-width: 0;
+    justify-content: flex-end;
     cursor: pointer;
     gap: var(--ruvor-space-2);
   }
   .m21b-account:hover .m21b-account__name { color: var(--ruvor-topbar-text); }
-  .m21b-account__name { max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m21b-account__name { min-width: 0; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .m21b-account .ruvor-avatar { color: var(--ruvor-topbar-text); }
   .m21b-account .ruvor-glyph { width: 12px; height: 12px; color: var(--ruvor-topbar-link); }
   .m21b-account[aria-expanded="true"] .ruvor-glyph { transform: rotate(180deg); }
@@ -83,8 +93,8 @@
   .m21b-menu {
     position: absolute;
     z-index: 10;
-    top: calc(100% + 10px);
-    right: 0;
+    top: calc(100% + var(--ruvor-space-1));   /* abaixo da barra, que é o pai posicionado */
+    right: 26px;                               /* o recuo lateral da barra (kit) */
     width: 280px;
     max-width: calc(100vw - 2 * var(--ruvor-space-4));
     box-sizing: border-box;
@@ -95,7 +105,10 @@
     box-shadow: var(--ruvor-shadow);
     overflow: hidden;
   }
+  /* Para a T10: este [hidden] precisa sobreviver quando o menu ganhar display no kit. */
   .m21b-menu[hidden] { display: none; }
+  /* O Sair que falhou (rede, 403 csrf_failed, 5xx): a linha de alerta dentro do menu. */
+  .m21b-menu__error { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-4) var(--ruvor-space-3); color: var(--ruvor-critical-text); font-size: var(--ruvor-type-small-size); }
   .m21b-menu__who, .m21b-menu__org { padding: var(--ruvor-space-3) var(--ruvor-space-4); }
   .m21b-menu__who { border-bottom: 1px solid var(--ruvor-table-rule); }
   .m21b-menu__name { margin: 0; font-weight: var(--ruvor-type-small-weight); overflow-wrap: anywhere; }
@@ -134,15 +147,29 @@
   .m21b-notice .ruvor-btn { align-self: flex-start; }
   .m21b-page-notice { max-width: 640px; }
 
-  /* Até 720 px: a barra do kit em duas colunas vira quatro, para a chave de tema e a conta
-     dividirem a segunda linha. A marca e o alternador na primeira; o tema e a conta na
-     segunda, à direita, a conta por último; a busca na terceira (o kit já a põe lá). */
-  @media (max-width: 720px) {
+  /* Abaixo de 1024 px: só as iniciais, e o lugar com a largura do "Entrar". */
+  @media (max-width: 1023px) {
+    .m21b-slot { width: calc(72px + var(--ruvor-space-3) + 1px); }
+    .m21b-account__name { display: none; }
+  }
+
+  /* Até 840 px (NOVO PONTO DE QUEBRA DA BARRA; no kit de hoje, 720 px): a barra em três
+     linhas, em quatro colunas, para a chave de tema e a conta dividirem a segunda. A marca e
+     o alternador na primeira; o tema e a conta na segunda, à direita, a conta por último; a
+     busca na terceira. As quatro primeiras regras repetem, até 840 px, as da barra estreita
+     do kit (components.css, o @media (max-width: 720px) do M1.6b e do M2.3): para a T10, o
+     ponto de quebra da barra passa a 840 px ali, e os seletores por posição de
+     components.css:2206-2224 dão lugar aos desta folha. */
+  @media (max-width: 840px) {
+    .ruvor-topbar.m21b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
+    .m21b-bar .ruvor-topbar__spacer { display: none; }
+    .m21b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m21b-bar .ruvor-topbar__prefs { display: contents; }
+    .m21b-menu { right: var(--ruvor-space-4); }
     .ruvor-topbar.m21b-bar { grid-template-columns: auto minmax(0, 1fr) auto auto; }
     .m21b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
     .m21b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
     .m21b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
-    .m21b-account__name { display: none; }    /* RF-09: em 360 px, só as iniciais */
   }
 
   /* --- Moldura do mockup: não é tela ------------------------------------------------ */
@@ -210,6 +237,11 @@
     <button class="ruvor-btn" type="button" data-mk-org="admin">organização · admin</button>
     <button class="ruvor-btn" type="button" data-mk-org="membro">organização · membro</button>
   </div>
+  <div class="mk-group" role="group" aria-label="Sair">
+    <span>Sair:</span>
+    <button class="ruvor-btn" type="button" data-mk-sair="ok">dá certo (204 ou 401)</button>
+    <button class="ruvor-btn" type="button" data-mk-sair="falhou">falha (rede, 403 csrf_failed, 5xx)</button>
+  </div>
   <div class="mk-group" role="group" aria-label="Vista">
     <span>Vista:</span>
     <button class="ruvor-btn" type="button" data-mk-vista="e8">ativo · E8</button>
@@ -267,7 +299,7 @@
   </div>
 
   <div class="mk-view mk-pad" data-view="estreito" hidden>
-    <p class="mk-tail">Moldura: a página em 360 px, sem a moldura. Até 720 px, o alternador fica na primeira linha, ao lado da marca; a chave de tema e a conta dividem a segunda, à direita, a conta por último; a busca vai para a terceira. O botão de conta mostra só as iniciais. Nada rola na horizontal.</p>
+    <p class="mk-tail">Moldura: a página em 360 px, sem a moldura. Até 840 px, o alternador fica na primeira linha, ao lado da marca; a chave de tema e a conta dividem a segunda, à direita, a conta por último; a busca vai para a terceira. O botão de conta mostra só as iniciais. Nada rola na horizontal.</p>
     <div class="mk-frames" data-frames></div>
   </div>
 
@@ -286,14 +318,15 @@
       <div class="ruvor-panel__body">
         <ul class="mk-notes">
           <li><b>A posição do menu (decide-se aqui).</b> Proposta: o lugar da conta dentro de <code>.ruvor-topbar__prefs</code>, <b>por último</b>, depois da chave de tema — o canto de conta comum —, com um fio que o separa das duas chaves, que são preferências da tela e não da pessoa. A spec dizia "antes da chave de tema", escrita quando a barra só tinha o tema.</li>
-          <li><b>O arranjo em até 720 px.</b> As três peças não cabem numa linha de 360 px (o alternador e o tema, juntos, já passam da largura útil de 328 px). Proposta: a primeira linha como hoje (a marca e o alternador); <b>a chave de tema e a conta dividem a segunda</b>, à direita, a conta por último; a busca na terceira. A barra fica com as mesmas três linhas de hoje, e a ordem visual das peças é a do DOM (alternador, tema, conta). Para a T10: os seletores por posição do M2.3 (<code>:first-child</code>/<code>:last-child</code>, <code>components.css:2206-2224</code>) não servem com três filhos — o <code>:last-child</code> passaria a ser a conta; este mockup usa quatro colunas e endereça cada peça.</li>
-          <li><b>O preço de "por último".</b> Com as peças alinhadas à direita, o que muda de largura no lugar da conta empurra as chaves. O lugar reserva a largura do "Entrar" (64 px) e a altura do avatar: carregando → anônimo não move nada; carregando → logado move as chaves pela diferença do nome (até 18 caracteres, depois reticências). A alternativa sem movimento nenhum é a conta <b>antes</b> do alternador; o mockup não a mostra.</li>
+          <li><b>O arranjo em até 840 px.</b> <b>Para a T10: o ponto de quebra da barra passa de 720 a 840 px</b> (o <code>@media (max-width: 720px)</code> da barra em <code>components.css</code>), porque entre 721 e 840 px a linha única deixava a busca com 78 a 156 px. As três peças não cabem numa linha de 360 px (o alternador e o tema, juntos, já passam da largura útil de 328 px). Proposta: a primeira linha como hoje (a marca e o alternador); <b>a chave de tema e a conta dividem a segunda</b>, à direita, a conta por último; a busca na terceira. A barra fica com as mesmas três linhas de hoje, e a ordem visual das peças é a do DOM (alternador, tema, conta). Para a T10: os seletores por posição do M2.3 (<code>:first-child</code>/<code>:last-child</code>, <code>components.css:2206-2224</code>) não servem com três filhos — o <code>:last-child</code> passaria a ser a conta; este mockup usa quatro colunas e endereça cada peça.</li>
+          <li><b>Sem salto (RF-09).</b> O lugar da conta tem <b>largura fixa nos três estados</b> (carregando, anônimo, logado), e o "Entrar" e o botão ficam alinhados à direita dentro dele: nenhuma troca de estado move as chaves. A partir de 1024 px, 200 px — o nome (até 18 caracteres, depois reticências), as iniciais e a seta; <b>abaixo de 1024 px, só as iniciais</b>, e o lugar tem a largura do "Entrar" (72 px mais o fio). A marca <code>data-part="conta"</code> ocupa a largura inteira do lugar, e fica com largura fixa também. Medido de 1440 a 320 px: a página não rola na horizontal, e a posição do alternador é a mesma nos três estados em cada largura.</li>
           <li><b>Carregando</b>: o lugar vazio, com o fio e o espaço reservado — sem "Entrar" nem nome (RF-03, RF-09).</li>
-          <li><b>As iniciais</b>: a primeira letra da primeira e da última palavra do nome, em maiúscula ("Ana Beatriz Souza" → AS); nome de uma palavra, uma letra. O nome é obrigatório (1 a 120 caracteres, <code>services.py</code>), e a regra não precisa de caso vazio. É código, não texto.</li>
-          <li><b>O menu</b>: o nome e o e-mail; a organização com o rótulo "Organização" — o nome dela, ou "Conta pessoal"; Trocar a senha; Usuários da organização só com <code>role === "admin"</code> e organização não pessoal (o "organização · membro" e o "conta pessoal" da moldura mostram a falta); um fio; Sair. Botão com <code>aria-expanded</code> e <code>aria-controls</code>; o rótulo do botão, para o leitor de tela, é "Conta de &lt;nome&gt;" — inclui o nome visível em 1440.</li>
+          <li><b>As iniciais</b>: a primeira letra da primeira e da última palavra do nome, em maiúscula ("Ana Beatriz Souza" → AS); nome de uma palavra, uma letra. O nome é obrigatório (1 a 120 caracteres, <code>services.py</code>), e mas o <code>createsuperuser</code> aceita um nome só de espaço: nesse caso, a <b>primeira letra do e-mail</b>. É código, não texto.</li>
+          <li><b>O menu</b>: o nome e o e-mail; a organização com o rótulo "Organização" — o nome dela, ou "Conta pessoal"; Trocar a senha; Usuários da organização só com <code>role === "admin"</code> e organização não pessoal (o "organização · membro" e o "conta pessoal" da moldura mostram a falta); um fio; Sair. Botão com <code>aria-expanded</code> e <code>aria-controls</code>; o rótulo do botão, para o leitor de tela, é "Conta de &lt;nome&gt;" — inclui o nome visível em 1440. <b>Clicar num item fecha o menu</b>; o <code>Tab</code> que sai do último item também fecha; o <code>Esc</code> e o clique fora fecham, e o <code>Esc</code> devolve o foco ao botão. O menu começa logo abaixo da barra, sem a sobrepor; em 360 px ele fica abaixo da barra inteira, depois da busca, e não a cobre.</li>
+          <li><b>O Sair que falhou</b> (rede, 403 <code>csrf_failed</code>, 5xx): a sessão <b>fica</b>, o menu continua aberto, e uma linha com <code>role="alert"</code> dentro dele diz "Não foi possível sair agora. Tente de novo."; o Sair segue disponível. <b>Para o plano:</b> o <code>signOut()</code> rejeita fora de 204 e 401 (o 401 é sair, sem mensagem — RF-10).</li>
           <li><b>O convite (RF-15)</b>: no lugar do botão, o link "Entrar para calcular", que leva a <code>/entrar?next=/ativos/{ticker}</code>, e a frase ao lado. O título e a nota do E7/E8 não mudam. É link com a forma de <code>.ruvor-btn--primary</code>, como o botão que ele substitui.</li>
-          <li><b>Os avisos (RF-16)</b>: o mesmo componente, com dois títulos. "A sua sessão terminou." aparece no lugar da ação que recebeu 401 (aqui, o botão de calcular), com <code>role="alert"</code>, e a barra passa a mostrar "Entrar"; "Esta página é para quem entrou na conta." aparece no corpo de <code>/conta/senha</code> e de <code>/organizacao/usuarios</code> para quem não entrou. O link "Entrar" leva a <code>/entrar?next=&lt;página atual&gt;</code>. As telas de senha e de usuários (T7, T9) usam o aviso de sessão terminada no lugar da ação delas.</li>
-          <li><b>Fora deste mockup</b>: o que acontece se o <code>logout</code> falhar por rede (a spec só fala do 204 e do 401) — o mockup não mostra erro no Sair.</li>
+          <li><b>Os avisos (RF-16)</b>: o mesmo componente, com dois títulos. "A sua sessão terminou." aparece no lugar da ação que recebeu 401 (aqui, o botão de calcular), com <code>role="alert"</code>, e a barra passa a mostrar "Entrar"; "Esta página é para quem entrou na conta." aparece no corpo de <code>/conta/senha</code> e de <code>/organizacao/usuarios</code> para quem não entrou. O link "Entrar" leva a <code>/entrar?next=&lt;página atual&gt;</code>. As telas de senha e de usuários (T7, T9) usam o aviso de sessão terminada no lugar da ação delas. <b>O aviso de sessão terminada vale para a página onde o 401 aconteceu</b>; ao navegar, a página nova mostra o estado anônimo normal (o convite, ou "esta página é para quem entrou").</li>
+          <li><b>Para a T10</b>: a regra <code>[hidden] { display: none }</code> do menu precisa sobreviver quando ele ganhar <code>display</code> no kit (uma regra de <code>display</code> sem <code>:not([hidden])</code> o deixaria à vista). E o menu se ancora na barra (<code>position: relative</code> em <code>.ruvor-topbar</code>), não no botão.</li>
         </ul>
       </div>
     </section>
@@ -336,6 +369,7 @@ const TEXTOS = {
   "conta.menu.senha": "Trocar a senha",
   "conta.menu.usuarios": "Usuários da organização",
   "conta.menu.sair": "Sair",
+  "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
   "conta.convite.entrar": "Entrar para calcular",
   "conta.convite.frase": "Pedir um cálculo exige entrar na conta.",
   "conta.aviso.terminou": "A sua sessão terminou.",
@@ -358,8 +392,11 @@ const T = (k, ...a) => {
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const glyph = (id) => `<svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
-const initials = (name) => {
-  const w = name.trim().split(/\s+/);
+// As iniciais: primeira letra da primeira e da última palavra; nome em branco (o
+// createsuperuser aceita " ") cai na primeira letra do e-mail.
+const initials = (name, email) => {
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  if (w.length === 0) return email.trim().charAt(0).toUpperCase();
   return (w.length === 1 ? w[0][0] : w[0][0] + w[w.length - 1][0]).toUpperCase();
 };
 
@@ -382,6 +419,8 @@ const S = {
   sessao: params.get("sessao") || "anonimo",   // carregando | anonimo | logado
   org: params.get("org") || "admin",           // pessoal | admin | membro
   menu: params.get("menu") === "aberto",
+  sairFalha: params.get("sair") === "falhou",  // o logout responde fora de 204 e 401
+  sairErro: params.get("sair") === "falhou",   // a linha de alerta está à vista
   vista: params.get("vista") || "e8",          // e8 | e7 | terminou | senha | usuarios | barras | estreito | textos
   tema: params.get("tema") || "system",
   nivel: params.get("nivel") || "beginner",
@@ -410,7 +449,7 @@ function renderSlot() {
   slot.innerHTML = `
     <button class="ruvor-account m21b-account" type="button" data-part="conta" aria-expanded="${S.menu}" aria-controls="m21b-menu" aria-label="${esc(T("conta.menu.rotulo", me.name))}">
       <span class="m21b-account__name">${esc(me.name)}</span>
-      <span class="ruvor-avatar" data-part="avatar" aria-hidden="true">${esc(initials(me.name))}</span>
+      <span class="ruvor-avatar" data-part="avatar" aria-hidden="true">${esc(initials(me.name, me.email))}</span>
       ${glyph("i-caret-down")}
     </button>
     <div class="m21b-menu" id="m21b-menu" data-part="menu"${S.menu ? "" : " hidden"}>
@@ -428,9 +467,21 @@ function renderSlot() {
         <li class="m21b-menu__sep" role="presentation"></li>
         <li><button class="m21b-menu__item" type="button" data-part="menu-sair">${glyph("i-sign-out")}<span>${esc(T("conta.menu.sair"))}</span></button></li>
       </ul>
+      ${S.sairErro ? `<p class="m21b-menu__error" role="alert" data-logout-error>${esc(T("conta.menu.sairFalhou"))}</p>` : ""}
     </div>`;
   const btn = $("[data-part='conta']", slot);
   btn.addEventListener("click", () => setMenu(!S.menu));
+  // Clicar num link do menu o fecha (a navegação leva a outra página).
+  for (const a of slot.querySelectorAll("a.m21b-menu__item")) a.addEventListener("click", (e) => { e.preventDefault(); setMenu(false); });
+  // Sair: dá certo → anônimo; falha → a sessão fica, o menu continua aberto, com a linha de alerta.
+  $("[data-part='menu-sair']", slot).addEventListener("click", () => {
+    if (S.sairFalha) { S.sairErro = true; S.menu = true; render(); $("[data-part='menu-sair']")?.focus(); return; }
+    S.sessao = "anonimo"; S.menu = false; S.sairErro = false; render();
+  });
+  // O Tab que sai do último item fecha o menu (o foco foi para fora do lugar da conta).
+  $("#m21b-menu", slot).addEventListener("focusout", (e) => {
+    if (S.menu && !(e.relatedTarget && slot.contains(e.relatedTarget))) setMenu(false);
+  });
 }
 
 function setMenu(open, refocus = false) {
@@ -515,6 +566,7 @@ function renderTextos() {
     "conta.menu.senha": "ação do menu → /conta/senha?next=<página atual>",
     "conta.menu.usuarios": "ação do menu, só admin em organização não pessoal",
     "conta.menu.sair": "ação do menu",
+    "conta.menu.sairFalhou": "linha com role=alert dentro do menu, quando o logout falha (rede, 403 csrf_failed, 5xx); a sessão fica, o menu continua aberto e o Sair segue disponível",
     "conta.convite.entrar": "o link no lugar do botão, E7/E8 anônimo → /entrar?next=/ativos/{ticker}",
     "conta.convite.frase": "a frase ao lado do link do convite",
     "conta.aviso.terminou": "título do aviso de sessão terminada (401 de quem estava logado)",
@@ -556,6 +608,7 @@ function render() {
   for (const b of document.querySelectorAll("[data-mk-vista]")) b.setAttribute("aria-pressed", String(b.dataset.mkVista === S.vista));
   for (const b of document.querySelectorAll("[data-mk-sessao]")) { b.setAttribute("aria-pressed", String(b.dataset.mkSessao === sessaoEfetiva())); b.disabled = sessaoEfetiva() !== S.sessao; }
   for (const b of document.querySelectorAll("[data-mk-org]")) { b.setAttribute("aria-pressed", String(b.dataset.mkOrg === S.org)); b.disabled = sessaoEfetiva() !== "logado"; }
+  for (const b of document.querySelectorAll("[data-mk-sair]")) b.setAttribute("aria-pressed", String((b.dataset.mkSair === "falhou") === S.sairFalha));
   renderSlot();
   if (view === "ativo") renderRisk();
   if (view === "pagina") renderPage();
@@ -563,6 +616,11 @@ function render() {
 }
 for (const b of document.querySelectorAll("[data-mk-sessao]")) b.addEventListener("click", () => { S.sessao = b.dataset.mkSessao; S.menu = false; render(); });
 for (const b of document.querySelectorAll("[data-mk-org]")) b.addEventListener("click", () => { S.org = b.dataset.mkOrg; S.menu = true; render(); });
+for (const b of document.querySelectorAll("[data-mk-sair]")) b.addEventListener("click", () => {
+  S.sairFalha = b.dataset.mkSair === "falhou"; S.sairErro = S.sairFalha;
+  if (S.sairFalha) { S.sessao = "logado"; S.menu = true; if (!["e8", "e7"].includes(S.vista)) S.vista = "e8"; }
+  render();
+});
 for (const b of document.querySelectorAll("[data-mk-vista]")) b.addEventListener("click", () => { S.vista = b.dataset.mkVista; S.menu = false; render(); });
 
 // Os quadros: a própria página, sem a moldura, no nível e no tema correntes.
@@ -577,6 +635,7 @@ function refreshFrames() {
       f("logado, menu aberto — organização, admin: com Usuários da organização", "vista=e8&sessao=logado&org=admin&menu=aberto", true),
       f("logado, menu aberto — conta pessoal: sem Usuários da organização", "vista=e8&sessao=logado&org=pessoal&menu=aberto", true),
       f("logado, menu aberto — organização, membro: sem Usuários da organização", "vista=e8&sessao=logado&org=membro&menu=aberto", true),
+      f("logado, menu aberto — o Sair falhou: a sessão fica, a linha de alerta no menu", "vista=e8&sessao=logado&org=admin&menu=aberto&sair=falhou", true),
     ].join("");
   }
   if (S.vista === "estreito") {
@@ -587,6 +646,7 @@ function refreshFrames() {
       f("E8, logado: o botão; só as iniciais", "vista=e8&sessao=logado&org=admin"),
       f("o menu aberto, organização, admin", "vista=e8&sessao=logado&org=admin&menu=aberto"),
       f("o menu aberto, conta pessoal", "vista=e8&sessao=logado&org=pessoal&menu=aberto"),
+      f("o menu aberto, o Sair falhou", "vista=e8&sessao=logado&org=admin&menu=aberto&sair=falhou"),
       f("E7, anônimo: o convite", "vista=e7&sessao=anonimo"),
       f("401 no pedido: a sessão terminou", "vista=terminou"),
       f("/conta/senha sem conta", "vista=senha"),
@@ -594,7 +654,7 @@ function refreshFrames() {
   }
 }
 
-// ?vista=… &sessao=carregando|anonimo|logado &org=pessoal|admin|membro &menu=aberto &tema=light|dark|system &nivel=… &moldura=0
+// ?vista=… &sessao=carregando|anonimo|logado &org=pessoal|admin|membro &menu=aberto &sair=falhou &tema=light|dark|system &nivel=… &moldura=0
 if (params.get("moldura") === "0") root.dataset.moldura = "0";
 setReading(S.nivel);
 setTheme(S.tema);
