@@ -265,7 +265,8 @@ type Route =
   | "risk"
   | "fundamentals"
   | "disclosures"
-  | "suggestion";
+  | "suggestion"
+  | "me";
 type Reply = { status: number; body: unknown };
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -284,12 +285,20 @@ let replies: Partial<Record<Route, Reply>> = {};
 const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
 
 /**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03), a rota `me`: responde na hora —
+ * `replies.me` ou, sem ela, 401 (anônimo) — e fica fora de `calls`.
+ */
+const ME_URL = "/api/v1/auth/me";
+const ANON: Reply = fail(401, "not_authenticated");
+
+/**
  * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). A
  * sugestão é a rota própria `suggestion`, casada só pelo endereço exato; qualquer outro pedido
  * continua lançando.
  */
 function routeOf(url: string): Route {
   if (url === SUGGESTION_URL) return "suggestion";
+  if (url === ME_URL) return "me";
   const match =
     /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
@@ -314,6 +323,10 @@ function stubFetch(): void {
       (url: string) =>
         new Promise<Response>((resolve) => {
           const route = routeOf(url);
+          if (route === "me") {
+            resolve(fakeResponse(replies.me ?? ANON));
+            return;
+          }
           const call: Call = { url, route, resolve: (r) => resolve(fakeResponse(r)) };
           calls.push(call);
           const reply = replies[route];
@@ -369,6 +382,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     fundamentals: ok(FUNDAMENTALS),
     disclosures: ok(DISCLOSURES),
     suggestion: ok(SUGGESTION),
+    me: ANON,
     ...over,
   };
 }

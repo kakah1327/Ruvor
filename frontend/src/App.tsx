@@ -11,6 +11,7 @@ import { Shell } from "./components/Shell";
 import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { SearchScreen } from "./screens/SearchScreen";
+import { SessionProvider } from "./session/SessionProvider";
 
 /**
  * A rota do ativo (RF-01): o ticker em minúsculas é aceito, e o endereço passa a mostrar
@@ -31,14 +32,23 @@ function AssetRoute() {
   return ticker === upper ? <AssetScreen key={upper} ticker={upper} /> : null;
 }
 
-/** As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. */
+/**
+ * As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. Na
+ * raiz, a rota de layout do estado de sessão (M2.1b, RF-03), pai do casco e das telas fora
+ * dele: quem monta `routes` recebe o provedor.
+ */
 export const routes: RouteObject[] = [
   {
-    element: <Shell />,
+    element: <SessionProvider />,
     children: [
-      { index: true, element: <SearchScreen /> },
-      { path: "ativos/:ticker", element: <AssetRoute /> },
-      { path: "*", element: <NotFoundScreen /> },
+      {
+        element: <Shell />,
+        children: [
+          { index: true, element: <SearchScreen /> },
+          { path: "ativos/:ticker", element: <AssetRoute /> },
+          { path: "*", element: <NotFoundScreen /> },
+        ],
+      },
     ],
   },
 ];

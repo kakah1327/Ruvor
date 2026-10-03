@@ -239,7 +239,8 @@ type Route =
   | "fundamentals"
   | "disclosures"
   | "post"
-  | "csrf";
+  | "csrf"
+  | "me";
 type Reply = { status: number; body: unknown } | "network" | "html";
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -261,11 +262,19 @@ let calls: Call[] = [];
 let replies: Partial<Record<Route, Reply>> = {};
 
 /**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03), a rota `me`: responde na hora —
+ * `replies.me` ou, sem ela, 401 (anônimo) — e fica fora de `calls`.
+ */
+const ME_URL = "/api/v1/auth/me";
+const ANON: Reply = fail(401, "not_authenticated");
+
+/**
  * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página).
  * O `GET /api/v1/auth/csrf` é o que o cliente pede antes do `POST` sem cookie (M2.1b, RF-02).
  */
 function routeOf(url: string, method: string): Route {
   if (url === "/api/v1/auth/csrf" && method === "GET") return "csrf";
+  if (url === ME_URL && method === "GET") return "me";
   const match =
     /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
@@ -286,6 +295,17 @@ function stubFetch(): void {
       (url: string, init?: RequestInit) =>
         new Promise<Response>((resolve, reject) => {
           const route = routeOf(url, init?.method ?? "GET");
+          if (route === "me") {
+            const me = replies.me ?? ANON;
+            if (typeof me === "string") reject(new TypeError("Failed to fetch"));
+            else
+              resolve({
+                ok: me.status >= 200 && me.status < 300,
+                status: me.status,
+                json: async () => me.body,
+              } as unknown as Response);
+            return;
+          }
           const call: Call = {
             url,
             route,
@@ -339,6 +359,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
       results: [],
     }),
     csrf: { status: 204, body: null },
+    me: ANON,
     ...over,
   };
 }
