@@ -238,7 +238,8 @@ type Route =
   | "risk"
   | "fundamentals"
   | "disclosures"
-  | "post";
+  | "post"
+  | "csrf";
 type Reply = { status: number; body: unknown } | "network" | "html";
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -259,8 +260,12 @@ type Call = {
 let calls: Call[] = [];
 let replies: Partial<Record<Route, Reply>> = {};
 
-/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
+/**
+ * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página).
+ * O `GET /api/v1/auth/csrf` é o que o cliente pede antes do `POST` sem cookie (M2.1b, RF-02).
+ */
 function routeOf(url: string, method: string): Route {
+  if (url === "/api/v1/auth/csrf" && method === "GET") return "csrf";
   const match =
     /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
@@ -295,12 +300,18 @@ function stubFetch(): void {
                     throw new SyntaxError("não é JSON");
                   },
                 } as unknown as Response);
-              else
+              else {
+                if (route === "csrf" && r.status >= 200 && r.status < 300) {
+                  // como o servidor: o `auth/csrf` grava o cookie que o `POST` lê em seguida.
+                  // biome-ignore lint/suspicious/noDocumentCookie: o cliente lê o cookie de verdade.
+                  document.cookie = "csrftoken=tok; path=/";
+                }
                 resolve({
                   ok: r.status >= 200 && r.status < 300,
                   status: r.status,
                   json: async () => r.body,
                 } as unknown as Response);
+              }
             },
           };
           calls.push(call);
@@ -327,6 +338,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
       offset: 0,
       results: [],
     }),
+    csrf: { status: 204, body: null },
     ...over,
   };
 }
@@ -1274,14 +1286,20 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
     );
   });
 
-  it("e não vai quando o cookie não existe", async () => {
+  it("sem cookie, o botão pede `auth/csrf` antes do `POST`", async () => {
     startE8({ status: 202, body: risk({ request: request({ status: "queued" }) }) });
     await settled("E8");
+    expect(calls.some((c) => c.route === "csrf")).toBe(false);
     fireEvent.click(calcular());
     await settled("E5");
-    expect(calls.find((c) => c.route === "post")?.headers).not.toHaveProperty(
-      "X-CSRFToken",
-    );
+    const csrfAt = calls.findIndex((c) => c.route === "csrf");
+    const postAt = calls.findIndex((c) => c.route === "post");
+    expect(calls.filter((c) => c.route === "csrf")).toHaveLength(1);
+    expect(csrfAt).toBeGreaterThanOrEqual(0);
+    expect(postAt).toBeGreaterThan(csrfAt);
+    expect(calls[csrfAt]?.url).toBe("/api/v1/auth/csrf");
+    expect(calls[csrfAt]?.headers).not.toHaveProperty("X-CSRFToken");
+    expect(calls[postAt]?.headers["X-CSRFToken"]).toBe("tok");
   });
 });
 
