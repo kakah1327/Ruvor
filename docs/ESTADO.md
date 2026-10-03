@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-10-02
+**Última atualização:** 2026-10-03
 
 ---
 
@@ -26,8 +26,12 @@ de cada uma das 55 chaves e os detalhes técnicos recolhidos na iniciante
 `main` pela PR #33; o **M3.3 fechou em 2026-10-02** — o estresse histórico: o ativo e o Ibovespa lado a
 lado nos quatro episódios da D-147, em `gold.stress_episode`, pelo `/metrics` e no bloco "Em momentos de estresse"
 ([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a
-[D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)) —, com a PR de implementação a abrir
-pelo dono; o M2.1b tem spec e plano aprovados, a implementar; na
+[D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)) —, e entrou na `main` pela PR #37;
+o **M1.4b fechou em 2026-10-03** — a correção do motor: o GARCH e o EGARCH sem olhar à frente, os três tradicionais em
+janela expansiva reestimada a cada 252 pregões, o motor `0.4.0` e os seis ativos cobertos recalculados do zero
+([D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md) a
+[D-159](decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md)) —, já com a `main` do M2.2a e
+do M3.3 mesclada, e com a PR única — spec, plano e implementação — a abrir (o portão da spec e do plano foi a aprovação do dono na conversa, em 2026-10-02); o M2.1b tem spec e plano aprovados, a implementar; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -36,7 +40,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -82,7 +86,8 @@ com o cálculo dos indicadores encadeado à coleta; e os comunicados, de segunda
 retrato por ponto de retreino em `gold.model_snapshot`, e a rotina reaproveita os válidos,
 treina só o que falta e reconstitui a série inteira do backtest por previsão — em segundos por
 ativo, igual campo a campo ao cálculo do zero, que `compute_risk --full` ainda faz. O motor está
-no `0.3.0`. **Desde o M1.6a há API e kit:** `GET /api/v1/…` entrega catálogo, identidade,
+no `0.4.0` desde o M1.4b: nenhum dos nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a cada
+252 pregões, numa janela que cresce. **Desde o M1.6a há API e kit:** `GET /api/v1/…` entrega catálogo, identidade,
 preços, eventos, métricas e risco de um ativo, no formato da
 [D-86](decisoes/D-86-convencoes-da-api-http.md), e `POST /api/v1/assets/{ticker}/risk` pede o
 cálculo de um ativo nunca calculado — coleta, métricas e risco, pela fila, com um pedido aberto por
@@ -1662,16 +1667,139 @@ a queda zero só os testes provam. A ABCB4, a ABEV3, a BBDC4 e o AALR3 não fora
 novos: a máquina nova (o `.wslconfig` fora do clone, e quanto custa refazer `gold`) e o tempo do RF-24, que depende da
 máquina.
 
+### M1.4b — Correção do motor
+
+Spec em [`specs/M1.4b-correcao-do-motor.md`](specs/M1.4b-correcao-do-motor.md) e plano em
+[`planos/M1.4b-correcao-do-motor.md`](planos/M1.4b-correcao-do-motor.md). Frente `marco1`, ramo
+`marco1/M1.4b-correcao-do-motor`, no worktree `E:/Temp/Trilobit/varlab-wt/M1.4b-correcao-do-motor`. Spec com duas rodadas
+de revisão adversarial, plano com uma, os dois aprovados pelo dono em 2026-10-02. Nove tarefas: T0 (`24145bf`), T1
+(`ebb307a`), T2 (`9a612bc`), T3 (`6906ccb`), T4 (`dd2ddcc`, `854dbaa`), T5 (`fe0dceb`, `8c5cbc8`), T6 (`3d1cc5e`), a
+revisão da implementação antes da execução real, T6b (`a101039`, 0 graves e 0 médios), e T7 (`9fb9819`, a referência do
+trecho 0). Sem portão de mockup ([D-158](decisoes/D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md)).
+Três decisões, com a spec: [D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md)
+(a lista fechada), D-158 (o VaR do dia sem o retorno do dia, os tradicionais a cada 252 pregões, as frases sem mockup) e
+[D-159](decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md) (a linha de base do `0.4.0`).
+**Fechou em 2026-10-03**; o ramo recebeu a `main` com o M2.2a, o M3.3 e a D-160 antes da execução real, e a PR de
+implementação é do dono.
+
+**O que mudou:** `_sigma_path` prevê a σ do dia `pos` com os retornos até `pos − 1` (o `forecast` começa em
+`n_train + pos − 1`); os três tradicionais estimam o VaR por trechos de 252 pregões sobre todos os retornos conhecidos no
+início do trecho (`engine/src/engine/models/traditional/_expanding.py`), com o Monte Carlo tirando os sorteios de cada
+trecho em sequência de um só gerador, e declaram `refit_frequency_days = 252`; o motor é o `0.4.0`, e todos os retratos
+`0.3.0` ficam inválidos pela impressão digital; `engine/tests/test_sem_olhar_a_frente.py` prova por perturbação, nos
+seis modelos não neurais, que mudar os retornos de *t* em diante não muda o VaR de nenhum dia até *t*; a linha de base
+se recaptura por `engine/tests/baseline/capturar.py`; as avançadas de `risco.perda95` e `risco.perda99` dizem a janela
+nova; `backend/tests/risk/test_compute.py` lê a versão da metadata, não mais o literal.
+
+**A execução real**, na ordem do RF-13, com o Beat parado do começo ao fim:
+
+| Passo | O que aconteceu |
+|---|---|
+| 2 — a referência `0.3.0` | checkout principal na `main`; `worker` recriado (`Created` 2026-10-02T14:30:49Z), `version` = `0.3.0`; `compute_risk --async --full` dos seis às 14:31:02Z; `risk_run` **89 a 94, todas `ok`**; a fila vazia (as seis fechadas, `celery inspect` vazio, `redis llen celery` = 0) |
+| interrupção | o primeiro build da imagem `0.4.0` morreu por falta de memória no hospedeiro (1,4 GB livres de 32); o checkout principal voltou à `main`, para código e versão ficarem coerentes, e o Docker caiu e voltou. **Nada foi gravado com versão trocada** |
+| 3 | checkout principal destacado no HEAD do ramo, já com a `main` mesclada (`9d787d6`); o `migrate` aplicou `analytics.0002_gold_stress_episode` e `portfolios.0001_portfolio` no banco de desenvolvimento |
+| 4 | `docker compose build worker`; `worker` recriado (`Created` 2026-10-03T00:29:05Z), `version` = `0.4.0` |
+| 5 — o trecho 0 (RF-12, V-06) | a fixture recapturada: o diff só em `garchnet/0.05`, `garchnet/0.01` e `captured_with_engine` (`0.4.0`); **o `lstm` e o `gru` iguais**; sem a variável, verde; `9fb9819` |
+| 6 — o recálculo `0.4.0` | `compute_risk --async --full` dos seis às 00:33:12Z; `risk_run` **95 a 100, todas `ok`**; a fila vazia pela mesma condição |
+| 7 — o RF-15 (V-10) | no ITUB4 (execução 98), nos dois níveis: ver abaixo |
+| 8 | o Beat recriado com a imagem `0.4.0`, saudável; **o checkout principal fica no HEAD do ramo até a mesclagem da PR** |
+
+**O tempo do zero:** as seis execuções correm em paralelo no `worker` (`--concurrency=2`), e cada uma leva o tempo do
+leque inteiro — a referência `0.3.0`, 8 min 20 s (a do VALE3, 8 min 36 s); a `0.4.0`, **7 min 52 s a 7 min 56 s**. Bate
+com os ~8 min que a spec estimou para um `--full` dos seis; o tempo de um ativo sozinho não foi medido. Os tradicionais
+por trechos não pesam.
+
+**A comparação campo a campo (V-09)**, das execuções 89 a 94 contra 95 a 100, mesma série (`as_of_date` 2026-10-01, os
+mesmos pregões por ativo), 108 pares (ativo, modelo, nível):
+
+- **O `lstm`, o `gru` e o `caviar`, idênticos nos seis ativos**: 36 de 36 pares iguais em `var_latest`, `var_mean`,
+  violações, os três p-valores, zona, `adequate`, hiperparâmetros e erro.
+- **Os outros seis, com `var_latest` diferente em todos os 72 pares.** Nos tradicionais, o valor `0.3.0` era o quantil
+  (ou a normal, ou a simulação) dos 252 primeiros retornos, constante no teste: o `0.4.0` difere dele nos 36 pares.
+- **O GARCH e o EGARCH tinham violações de menos** — viam o choque do dia. Corrigidos, as violações sobem nos seis
+  ativos e nos dois níveis — nos 24 pares —, chegando perto das esperadas (~111 a 112 a 5% e ~22 a 1%, em 2.220 a 2.245 dias de teste) no BBDC4, no IBOV e no ITUB4, e passando delas no AALR3: o
+  EGARCH a 5% no ITUB4, de **48 para 101**; no IBOV, de 29 para 111; no BBDC4, de 32 para 104; a 1%, fora o AALR3, de
+  4–12 para 20–41. O GARCH a 5%, de 49–63 para 65–100 (fora o AALR3, 116 → 142).
+- **Os tradicionais erravam para os dois lados, conforme o ativo.** O quantil de 2016–2017 era baixo para o AALR3, o
+  BBDC4, o IBOV e o ITUB4 (violações de mais: o `historical` a 5% do BBDC4, **159 → 112**; do ITUB4, 187 → 113; do AALR3,
+  253 → 196) e alto para o VALE3 (violações de menos: 47 → 68) e, no `historical`, para o PETR4 (80 → 92). Na janela que
+  cresce, o `parametric` e o `monte_carlo` a 5% ficam com 74 a 85 violações no BBDC4, no IBOV e no ITUB4 — abaixo das
+  ~112 esperadas, e perdem o veredito.
+- **O `garchnet`** muda pouco: violações a ±7 das de antes, em todos os pares.
+
+A mudança de veredito (`adequate`), em quantos dos seis ativos o modelo não é rejeitado, antes → depois:
+
+| Modelo | 5% | 1% |
+|---|---|---|
+| `historical` | 1 → 2 (ganham BBDC4 e ITUB4; perde IBOV) | 1 → 0 (perde ITUB4) |
+| `parametric` | 3 → 0 (perdem BBDC4, IBOV e ITUB4) | 0 → 0 |
+| `monte_carlo` | 3 → 0 (perdem BBDC4, IBOV e ITUB4) | 0 → 0 |
+| `garch_1_1` | 0 → 1 (ganha IBOV) | 2 → 3 (ganha IBOV) |
+| `egarch` | 0 → 3 (ganham BBDC4, IBOV e ITUB4) | 0 → 0 |
+| `garchnet` | 4 → 4 | 2 → 3 (ganha ITUB4) |
+| `lstm`, `gru`, `caviar` | iguais | iguais |
+| **Total dos nove** | **20 → 19** | **13 → 14** |
+
+O risco da spec ("o veredito do GARCH deve piorar") **não se confirmou no veredito**: o GARCH e o EGARCH tinham
+violações de menos, e o Kupiec rejeita a cobertura baixa tanto quanto a alta — corrigidos, chegam perto da esperada e
+**ganham** o veredito em parte dos ativos. A zona de Basileia mudou em sete pares, seis deles no AALR3 (o
+`historical` a 1%, vermelha → verde; o `parametric` e o `monte_carlo` nos dois níveis, vermelha → amarela; o GARCH a
+1%, verde → amarela) e um no ITUB4 (o `historical` a 5%, amarela → verde).
+
+**O RF-15, a zona de Basileia (V-10):** um script avulso, no `worker`, rodou o motor `0.4.0` sobre a série da execução
+98 (ITUB4, 2.498 pregões até 2026-10-01), pelo mesmo `run_models` do cálculo, um modelo por vez como a tarefa, sem gravar nada. **A guarda bateu
+nos 18**: `var_latest` e violações recompostos iguais aos gravados. A zona recalculada pelas violações dos **últimos
+250** dias bate com a gravada nos 18 — todas verdes, com 6 a 15 violações a 5% (12,5 esperadas) e 1 a 3 a 1% (2,5),
+enquanto o teste inteiro tem, por exemplo, 113 no `historical` a 5%. **A entrada de *Aberto* fecha sem defeito:** a
+suspeita comparava as violações do teste inteiro, que o Kupiec usa, com a zona, que olha só 250 dias.
+
+| Verificação | Resultado |
+|---|---|
+| Sem olhar à frente (V-01 a V-03) | ✅ por perturbação, nos seis não neurais, em *t* fora do piso da σ; contra o `arch`, nas posições 0, 100, 252 e 400 |
+| A lista fechada (V-07) | ✅ `git diff --stat origin/main -- engine/src/`: os seis arquivos da D-157 (o `pyproject.toml` fica fora de `engine/src/`); `base.py` só nas duas docstrings |
+| A linha de base (V-05) | ✅ as dez entradas das cinco famílias mudaram, as duas do `caviar` iguais; **25 verdes** no hospedeiro |
+| O trecho 0 (V-06) | ✅ só o `garchnet` mudou |
+| Mutações (T6) | ✅ todas reprovam: o laço antigo do GARCH, o VaR constante, o gerador por trecho, o hiperparâmetro fora, o script com o motor velho, a frase velha |
+| Suítes (V-08) | ✅ depois da `main` mesclada: **1747 no backend** (`mypy` e `ruff` limpos); **152 no motor** sem a linha de base, no contêiner avulso do `worker` com o motor do ramo, em 4 min 51 s — o V-04 (o trecho 0) entre eles, verde; **25 da linha de base** no hospedeiro; **1265 no frontend** |
+
+**O que a execução mostrou.**
+
+- **O build da imagem pode morrer por falta de memória do hospedeiro**, e a execução real fica no meio: o checkout
+  principal voltou à `main` enquanto não havia imagem nova, para nenhum cálculo sair com código e versão desencontrados.
+- **O Beat, ao voltar, dispara na hora o que perdeu o horário**: na partida, o `PersistentScheduler` mandou a
+  `rotina_diaria` e a `importar_comunicados`, que tinham passado do horário com ele parado. A rotina coletou o pregão
+  de 2026-10-02 e abriu as execuções incrementais 101 a 106, `0.4.0`, com o código do ramo — todas `ok` em
+  **~1 min 41 s**. Saiu coerente porque o checkout já estava no ramo. **E o caso de provento que faltava medir
+  apareceu:** o BBDC4 tem dividendo com data de 2026-10-02, e a linhagem dele se retreinou inteira — 72 retratos novos,
+  os mesmos 72 que o `--full` grava por ativo —, enquanto os outros cinco não gravaram nenhum. O tempo do BBDC4 sozinho
+  não foi medido.
+- **A consulta "a última execução `0.4.0` de cada ativo" pegou a incremental em curso**: a primeira tabela do V-09 saiu
+  com 10 linhas do BBDC4, de uma execução ainda aberta. Refeita pelo `id` (89 a 94 contra 95 a 100), 108.
+- Quatro aprendizados novos, em [aprendizados](aprendizados.md): o build morto e a regra de devolver o checkout; o
+  `docker compose run --rm` que perde a saída se cortado; a folga da guarda do piso da σ; e o Beat que dispara ao voltar,
+  com a comparação fixada pelo `id`.
+
+**O impacto no TCC.** As Tabelas 1 e 2 de `docs/tcc/TCC_II_VaR_ML_v3.md` e a conclusão preliminar de que o GARCH e o
+EGARCH ganham dos "tradicionais estáticos" saíram do motor com os dois defeitos: o GARCH via o retorno do dia, e os
+tradicionais eram o quantil do primeiro ano. Refazê-las é da [trilha do TCC](#trilha-paralela--tcc), sobre o `0.4.0`.
+
+**A imagem é uma só.** Desde o passo 4, a imagem compartilhada do `worker` diz `0.4.0`. Os outros worktrees que rodam o
+backend em contêiner avulso dessa imagem (o M2.1b, os da `identidade`) têm, em `backend/tests/risk/test_compute.py`, a
+versão `"0.3.0"` literal em duas asserções, que reprovam **até o ramo receber a `main` com o M1.4b**. E, até a PR ser
+mesclada, **nenhum outro ramo é servido pelo stack**: o checkout principal fica no HEAD deste, porque um cálculo com o
+motor `0.3.0` montado gravaria números velhos com o rótulo `0.4.0`, para sempre (D-16).
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M3.3** (implementação, T5 a T8), que o dono abre e mescla com a CI verde. O M2.3 entrou
-pela PR #33, e o ramo do M3.3 nasceu da `main` com ele: as seis medidas do estresse têm a frase avançada e entraram na
-lista fechada do V-02 (`AS_61`). Depois, **implementar o M2.1b** — a T14 do M2.1a entrou antes dele (ver o fecho do
-M2.1a), e o M2.1b ajusta a ordem por ela; **o menu de conta**, se entrar em `.ruvor-topbar__prefs`, refaz os seletores
-por posição (`:first-child` o alternador, `:last-child` o tema) que a T4 do M2.3 escreveu. Ramos e a regra de onde cada
-comando roda estão em [frentes/marco1.md](frentes/marco1.md). **Duas entradas em
-[Aberto](#aberto-e-aguardando-decisão)**, achadas na conferência do M2.3, são do motor: o GARCH e o EGARCH olham um
-dia à frente, e os três tradicionais ficam no primeiro ano da série.
+**Na frente `marco1`, a PR do M1.4b** (implementação, T0 a T7), que o dono abre logo e mescla com a CI verde. **Até a
+mesclagem, o stack não serve outro ramo**: o checkout principal fica no HEAD do M1.4b, e a imagem do `worker` já diz
+`0.4.0` (ver "A imagem é uma só", no fecho do M1.4b). Mesclada, o checkout principal recebe a `main` (`git pull`) e só
+então volta a outro ramo; **cada ramo aberto recebe a `main` antes de rodar a suíte de backend** — o
+`test_compute.py` deles tem a versão `"0.3.0"` literal. O M3.3 entrou pela PR #37. Depois, **implementar o M2.1b** — a
+T14 do M2.1a entrou antes dele (ver o fecho do M2.1a), e o M2.1b ajusta a ordem por ela; **o menu de conta**, se entrar
+em `.ruvor-topbar__prefs`, refaz os seletores por posição (`:first-child` o alternador, `:last-child` o tema) que a T4
+do M2.3 escreveu. Ramos e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md). As duas
+entradas do motor e a da zona de Basileia, em [Aberto](#aberto-e-aguardando-decisão), fecharam no M1.4b.
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
 qualquer pedido bem-sucedido torna o ativo coberto para sempre
@@ -1681,10 +1809,12 @@ qualquer pedido bem-sucedido torna o ativo coberto para sempre
 **O tique do Beat num dia útil já foi visto** (2026-09-28, ver o M1.6b): a rotina inteira, sem
 treino. **O que falta medir** é um dia em que um ativo coberto pague provento — se ele aparecer com
 `trained_snapshots` 9, a estimativa do V-13 do M1.5b se confirma. A rotina agora inclui o `BBDC4` e o
-`AALR3`.
+`AALR3`. **Visto em 2026-10-03**, no tique que o Beat disparou ao voltar no fecho do M1.4b: o dividendo do `BBDC4` com
+data de 2026-10-02 retreinou a linhagem inteira dele (72 retratos novos), e os outros cinco ativos nenhum; o tempo do
+`BBDC4` sozinho segue sem medida.
 
 **`gold` segue derivado, mas deixou de ser barato de refazer à mão:** o Beat acrescenta uma
-`risk_run` por ativo coberto a cada dia útil — cinco, desde o `BBDC4` —, e `migrate risk zero`
+`risk_run` por ativo coberto a cada dia útil — seis, desde o `AALR3` —, e `migrate risk zero`
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
@@ -1724,7 +1854,7 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **`django_session` cresce sem limpeza.** Sessão vencida fica na tabela até alguém rodar `manage.py clearsessions` | `public.django_session` | Uma entrada própria no Beat quando o volume justificar, ou na hospedagem |
 | **A taxa anônima depende de `NUM_PROXIES`.** Sem ele certo, atrás de um proxy todo pedido chega com o IP do proxy, e os 60 por minuto por IP viram teto do site inteiro — o mesmo risco do limite `auth` do M2.1a, agora sobre a leitura | `backend/config/settings.py`, `REST_FRAMEWORK["NUM_PROXIES"]` | A hospedagem, antes de expor a API ([D-109](decisoes/D-109-toda-rota-da-api-tem-taxa.md)) |
 | ~~**O campo `recommended` do Biome está descontinuado.** `npm run lint` emite `DEPRECATED — use "preset" instead` e sai 0~~ | ~~`frontend/biome.json`, campo `linter.rules.recommended`~~ | ✅ **quitada no M1.6d** — `"preset": "recommended"`, e `frontend/tests/biome.test.ts` reprova o campo antigo de volta |
-| **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma** | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** A linha de base provou a migração no F2a e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
+| **A linha de base numérica não é portátil entre plataformas.** 8 das 64 do motor reprovam em Linux — remedido em 2026-09-15 no `worker` desta máquina, com as mesmas versões de biblioteca do Windows. O `garch_1_1` desvia ~2,1e-6, no limiar da tolerância — aritmética de BLAS. O EGARCH cai em **outro ótimo local**: a série da linha de base é ruído i.i.d. sem estrutura EGARCH, a superfície é quase plana, e no próprio Windows o VaR sobe de 8% a 113% no primeiro bloco. O que era **defeito** — o reajuste não convergia em Linux (`code 4`, VaR de 2032%) — foi pago pela [D-46](decisoes/D-46-ajuste-garch-tenta-de-novo-quando-nao-converge.md). O lock congela **versão, não plataforma**. (As medidas de Linux são do motor `0.3.0`; não foram refeitas no `0.4.0`.) | `engine/tests/baseline/valores.json`, capturado no Windows | **Não se paga: se aceita.** Desde o M1.4b a linha de base é a do motor `0.4.0`, não mais a paridade com o protótipo VaR Lab nas cinco famílias corrigidas, e se regenera por `engine/tests/baseline/capturar.py`, no hospedeiro Windows ([D-159](decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md)). Ela prova que o motor não muda sem querer, e não é referência de EGARCH. A CI segue rodando o motor **sem** ela ([spec F5](specs/F5-integracao-continua.md#a-linha-de-base-não-é-portátil-entre-plataformas)); a Etapa 6 gera a referência dela própria, em contêiner ([D-22](decisoes/D-22-treino-centralizado-em-container.md)) |
 | ~~**A busca diferencia acento.** "itaú" não acha nada: o catálogo grava "ITAU", e a busca casa sem caixa, mas com acento~~ | ~~`backend/apps/api/views.py`, a busca do RF-12 do M1.6a~~ | ✅ **quitada no M1.7** — o lookup `unaccent` do Django, bilateral, no nome e no nome de pregão, com a extensão criada pela `apps/assets/migrations/0004_unaccent.py`; o banco de produção precisa dela ([D-143](decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)) |
 | ~~**O setor da B3 vem com ponto no lugar da vírgula** ("Petróleo. Gás e Biocombustíveis"), e a tela mostra como chega~~ | ~~`silver.asset.sector`, a conformação do M1.1~~ | ✅ **quitada no M1.7**, na **saída da API**, não na conformação: a tabela fechada de `apps/assets/classification.py` corrige cinco textos e deixa os dois de abreviação; o `silver` e o `gold.peer_comparison` seguem com o texto da B3, e o relatório do `import_assets` conta o texto com ponto fora da tabela ([D-144](decisoes/D-144-a-classificacao-da-b3-se-corrige-na-saida-da-api-estende-a-d-47.md)) |
 | ~~**A sugestão da busca é uma lista fixa** dos ativos com risco (`frontend/src/content/sugestoes.ts`), e envelhece: o `AALR3` ganhou risco na execução real e não está nela. O roteiro da execução real tem uma cópia da lista~~ | ~~`frontend/src/content/sugestoes.ts`, `frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.7** — não por `has_prices`, mas por `has_risk` (a fechada mais recente `ok` ou `partial`, a regra da tela): a caixa de página pede `has_risk=true&limit=8` uma vez por montagem; `sugestoes.ts` saiu, e o `MIN_SESSIONS` foi para `frontend/src/risk/config.ts`; o roteiro confere a sugestão contra a API |
@@ -1732,7 +1862,10 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | ~~**O roteiro da execução real não reprova por erro de página** — junta os `pageerror` sem conferir~~ | ~~`frontend/e2e/capturas.mjs`~~ | ✅ **quitada no M1.6c** (T8, `f00f3d2`) |
 | **`comportamento.nota.retornos` afirma o que o código não ancora**: diz que o preço ajustado "já inclui proventos e desdobramentos", e o ajuste vem pronto da fonte, sem regra própria no código. Achado na conferência técnica do M2.3 (T5) e deixado fora pelo dono no portão da T6, porque a frase não é das 55 nem das três emendas | `frontend/src/content/textos.ts`, `comportamento.nota.retornos` | Num bloco que corrija o texto da iniciante, ou quando a conformação do preço documentar o ajuste |
 | **A taxa do anônimo aceitou 81 pedidos com o limite em 60 por minuto** (execução real do M1.6c). Hipótese não provada: o `SimpleRateThrottle` do DRF conta sem atomicidade sob o `runserver` concorrente. E, com a taxa certa, a tela do ativo aguenta **5 cargas por minuto** a um anônimo em desenvolvimento | `backend/apps/accounts/throttling.py` (frente `identidade`), `RUVOR_THROTTLE_ANON` | Antes de expor a aplicação: a `identidade` confirma a contagem, e a hospedagem decide a taxa e se a tela junta rotas |
-| **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência do `0.2.0` (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
+| **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência — recapturada no `0.4.0` pelo M1.4b, com o `lstm` e o `gru` iguais aos do `0.2.0` e só o `garchnet` mudado (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
+| **A prova por seção no avançado cobre só 2 das 6 chaves do estresse** (revisão da PR #37, do M3.3, achado médio): a prova de que cada chave da seção sai na avançada e nunca na iniciante, como a do M2.3 para as outras seções, só exerce `period_return` e `benchmark_recovery_sessions` das seis medidas do estresse | `frontend/tests/estresse.test.tsx` | No próximo bloco que tocar o `StressBlock` ou as frases do estresse |
+| **Dois ramos do índice no estresse sem teste** (revisão da PR #37, achado médio): `benchmark_drawdown = 0` e `benchmark_recovery_sessions = null`, no Ibovespa do episódio, não são exercidos | `frontend/src/components/StressBlock.tsx`, `frontend/tests/estresse.test.tsx` | Idem |
+| **Os menores da revisão da PR #37:** "1 pregões" (o plural de `comportamento.estresse.pregoes` com *n* = 1); o `data-field` da célula "Sem dado"; a tabela de chaves do plano do M3.3 (o portão aprovou duas chaves fora dela); e o registro da frente `marco1` sem as PRs #33 e #36 | `frontend/src/content/textos.ts`, `frontend/src/components/StressBlock.tsx`, `docs/planos/M3.3-estresse-historico.md`, `docs/frentes/marco1.md` | Num bloco de acabamento da `marco1` |
 
 ## Aberto e aguardando decisão
 
@@ -1742,9 +1875,9 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | Carteira: caminho barato ou caro | [PRODUTO.md](PRODUTO.md#6-restrições-de-produto) |
 | Política de cobertura e atualização de ativos | [PRODUTO.md](PRODUTO.md#8-pendências-de-produto) |
 | Hospedagem de produção | [ARQUITETURA.md](ARQUITETURA.md#ambientes) |
-| **A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe. **A tela do M1.6b não a mostra** até a investigação. As 159 violações do `historical` têm explicação provável na entrada dos tradicionais, abaixo: o VaR deles é o do primeiro ano, constante no teste inteiro | [spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação) |
-| **O GARCH e o EGARCH usam o retorno do próprio dia na previsão** (achado na conferência do M2.3, 2026-10-02, não investigado). Em `_sigma_path`, `fixed.forecast(start=n_train + pos, horizon=1, …)` devolve na primeira linha a previsão **para o dia seguinte** a `n_train + pos`, já condicionada ao retorno desse dia; ela é gravada em `sigma_1d[pos]` e o backtest a compara com o retorno de `pos`. Se confirmado, o VaR do dia vê o próprio retorno (olhar à frente de um dia), e os backtests dos dois modelos ficam otimistas; o GARCHNet, que recebe a mesma série por `full_sigma_series` (`engine/src/engine/models/ml/garchnet.py:30`), pode herdar o desvio. Mexer é mudar o motor, sob a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) e a [D-76](decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md) | `engine/src/engine/models/garch/_conditional.py:115`; `engine/src/engine/experiments/runner.py:110` (o alinhamento com o retorno do teste) |
-| **Os três tradicionais são ajustados só nos 252 primeiros retornos, e o VaR deles é constante no teste inteiro** (achado na conferência do M2.3, 2026-10-02). O `run_experiment` treina cada modelo uma vez em `returns.iloc[:252]`, e o `historical` (como o `parametric` e o `monte_carlo`) devolve o mesmo número para todo dia do teste. **O "número de hoje" deles vem do primeiro ano da série**, dez anos atrás. É a explicação provável das 159 violações do `historical` do `BBDC4` na entrada da zona de Basileia, acima; as duas se investigam juntas. Mexer é mudar o motor (D-21, D-76) | `engine/src/engine/experiments/runner.py:87` e `:93`; `engine/src/engine/models/traditional/historical.py:24` |
+| ~~**A zona de Basileia a 5% pode estar errada** — na execução real do M1.6a, os 18 resultados do `BBDC4` saíram com `basel_zone` `verde`, inclusive o `historical` a 5% com **159 violações para 111,85 esperadas**. Possível defeito na zona de Basileia do M1.4 para o nível de 5%. **Não investigado**; o veredito de adequação não usa a zona ([D-64](decisoes/D-64-veredito-de-adequacao-e-kupiec-e-christoffersen.md)), mas ela é gravada e o `/risk` a expõe. **A tela do M1.6b não a mostra** até a investigação. As 159 violações do `historical` têm explicação provável na entrada dos tradicionais, abaixo: o VaR deles é o do primeiro ano, constante no teste inteiro~~ — ✅ **fechada no M1.4b (RF-15), sem defeito:** no ITUB4, sobre o motor `0.4.0`, nos dois níveis, a zona recalculada pelas violações dos últimos 250 dias bate com a gravada nos 18 resultados. A suspeita comparava as violações do teste inteiro, que o Kupiec usa, com a zona, que olha só 250 dias. Mostrar a zona na tela é decisão de outro bloco | ~~[spec M1.4](specs/M1.4-motor-de-risco.md), [ESTADO, M1.6a](#m16a--fundação-da-aplicação)~~; [ESTADO, M1.4b](#m14b--correção-do-motor), [spec M1.4b, RF-15](specs/M1.4b-correcao-do-motor.md#rf-15) |
+| ~~**O GARCH e o EGARCH usam o retorno do próprio dia na previsão** (achado na conferência do M2.3, 2026-10-02, não investigado). Em `_sigma_path`, `fixed.forecast(start=n_train + pos, horizon=1, …)` devolve na primeira linha a previsão **para o dia seguinte** a `n_train + pos`, já condicionada ao retorno desse dia; ela é gravada em `sigma_1d[pos]` e o backtest a compara com o retorno de `pos`. Se confirmado, o VaR do dia vê o próprio retorno (olhar à frente de um dia), e os backtests dos dois modelos ficam otimistas; o GARCHNet, que recebe a mesma série por `full_sigma_series` (`engine/src/engine/models/ml/garchnet.py:30`), pode herdar o desvio. Mexer é mudar o motor, sob a [D-21](decisoes/D-21-motor-ml-congelado-ate-etapa-6.md) e a [D-76](decisoes/D-76-alteracao-no-motor-em-lista-fechada-restringe-a-d-21.md)~~ — ✅ **fechada no M1.4b**: confirmado (a linha *k* do `forecast` é a variância de *k* + 1, com o retorno de *k*) e corrigido — `_sigma_path` prevê a σ do dia `pos` com os retornos até `pos − 1`; o `garchnet` recebe a série corrigida. Com a correção, as violações dos dois sobem para perto das esperadas | ~~`engine/src/engine/models/garch/_conditional.py:115`; `engine/src/engine/experiments/runner.py:110` (o alinhamento com o retorno do teste)~~; [D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md), [D-158](decisoes/D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md), [ESTADO, M1.4b](#m14b--correção-do-motor) |
+| ~~**Os três tradicionais são ajustados só nos 252 primeiros retornos, e o VaR deles é constante no teste inteiro** (achado na conferência do M2.3, 2026-10-02). O `run_experiment` treina cada modelo uma vez em `returns.iloc[:252]`, e o `historical` (como o `parametric` e o `monte_carlo`) devolve o mesmo número para todo dia do teste. **O "número de hoje" deles vem do primeiro ano da série**, dez anos atrás. É a explicação provável das 159 violações do `historical` do `BBDC4` na entrada da zona de Basileia, acima; as duas se investigam juntas. Mexer é mudar o motor (D-21, D-76)~~ — ✅ **fechada no M1.4b**: os três reestimam a cada 252 pregões, numa janela que cresce desde o primeiro retorno; o `historical` a 5% do `BBDC4` passou de 159 a 112 violações | ~~`engine/src/engine/experiments/runner.py:87` e `:93`; `engine/src/engine/models/traditional/historical.py:24`~~; [D-158](decisoes/D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md), [ESTADO, M1.4b](#m14b--correção-do-motor) |
 
 ## Pendências que bloqueiam trabalho futuro
 
@@ -1775,5 +1908,13 @@ carga, mas convém remedir antes de planejar paralelização.
 **Desde o M1.5b o motor é o `0.3.0`**, e as três redes semeiam em cada retreino
 ([D-75](decisoes/D-75-as-redes-semeiam-em-cada-retreino-estende-a-d-63.md)): os números delas
 mudam a partir do segundo trecho de teste. A Etapa 6, que ainda não rodou, rodará sobre o `0.3.0`.
+
+**Desde o M1.4b o motor é o `0.4.0`**, e a Etapa 6 roda sobre ele
+([D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md)): o GARCH e o
+EGARCH não veem mais o retorno do próprio dia, e os três tradicionais reestimam a cada 252 pregões, numa janela que
+cresce. **As Tabelas 1 e 2 de `docs/tcc/TCC_II_VaR_ML_v3.md` e a conclusão preliminar de que o GARCH e o EGARCH ganham
+dos "tradicionais estáticos" saíram do motor com os dois defeitos** e precisam ser refeitas nesta trilha, sobre o
+`0.4.0`. Na plataforma, nos seis ativos cobertos, o GARCH e o EGARCH tinham violações de menos, e os tradicionais
+erravam para os dois lados (ver o [fecho do M1.4b](#m14b--correção-do-motor)). O `lstm`, o `gru` e o `caviar` não mudam.
 
 Ver [ROADMAP.md](ROADMAP.md#trilha-paralela--tcc).

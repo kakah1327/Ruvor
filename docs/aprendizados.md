@@ -1628,3 +1628,59 @@ tempo vem dos 14 pedidos em paralelo pelo proxy.
 **Faça:** com ela reprovando sozinha, meça as rotas uma a uma (`curl -w '%{time_total}'`) antes de suspeitar do bloco,
 rode o roteiro de novo e relate as duas rodadas. Mutação de texto literal, do mesmo jeito: escreva o trecho mutado
 **depois** do `biome check --write` ou do `ruff format`, que reformatam e deixam a mutação sem casar.
+
+## O build da imagem pode morrer por falta de memória, e o checkout principal não espera a imagem nova
+
+**Quando:** numa execução real que troca a versão do motor (a imagem do `worker` fixa a **versão**; o **código** é o
+`engine/` montado do checkout principal), entre "o checkout no HEAD do ramo" e "a imagem nova de pé".
+
+**Problema:** no fecho do M1.4b, o primeiro `docker compose build worker` morreu por falta de memória no hospedeiro (1,4 GB
+livres de 32), e o Docker caiu logo depois. Com o checkout já no código `0.4.0` e a imagem ainda dizendo `0.3.0`,
+qualquer cálculo — a rotina do Beat, um pedido sob demanda, uma tarefa que sobrou na fila — gravaria números novos com o
+rótulo velho, para sempre (D-16), e retratos com a impressão digital errada (D-78).
+
+**Faça:** feche o que pesa antes do build (navegador, outra suíte, o `.venv` com TensorFlow) e confira a memória livre.
+Se o build falhar, **devolva o checkout principal ao código da versão que a imagem diz** (`git switch --detach` no commit
+dela) antes de qualquer outra coisa, e só o ponha de novo no ramo quando `version("ruvor-engine")` dentro do `worker`
+recriado disser a versão nova. Código e versão andam juntos ou nenhum dos dois anda.
+
+## `docker compose run --rm` cortado leva a saída junto
+
+**Quando:** ao rodar uma suíte longa — a do backend leva ~17 a 33 min — num contêiner avulso, com a saída só no terminal.
+
+**Problema:** se o contêiner morre no meio (falta de memória, Docker que cai, tempo-limite da ferramenta), o `--rm` o
+apaga, e o que a suíte imprimiu até ali some: não há `docker logs` para consultar, e não se sabe se reprovou, onde, ou se
+só foi cortada. No M1.4b, a suíte do backend foi cortada uma vez e teve de rodar de novo inteira.
+
+**Faça:** mande a saída para um arquivo do hospedeiro (`… worker python -m pytest … > <scratchpad>/suite.txt 2>&1;
+echo "exit $?" >> <scratchpad>/suite.txt`), de preferência em segundo plano, e leia o arquivo. O código de saída no fim
+separa "reprovou" de "foi morto".
+
+## A guarda "a σ não está no piso" precisa de folga
+
+**Quando:** ao escrever um teste que só vale com a σ condicional do GARCH/EGARCH acima de `sigma_floor_` (o V-01 do
+M1.4b escolhe *t* fora do piso, porque com a σ colada no piso a perturbação não muda nada e o teste passa sem provar).
+
+**Problema:** a σ recuperada de `VaR / z` fica **1 ulp acima** de `sigma_floor_` quando está no piso, e a comparação
+estrita `sigma_t > sigma_floor_` não dispara — a guarda passa com a σ no piso. E o ulp depende do valor do piso: com o
+piso ×100 a σ reconstituída sai igual a ele e a estrita dispara; com ×10, fica 1 ulp acima e não dispara. Medir com um só
+valor de piso engana.
+
+**Faça:** compare com folga relativa — `sigma_t > sigma_floor_ * (1 + 1e-9)` — e prove a guarda forçando o piso alto em
+mais de um valor. Não confie numa guarda só: o V-01 tem a segunda defesa, "o VaR depois de *t* muda".
+
+## O Beat, ao voltar, dispara na hora o que perdeu o horário
+
+**Quando:** ao religar o Beat depois de uma execução real em que ele ficou parado (`docker compose stop beat` …
+`up -d --force-recreate --no-deps beat`), e ao comparar execuções logo depois.
+
+**Problema:** o `PersistentScheduler` guarda o último disparo em `celerybeat-schedule`; uma entrada cujo horário passou
+com ele parado é **mandada na partida** (`Scheduler: Sending due task precos`). No fecho do M1.4b, a `rotina_diaria` e a
+`importar_comunicados` saíram no primeiro segundo: a coleta trouxe um pregão novo e a rotina abriu seis execuções
+incrementais. Se o checkout principal não estivesse no código da versão da imagem, elas teriam gravado com o rótulo
+errado. E a consulta de comparação que pegava "a última execução `0.4.0` de cada ativo" passou a pegar a incremental
+ainda em curso: a tabela saiu com 10 linhas em vez de 108, e com valores de outra série.
+
+**Faça:** só religue o Beat com o checkout e a imagem coerentes — é o último passo, não um intermediário. Conte com um
+tique imediato: anote o horário de recriação e o `max(id)` de `gold.risk_run` antes. Nas comparações de uma execução
+real, **fixe as execuções pelo `id`** (`WHERE id BETWEEN …`), nunca por "a mais recente".

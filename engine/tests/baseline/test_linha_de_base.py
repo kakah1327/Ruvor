@@ -1,7 +1,9 @@
-"""Compara o motor migrado contra a linha de base numerica congelada em `valores.json`.
+"""Compara o motor contra a linha de base numerica congelada em `valores.json`.
 
-O JSON foi capturado antes da migracao, contra o codigo do prototipo, e nao pode ser
-regenerado: se a comparacao divergir, o defeito esta na migracao.
+A linha de base e a do motor 0.4.0 (D-159). As entradas do `caviar` foram capturadas antes
+da migracao, contra o prototipo; as dos tradicionais, do GARCH e do EGARCH foram recapturadas
+no M1.4b, depois da correcao, por `capturar.py` (que recusa gravar se o motor for o velho).
+Se a comparacao divergir sem uma mudanca de calculo decidida, o defeito esta no motor.
 
 O caminho de execucao reproduz exatamente o da captura — chamada direta a `fit` sobre o
 treino e `estimate_var` sobre o teste, com o mesmo alinhamento que

@@ -179,10 +179,11 @@ export const TEXTOS_AVANCADOS: {
   // O risco (T10): do `risco.html` aprovado, literais; as afirmações são as de
   // `conferencia-risco.md`. `risco.veredito` e os ramos k ≥ 1 e k = 0 de `risco.naoRejeitados`
   // são os da alternativa da D-64 (a vista `d64`: `altAvVeredito`, `altAvK1`, `altAvK0`).
+  // `risco.perda95` e `risco.perda99`: literais do RF-14 do M1.4b (D-158), não do `risco.html`.
   "risco.perda95":
-    "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito; o número mostrado é, nos três tradicionais — histórico, paramétrico e Monte Carlo —, o quantil estimado uma vez sobre os 252 primeiros retornos da série e repetido no teste inteiro; nos outros seis, o do último pregão. Vai à tela como perda percentual simples, 1 − e^(−VaR).",
+    "VaR de 1 dia a 95%: o quantil de 5% do retorno logarítmico diário, com o sinal trocado — espera-se um retorno abaixo de −VaR em 5% dos dias. Cada modelo estima esse quantil do seu jeito, nunca com o retorno do próprio dia: nos seis que se atualizam a cada pregão, o número mostrado é o do último pregão, com os dados até a véspera; nos três tradicionais — histórico, paramétrico e Monte Carlo —, ele só muda quando o modelo é reestimado, a cada 252 pregões, sobre todos os retornos conhecidos até ali. Vai à tela como perda percentual simples, 1 − e^(−VaR).",
   "risco.perda99":
-    "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, com a mesma janela por família e mostrado da mesma forma.",
+    "O mesmo VaR a 99%: o quantil de 1% — espera-se um retorno abaixo de −VaR em 1% dos dias —, estimado e mostrado da mesma forma.",
   "risco.discordancia": (
     min: string | null,
     max: string | null,
