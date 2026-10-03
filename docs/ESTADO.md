@@ -1842,7 +1842,7 @@ trocas; o "Continuar" depois do sucesso da troca; o 401 nas trocas e na gestão 
 | Suíte do backend | **1 failed, 1752 passed** (1753). A falha é `tests/accounts/test_requested_by.py::test_v19_o_pedido_anonimo_grava_nulo_no_pedido_e_na_execucao`: o caso anônimo, que espera 202 e autor nulo, e com a D-140 recebe 401. É da `identidade`, na cerca dela — a pré-condição externa do plano —, e **a PR espera esse ajuste**. `mypy` e `ruff` limpos |
 | Frontend | ✅ **1621 testes** (eram 1265); lint, `typecheck` e build limpos — o build avisa do pacote acima de 500 kB, registrado na T12, sem ação neste bloco |
 | A cerca do backend | ✅ `git diff --stat` mostra só os sete arquivos da T2 — `apps/api/models.py`, `apps/api/permissions.py`, `apps/api/views.py` e os quatro de `tests/api/`; nada em `backend/tests/accounts/` |
-| Mutações (T15) | o relato da T15 não está no plano nem nos commits do ramo |
+| Mutações (T15) | as 22 da tabela, mais a nova da T12 (a obrigatória chama `reload()` no 204) e quatro variantes, de novo sobre `2c4f730`: **todas reprovam**, cada uma revertida com o `git status --porcelain` vazio — backend 4 e 2 falhas (M1, M2), frontend de 1 a 10 falhas por mutação |
 
 **O que a execução mostrou:** o dublê de `<dialog>` dos testes disparava o evento `close` de forma síncrona, e no
 navegador ele chega numa tarefa enfileirada: entre o `close()` e o evento, a linha trocada renderizava com o diálogo já
