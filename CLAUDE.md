@@ -137,11 +137,18 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
 (`has_risk`) e a classificação da B3 sai da API com vírgula. Desde o M2.3 há a
 **camada explicativa**: as duas leituras, iniciante e avançada, escolhidas no casco. Desde o M3.3, o
 **estresse histórico**: o ativo e o Ibovespa lado a lado nos quatro episódios da D-147, em `gold.stress_episode`, pelo
-`/metrics` e no bloco "Em momentos de estresse" da tela.
+`/metrics` e no bloco "Em momentos de estresse" da tela. Desde o M1.4b, o **motor corrigido** (`0.4.0`): nenhum dos
+nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a cada 252 pregões, numa janela que cresce.
 
-- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.3.0**, 9
-  modelos de VaR, 4 testes de backtesting, 145 testes — um deles, o V-04, só roda no `worker` e
-  pula fora dele — e linha de base numérica. Roda por linha de comando: `ruvor run`. **Nunca
+- `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.4.0**, 9
+  modelos de VaR, 4 testes de backtesting, 177 testes — 25 deles a linha de base numérica, que só vale no Windows e se
+  regenera por `engine/tests/baseline/capturar.py` ([D-159](docs/decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md)),
+  e um, o V-04, que só roda no `worker` e pula fora dele. Desde o M1.4b, o GARCH e o EGARCH **não olham à frente** — a σ
+  do dia *t* sai dos retornos até *t* − 1 — e os três tradicionais estimam em **janela expansiva**, reestimada a cada
+  252 pregões; `engine/tests/test_sem_olhar_a_frente.py` prova por perturbação, nos seis não neurais, que o VaR de um
+  dia não usa o retorno dele nem os seguintes
+  ([D-157](docs/decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md),
+  [D-158](docs/decisoes/D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md)). Roda por linha de comando: `ruvor run`. **Nunca
   importa Django**, e um teste prova isso. Os três modelos neurais fixam semente por
   `engine/src/engine/seeding.py`, no treino e em cada retreino
   ([D-63](docs/decisoes/D-63-semente-fixa-entra-no-manifesto.md),
@@ -287,7 +294,7 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
   método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
   ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
   [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
-  entradas. 1263 testes.
+  entradas. 1265 testes.
   `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,

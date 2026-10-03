@@ -106,6 +106,9 @@ conversas e entre agentes.
 | [D-79](D-79-os-quatro-caros-usam-retratos-e-os-cinco-baratos-nao.md) | Os quatro modelos caros usam retratos; os cinco baratos, não |
 | [D-80](D-80-o-retreino-de-producao-e-a-cada-252-pregoes-restringe-a-d-18.md) | O retreino de produção é a cada 252 pregões, o do protocolo; restringe a D-18 |
 | [D-81](D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md) | A imagem do `worker` é travada pelo lock do motor, e as versões das bibliotecas entram na identidade do retrato |
+| [D-157](D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md) | Alteração no motor em lista fechada para a correção do M1.4b; restringe a D-76, a D-21 e a D-46 |
+| [D-158](D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md) | Nos nove modelos, o VaR do dia *t* não usa o retorno de *t* nem posteriores, e o número mostrado tem a data do último pregão; os tradicionais reestimam a cada 252 pregões em janela expansiva; restringe a D-97 |
+| [D-159](D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md) | A linha de base numérica passa a ser a do motor `0.4.0`, recapturada por script versionado; restringe a D-44 |
 | [D-120](D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) | Fundamento vem dos dados abertos da CVM (DFP e ITR), por HTTP direto |
 | [D-121](D-121-a-bronze-guarda-o-zip-inteiro-e-so-quando-o-conteudo-muda.md) | A `bronze` guarda o zip inteiro, e o conteúdo só de novo quando mudou |
 | [D-122](D-122-conta-se-localiza-pela-descricao-sob-mae-fixa.md) | Conta se localiza pela descrição sob mãe fixa definida, não pelo código; a companhia tem plano de contas |
