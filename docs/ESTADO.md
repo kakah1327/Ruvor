@@ -22,8 +22,12 @@ acento, `has_risk` e a sugestão pela API, a classificação da B3 com vírgula 
 dia; o **M2.3 fechou em 2026-10-02** — a camada explicativa: o alternador Iniciante/Avançada no casco, a frase avançada
 de cada uma das 55 chaves e os detalhes técnicos recolhidos na iniciante
 ([D-151](decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md) a
-[D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)) —, já com a `main` do M1.7 mesclada, e a PR de
-implementação a abrir pelo dono; dois blocos da `marco1` — M3.3 e M2.1b — têm spec e plano aprovados, a implementar; na
+[D-153](decisoes/D-153-o-parecer-da-cvm-nao-bloqueia-o-m2-3.md)) —, já com a `main` do M1.7 mesclada, e entrou na
+`main` pela PR #33; o **M3.3 fechou em 2026-10-02** — o estresse histórico: o ativo e o Ibovespa lado a
+lado nos quatro episódios da D-147, em `gold.stress_episode`, pelo `/metrics` e no bloco "Em momentos de estresse"
+([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a
+[D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)) —, com a PR de implementação a abrir
+pelo dono; o M2.1b tem spec e plano aprovados, a implementar; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -32,7 +36,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -1618,18 +1622,54 @@ intermediário.
 
 Quatro decisões, que vieram com a spec: [D-116](decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) a [D-119](decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md).
 
+### M3.3 — Estresse histórico
+
+Spec em [`specs/M3.3-estresse-historico.md`](specs/M3.3-estresse-historico.md) e plano em
+[`planos/M3.3-estresse-historico.md`](planos/M3.3-estresse-historico.md). Frente `marco1`, ramo
+`marco1/M3.3-estresse-historico`. Nove tarefas: a T0 a T4 numa máquina, num worktree, mescladas na `main` pela PR #36
+com o portão da T4 pendente; a T5 a T8 noutra máquina, com o ramo no checkout principal, de `442e984` (T5) a `7d42e07`
+(T6), a T7 e a T8 sem arquivo de código. O mockup `docs/mockups/M3.3/ativo-estresse.html` aprovado pelo dono no portão,
+em 2026-10-02, **sem ajuste** — com as duas chaves que ele pediu fora da tabela do plano. Três decisões, aceitas com a
+spec: [D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a
+[D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md). Promove o requisito candidato 5.3,
+só do ativo. **Fechou em 2026-10-02**; a PR de implementação é do dono.
+
+**O que passou a existir:** `apps/analytics/stress.py`, só biblioteca padrão — os quatro episódios curados da D-147
+(a delação da JBS, a greve dos caminhoneiros, a chegada da covid e a alta dos juros), cada um com o retorno do
+pregão-base ao final, a maior queda dentro da janela, a recuperação procurada na série inteira, o motivo de "sem dado"
+(`starts_after`, `stale_start`, `ends_before`, `no_trading`) e o Ibovespa no mesmo recorte —; `gold.stress_episode`,
+filha da linha de métrica, gravada no mesmo `atomic` do `compute_metrics`, sem tarefa, comando nem entrada no Beat
+nova; o campo `stress` em `/metrics`, ao lado de `histogram`, com `episode` em texto livre e `missing` como enum no
+esquema; no frontend, o `StressBlock` depois de "Maior queda", com o ativo e o Ibovespa medida a medida, as seis frases
+de medida nas duas leituras (61 na lista fechada do V-02) e cada estado com a frase dele; no kit, `.ruvor-episodes`,
+`.ruvor-episode` e `.ruvor-pair`, com a seção "Telas do M3.3" na vitrine.
+
+| Verificação | Resultado |
+|---|---|
+| Suítes | ✅ **1747 no backend** (eram 1711), em 33 min 11 s, no `worker` com o Beat parado e nenhuma outra suíte rodando; **1263 no frontend** (eram 1217); `mypy` estrito limpo em 272 arquivos, `ruff check` e `ruff format --check` limpos, `makemigrations --check` sem mudança, `spectacular --validate --fail-on-warn` sem aviso; lint, `typecheck` e build do frontend limpos |
+| Mutações (T7) | ✅ as 22 reprovaram sobre o código final, cada uma revertida com o `git status` igual ao de antes — 12 da T1, 4 da T2, 2 da T3 e 4 da T6 |
+| O kit (T5) | ✅ as 24 capturas do mockup (três vistas, dois temas, dois níveis, 1440 e 360 px) idênticas byte a byte antes e depois de o estilo local virar classe do kit; os testes do kit verdes |
+| A tela (T6) | ✅ PETR4 e IBOV nos dois temas, nos dois níveis, em 1440 e 360 px: o bloco logo depois de "Maior queda", os quatro episódios, sem rolagem horizontal, sem erro de página, sem 429; igual ao mockup |
+| **O oráculo (T8)** | ✅ a consulta SQL da T0, literal, logo depois do `compute_metrics`: nos oito conjuntos (IBOV e PETR4), datas e pregões iguais ao gravado, `period_return` e `drawdown` a menos de 5E-11 |
+| **Execução real (V-13)** | o roteiro `capturas.mjs`, sem mudança, com `RUVOR_E2E_SOB_DEMANDA=0` e `RUVOR_E2E_EMPRESA=PETR4`: a 1ª rodada **641 de 642**, reprovando só o tempo do RF-24 (3.514 ms, limite de 2 s); a 2ª, sem mudança nenhuma, ✅ **642 de 642**, 1.469 ms, 52 capturas, nenhum erro de página. As marcas: quatro `[data-episode]` na ordem nas três páginas, nenhum `[data-missing]`, o índice nulo só no IBOV |
+| A hipótese do ajuste | **não exercida**: nenhum provento nem coleta de preço entre os dois cálculos da máquina; os episódios das duas linhas de cada ativo são iguais |
+| Revisão final | inline, contra a spec (RF-01 a RF-16 e V-01 a V-14), sem divergência; não houve rodada do revisor adversarial separado |
+
+**O que a execução mostrou:** a máquina nova começou com o banco vazio — a reinstalação do Docker Desktop apagou o
+disco de dados —, e `gold` foi refeita do zero para os quatro ativos do Marco 1: o `compute_risk` levou 52 min, todos
+`ok`. O banco não tem ativo com "sem dado" nem queda zero nos episódios: os quatro motivos, o índice nulo fora do IBOV e
+a queda zero só os testes provam. A ABCB4, a ABEV3, a BBDC4 e o AALR3 não foram recalculados aqui. Dois aprendizados
+novos: a máquina nova (o `.wslconfig` fora do clone, e quanto custa refazer `gold`) e o tempo do RF-24, que depende da
+máquina.
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M2.3**, que o dono abre e mescla com a CI verde. O M1.7 entrou na `main` pela PR #32, em
-2026-10-02, e o ramo do M2.3 já a recebeu: os dois tocavam os mesmos arquivos (`RiskSection.tsx`, `textos.ts`,
-`capturas.mjs` e os documentos do fecho), e o M1.7 não acrescentou número com frase (só os textos `busca.sugestao*`),
-então a lista das 55 não mudou no merge. Depois, **implementar o M3.3 e o M2.1b**, nesta ordem — a T14 do M2.1a entrou
-antes do M2.1b (ver o fecho do M2.1a), e o M2.1b ajusta a ordem por ela.
-**O M3.3 nasce com as duas entradas** de cada número novo com frase, pela
-[D-152](decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md), e entra na lista fechada do V-02; **o menu de
-conta do M2.1b**, se entrar em `.ruvor-topbar__prefs`, refaz os seletores por posição (`:first-child` o alternador,
-`:last-child` o tema) que a T4 do M2.3 escreveu. Ramos, worktrees e a regra de onde cada comando roda estão em
-[frentes/marco1.md](frentes/marco1.md). **Duas entradas novas em
+**Na frente `marco1`, a PR do M3.3** (implementação, T5 a T8), que o dono abre e mescla com a CI verde. O M2.3 entrou
+pela PR #33, e o ramo do M3.3 nasceu da `main` com ele: as seis medidas do estresse têm a frase avançada e entraram na
+lista fechada do V-02 (`AS_61`). Depois, **implementar o M2.1b** — a T14 do M2.1a entrou antes dele (ver o fecho do
+M2.1a), e o M2.1b ajusta a ordem por ela; **o menu de conta**, se entrar em `.ruvor-topbar__prefs`, refaz os seletores
+por posição (`:first-child` o alternador, `:last-child` o tema) que a T4 do M2.3 escreveu. Ramos e a regra de onde cada
+comando roda estão em [frentes/marco1.md](frentes/marco1.md). **Duas entradas em
 [Aberto](#aberto-e-aguardando-decisão)**, achadas na conferência do M2.3, são do motor: o GARCH e o EGARCH olham um
 dia à frente, e os três tradicionais ficam no primeiro ano da série.
 

@@ -68,6 +68,26 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
     ["31,2%", "05/01/2022", "12/10/2022", "22/09/2016", null],
   ],
   "comportamento.max_drawdown_recovery_sessions": [["1,4"]],
+  // Os momentos de estresse (M3.3): o `EXEMPLOS` do `ativo-estresse.html`, cobrindo os ramos.
+  "comportamento.estresse.recorte": [["17/05/2017", "30/06/2017"]],
+  "comportamento.estresse.janela": [["14/11/2025", "30/12/2025"]],
+  "comportamento.estresse.period_return": [
+    ["R$ 79,24", "17/05/2017", "30/06/2017"],
+    ["R$ 141,00", "07/06/2021", "14/07/2022"],
+  ],
+  "comportamento.estresse.benchmark_period_return": [["R$ 93,13"]],
+  "comportamento.estresse.drawdown": [
+    // inteira = false (PETR4, JBS), e inteira = true (IBOV, juros).
+    ["25,4%", "17/05/2017", "21/06/2017", false],
+    ["26,5%", "07/06/2021", "14/07/2022", true],
+  ],
+  "comportamento.estresse.benchmark_drawdown": [
+    ["10,0%", false],
+    ["26,5%", true],
+  ],
+  "comportamento.estresse.recovery_sessions": [["20/09/2017"]],
+  "comportamento.estresse.benchmark_recovery_sessions": [["33 pregões"]],
+  "comportamento.estresse.pregoes": [["33"]],
   "comportamento.beta_60m": [
     ["0,85%", false],
     ["0,15%", true],
@@ -208,6 +228,22 @@ export const EXEMPLOS_AVANCADOS: Readonly<
     ["61,8%", "18/05/2021", "04/11/2022", "22/09/2016", null],
   ],
   "comportamento.max_drawdown_recovery_sessions": [["3,7"]],
+  // Os momentos de estresse (M3.3): os mesmos ramos da iniciante.
+  "comportamento.estresse.period_return": [
+    ["R$ 79,24", "17/05/2017", "30/06/2017"],
+    ["R$ 141,00", "07/06/2021", "14/07/2022"],
+  ],
+  "comportamento.estresse.benchmark_period_return": [["R$ 93,13"]],
+  "comportamento.estresse.drawdown": [
+    ["25,4%", "17/05/2017", "21/06/2017", false],
+    ["26,5%", "07/06/2021", "14/07/2022", true],
+  ],
+  "comportamento.estresse.benchmark_drawdown": [
+    ["10,0%", false],
+    ["26,5%", true],
+  ],
+  "comportamento.estresse.recovery_sessions": [["20/09/2017"]],
+  "comportamento.estresse.benchmark_recovery_sessions": [["33 pregões"]],
   "comportamento.beta_60m": [
     // oposta = false (ITUB4), e oposta = true.
     ["1,01%", false],
