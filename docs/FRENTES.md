@@ -119,6 +119,7 @@ outras frentes.
 | D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156; e, pela spec do M1.4b em 2026-10-02, D-157–159 | D-140, D-143, D-144, D-146 a D-153, D-157 a D-159 (a D-157 a D-159 com o M1.4b, fechado; a D-146 a D-148 com o M3.3, fechado; a D-143 e a D-144 com o M1.7, fechado, que deixa a D-145 sem uso; a D-149 e a D-150 com o M1.5c, fechado; a D-151 a D-153 com o M2.3, fechado, que deixou a D-154 sem uso) |
 | D-100 a D-119 | `identidade` | todas — D-116 a D-119 são do M2.2a |
 | D-160 a D-179 | `identidade`, reservada pela spec do M2.2a | — |
+| D-180 a D-199 | `marco1`, reservada pela spec do M2.2b em 2026-10-03 | — (a D-180 a D-182 propostas pelo M2.2b) |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da
