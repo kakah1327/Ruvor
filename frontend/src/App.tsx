@@ -14,6 +14,7 @@ import { PasswordScreen } from "./screens/PasswordScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 import { SignInScreen } from "./screens/SignInScreen";
 import { SignUpScreen } from "./screens/SignUpScreen";
+import { UsersScreen } from "./screens/UsersScreen";
 import { SessionProvider } from "./session/SessionProvider";
 
 /**
@@ -41,7 +42,8 @@ function AssetRoute() {
  * dele: quem monta `routes` recebe o provedor. A entrada e o cadastro (`/entrar`, `/cadastro`,
  * RF-04) ficam fora do casco, em tela cheia; vêm depois dele na lista, e o roteador os escolhe
  * pela especificidade — o caminho fixo ganha do `*` —, não pela ordem. A troca voluntária da
- * senha (`/conta/senha`) fica no casco; a obrigatória não tem rota (RF-05).
+ * senha (`/conta/senha`) fica no casco; a obrigatória não tem rota (RF-05). A gestão de
+ * usuários (`/organizacao/usuarios`, RF-11) também fica no casco.
  */
 export const routes: RouteObject[] = [
   {
@@ -53,6 +55,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <SearchScreen /> },
           { path: "ativos/:ticker", element: <AssetRoute /> },
           { path: "conta/senha", element: <PasswordScreen mode="voluntary" /> },
+          { path: "organizacao/usuarios", element: <UsersScreen /> },
           { path: "*", element: <NotFoundScreen /> },
         ],
       },

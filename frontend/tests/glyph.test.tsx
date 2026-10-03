@@ -36,6 +36,7 @@ const REGULAR: RegularGlyph[] = [
   "magnifying-glass",
   "scales",
   "shield-check",
+  "shield-warning",
   "sign-out",
   "spinner-gap",
   "user",

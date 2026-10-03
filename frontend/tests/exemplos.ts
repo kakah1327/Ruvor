@@ -208,6 +208,21 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "senha.obrigatoria.conta": [["ana.souza@exemplo.com"]],
   // conta.*: o registro EXEMPLOS do conta.html (M2.1b) — o nome de quem entrou.
   "conta.menu.rotulo": [["Ana Beatriz Souza"]],
+  // usuarios.*: o registro EXEMPLOS do usuarios.html (M2.1b) — a contagem nos dois ramos.
+  "usuarios.sub": [["Gestora Exemplo"]],
+  "usuarios.erro.muitos": [[12]],
+  "usuarios.lista.contagem": [[1], [63]],
+  "usuarios.ultimoAcesso": [["03/10/2026", "10:41"]],
+  "usuarios.mostrando": [[50, 63]],
+  "usuarios.acoes.rotulo": [["Ana Lima"]],
+  "usuarios.confirmar.admin.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.member.titulo": [["Bruno Costa"]],
+  "usuarios.confirmar.desativar.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.reativar.titulo": [["Diego Alves"]],
+  "usuarios.confirmar.senha.titulo": [["Ana Lima"]],
+  "usuarios.senha.criado.texto": [["Gabriela Rocha", "gabriela.rocha@exemplo.com"]],
+  "usuarios.senha.nova.texto": [["Ana Lima", "ana.lima@exemplo.com"]],
+  "usuarios.membro.texto": [["Gestora Exemplo"]],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.

@@ -27,6 +27,7 @@ import info from "@brand/icons/regular/info.svg?raw";
 import magnifyingGlass from "@brand/icons/regular/magnifying-glass.svg?raw";
 import scales from "@brand/icons/regular/scales.svg?raw";
 import shieldCheck from "@brand/icons/regular/shield-check.svg?raw";
+import shieldWarning from "@brand/icons/regular/shield-warning.svg?raw";
 import signOut from "@brand/icons/regular/sign-out.svg?raw";
 import spinnerGap from "@brand/icons/regular/spinner-gap.svg?raw";
 import user from "@brand/icons/regular/user.svg?raw";
@@ -49,6 +50,7 @@ const REGULAR = {
   "magnifying-glass": magnifyingGlass,
   scales,
   "shield-check": shieldCheck,
+  "shield-warning": shieldWarning,
   "sign-out": signOut,
   "spinner-gap": spinnerGap,
   user,
