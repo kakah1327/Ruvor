@@ -16,14 +16,15 @@
  * hoje" em `risco.veredito` e nos ramos k ≥ 1 e k = 0 de `risco.naoRejeitados` (as constantes
  * da vista `d64`); as afirmações são as de `conferencia-risco.md`. `fundamentos.*`: do
  * `fundamentos.html` (T12), literais; as afirmações são as de `conferencia-fundamentos.md`.
- * Com eles, `LEITURA_KEYS` são as 55 do RF-04.
+ * Com eles, `LEITURA_KEYS` são as 55 do RF-04; o M3.3 acrescenta as seis medidas do estresse, do
+ * `ativo-estresse.html` (T4): são 61.
  */
 import type { TEXTOS, TextoKey } from "./textos";
 
 /** Texto vira `string`; função mantém a assinatura (mesma chave, mesmos argumentos: RF-05). */
 export type Leitura<T> = T extends string ? string : T;
 
-/** As chaves já com frase avançada. Cresce seção a seção (T4, T7, T10, T13) até as 55 do RF-04. */
+/** As chaves já com frase avançada: as 55 do RF-04 do M2.3 e as seis do estresse (M3.3). */
 export const LEITURA_KEYS = [
   // O cabeçalho e o preço (T4).
   "ativo.ultimoFechamento",
@@ -51,6 +52,13 @@ export const LEITURA_KEYS = [
   "comportamento.dividend_yield_12m",
   "comportamento.avg_volume_21d",
   "comportamento.avg_volume_252d",
+  // Os momentos de estresse (M3.3): as seis medidas novas nascem com as duas frases (D-152).
+  "comportamento.estresse.period_return",
+  "comportamento.estresse.benchmark_period_return",
+  "comportamento.estresse.drawdown",
+  "comportamento.estresse.benchmark_drawdown",
+  "comportamento.estresse.recovery_sessions",
+  "comportamento.estresse.benchmark_recovery_sessions",
   // O risco (T10).
   "risco.perda95",
   "risco.perda99",
@@ -148,6 +156,26 @@ export const TEXTOS_AVANCADOS: {
     "Média aritmética do volume dos últimos 21 pregões da série — contagem de pregões, não de meses —, com o volume de cada pregão como vem do Yahoo Finance. Com menos de 21 pregões, o número é nulo, nunca uma média parcial.",
   "comportamento.avg_volume_252d":
     "A mesma média aritmética do volume, sobre os últimos 252 pregões da série. Com menos de 252 pregões, nula — nunca uma média parcial.",
+  // Os momentos de estresse (M3.3): do `ativo-estresse.html` aprovado (T4), literais; cada
+  // afirmação confere em `backend/apps/analytics/stress.py` (a coluna "confere em" da vista
+  // "os textos" do mockup).
+  "comportamento.estresse.period_return": (x: string, inicio: string, fim: string) =>
+    `Retorno simples do fechamento ajustado que o Yahoo Finance informa, do pregão-base ao pregão final: o pregão-base é o último em ou antes da data de início do episódio, e o final, o último em ou antes da data de fim — aqui, ${inicio} e ${fim}. O fechamento ajustado do final sobre o do pregão-base, menos 1. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.estresse.benchmark_period_return": (x: string) =>
+    `O mesmo retorno simples, sobre o fechamento do Ibovespa, com o pregão-base e o final tirados da série do próprio índice, pelas mesmas datas de calendário — as datas do índice e as da ação não se emparelham. R$ 100 × (1 + retorno) = ${x}.`,
+  "comportamento.estresse.drawdown": (
+    queda: string,
+    topo: string,
+    fundo: string,
+    inteira: boolean,
+  ) =>
+    `A razão mais negativa, entre o pregão-base e o final, do fechamento ajustado de um pregão sobre o maior fechamento ajustado anterior a ele dentro da janela, menos 1 — topo de antes do episódio não entra. Do topo de ${topo} ao fundo de ${fundo}: ${queda}. No empate, ficam o primeiro topo de um platô e a primeira queda de mesma profundidade.${inteira ? " Aqui o topo é o pregão-base e o fundo é o final: a queda coincide com o retorno do recorte." : ""}`,
+  "comportamento.estresse.benchmark_drawdown": (queda: string, inteira: boolean) =>
+    `A mesma maior queda dentro da janela, na série do Ibovespa: ${queda}.${inteira ? " Aqui o topo é o pregão-base e o fundo é o final: a queda coincide com o retorno do recorte." : ""}`,
+  "comportamento.estresse.recovery_sessions": (volta: string) =>
+    `Pregões contados do fundo, exclusive, ao primeiro pregão da série inteira — não só da janela — cujo fechamento ajustado alcança o do topo da queda, inclusive: ${volta}. Sem esse pregão até o último calculado, o número é nulo.`,
+  "comportamento.estresse.benchmark_recovery_sessions": (volta: string) =>
+    `A mesma contagem, do fundo, exclusive, à volta ao topo, inclusive, na série inteira do Ibovespa: ${volta}.`,
   // O risco (T10): do `risco.html` aprovado, literais; as afirmações são as de
   // `conferencia-risco.md`. `risco.veredito` e os ramos k ≥ 1 e k = 0 de `risco.naoRejeitados`
   // são os da alternativa da D-64 (a vista `d64`: `altAvVeredito`, `altAvK1`, `altAvK0`).

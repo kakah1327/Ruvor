@@ -95,7 +95,47 @@ export type HistogramBin = {
   count: number;
 };
 
-/** A linha de métrica: o cabeçalho, as 26 colunas de METRIC_COLUMNS, na ordem, e os baldes. */
+/**
+ * O código de um episódio de estresse (D-147): os códigos **gravados** em
+ * `gold.stress_episode` — os vigentes de `EPISODES` em `backend/apps/analytics/stress.py` e,
+ * quando a lista mudar, também os aposentados (V-09 do M3.3).
+ */
+export type EpisodeCode = "jbs_2017" | "truckers_2018" | "covid_2020" | "rates_2021";
+
+/** O motivo de o ativo não ter dado no episódio (RF-05 do M3.3), na precedência do cálculo. */
+export type StressMissing =
+  | "starts_after"
+  | "stale_start"
+  | "ends_before"
+  | "no_trading";
+
+/**
+ * Um episódio de estresse da linha de métrica (RF-10 do M3.3): os quinze campos de
+ * `StressEpisodeSerializer`, na ordem. Com `missing`, os do ativo são nulos; as três colunas
+ * do índice podem ser nulas sozinhas (no próprio IBOV, sempre).
+ */
+export type StressEpisode = {
+  episode: EpisodeCode;
+  start_date: string;
+  end_date: string;
+  missing: StressMissing | null;
+  window_start_date: string | null;
+  window_end_date: string | null;
+  period_return: Dec | null;
+  drawdown: Dec | null;
+  drawdown_peak_date: string | null;
+  drawdown_trough_date: string | null;
+  recovery_date: string | null;
+  recovery_sessions: number | null;
+  benchmark_period_return: Dec | null;
+  benchmark_drawdown: Dec | null;
+  benchmark_recovery_sessions: number | null;
+};
+
+/**
+ * A linha de métrica: o cabeçalho, as 26 colunas de METRIC_COLUMNS, na ordem, os baldes e,
+ * desde o M3.3, os episódios de estresse por `start_date` (`[]` na linha gravada antes dele).
+ */
 export type Metric = {
   calculated_at: string;
   as_of_date: string;
@@ -128,6 +168,7 @@ export type Metric = {
   avg_volume_21d: Dec | null;
   avg_volume_252d: Dec | null;
   histogram: HistogramBin[];
+  stress: StressEpisode[];
 };
 
 export type Metrics = { ticker: string; metric: Metric | null };

@@ -62,8 +62,8 @@ Coincide em grande parte com o conteúdo do TCC — os dois avançam juntos.
 
 **Candidatos promovidos a este marco** ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md),
 2026-09-28): a discordância entre modelos (5.1) e os modelos não rejeitados por ativo (5.2), na tela
-do M1.6b. O estresse histórico (5.3) continua candidato
-([PRODUTO.md](PRODUTO.md#5-requisitos-candidatos)).
+do M1.6b. O estresse histórico (5.3) entrou depois, no M3.3, fora do Marco 1
+([PRODUTO.md](PRODUTO.md#5-requisitos-candidatos), [D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md)).
 
 **O regime de laboratório não é deste marco**
 ([D-74](decisoes/D-74-o-marco-1-e-so-producao.md), 2026-09-25). A camada 3 do Marco 1 é só
@@ -96,7 +96,7 @@ pessoa escolhe ativos e pesos, e a plataforma não sugere.
 |---|---|---|
 | ✅ | **M3.1 — Fundamentos** | camada 4, com fonte adequada para B3 (Yahoo não serve) — dados abertos da CVM (ITR e DFP, 2016 em diante) em `bronze`, companhias e balanços trimestrais em `silver`, indicadores e capitalização em `gold`; `import_fundamentals`, `compute_fundamentals` e a coleta semanal encadeada no Beat. Fechado em 2026-09-27, frente `fundamentos`: 339 companhias, 471 ações calculadas, e lucro, PL e dívida de PETR4, VALE3 e ITUB4 iguais à divulgação das companhias. **EBITDA fica de fora** |
 | ✅ | **M3.2 — Contexto** | camada 5: notícias e comparação setorial — os comunicados da companhia à CVM (IPE: fato relevante, comunicado ao mercado e aviso aos acionistas) em `silver.disclosure`, só na versão corrente, coletados de segunda a sexta pela quarta entrada do Beat; e a comparação com os pares do segmento da B3, ou do subsetor, em `gold.peer_comparison`, gravada pelo `compute_fundamentals` depois dos indicadores. Fechado em 2026-09-27, frente `fundamentos`: 80.900 comunicados de 339 companhias, 471 ações comparadas, 17 sem grupo. **Imprensa e o texto do documento ficam de fora** ([D-130](decisoes/D-130-noticia-e-o-que-a-companhia-divulga-na-cvm.md)) |
-| 🟡 | **M3.3 — Estresse histórico** | o requisito candidato 5.3, só do ativo e só com preço: quatro episódios curados, com queda, retorno, recuperação e o Ibovespa lado a lado, em `gold.stress_episode` pelo `/metrics` ([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a [D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)) — spec e plano aprovados (PR #20), frente `marco1` |
+| ✅ | **M3.3 — Estresse histórico** | **fechado em 2026-10-02**; o requisito candidato 5.3, só do ativo e só com preço: quatro episódios curados, com queda, retorno, recuperação e o Ibovespa lado a lado, em `gold.stress_episode` pelo `/metrics` ([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) a [D-148](decisoes/D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md)) — spec e plano aprovados (PR #20), frente `marco1`. O bloco "Em momentos de estresse" na seção Comportamento, nas duas leituras, com um portão de mockup; o oráculo SQL bateu nos oito conjuntos do IBOV e da PETR4, e a execução real fechou com 642 conferências |
 
 ---
 

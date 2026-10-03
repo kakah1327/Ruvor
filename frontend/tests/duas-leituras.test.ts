@@ -2,19 +2,19 @@
  * @vitest-environment node
  *
  * V-02, a lista fechada das duas leituras (RF-04, RF-05): as 55 chaves do RF-04, escritas aqui,
- * copiadas da spec. Cada chave com frase avançada (`LEITURA_KEYS`) está na lista, tem entrada em
+ * copiadas da spec, e as seis medidas do estresse do M3.3 — 61. Cada chave com frase avançada (`LEITURA_KEYS`) está na lista, tem entrada em
  * `TEXTOS_AVANCADOS` com o mesmo tipo da iniciante (texto, ou função com o mesmo
  * `Function.length`), e o módulo avançado não tem chave fora de `LEITURA_KEYS`.
  *
  * A falha silenciosa é a chave que nunca ganha avançada e ninguém nota: com as quatro seções
- * escritas (T4, T7, T10, T13), `LEITURA_KEYS` é exatamente `AS_55` — nem mais, nem menos.
+ * escritas (T4, T7, T10, T13) e o M3.3, `LEITURA_KEYS` é exatamente `AS_61` — nem mais, nem menos.
  */
 import { describe, expect, it } from "vitest";
 
 import { LEITURA_KEYS, TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { TEXTOS, type TextoKey } from "../src/content/textos";
 
-const AS_55 = [
+const AS_61 = [
   // RF-21 do M1.6b (`LISTA_FECHADA` de textos.test.ts): os 19 campos de `CAMPOS_COM_FRASE`…
   "comportamento.return_1m",
   "comportamento.return_3m",
@@ -76,24 +76,32 @@ const AS_55 = [
   "fundamentos.pares.posicao",
   "fundamentos.pares.abaixoDeTodas",
   "fundamentos.pares.mediana",
+  // As seis medidas dos momentos de estresse (M3.3), que nascem com as duas frases (D-152).
+  // São 61.
+  "comportamento.estresse.period_return",
+  "comportamento.estresse.benchmark_period_return",
+  "comportamento.estresse.drawdown",
+  "comportamento.estresse.benchmark_drawdown",
+  "comportamento.estresse.recovery_sessions",
+  "comportamento.estresse.benchmark_recovery_sessions",
 ] as const satisfies readonly TextoKey[];
 
 const ordenada = (chaves: readonly string[]): string[] => [...chaves].sort();
 
 describe("V-02 — a lista fechada das duas leituras", () => {
-  it("AS_55 tem 55 chaves distintas, todas em TEXTOS", () => {
-    expect(new Set(AS_55).size).toBe(55);
-    expect(AS_55.filter((k) => !Object.hasOwn(TEXTOS, k))).toEqual([]);
+  it("AS_61 tem 61 chaves distintas, todas em TEXTOS", () => {
+    expect(new Set(AS_61).size).toBe(61);
+    expect(AS_61.filter((k) => !Object.hasOwn(TEXTOS, k))).toEqual([]);
   });
 
-  it("LEITURA_KEYS não repete chave e está contida em AS_55", () => {
+  it("LEITURA_KEYS não repete chave e está contida em AS_61", () => {
     const chaves: readonly string[] = LEITURA_KEYS;
     expect(new Set(chaves).size).toBe(chaves.length);
-    expect(chaves.filter((k) => !(AS_55 as readonly string[]).includes(k))).toEqual([]);
+    expect(chaves.filter((k) => !(AS_61 as readonly string[]).includes(k))).toEqual([]);
   });
 
-  it("LEITURA_KEYS é exatamente AS_55: toda chave do RF-04 tem avançada", () => {
-    expect(ordenada(LEITURA_KEYS)).toEqual(ordenada(AS_55));
+  it("LEITURA_KEYS é exatamente AS_61: toda chave do RF-04 tem avançada", () => {
+    expect(ordenada(LEITURA_KEYS)).toEqual(ordenada(AS_61));
   });
 
   it("o módulo avançado tem exatamente as chaves de LEITURA_KEYS", () => {
