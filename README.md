@@ -10,8 +10,9 @@ merece confiança para aquele ativo.
 >
 > O Marco 1 está completo: a **busca** e a **tela do ativo** — preço, comportamento e o risco
 > pelos nove modelos, com o cálculo sob demanda — sobre a API de leitura em `/api/v1/`. Desde o M2.3,
-> cada número de análise da tela tem duas leituras, **iniciante** e **avançada**, escolhidas no topo da página. Ainda não há
-> login nem carteira.
+> cada número de análise da tela tem duas leituras, **iniciante** e **avançada**, escolhidas no topo da página. Desde o
+> M2.1b há **conta**: entrar, criar conta, trocar a senha e gerir os usuários da organização, e pedir o cálculo de um
+> ativo exige entrar. Ainda não há a tela da carteira.
 >
 > O que já existe:
 >
@@ -19,7 +20,7 @@ merece confiança para aquele ativo.
 >   testes e linha de base numérica próprias
 > - o **casco da aplicação**: um projeto Django em [`backend/`](backend/), que responde
 >   `GET /health` e conecta no PostgreSQL, e um projeto React em TypeScript em
->   [`frontend/`](frontend/), com a busca e a tela do ativo nas duas leituras
+>   [`frontend/`](frontend/), com a busca e a tela do ativo nas duas leituras, e as telas de conta
 > - o **ambiente local em contêiner**: `docker compose up` sobe Postgres, Redis, o Django, um
 >   worker Celery, o agendador Celery Beat e o servidor de desenvolvimento do frontend
 >

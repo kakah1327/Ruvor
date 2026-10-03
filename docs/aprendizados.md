@@ -1684,3 +1684,34 @@ ainda em curso: a tabela saiu com 10 linhas em vez de 108, e com valores de outr
 **Faça:** só religue o Beat com o checkout e a imagem coerentes — é o último passo, não um intermediário. Conte com um
 tique imediato: anote o horário de recriação e o `max(id)` de `gold.risk_run` antes. Nas comparações de uma execução
 real, **fixe as execuções pelo `id`** (`WHERE id BETWEEN …`), nunca por "a mais recente".
+
+## O dublê de `<dialog>` que dispara `close` na hora esconde o diálogo que reabre
+
+**Quando:** ao testar no jsdom um componente que abre um `<dialog>` com `showModal()` num efeito e guarda o "está aberto"
+num estado do React que só zera no evento `close` (a gestão de usuários do M2.1b, `frontend/tests/dubles.ts`).
+
+**Problema:** no navegador, `close()` tira o atributo `open` **na hora**, mas o evento `close` chega **numa tarefa
+enfileirada** (a especificação HTML: "queue an element task … to fire an event named close"). Entre um e outro, a tela
+pode renderizar — a linha trocada depois de uma ação — com o `<dialog>` já fechado e o estado ainda aberto, e o efeito
+chama `showModal()` de novo: o diálogo reabre. O primeiro dublê disparava o `close` de forma síncrona, dentro do
+`close()`, e os 1610 testes passavam; o defeito só apareceu na execução real (`acesso.mjs`, 129 de 130 na primeira
+rodada).
+
+**Faça:** o dublê dispara o `close` num `setTimeout(…, 0)`, como o navegador, e descarta os pendentes ao restaurar. No
+componente, não decida reabrir pelo `element.open`: guarde o elemento em que o `showModal()` já foi chamado para o
+diálogo corrente e zere quando o diálogo vira nulo. Em geral: dublê de API do navegador reproduz **quando** o evento
+chega, não só **que** ele chega — e o que só o navegador mostra (foco preso, `Esc`, ordem de eventos) se prova no roteiro.
+
+## O `capturas.mjs` completo reprova por 429 com a taxa do anônimo padrão
+
+**Quando:** ao rodar o `capturas.mjs` inteiro na execução real de um bloco, com o `RUVOR_THROTTLE_ANON` do `.env` no
+padrão (60 por minuto).
+
+**Problema:** o roteiro carrega a tela do ativo muitas vezes em seguida, todas com o IP do contêiner `frontend`, e desde o
+M2.1b cada carga faz um pedido a mais, o `auth/me` da sessão. No fecho do M2.1b, a primeira rodada reprovou por 429; a
+segunda, com a taxa subida, passou com 644 conferências. O recado já existia no ESTADO ("em dev, suba
+`RUVOR_THROTTLE_ANON`"), mas não aqui.
+
+**Faça:** antes da rodada completa, suba `RUVOR_THROTTLE_ANON` (por exemplo, `100000/min`) só durante ela, guardando o
+sha256 do `.env`, e devolva-o igual no fim, conferindo o sha256. A medida da taxa (`RUVOR_E2E_MEDIR_TAXA=1`) é o caso
+oposto: roda com a taxa padrão.
