@@ -26,8 +26,8 @@
    *     vista "a lista", os botões abrem o diálogo de verdade — o foco fica preso nele, o Esc
    *     fecha, e o foco volta ao botão que o abriu;
    *   - os casos do RF-12 e os erros.
-   * O menu de conta (T8) não está aprovado: a barra não o mostra. O aviso do anônimo e o de
-   * sessão terminada nascem no conta.html (T8); aqui só aparece o lugar deles.
+   * O menu de conta (T8) não está aprovado: a barra não o mostra. Os avisos do RF-16 usam os
+   * textos do conta.html (conta.aviso.*), no lugar da ação.
    *
    * Estilo local: m21b- (o que a T10 leva ao kit, se o portão aprovar) e mk- (a moldura do
    * mockup, que não é tela).
@@ -53,6 +53,9 @@
   .m21b-users .ruvor-btn-group { justify-content: flex-end; }
   .m21b-users .ruvor-btn-group .ruvor-btn { font-size: var(--ruvor-type-micro-size); }
   .m21b-users__muted { color: var(--ruvor-text-muted); }
+
+  /* --- O aviso para entrar (RF-16), como no conta.html ---------------------------- */
+  .m21b-notice .ruvor-btn { align-self: flex-start; }
 
   /* --- NOVO: o diálogo (<dialog> com showModal) ------------------------------------ */
   .m21b-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-lg); background: var(--ruvor-surface); color: var(--ruvor-ink); box-shadow: var(--ruvor-shadow); }
@@ -113,6 +116,7 @@
   .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
   .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
   .mk-notes code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  .mk-alt { margin-top: var(--ruvor-space-2); }
   [data-moldura="0"] .mk-bar { display: none; }
   @media (max-width: 720px) {
     .mk-bar { padding-inline: var(--ruvor-space-4); }
@@ -135,6 +139,7 @@
   <symbol id="i-shield-warning" viewBox="0 0 256 256"><path d="M120,136V96a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,48a12,12,0,1,0-12-12A12,12,0,0,0,128,184ZM224,56v56c0,52.72-25.52,84.67-46.93,102.19-23.06,18.86-46,25.27-47,25.53a8,8,0,0,1-4.2,0c-1-.26-23.91-6.67-47-25.53C57.52,196.67,32,164.72,32,112V56A16,16,0,0,1,48,40H208A16,16,0,0,1,224,56Zm-16,0L48,56l0,56c0,37.3,13.82,67.51,41.07,89.81A128.25,128.25,0,0,0,128,223.62a129.3,129.3,0,0,0,39.41-22.2C194.34,179.16,208,149.07,208,112Z"/></symbol>
   <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
   <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
   <symbol id="i-clock" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></symbol>
 </svg>
 
@@ -236,13 +241,32 @@
         <div class="ruvor-panel__body">
           <ul class="mk-notes">
             <li><b>O papel no feminino fixo.</b> A spec nomeia os papéis "administradora ou membro" (RF-11); o mockup segue, e a amostra tem um homem administrador (Bruno Costa) para o portão ver como fica. Trocar por "administração" ou "admin" é decisão do portão.</li>
+            <li><b>As duas formas do rótulo do papel</b>, para o portão escolher. Nas duas, o valor da API (<code>admin</code>) não muda; muda o texto.
+              <div class="ruvor-grid ruvor-grid--2 mk-alt">
+                <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-stack">
+                  <p class="ruvor-eyebrow">A · "Administradora" (a spec, a do mockup)</p>
+                  <div class="ruvor-segmented m21b-segmented" role="group" aria-label="Papel, forma A"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Membro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Administradora</button></div>
+                  <table class="ruvor-table"><thead><tr><th scope="col">Nome</th><th scope="col">Papel</th></tr></thead><tbody><tr><td>Bruno Costa</td><td>Administradora</td></tr><tr><td>Ana Lima</td><td>Membro</td></tr></tbody></table>
+                  <p class="ruvor-note">Ações: "Mudar para administradora"; textos: "uma administradora da organização", "Para voltar a administradora".</p>
+                </div></div>
+                <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-stack">
+                  <p class="ruvor-eyebrow">B · "Administração"</p>
+                  <div class="ruvor-segmented m21b-segmented" role="group" aria-label="Papel, forma B"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Membro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Administração</button></div>
+                  <table class="ruvor-table"><thead><tr><th scope="col">Nome</th><th scope="col">Papel</th></tr></thead><tbody><tr><td>Bruno Costa</td><td>Administração</td></tr><tr><td>Ana Lima</td><td>Membro</td></tr></tbody></table>
+                  <p class="ruvor-note">Ações: "Mudar para administração"; textos: "quem administra a organização", "Para voltar à administração" — a forma B reescreve as frases que citam o papel, com as mesmas chaves.</p>
+                </div></div>
+              </div>
+            </li>
+            <li><b>A regra do foco.</b> O diálogo guarda quem o abriu. Ao fechar, o foco volta a esse botão; se ele deixou de existir depois de uma ação bem-sucedida ("Desativar" vira "Reativar"), vai ao botão <b>da mesma posição</b> na linha redesenhada. Quando o conteúdo do diálogo aberto é trocado (confirmar "Nova senha provisória" mostra o diálogo da senha), o foco vai ao primeiro controle do novo conteúdo. Depois de criar, volta a "Criar usuário". Rebaixar a si mesma troca a tela pelo caso "membro", e o foco vai ao aviso dele. A vista "a lista" segue a regra.</li>
+            <li><b>A linha desativada</b> mantém a mudança de papel, e a confirmação diz que ela vale quando a conta for reativada — as posições dos botões são as mesmas na linha ativa e na desativada, o que a regra do foco usa.</li>
+            <li><b>Para a T10.</b> O <code>m21b-segmented</code> vira variante do kit, <code>.ruvor-segmented--surface</code>, com o estilo de <code>:disabled</code> (o formulário enviando trava os dois botões). O véu vira token, <code>--ruvor-scrim</code>, nos dois temas, declarado no próprio <code>::backdrop</code> do diálogo.</li>
             <li><b>O papel em <code>.ruvor-segmented</code></b>, como pede o RF-13. O kit comenta a classe como "só na barra" (<code>components.css</code>, a chave de tema): as cores dela são as da barra escura, e sobre a superfície clara o botão não marcado sairia em <code>--ruvor-topbar-link</code> sobre <code>--ruvor-surface</code>, perto de 1,9:1. O mockup a recolore com os tokens da superfície (<code>m21b-segmented</code>: o marcado em tinta cheia, como os atalhos do gráfico). A T10 leva isso ao kit como variante, se aprovado.</li>
             <li><b>As ações na própria linha</b>: só a mudança de papel. "Desativar" e "Nova senha provisória" não existem nela (RF-14); a própria pessoa troca a senha pelo menu de conta.</li>
             <li><b>Rebaixar a si mesma</b> pede a confirmação própria; feito, a tela relê a conta e mostra o caso "membro" do RF-12 (na vista "a lista", "Mudar para membro" na linha "você" leva a ele).</li>
             <li><b>Depois de cada ação</b>, a linha mostra o estado que a API devolve (o papel, a situação, a marca da senha provisória). Não há aviso de sucesso à parte: a linha mudada é a confirmação.</li>
-            <li><b>Os avisos do anônimo e de sessão terminada</b> são do <code>conta.html</code> (T8). Na vista "os estados", o lugar deles aparece com o texto da spec, entre aspas, até o portão da T8.</li>
-            <li><b>Nenhum token novo.</b> O véu atrás do diálogo é <code>color-mix</code> de <code>--ruvor-topbar</code> com transparente, escuro nos dois temas; a T10 decide se vira token.</li>
-            <li><b>Erros de permissão no meio do uso</b> (<code>permission_denied</code>, <code>personal_organization</code> numa ação) trocam a tela pelo caso do RF-12; <code>password_change_required</code> relê a conta e o desvio do RF-05 assume (a troca obrigatória do <code>senha.html</code>); 401 põe o aviso de sessão terminada no lugar da tela.</li>
+            <li><b>O 401 segue o RF-16: o aviso fica no lugar da ação</b>, com os textos do <code>conta.html</code> (<code>conta.aviso.terminou</code>, <code>conta.aviso.volta</code>, <code>conta.entrar</code>; <code>role="alert"</code>). Numa ação do diálogo, o aviso entra no diálogo; ao carregar a lista ou ao criar, no lugar da lista ou do formulário — a página não muda de rota nem some. Só o anônimo desde a carga vê o aviso "para quem entrou" no lugar da tela.</li>
+            <li><b>Nenhum token novo no mockup.</b> O véu atrás do diálogo é <code>color-mix</code> de <code>--ruvor-topbar</code> com transparente, escuro nos dois temas; na T10, vira <code>--ruvor-scrim</code> (acima).</li>
+            <li><b>Erros de permissão no meio do uso</b> (<code>permission_denied</code>, <code>personal_organization</code> numa ação) trocam a tela pelo caso do RF-12; <code>password_change_required</code> relê a conta e o desvio do RF-05 assume (a troca obrigatória do <code>senha.html</code>).</li>
           </ul>
         </div>
       </section>
@@ -278,11 +302,12 @@ const HERDADOS = {
   "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
 };
 
-// Do conta.html (T8), ainda sem portão: só o lugar. O texto é a frase da spec (RF-16), entre aspas.
-const DA_T8 = {
-  "anonimo": "“esta página é para quem entrou na conta”",
-  "terminou": "“a sua sessão terminou”",
-  "entrar": "Entrar",
+// Do conta.html (T8): os avisos do RF-16, literais, sem chave nova aqui.
+const DA_CONTA = {
+  "conta.entrar": "Entrar",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
 };
 
 // NOVOS em textos.ts, prefixo usuarios.* (RF-11 a RF-14).
@@ -343,7 +368,7 @@ const TEXTOS = {
   "usuarios.acao.senha": "Nova senha provisória",
   // as confirmações (RF-14)
   "usuarios.confirmar.admin.titulo": (nome) => `Mudar ${nome} para administradora?`,
-  "usuarios.confirmar.admin.texto": "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização.",
+  "usuarios.confirmar.admin.texto": "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização, e a gerar senhas provisórias para eles.",
   "usuarios.confirmar.member.titulo": (nome) => `Mudar ${nome} para membro?`,
   "usuarios.confirmar.member.texto": "A pessoa deixa de gerir os usuários da organização. O resto do Ruvor continua igual para ela.",
   "usuarios.confirmar.rebaixarSi.titulo": "Deixar de administrar a organização?",
@@ -354,7 +379,9 @@ const TEXTOS = {
   "usuarios.confirmar.reativar.texto": "A pessoa volta a entrar com a senha que já tinha. As chaves de API encerradas na desativação não voltam.",
   "usuarios.confirmar.senha.titulo": (nome) => `Gerar uma senha provisória nova para ${nome}?`,
   "usuarios.confirmar.senha.texto": "A senha atual da pessoa deixa de valer, e as sessões abertas e as chaves de API dela são encerradas agora. A senha nova aparece uma vez, para você entregar.",
+  "usuarios.confirmar.desativada": "A conta está desativada: a mudança vale quando ela for reativada.",
   "usuarios.confirmar.cancelar": "Cancelar",
+  "usuarios.confirmar.fechar": "Fechar",
   "usuarios.confirmar.enviando": "Enviando…",
   // o diálogo da senha provisória (RF-13, RF-14)
   "usuarios.senha.criado.titulo": "Usuário criado",
@@ -396,7 +423,7 @@ const EXEMPLOS = {
 };
 
 const T = (k, ...a) => {
-  const v = k in TEXTOS ? TEXTOS[k] : HERDADOS[k];
+  const v = k in TEXTOS ? TEXTOS[k] : k in DA_CONTA ? DA_CONTA[k] : HERDADOS[k];
   if (v === undefined) throw new Error(`texto sem chave: ${k}`);
   return typeof v === "function" ? v(...a) : v;
 };
@@ -510,7 +537,7 @@ function rowHtml(u, opts = {}) {
     u.must_change_password ? `<li><span class="ruvor-tag ruvor-tag--review">${tx("usuarios.provisoria")}</span></li>` : "",
   ].join("");
   return `<tr data-email="${esc(u.email)}"${part}>
-    <td><span class="m21b-users__name">${esc(u.name)}${self ? ` <span class="ruvor-tag ruvor-tag--decision">${tx("usuarios.voce")}</span>` : ""}</span></td>
+    <td><span class="m21b-users__name">${esc(u.name)}${self ? ` <span class="ruvor-tag ruvor-tag--neutral">${tx("usuarios.voce")}</span>` : ""}</span></td>
     <td class="m21b-users__email">${esc(u.email)}</td>
     <td data-label="${tx("usuarios.col.papel")}">${tx(`usuarios.papel.${u.role}`)}</td>
     <td data-label="${tx("usuarios.col.situacao")}"><ul class="ruvor-tag-list">${tags}</ul></td>
@@ -559,11 +586,13 @@ function confirmHtml(o) {
   const tid = o.live ? "live-dialog-title" : `d${++dlgSeq}-t`;
   return `<div class="m21b-dialog__body">
       <h2 class="ruvor-h3" id="${tid}">${esc(o.titulo)}</h2>
-      <p>${esc(o.texto)}</p>
+      ${o.semTexto ? "" : `<p>${esc(o.texto)}</p>`}
+      ${o.nota && !o.semTexto ? `<p class="ruvor-note">${esc(o.nota)}</p>` : ""}
       ${o.erro ? `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(o.erro)}</span></div>` : ""}
+      ${o.sessao ? signInNotice("ended") : ""}
     </div>
     <div class="m21b-dialog__actions">
-      <button class="ruvor-btn" type="button" data-close${o.sending ? " disabled" : ""}>${tx("usuarios.confirmar.cancelar")}</button>
+      <button class="ruvor-btn" type="button" data-close${o.sending ? " disabled" : ""}>${o.semConfirmar ? tx("usuarios.confirmar.fechar") : tx("usuarios.confirmar.cancelar")}</button>
       ${o.semConfirmar ? "" : o.sending
         ? `<button class="ruvor-btn ruvor-btn--primary" type="button" aria-busy="true" disabled>${glyph("spinner-gap", "ruvor-spin")}<span>${tx("usuarios.confirmar.enviando")}</span></button>`
         : `<button class="ruvor-btn ruvor-btn--primary" type="button" data-confirm>${esc(o.confirmar)}</button>`}
@@ -610,10 +639,26 @@ function confirmFor(act, u, extra = {}) {
     reativar: { titulo: T("usuarios.confirmar.reativar.titulo", u.name), texto: T("usuarios.confirmar.reativar.texto"), confirmar: T("usuarios.acao.reativar") },
     senha: { titulo: T("usuarios.confirmar.senha.titulo", u.name), texto: T("usuarios.confirmar.senha.texto"), confirmar: T("usuarios.acao.senha") },
   };
-  return confirmHtml({ ...map[act], ...extra });
+  // 6. Na linha desativada, a mudança de papel fica, com a frase de quando ela vale.
+  const nota = (act === "admin" || act === "member") && !u.is_active ? T("usuarios.confirmar.desativada") : null;
+  return confirmHtml({ ...map[act], nota, ...extra });
 }
 
-// ---------------------------------------------------------------- RF-12 e o lugar dos avisos da T8
+// ---------------------------------------------------------------- o aviso para entrar (RF-16), o do conta.html
+// ended: 401 de quem estava logada, com role="alert"; required: anônimo desde a carga.
+function signInNotice(kind) {
+  const title = kind === "ended" ? T("conta.aviso.terminou") : T("conta.aviso.paraQuemEntrou");
+  return `<div class="ruvor-state ruvor-state--notice m21b-notice" data-signin-notice="${kind}"${kind === "ended" ? ' role="alert"' : ""}>
+    <span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(title)}</p>
+      <p class="ruvor-note">${esc(T("conta.aviso.volta"))}</p>
+      <a class="ruvor-btn ruvor-btn--primary" href="#" title="/entrar?next=%2Forganizacao%2Fusuarios">${esc(T("conta.entrar"))}</a>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- RF-12
 function stateHtml(icon, tone, titulo, texto, action = "") {
   return `<div class="ruvor-panel"><div class="ruvor-panel__body"><div class="ruvor-state">
     <span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"><use href="#i-${icon}"/></svg></span>
@@ -630,6 +675,24 @@ const live = { users: PRIMEIRA.map((u) => ({ ...u })), shown: 50, more: false, r
 const listView = $("[data-view='lista']");
 const liveDialog = $("#live-dialog");
 let opener = null;
+// A regra do foco (nota "Para o portão"): quem abriu é lembrado pela linha e pela posição do
+// botão nela; ao fechar, o foco volta a ele, ou, se ele deixou de existir, ao botão da mesma
+// posição na linha redesenhada.
+let openerSpot = null;
+function spotOf(btn) {
+  const tr = btn?.closest?.("tr[data-email]");
+  if (!tr) return null;
+  return { email: tr.dataset.email, index: [...tr.querySelectorAll("[data-act]")].indexOf(btn) };
+}
+function fromSpot(spot) {
+  if (!spot) return null;
+  const btns = [...(listView.querySelector(`tr[data-email="${CSS.escape(spot.email)}"]`)?.querySelectorAll("[data-act]") ?? [])];
+  return btns[Math.min(spot.index, btns.length - 1)] ?? null;
+}
+// Conteúdo trocado dentro do diálogo aberto: o foco vai ao primeiro controle do novo.
+function focusFirst() {
+  liveDialog.querySelector("input, button:not([disabled]), a[href]")?.focus();
+}
 
 function renderLiveList() {
   const users = live.more ? [...live.users, ...MAIS] : live.users;
@@ -644,14 +707,16 @@ function renderLiveForm(opts = {}) {
 
 function openDialog(html, from) {
   opener = from ?? document.activeElement;
+  openerSpot = spotOf(opener);
   liveDialog.innerHTML = html;
   if (!liveDialog.open) liveDialog.showModal();
 }
 // O diálogo devolve o foco a quem o abriu, explicitamente (o contrato da T14).
 liveDialog.addEventListener("close", () => {
   liveDialog.innerHTML = ""; // a senha sai da memória da tela ao fechar
-  const target = opener && document.contains(opener) ? opener : null;
+  const target = opener && document.contains(opener) ? opener : fromSpot(openerSpot);
   opener = null;
+  openerSpot = null;
   target?.focus();
 });
 
@@ -692,7 +757,8 @@ $("[data-form='live']", listView).addEventListener("submit", (ev) => {
   const submit = $("[type='submit']", form);
   openDialog(senhaHtml({ kind: "criado", nome: values.name, email: values.email.toLowerCase(), senha: SENHA_EXEMPLO, copy: null, live: true }), submit);
   liveDialog.dataset.act = "criado";
-  renderLiveForm(); // o formulário volta vazio; a lista é relida da primeira página (offset=0)
+  live.role = "member"; // o formulário volta vazio e com "Membro" (RF-13)
+  renderLiveForm(); // a lista é relida da primeira página (offset=0)
   opener = $("[type='submit']", form);
 });
 
@@ -719,21 +785,18 @@ liveDialog.addEventListener("click", async (ev) => {
     const u = [...live.users, ...MAIS].find((x) => x.email === liveDialog.dataset.email);
     if (act === "senha") {
       u.must_change_password = true;
-      const keep = opener;
       liveDialog.innerHTML = senhaHtml({ kind: "nova", nome: u.name, email: u.email, senha: SENHA_EXEMPLO.split("").reverse().join(""), copy: null, live: true });
-      opener = keep;
-      renderLiveList();
-      opener = $(`tr[data-email="${CSS.escape(u.email)}"] [data-act="senha"]`, listView) ?? keep;
+      focusFirst();
+      renderLiveList(); // o botão que abriu é redesenhado: ao fechar, o da mesma posição
       return;
     }
-    if (act === "rebaixarSi") { liveDialog.close(); setView("estados"); location.hash = "caso-membro"; $("#caso-membro")?.scrollIntoView(); return; }
+    if (act === "rebaixarSi") { opener = null; openerSpot = null; liveDialog.close(); setView("estados"); const c = $("#caso-membro .ruvor-state"); c?.setAttribute("tabindex", "-1"); c?.focus(); c?.scrollIntoView(); return; }
     if (act === "admin") u.role = "admin";
     if (act === "member") u.role = "member";
     if (act === "desativar") u.is_active = false;
     if (act === "reativar") u.is_active = true;
     renderLiveList();
-    // a linha mostra o estado devolvido pela API; o foco volta ao botão equivalente da linha redesenhada
-    opener = $(`tr[data-email="${CSS.escape(u.email)}"] [data-act]`, listView);
+    // a linha mostra o estado devolvido pela API; ao fechar, o foco vai ao botão da mesma posição
     liveDialog.close();
   }
 });
@@ -758,11 +821,10 @@ const gerais = [
   T("usuarios.erro.rede"),
   T("usuarios.erro.outro"),
 ];
-const entrarLink = `<div class="ruvor-state__actions"><a class="ruvor-btn ruvor-btn--primary" href="#">${esc(DA_T8.entrar)}</a></div>`;
 
 $("[data-slot='estados']").innerHTML = [
   caseBlock("", "Criar · campos vazios, conferidos no navegador antes do pedido", formPanel({ values: { name: "", email: "" }, errors: { name: [T("usuarios.erro.nomeVazio")], email: [T("usuarios.erro.emailVazio")] } })),
-  caseBlock("", "Criar · invalid_parameter: as mensagens por campo são as da API (details.fields), mostradas como chegam", formPanel({ values: { name: "", email: "ana@" }, errors: { name: ["Informe um nome de 1 a 120 caracteres."], email: ["Informe um e-mail válido."] } })),
+  caseBlock("", "Criar · invalid_parameter: o nome com mais de 120 caracteres; a mensagem é a da API (details.fields), mostrada como chega", formPanel({ values: { name: "Ana ".repeat(31).trim(), email: "ana.lima@exemplo.com" }, errors: { name: ["Informe um nome de 1 a 120 caracteres."] } })),
   caseBlock("", "Criar · email_taken, no campo do e-mail", formPanel({ values: { name: "Elisa Prado", email: "elisa.prado@exemplo.com", role: "member" }, errors: { email: [T("usuarios.erro.emailTaken")] } })),
   caseBlock("", "Criar · enviando: o botão espera, os campos ficam travados", formPanel({ values: { name: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", role: "admin" }, sending: true })),
   caseBlock("", "Criar · erro geral na caixa do formulário (role=alert): too_many_requests com e sem details.wait_seconds, csrf_failed depois da repetição, rede ou fora do formato, e qualquer outro code — um de cada vez na tela", `<div class="ruvor-stack">${gerais.map((g) => `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(g)}</span></div>`).join("")}</div>`),
@@ -772,8 +834,9 @@ $("[data-slot='estados']").innerHTML = [
   caseBlock("", "A lista · tudo mostrado: sem \"Mostrar mais\"", listPanel({ count: true, html: footHtml(TOTAL, TOTAL) })),
   caseBlock("caso-membro", "RF-12 · membro: pelo me antes do pedido, ou por 403 permission_denied (também depois de rebaixar a si mesma)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("shield-warning", "review", T("usuarios.membro.titulo"), T("usuarios.membro.texto", ORG))}`),
   caseBlock("caso-pessoal", "RF-12 · organização pessoal: pelo me (organization.is_personal), ou por 409 personal_organization", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("buildings", "evidence", T("usuarios.pessoal.titulo"), T("usuarios.pessoal.texto"))}`),
-  caseBlock("caso-anonimo", "RF-12 · anônimo desde a carga: o aviso do RF-16, do conta.html (T8) — aqui só o lugar, com a frase da spec", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("user", "evidence", DA_T8.anonimo, "", entrarLink)}`),
-  caseBlock("caso-terminou", "RF-16 · 401 numa ação ou na lista, depois de estar logada: o aviso de sessão terminada no lugar da tela, sem mudar de rota — do conta.html (T8)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("clock", "review", DA_T8.terminou, "", entrarLink)}`),
+  caseBlock("caso-anonimo", "RF-12 · anônimo desde a carga: o aviso \"para quem entrou\" do conta.html no lugar da tela (nada dela chega a aparecer)", `<div class="ruvor-page-head">${head(false)}</div>${signInNotice("required")}`),
+  caseBlock("caso-401-lista", "RF-16 · 401 ao carregar a lista (ou o \"Mostrar mais\"), depois de estar logada: o aviso de sessão terminada no lugar da lista; o resto da página fica", listPanel({ html: signInNotice("ended") })),
+  caseBlock("caso-401-criar", "RF-16 · 401 ao criar: o aviso de sessão terminada no lugar do formulário", `<section class="ruvor-panel"><div class="ruvor-panel__body">${signInNotice("ended")}</div></section>`),
   caseBlock("", "RF-12 · password_change_required: a tela relê a conta e o desvio do RF-05 assume — a troca obrigatória do senha.html (T7), fora do casco", `<p class="mk-tail">Moldura: sem desenho aqui; é a tela da T7.</p>`),
 ].join("");
 
@@ -792,8 +855,10 @@ $("[data-slot='dialogos']").innerHTML = [
   scrim("Confirmar · reativar", confirmFor("reativar", DIEGO)),
   scrim("Confirmar · gerar senha provisória nova", confirmFor("senha", ANA)),
   scrim("Confirmar · enviando", confirmFor("desativar", ELISA, { sending: true })),
-  scrim("Erro · last_admin (rebaixar ou desativar a última administradora ativa)", confirmFor("rebaixarSi", PRIMEIRA[2], { erro: T("usuarios.erro.lastAdmin") })),
-  scrim("Erro · user_not_found (a lista é relida por trás; resta só Cancelar)", confirmFor("desativar", ELISA, { erro: T("usuarios.erro.naoEncontrado"), semConfirmar: true })),
+  scrim("Erro · last_admin (a última administradora ativa rebaixa a si mesma)", confirmFor("rebaixarSi", PRIMEIRA[2], { erro: T("usuarios.erro.lastAdmin") })),
+  scrim("Erro · user_not_found (a lista é relida por trás): só o título, o erro e Fechar", confirmFor("desativar", ELISA, { erro: T("usuarios.erro.naoEncontrado"), semConfirmar: true, semTexto: true })),
+  scrim("Erro · 401 numa ação (RF-16): o aviso de sessão terminada dentro do diálogo, no lugar da ação, com Entrar", confirmFor("desativar", ELISA, { semConfirmar: true, semTexto: true, sessao: true })),
+  scrim("Confirmar · mudar o papel na linha desativada (a frase de quando vale)", confirmFor("admin", DIEGO)),
   scrim("Erro · rede (e, no mesmo lugar, too_many_requests, csrf_failed, invalid_parameter e qualquer outro code)", confirmFor("senha", ANA, { erro: T("usuarios.erro.rede") })),
 ].join("");
 
