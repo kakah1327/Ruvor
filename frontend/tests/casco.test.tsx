@@ -169,6 +169,11 @@ describe("o alternador do nível de leitura (V-03 do M2.3)", () => {
     ).not.toBe(0);
     expect(reading.parentElement).toBe(theme.parentElement);
     expect(reading.parentElement?.className).toBe("ruvor-topbar__prefs");
+    // M2.1b (T10): até 840 px, o kit endereça o alternador como a .ruvor-segmented seguida de
+    // outra e a chave de tema como a que segue outra — os dois vizinhos, nessa ordem.
+    expect(reading.nextElementSibling).toBe(theme);
+    expect(reading.classList.contains("ruvor-segmented")).toBe(true);
+    expect(theme.classList.contains("ruvor-segmented")).toBe(true);
     expect(reading.closest("[aria-live]")).toBeNull();
   });
 

@@ -57,6 +57,7 @@
   --ruvor-decision-hover: #7F3442;
   --ruvor-focus: #8F3B4B;
   --ruvor-focus-on-dark: #E7AAB5;
+  --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
 }
 
 [data-theme="dark"] {
@@ -109,6 +110,7 @@
   --ruvor-decision-hover: #E0A0AC;
   --ruvor-focus: #E7AAB5;
   --ruvor-focus-on-dark: #E7AAB5;
+  --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -162,6 +164,7 @@
     --ruvor-decision-hover: #E0A0AC;
     --ruvor-focus: #E7AAB5;
     --ruvor-focus-on-dark: #E7AAB5;
+    --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
   }
 }
 
@@ -214,4 +217,8 @@
   --ruvor-type-brand-weight: 700;
   --ruvor-type-label-tracking-table: .07em;
   --ruvor-type-code-leading: 1.65;
+  --ruvor-type-scene-size: 48px;
+  --ruvor-type-scene-narrow-size: 28px;
+  --ruvor-type-scene-text-size: 15px;
+  --ruvor-type-auth-size: 31px;
 }

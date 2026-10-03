@@ -708,7 +708,8 @@
 }
 
 /* M2.3: as chaves da barra juntas no terceiro lugar da grade — o alternador de leitura
-   primeiro, a chave de tema depois. Até 720 px, ver o fim da folha. */
+   primeiro, a chave de tema depois e, desde o M2.1b, o lugar da conta por último. Até
+   840 px, ver o fim da folha. */
 .ruvor-topbar__prefs {
   display: flex;
   align-items: center;
@@ -2000,6 +2001,598 @@
   margin-top: var(--ruvor-space-4);
 }
 
+/* ==================================================================================
+ * M2.1b — as telas de acesso (T10, RF-17). Vieram do estilo local dos cinco mockups
+ * aprovados, docs/mockups/M2.1b/: entrada.html e cadastro.html (a cena, o formulário de
+ * acesso, a dica e os erros), senha.html (o painel estreito), conta.html (o lugar da conta
+ * na barra, o menu, o convite e os avisos) e usuarios.html (o formulário de criação, a
+ * lista, o diálogo e o campo com copiar). Cada m21b- virou um nome ruvor- (o que o mockup
+ * tabela, quando tabela); os valores são os aprovados. Ficam antes do anel sobre fundo
+ * escuro, como as do M1.6b. Os pontos de quebra (1023, 840 e 720 px) estão nas @media do
+ * fim da folha.
+ * ================================================================================== */
+
+/* --- A cena de acesso e o arranjo de tela cheia (entrada.html) ----------------------- */
+
+/* O arranjo de tela cheia: a cena à esquerda, o formulário à direita; até 720 px, uma
+   coluna, com a cena em faixa acima. */
+.ruvor-access {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  background: var(--ruvor-bg);
+}
+
+/* A cena: o painel escuro do 01-login, nas cores da barra (escuras nos dois temas). */
+.ruvor-scene {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 68px;
+  background: var(--ruvor-topbar);
+  color: var(--ruvor-topbar-text);
+}
+
+/* O padrão de pontos do 01-login, na cor de revisão do tema. */
+.ruvor-scene::after {
+  content: "";
+  position: absolute;
+  inset: auto -90px -120px auto;
+  width: 430px;
+  height: 430px;
+  background-image: radial-gradient(circle, var(--ruvor-review) 0 4px, transparent 4.5px);
+  background-size: 31px 31px;
+  opacity: 0.28;
+  transform: rotate(-9deg);
+  pointer-events: none;
+}
+
+.ruvor-scene__logo {
+  display: block;
+  width: 156px;
+  height: auto;
+}
+
+/* Sem a linha de rodapé do 01-login, o texto fica no meio da altura que sobra. */
+.ruvor-scene__copy {
+  position: relative;
+  z-index: 1;
+  max-width: 500px;
+  margin-block: auto;
+}
+
+.ruvor-scene__copy .ruvor-eyebrow {
+  color: var(--ruvor-review);
+}
+
+.ruvor-scene__title {
+  font-size: var(--ruvor-type-scene-size);
+}
+
+.ruvor-scene__text {
+  margin: var(--ruvor-space-4) 0 0;
+  max-width: 52ch;
+  font-size: var(--ruvor-type-scene-text-size);
+  color: var(--ruvor-topbar-account);
+}
+
+/* A coluna do formulário. */
+.ruvor-access__side {
+  display: grid;
+  place-items: center;
+  padding: 60px;
+}
+
+/* O formulário de acesso: a largura, o ritmo e o título. */
+.ruvor-auth {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-4);
+}
+
+.ruvor-auth__head {
+  margin-bottom: var(--ruvor-space-3);
+}
+
+.ruvor-auth__title {
+  font-size: var(--ruvor-type-auth-size);
+}
+
+.ruvor-auth .ruvor-sub {
+  margin-top: var(--ruvor-space-3);
+}
+
+/* A linha "Você entrou como …" da troca obrigatória, sob o subtítulo (senha.html). */
+.ruvor-auth__head .ruvor-note {
+  margin-top: var(--ruvor-space-2);
+}
+
+/* A dica longa: o ícone na primeira linha. Em (0,2,0) e depois de
+   .ruvor-hint:has(> .ruvor-glyph), que centra. */
+.ruvor-hint.ruvor-hint--top {
+  align-items: flex-start;
+}
+
+.ruvor-hint--top > .ruvor-glyph {
+  margin-top: 2px;
+}
+
+/* A caixa de erro do formulário, sobre .ruvor-callout--critical. */
+.ruvor-form-error {
+  color: var(--ruvor-critical-text);
+  padding: var(--ruvor-space-3) var(--ruvor-space-4);
+  border-radius: var(--ruvor-radius-sm);
+}
+
+.ruvor-form-error > .ruvor-glyph {
+  margin-top: 2px;
+}
+
+/* O botão na largura do formulário. */
+.ruvor-btn--block {
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+}
+
+/* A linha "Ainda não tem conta? Criar conta". */
+.ruvor-auth__alt {
+  margin: 0;
+  text-align: center;
+  color: var(--ruvor-text-muted);
+}
+
+/* O link no meio do texto. */
+.ruvor-link {
+  color: var(--ruvor-decision-text);
+  font-weight: var(--ruvor-type-small-weight);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 3px;
+}
+
+.ruvor-link:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* --- A dica dos requisitos e os erros de um campo (cadastro.html) ------------------- */
+
+/* A lista dos requisitos, dentro da dica. */
+.ruvor-hint__list {
+  margin: var(--ruvor-space-1) 0 0;
+  padding-left: var(--ruvor-space-4);
+  list-style: disc;
+}
+
+.ruvor-hint__list li + li {
+  margin-top: 2px;
+}
+
+/* As mensagens de um campo, uma por linha (a API manda uma lista por campo). */
+.ruvor-field__errors {
+  display: grid;
+  gap: 4px;
+}
+
+.ruvor-field__errors > .ruvor-field__error {
+  align-items: flex-start;
+}
+
+.ruvor-field__errors > .ruvor-field__error > .ruvor-glyph {
+  margin-top: 1px;
+  flex: none;
+}
+
+/* --- O painel do formulário no casco (senha.html) ------------------------------------ */
+
+/* Os 440 px do formulário da cena, mais o respiro do painel (18 px de cada lado) e a borda. */
+.ruvor-panel--narrow {
+  max-width: calc(440px + 2 * 18px + 2px);
+}
+
+.ruvor-panel--narrow .ruvor-auth {
+  max-width: none;
+}
+
+/* --- A conta na barra e o menu (conta.html) ------------------------------------------ */
+
+/* O menu se ancora na barra, não no botão: começa logo abaixo dela, sem a sobrepor. */
+.ruvor-topbar {
+  position: relative;
+}
+
+/* O lugar da conta, por último em .ruvor-topbar__prefs. A LARGURA É FIXA nos três estados
+   (carregando, anônimo, logado): nenhuma troca de estado move as chaves. 200 px a partir de
+   1024 px; abaixo, a largura do "Entrar". */
+.ruvor-topbar__account {
+  box-sizing: border-box;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 200px;
+  /* a altura do avatar: carregando não muda a barra */
+  min-height: 30px;
+  padding-left: var(--ruvor-space-3);
+  border-left: 1px solid var(--ruvor-topbar-control);
+}
+
+/* Anônimo: o "Entrar", no molde das chaves da barra. */
+.ruvor-topbar__signin {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--ruvor-topbar-control);
+  border-radius: var(--ruvor-radius-sm);
+  color: var(--ruvor-topbar-text);
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  line-height: var(--ruvor-type-micro-leading);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ruvor-topbar__signin:hover {
+  background: var(--ruvor-topbar-control);
+}
+
+.ruvor-topbar .ruvor-topbar__signin:focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+/* Logado: .ruvor-account como botão — o nome, as iniciais e a seta. */
+.ruvor-account--button {
+  font: inherit;
+  font-size: var(--ruvor-type-small-size);
+  background: transparent;
+  border: 0;
+  border-radius: var(--ruvor-radius-sm);
+  padding: 0;
+  /* ocupa a largura fixa do lugar */
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-end;
+  cursor: pointer;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-account--button:hover .ruvor-account__name {
+  color: var(--ruvor-topbar-text);
+}
+
+.ruvor-topbar .ruvor-account--button:focus-visible {
+  outline: 2px solid var(--ruvor-focus-on-dark);
+  outline-offset: 2px;
+}
+
+.ruvor-account__name {
+  min-width: 0;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ruvor-account--button .ruvor-avatar {
+  color: var(--ruvor-topbar-text);
+}
+
+.ruvor-account--button .ruvor-glyph {
+  width: 12px;
+  height: 12px;
+  color: var(--ruvor-topbar-link);
+}
+
+.ruvor-account--button[aria-expanded="true"] .ruvor-glyph {
+  transform: rotate(180deg);
+}
+
+/* O menu: superfície clara sob o botão, alinhado à direita da barra. */
+.ruvor-menu {
+  position: absolute;
+  z-index: 10;
+  /* abaixo da barra, que é o pai posicionado */
+  top: calc(100% + var(--ruvor-space-1));
+  /* o recuo lateral da barra */
+  right: 26px;
+  width: 280px;
+  max-width: calc(100vw - 2 * var(--ruvor-space-4));
+  box-sizing: border-box;
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-md);
+  box-shadow: var(--ruvor-shadow);
+  overflow: hidden;
+}
+
+/* O [hidden] sobrevive a qualquer display que o menu ganhar. */
+.ruvor-menu[hidden] {
+  display: none;
+}
+
+/* O Sair que falhou: a linha de alerta dentro do menu. */
+.ruvor-menu__error {
+  margin: 0;
+  padding: var(--ruvor-space-2) var(--ruvor-space-4) var(--ruvor-space-3);
+  color: var(--ruvor-critical-text);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-menu__who,
+.ruvor-menu__org {
+  padding: var(--ruvor-space-3) var(--ruvor-space-4);
+}
+
+.ruvor-menu__who {
+  border-bottom: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-menu__name {
+  margin: 0;
+  font-weight: var(--ruvor-type-small-weight);
+  overflow-wrap: anywhere;
+}
+
+.ruvor-menu__email {
+  margin: 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+  overflow-wrap: anywhere;
+}
+
+.ruvor-menu__org {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  background: var(--ruvor-table-head);
+  border-bottom: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-menu__org .ruvor-eyebrow {
+  margin: 0;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-menu__org p:last-child {
+  margin: 0;
+  font-size: var(--ruvor-type-small-size);
+  overflow-wrap: anywhere;
+}
+
+.ruvor-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: var(--ruvor-space-1) 0;
+}
+
+.ruvor-menu__item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  width: 100%;
+  padding: 9px var(--ruvor-space-4);
+  border: 0;
+  background: transparent;
+  color: var(--ruvor-ink);
+  font: inherit;
+  font-size: var(--ruvor-type-small-size);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ruvor-menu__item:hover {
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-menu__item .ruvor-glyph {
+  color: var(--ruvor-text-muted);
+}
+
+/* O menu fica dentro da barra, mas o fundo dele é claro: o anel claro, recuado para dentro.
+   Em (0,3,0) com a barra, vence a regra geral do anel sobre fundo escuro. */
+.ruvor-menu__item:focus-visible,
+.ruvor-topbar .ruvor-menu__item:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: -2px;
+}
+
+.ruvor-menu__sep {
+  height: 1px;
+  margin: var(--ruvor-space-1) 0;
+  background: var(--ruvor-table-rule);
+}
+
+/* O convite a entrar para calcular (RF-15): o link e a frase, lado a lado. */
+.ruvor-invite {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-3);
+}
+
+/* O aviso para entrar (RF-16), sobre .ruvor-state--notice, no lugar da ação ou no corpo. */
+.ruvor-state--signin .ruvor-btn {
+  align-self: flex-start;
+}
+
+.ruvor-page-notice {
+  max-width: 640px;
+}
+
+/* --- A gestão de usuários (usuarios.html) -------------------------------------------- */
+
+/* O formulário de criação, no arranjo do 03-nova-analise: o título e a frase à esquerda, os
+   campos à direita, as ações no pé. */
+.ruvor-form-section {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: var(--ruvor-space-6);
+}
+
+.ruvor-form-section__intro p {
+  margin: 6px 0 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-form-section__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  min-width: 0;
+}
+
+.ruvor-form-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ruvor-space-3);
+}
+
+/* A chave sobre a superfície (o papel): as cores da página, não as da barra; o marcado em
+   tinta cheia, como os atalhos do gráfico. Enviando, os botões ficam desabilitados. */
+.ruvor-segmented.ruvor-segmented--surface {
+  justify-self: start;
+  border-color: var(--ruvor-border);
+  background: var(--ruvor-surface);
+}
+
+.ruvor-segmented--surface .ruvor-segmented__btn {
+  font-size: var(--ruvor-type-small-size);
+  padding: 7px 14px;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-segmented--surface .ruvor-segmented__btn:hover:not(:disabled, [aria-pressed="true"]) {
+  color: var(--ruvor-ink);
+  background: var(--ruvor-control-hover);
+}
+
+.ruvor-segmented--surface .ruvor-segmented__btn[aria-pressed="true"] {
+  background: var(--ruvor-ink);
+  color: var(--ruvor-paper);
+}
+
+.ruvor-segmented--surface .ruvor-segmented__btn:focus-visible {
+  outline-color: var(--ruvor-focus);
+}
+
+.ruvor-segmented--surface .ruvor-segmented__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* A lista (sobre .ruvor-table). */
+.ruvor-users__name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-1) var(--ruvor-space-2);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-users__email {
+  overflow-wrap: anywhere;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-users .ruvor-tag-list {
+  gap: var(--ruvor-space-1);
+}
+
+.ruvor-users .ruvor-btn-group {
+  justify-content: flex-end;
+}
+
+.ruvor-users .ruvor-btn-group .ruvor-btn {
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-users__muted {
+  color: var(--ruvor-text-muted);
+}
+
+/* O diálogo: <dialog> com showModal(). Sem display aqui — o fechado segue oculto pelo
+   navegador. O véu é --ruvor-scrim, escuro nos dois temas. */
+.ruvor-dialog {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-lg);
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  box-shadow: var(--ruvor-shadow);
+}
+
+.ruvor-dialog::backdrop {
+  background: var(--ruvor-scrim);
+}
+
+.ruvor-dialog__body {
+  padding: var(--ruvor-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-dialog__body p {
+  margin: 0;
+}
+
+.ruvor-dialog__list {
+  margin: 0;
+  padding-left: var(--ruvor-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ruvor-space-2);
+  padding: var(--ruvor-space-4) var(--ruvor-space-5);
+  border-top: 1px solid var(--ruvor-border);
+}
+
+/* O campo somente leitura com copiar, e a confirmação de que copiou (ou não). */
+.ruvor-copy {
+  display: flex;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-copy .ruvor-input {
+  font-family: var(--ruvor-font-mono);
+  letter-spacing: 0.04em;
+}
+
+.ruvor-copy__reply {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-1);
+  font-size: var(--ruvor-type-small-size);
+  color: var(--ruvor-validated-text);
+}
+
+.ruvor-copy__reply--critical {
+  color: var(--ruvor-critical-text);
+}
+
 /* O anel sobre fundo escuro: dentro da barra e do bloco de código. Em (0,2,0) e depois dos
    componentes, vence o anel claro de .ruvor-btn, .ruvor-input, .ruvor-select e .ruvor-choice
    (também (0,2,0)) quando eles estão nesses fundos; o link da barra tem regra própria em
@@ -2040,6 +2633,18 @@
   }
 }
 
+/* M2.1b: abaixo de 1024 px, o botão de conta mostra só as iniciais, e o lugar da conta tem a
+   largura do "Entrar" (72 px, mais o respiro e o fio). */
+@media (max-width: 1023px) {
+  .ruvor-topbar__account {
+    width: calc(72px + var(--ruvor-space-3) + 1px);
+  }
+
+  .ruvor-account__name {
+    display: none;
+  }
+}
+
 @media (max-width: 1000px) {
   .ruvor-workspace {
     grid-template-columns: minmax(0, 1fr);
@@ -2076,16 +2681,9 @@
   }
 }
 
-/* M1.6b: estreito. A barra em duas linhas, com a busca embaixo; o conteúdo com menos
-   margem; o título da página no degrau h2. */
-@media (max-width: 720px) {
-  /* A tabela dos proventos cabe em 360 px com menos recuo lateral nas células. */
-  .ruvor-table--end th,
-  .ruvor-table--end td {
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-
+/* M1.6b: a barra estreita, em duas linhas, com a busca embaixo. Até 840 px desde o M2.1b
+   (era 720): entre 721 e 840 px, a linha única deixava a busca com 78 a 156 px. */
+@media (max-width: 840px) {
   .ruvor-topbar {
     height: auto;
     min-height: 60px;
@@ -2104,6 +2702,56 @@
     grid-row: 2;
     max-width: none;
     margin-bottom: var(--ruvor-space-1);
+  }
+
+  /* M2.3 e M2.1b (conta.html): com as chaves e a conta, a barra em três linhas, em quatro
+     colunas — a marca e o alternador de leitura na primeira; a chave de tema e o lugar da
+     conta juntos na segunda, à direita, a conta por último; a busca (quando há) na
+     terceira. Cada peça endereçada pelo que é, não pela posição: com três filhos, o
+     :last-child do M2.3 passaria a ser a conta. O alternador é a chave seguida de outra; a
+     chave de tema, a que segue outra. */
+  .ruvor-topbar:has(> .ruvor-topbar__prefs) {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .ruvor-topbar__prefs {
+    display: contents;
+  }
+
+  .ruvor-topbar__prefs > .ruvor-segmented:has(+ .ruvor-segmented) {
+    grid-column: 2 / -1;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .ruvor-topbar__prefs > .ruvor-segmented + .ruvor-segmented {
+    grid-column: 1 / 4;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .ruvor-topbar__prefs > .ruvor-topbar__account {
+    grid-column: 4;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .ruvor-topbar:has(> .ruvor-topbar__prefs) .ruvor-topbar__search {
+    grid-row: 3;
+  }
+
+  .ruvor-menu {
+    right: var(--ruvor-space-4);
+  }
+}
+
+/* M1.6b: estreito. O conteúdo com menos margem; o título da página no degrau h2. */
+@media (max-width: 720px) {
+  /* A tabela dos proventos cabe em 360 px com menos recuo lateral nas células. */
+  .ruvor-table--end th,
+  .ruvor-table--end td {
+    padding-left: 6px;
+    padding-right: 6px;
   }
 
   .ruvor-content {
@@ -2200,26 +2848,120 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* M2.3: com as duas chaves, a barra em três linhas, na ordem do DOM — a marca e o
-     alternador de leitura na primeira, a chave de tema na segunda, à direita, e a busca
-     (quando há) na terceira. */
-  .ruvor-topbar__prefs {
-    display: contents;
+  /* M2.1b: a cena vira faixa acima do formulário — a marca, o sobretítulo, o título e o
+     texto, menores, com o padrão de pontos menor —, e o formulário vem logo abaixo. Depois
+     de .ruvor-display, para o título da cena vencer o degrau h2 dele. */
+  .ruvor-access {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
   }
 
-  .ruvor-topbar__prefs > :first-child {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
+  .ruvor-scene {
+    padding: var(--ruvor-space-5) var(--ruvor-space-4);
   }
 
-  .ruvor-topbar__prefs > :last-child {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: end;
+  .ruvor-scene::after {
+    width: 220px;
+    height: 220px;
+    inset: auto -60px -90px auto;
+    background-size: 22px 22px;
+    background-image: radial-gradient(circle, var(--ruvor-review) 0 3px, transparent 3.5px);
   }
 
-  .ruvor-topbar:has(> .ruvor-topbar__prefs) .ruvor-topbar__search {
-    grid-row: 3;
+  .ruvor-scene__logo {
+    width: 112px;
+  }
+
+  .ruvor-scene__copy {
+    margin-block: var(--ruvor-space-5) 0;
+  }
+
+  .ruvor-scene__title {
+    font-size: var(--ruvor-type-scene-narrow-size);
+  }
+
+  .ruvor-scene__text {
+    font-size: var(--ruvor-type-body-size);
+  }
+
+  .ruvor-access__side {
+    place-items: start center;
+    padding: var(--ruvor-space-6) var(--ruvor-space-4) var(--ruvor-space-7);
+  }
+
+  .ruvor-auth__title {
+    font-size: var(--ruvor-type-h2-size);
+  }
+
+  /* M2.1b: o formulário de criação em uma coluna, as ações na largura. */
+  .ruvor-form-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ruvor-space-4);
+  }
+
+  .ruvor-form-section__actions {
+    justify-content: stretch;
+  }
+
+  .ruvor-form-section__actions .ruvor-btn {
+    flex: 1;
+  }
+
+  /* M2.1b: a lista vira um cartão por pessoa — o cabeçalho só para o leitor de tela, cada
+     célula numa linha, com o rótulo da coluna antes. */
+  .ruvor-users thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ruvor-users tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ruvor-space-2);
+    padding: var(--ruvor-space-3) 0;
+    border-bottom: 1px solid var(--ruvor-table-rule);
+  }
+
+  .ruvor-users tr:last-child {
+    border-bottom: 0;
+  }
+
+  .ruvor-users td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .ruvor-users td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-label-size);
+    font-weight: var(--ruvor-type-label-weight);
+    letter-spacing: var(--ruvor-type-label-tracking);
+    text-transform: uppercase;
+    color: var(--ruvor-text-muted);
+  }
+
+  .ruvor-users .ruvor-btn-group {
+    justify-content: flex-start;
+  }
+
+  /* M2.1b: o campo com copiar e as ações do diálogo, empilhados. */
+  .ruvor-copy {
+    flex-direction: column;
+  }
+
+  .ruvor-dialog__actions {
+    flex-direction: column-reverse;
+  }
+
+  .ruvor-dialog__actions .ruvor-btn {
+    width: 100%;
   }
 }
