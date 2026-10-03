@@ -10,8 +10,10 @@ import {
 import { Shell } from "./components/Shell";
 import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
+import { PasswordScreen } from "./screens/PasswordScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 import { SignInScreen } from "./screens/SignInScreen";
+import { SignUpScreen } from "./screens/SignUpScreen";
 import { SessionProvider } from "./session/SessionProvider";
 
 /**
@@ -36,9 +38,10 @@ function AssetRoute() {
 /**
  * As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. Na
  * raiz, a rota de layout do estado de sessão (M2.1b, RF-03), pai do casco e das telas fora
- * dele: quem monta `routes` recebe o provedor. A entrada (`/entrar`, RF-04) fica fora do casco,
- * em tela cheia; vem depois dele na lista, e o roteador a escolhe pela especificidade — o
- * caminho fixo ganha do `*` —, não pela ordem.
+ * dele: quem monta `routes` recebe o provedor. A entrada e o cadastro (`/entrar`, `/cadastro`,
+ * RF-04) ficam fora do casco, em tela cheia; vêm depois dele na lista, e o roteador os escolhe
+ * pela especificidade — o caminho fixo ganha do `*` —, não pela ordem. A troca voluntária da
+ * senha (`/conta/senha`) fica no casco; a obrigatória não tem rota (RF-05).
  */
 export const routes: RouteObject[] = [
   {
@@ -49,10 +52,12 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <SearchScreen /> },
           { path: "ativos/:ticker", element: <AssetRoute /> },
+          { path: "conta/senha", element: <PasswordScreen mode="voluntary" /> },
           { path: "*", element: <NotFoundScreen /> },
         ],
       },
       { path: "entrar", element: <SignInScreen /> },
+      { path: "cadastro", element: <SignUpScreen /> },
     ],
   },
 ];

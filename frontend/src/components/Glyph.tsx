@@ -9,6 +9,7 @@
  * Ícone novo entra na tabela abaixo, com o import do arquivo.
  */
 
+import checkCircleDuotone from "@brand/icons/duotone/check-circle.svg?raw";
 import infoDuotone from "@brand/icons/duotone/info.svg?raw";
 import warningDuotone from "@brand/icons/duotone/warning.svg?raw";
 import xCircleDuotone from "@brand/icons/duotone/x-circle.svg?raw";
@@ -23,6 +24,7 @@ import database from "@brand/icons/regular/database.svg?raw";
 import info from "@brand/icons/regular/info.svg?raw";
 import magnifyingGlass from "@brand/icons/regular/magnifying-glass.svg?raw";
 import scales from "@brand/icons/regular/scales.svg?raw";
+import signOut from "@brand/icons/regular/sign-out.svg?raw";
 import spinnerGap from "@brand/icons/regular/spinner-gap.svg?raw";
 import warning from "@brand/icons/regular/warning.svg?raw";
 import x from "@brand/icons/regular/x.svg?raw";
@@ -40,6 +42,7 @@ const REGULAR = {
   info,
   "magnifying-glass": magnifyingGlass,
   scales,
+  "sign-out": signOut,
   "spinner-gap": spinnerGap,
   warning,
   x,
@@ -48,6 +51,7 @@ const REGULAR = {
 
 /** Os duotone só vão nos sinais (`.ruvor-icon`), pela D-93. */
 const DUOTONE = {
+  "check-circle": checkCircleDuotone,
   info: infoDuotone,
   warning: warningDuotone,
   "x-circle": xCircleDuotone,

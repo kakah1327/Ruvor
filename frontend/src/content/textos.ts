@@ -761,6 +761,68 @@ export const TEXTOS = {
   "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
   "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
   "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
+  // A dica da senha e a confirmação diferente, compartilhadas pelo cadastro e pelas duas trocas
+  // de senha (os portões da T6 e da T7): do registro `COMPARTILHADOS` do `senha.html` aprovado,
+  // o mesmo texto do `cadastro.html`. Cada requisito é um validador de `AUTH_PASSWORD_VALIDATORS`.
+  "acesso.senha.dica": "A senha precisa:",
+  "acesso.senha.requisito.tamanho": "ter no mínimo 10 caracteres;",
+  "acesso.senha.requisito.numeros": "não ser só números;",
+  "acesso.senha.requisito.parecida": "não ser parecida com o seu e-mail ou o seu nome;",
+  "acesso.senha.requisito.comum": "não ser uma senha comum.",
+  "acesso.erro.confirmacaoDiferente": "As duas senhas não são iguais.",
+
+  // cadastro.* — criar conta (M2.1b, RF-07): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/cadastro.html` aprovado, as chaves novas; as da entrada são reaproveitadas.
+  // As mensagens da API por campo (`details.fields`) não entram aqui: são dado.
+  "cadastro.titulo": "Crie a sua conta.",
+  "cadastro.sub": "Informe o seu nome, o e-mail e uma senha.",
+  "cadastro.nome.rotulo": "Nome",
+  "cadastro.confirmacao.rotulo": "Repita a senha",
+  "cadastro.pessoal": "A conta é pessoal: você é a única pessoa da organização dela.",
+  "cadastro.pessoal.organizacao":
+    "Se você vai usar o Ruvor numa organização, peça a conta a quem a administra.",
+  "cadastro.criar": "Criar conta",
+  "cadastro.criando": "Criando a conta…",
+  "cadastro.temConta": "Já tem conta?",
+  "cadastro.erro.nomeVazio": "Informe o nome.",
+  "cadastro.erro.confirmacaoVazia": "Repita a senha.",
+  "cadastro.erro.emailTaken": "Este e-mail já tem conta.",
+  "cadastro.erro.emailTakenLink": "Entrar",
+  "cadastro.erro.outro": "Não foi possível criar a conta agora. Tente de novo.",
+
+  // senha.* — trocar a senha, voluntária e obrigatória (M2.1b, RF-08): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/senha.html` aprovado.
+  "senha.eyebrow": "Sua conta",
+  "senha.titulo": "Trocar a senha",
+  "senha.sub": "Confirme a senha atual e escolha uma nova.",
+  "senha.obrigatoria.eyebrow": "Senha provisória",
+  "senha.obrigatoria.titulo": "Troque a senha para continuar.",
+  "senha.obrigatoria.sub":
+    "A sua senha é provisória e precisa ser trocada antes de usar o Ruvor.",
+  // conta(email) — o e-mail de quem entrou (`me.email`).
+  "senha.obrigatoria.conta": (email: string): string => `Você entrou como ${email}.`,
+  "senha.obrigatoria.sair": "Sair",
+  "senha.atual.rotulo": "Senha atual",
+  "senha.nova.rotulo": "Senha nova",
+  "senha.confirmacao.rotulo": "Repita a senha nova",
+  "senha.trocar": "Trocar a senha",
+  "senha.trocando": "Trocando…",
+  "senha.erro.atualVazia": "Informe a senha atual.",
+  "senha.erro.novaVazia": "Informe a senha nova.",
+  "senha.erro.confirmacaoVazia": "Repita a senha nova.",
+  "senha.erro.atualIncorreta": "Senha atual incorreta.",
+  "senha.erro.outro": "Não foi possível trocar a senha agora. Tente de novo.",
+  "senha.sucesso.titulo": "Senha trocada.",
+  "senha.sucesso.texto":
+    "As outras sessões desta conta foram encerradas. Esta continua aberta.",
+  "senha.sucesso.continuar": "Continuar",
+
+  // conta.* — as chaves do `docs/mockups/M2.1b/conta.html` aprovado que a troca de senha usa
+  // (o aviso de sessão terminada do RF-16 e o Sair que falha); o resto de conta.* chega com o menu.
+  "conta.entrar": "Entrar",
+  "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

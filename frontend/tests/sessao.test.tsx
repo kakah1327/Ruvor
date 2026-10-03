@@ -3,6 +3,8 @@
  * logado; forma errada, 401, 500 e erro de rede → anônimo; `loading` enquanto não volta; as
  * ações `setMe`, `reload`, `signOut` e `expired`; fora do provedor, o anônimo do padrão; e o
  * provedor na rota de layout de `routes`, que `createMemoryRouter(routes)` recebe sem nada extra.
+ * E o bloqueio do RF-05 (V-06): com `must_change_password`, a troca obrigatória no lugar do
+ * `<Outlet>`, na mesma URL, menos em `/entrar` e `/cadastro`.
  *
  * O `fetch` é um duplo que responde pelo endereço e pelo método; `null` deixa o pedido pendente.
  */
@@ -214,7 +216,8 @@ describe("as ações", () => {
     await act(() => api.reload());
     expect(api.status === "authenticated" && api.me).toEqual(ME);
     await act(() => api.reload());
-    expect(api.status === "authenticated" && api.me.must_change_password).toBe(true);
+    // Com a marca, o bloqueio do RF-05 tira o Outlet (e o Probe): a troca aparece no lugar.
+    expect(document.querySelector('[data-screen="senha-obrigatoria"]')).not.toBeNull();
     expect(meCalls()).toHaveLength(3);
   });
 
@@ -266,11 +269,75 @@ describe("as ações", () => {
     expect(api.status).toBe("anonymous");
     expect(api.status === "anonymous" && api.ended).toBe(true);
   });
+});
 
-  it("com must_change_password, o Outlet segue de pé (o bloqueio do RF-05 chega na T12)", async () => {
-    reply("GET /api/v1/auth/me", ok({ ...ME, must_change_password: true }));
-    renderProvider();
+describe("o bloqueio do RF-05", () => {
+  /** O provedor num roteador, com a troca isenta em /entrar e /cadastro e um filho em `*`. */
+  function renderAt(path: string) {
+    const router = createMemoryRouter(
+      [
+        {
+          element: <SessionProvider />,
+          children: [
+            { path: "entrar", element: <Probe /> },
+            { path: "cadastro", element: <Probe /> },
+            { path: "*", element: <Probe /> },
+          ],
+        },
+      ],
+      { initialEntries: [path] },
+    );
+    render(<RouterProvider router={router} />);
+    return router;
+  }
+
+  const required = () => document.querySelector('[data-screen="senha-obrigatoria"]');
+
+  it.each(["/", "/ativos/ITUB4", "/conta/senha"])(
+    "com must_change_password, %s mostra a troca obrigatória no lugar do Outlet, na mesma URL",
+    async (path) => {
+      reply("GET /api/v1/auth/me", ok({ ...ME, must_change_password: true }));
+      const router = renderAt(path);
+      await waitFor(() => expect(required()).not.toBeNull());
+      expect(router.state.location.pathname).toBe(path);
+      // o Outlet não desenhou: o Probe só viu o carregando.
+      expect(api.status).toBe("loading");
+    },
+  );
+
+  it.each(["/entrar", "/cadastro"])(
+    "com must_change_password, %s monta a tela dela, não a troca",
+    async (path) => {
+      reply("GET /api/v1/auth/me", ok({ ...ME, must_change_password: true }));
+      renderAt(path);
+      await waitFor(() => expect(api.status).toBe("authenticated"));
+      expect(required()).toBeNull();
+    },
+  );
+
+  it("sem must_change_password, o Outlet de pé e nenhuma troca", async () => {
+    reply("GET /api/v1/auth/me", ok(ME));
+    renderAt("/ativos/ITUB4");
     await waitFor(() => expect(api.status).toBe("authenticated"));
+    expect(required()).toBeNull();
+  });
+
+  it("anônimo e carregando: nenhuma troca", async () => {
+    renderAt("/ativos/ITUB4");
+    await flush();
+    expect(api.status).toBe("loading");
+    expect(required()).toBeNull();
+  });
+
+  it("fora de um roteador, com filhos: sem URL para isentar, o bloqueio não se aplica", async () => {
+    reply("GET /api/v1/auth/me", ok({ ...ME, must_change_password: true }));
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    );
+    await waitFor(() => expect(api.status).toBe("authenticated"));
+    expect(required()).toBeNull();
   });
 });
 

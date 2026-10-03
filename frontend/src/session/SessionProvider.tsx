@@ -12,8 +12,12 @@
  * que volta **depois** de uma ação mais nova é descartada, para a resposta velha não desfazer
  * a entrada, a saída ou o fim de sessão.
  *
- * O bloqueio do RF-05 (a troca obrigatória no lugar do `<Outlet>`) chega na T12; até lá, com
- * `must_change_password`, o provedor renderiza o `<Outlet>` como sempre.
+ * O bloqueio do RF-05: com `me.must_change_password`, o provedor renderiza a troca obrigatória
+ * (`PasswordScreen` no modo `required`) **no lugar do `<Outlet>`**, na URL corrente, sem navegar
+ * — exceto em `/entrar` e `/cadastro`, que montam a tela deles: a entrada bem-sucedida navega ao
+ * `next`, e ele mostra a troca. Depois dela, o `reload()` tira a marca e o `<Outlet>` volta na
+ * mesma URL. Fora de um roteador (o provedor com filhos), não há URL para isentar: o bloqueio
+ * não se aplica.
  */
 import {
   createContext,
@@ -26,9 +30,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { Outlet } from "react-router";
+import { Outlet, useInRouterContext, useLocation } from "react-router";
 
 import { ApiError, apiGet, apiPost } from "../api/client";
+import { PasswordScreen } from "../screens/PasswordScreen";
 import { isMe, type Me } from "./types";
 
 export type Session =
@@ -71,6 +76,23 @@ async function readSession(): Promise<Session> {
   } catch {
     return ANONYMOUS;
   }
+}
+
+/** As telas que a troca obrigatória não cobre (RF-04, RF-05): a entrada leva ao `next`. */
+const EXEMPT = new Set(["/entrar", "/cadastro"]);
+
+/**
+ * O bloqueio do RF-05, dentro do roteador: a troca obrigatória no lugar do conteúdo, na URL
+ * corrente, enquanto `must_change_password`. Sempre no mesmo lugar da árvore — o conteúdo não
+ * remonta quando a sessão sai do carregando.
+ */
+function RequiredPasswordGate(props: { session: Session; children: ReactNode }) {
+  const { pathname } = useLocation();
+  const blocked =
+    props.session.status === "authenticated" &&
+    props.session.me.must_change_password &&
+    !EXEMPT.has(pathname);
+  return blocked ? <PasswordScreen mode="required" /> : props.children;
 }
 
 export function SessionProvider(props: { children?: ReactNode }): JSX.Element {
@@ -128,9 +150,16 @@ export function SessionProvider(props: { children?: ReactNode }): JSX.Element {
     [session, setMe, reload, signOut, expired],
   );
 
+  const inRouter = useInRouterContext();
+  const content = props.children === undefined ? <Outlet /> : props.children;
+
   return (
     <SessionContext value={value}>
-      {props.children === undefined ? <Outlet /> : props.children}
+      {inRouter ? (
+        <RequiredPasswordGate session={session}>{content}</RequiredPasswordGate>
+      ) : (
+        content
+      )}
     </SessionContext>
   );
 }
