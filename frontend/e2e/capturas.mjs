@@ -28,7 +28,19 @@
 // abre os dois nos dois níveis (grava `ruvor-reading` antes da carga e troca pelo alternador), nos
 // dois temas, em 360 e 1440 px, e confere `data-reading`, as marcas `data-collapsible`/`data-open`
 // e zero pedido `/api/v1/` entre a troca de nível e 2 s depois. Sem chave nova.
+//
+// M2.1b (D-140, docs/planos/M2.1b-telas-de-acesso.md, T16 e "A execução real"): o pedido de
+// cálculo exige conta. O passo 4 (sob demanda) cria a conta dele por `criarConta(context)` —
+// `context.request`, que divide os cookies com as páginas do contexto: `GET /api/v1/auth/csrf` e
+// `POST /api/v1/auth/signup` com o `X-CSRFToken` do cookie, e-mail `e2e-sd-<ts>@exemplo.com` —, e
+// as telas dos candidatos abrem já logadas, no mesmo contexto. Uma conta por execução com o passo
+// ligado, e um único pedido no limite `auth` (o `signup`; o `auth/csrf` não conta). Uma chave nova:
+//   RUVOR_E2E_SO_CONTA     padrão 0; com 1, só cria a conta, confere que a tela do ITUB4 abre com o
+//                          menu logado (`data-account="authenticated"`) e sai — sem a guarda do E1
+//                          e sem apagar as capturas: grava capturas/resultado-conta.json. Rodar 65 s
+//                          depois do `acesso.mjs`, para não somar à janela do limite `auth` dele.
 
+import { randomBytes } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -40,11 +52,16 @@ const OUT = path.resolve("capturas");
 const ON_DEMAND = (process.env.RUVOR_E2E_SOB_DEMANDA ?? "1") !== "0";
 const MEASURE_RATE = (process.env.RUVOR_E2E_MEDIR_TAXA ?? "0") === "1";
 const COMPANY = (process.env.RUVOR_E2E_EMPRESA ?? "").trim().toUpperCase() || null;
+const ONLY_ACCOUNT = (process.env.RUVOR_E2E_SO_CONTA ?? "0") === "1";
 
 // A medida da taxa: a janela da taxa do anônimo é de um minuto; 65 s sem pedido a esvaziam.
 const RATE_IDLE_MS = 65_000;
-// Teto de cargas da medida: a 60/min e catorze pedidos por carga, o 429 chega na quinta.
+// Teto de cargas da medida: a 60/min e quinze pedidos por carga — os catorze das rotas e, desde o
+// M2.1b, o `auth/me` da sessão —, o 429 chega na quinta.
 const RATE_MAX_LOADS = 30;
+
+// M2.1b: a conta do passo sob demanda (e da chave RUVOR_E2E_SO_CONTA).
+const ACCOUNT_NAME = "Sob Demanda E2E";
 
 // O pedido da sugestão (SUGGESTION_PATH em frontend/src/components/SearchBox.tsx, RF-10): o
 // roteiro só enxerga frontend/e2e. O "e mais N" mostra `count` − SUGGESTION_LIMIT.
@@ -91,7 +108,7 @@ const VARIANTS = [
 const result = {
   base: BASE,
   started_at: new Date().toISOString(),
-  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY },
+  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY, only_account: ONLY_ACCOUNT },
   checks: [],
   sections: [],
   rate: null,
@@ -103,6 +120,7 @@ const result = {
   e1_guard: null,
   reading: [],
   classification: null,
+  account: null,
   page_errors: [],
 };
 
@@ -660,7 +678,71 @@ async function measure(browser) {
   });
 }
 
-/** Passo 4: um ativo sem preço, pedido pela tela, até três candidatos. */
+/**
+ * M2.1b (D-140): a conta do pedido de cálculo, criada pela API, por `context.request` — que divide
+ * os cookies com as páginas do contexto: a tela abre já logada. `GET /api/v1/auth/csrf` (fora do
+ * limite `auth`) e `POST /api/v1/auth/signup` com o `X-CSRFToken` do cookie — o único pedido no
+ * limite `auth`. Devolve o e-mail criado; falha levanta.
+ */
+async function criarConta(context) {
+  const ts = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+  const email = `e2e-sd-${ts}@exemplo.com`;
+  // Sem o instante nem o nome: o `UserAttributeSimilarityValidator` recusaria a parecida com o
+  // e-mail. Doze bytes aleatórios passam dos dez caracteres e não são só número nem comuns.
+  const password = `Rv-${randomBytes(12).toString("base64url")}`;
+  const csrf = await context.request.get(`${BASE}/api/v1/auth/csrf`);
+  if (csrf.status() !== 204) throw new Error(`auth/csrf: ${csrf.status()}`);
+  const token = (await context.cookies(BASE)).find((c) => c.name === "csrftoken")?.value;
+  if (!token) throw new Error("auth/csrf sem o cookie csrftoken");
+  const response = await context.request.post(`${BASE}/api/v1/auth/signup`, {
+    headers: { "X-CSRFToken": token },
+    data: { email, name: ACCOUNT_NAME, password },
+  });
+  if (response.status() !== 201) {
+    throw new Error(`auth/signup: ${response.status()} ${await response.text()}`);
+  }
+  console.log(`conta criada: ${email}`);
+  return email;
+}
+
+/**
+ * M2.1b: só a conta (RUVOR_E2E_SO_CONTA=1) — cria a conta por `criarConta`, abre a tela do ITUB4
+ * no mesmo contexto e confere o menu logado (`data-account="authenticated"`).
+ */
+async function onlyAccount(browser) {
+  const variant = VARIANTS[0];
+  const context = await newContext(browser, variant);
+  try {
+    result.account = { email: await criarConta(context) };
+    const page = await context.newPage();
+    watchErrors(page, "só a conta");
+    const response = await page.goto(`${BASE}/ativos/ITUB4`);
+    const ready = await page
+      .locator('[data-ready="true"]')
+      .first()
+      .waitFor({ timeout: 60_000 })
+      .then(() => true)
+      .catch(() => false);
+    check("só a conta: a tela do ITUB4 chega a data-ready", ready && response?.ok(), { status: response?.status() });
+    const signedIn = await page
+      .locator('[data-account="authenticated"]')
+      .waitFor({ timeout: 30_000 })
+      .then(() => true)
+      .catch(() => false);
+    check('só a conta: a tela do ITUB4 abre com o menu logado (data-account="authenticated")', signedIn, {
+      email: result.account.email,
+    });
+    await page.screenshot({ path: path.join(OUT, "so-conta-ITUB4.png"), fullPage: true });
+    result.captures.push({ file: "so-conta-ITUB4.png" });
+  } finally {
+    await context.close();
+  }
+}
+
+/**
+ * Passo 4: um ativo sem preço, pedido pela tela, até três candidatos. M2.1b: num contexto só, com
+ * a conta de `criarConta` — uma conta por execução —, uma página por candidato.
+ */
 async function onDemand(browser, request) {
   const assets = await allAssets(request);
   const candidates = assets
@@ -669,11 +751,20 @@ async function onDemand(browser, request) {
   result.on_demand.candidates_total = candidates.length;
   result.on_demand.candidates_first = candidates.slice(0, MAX_CANDIDATES);
 
+  const variant = VARIANTS[0];
+  const context = await newContext(browser, variant);
+  try {
+    result.on_demand.account = await criarConta(context);
+    return await onDemandCandidates(context, candidates, request);
+  } finally {
+    await context.close();
+  }
+}
+
+async function onDemandCandidates(context, candidates, request) {
   for (const ticker of candidates.slice(0, MAX_CANDIDATES)) {
     const attempt = { ticker };
     result.on_demand.attempts.push(attempt);
-    const variant = VARIANTS[0];
-    const context = await newContext(browser, variant);
     const page = await context.newPage();
     watchErrors(page, `sob demanda ${ticker}`);
     await page.goto(`${BASE}/ativos/${ticker}`);
@@ -688,7 +779,7 @@ async function onDemand(browser, request) {
     if ((await button.count()) === 0) {
       attempt.outcome = "sem botão";
       console.log(`sob demanda ${ticker}: sem o botão "Calcular o risco" (estado ${attempt.initial_state})`);
-      await context.close();
+      await page.close();
       continue;
     }
 
@@ -707,7 +798,7 @@ async function onDemand(browser, request) {
     if (!started) {
       attempt.outcome = "não entrou em E4/E5 em 30 s";
       console.log(`sob demanda ${ticker}: não entrou em E4/E5 (estado ${attempt.started_state})`);
-      await context.close();
+      await page.close();
       continue;
     }
 
@@ -736,12 +827,12 @@ async function onDemand(browser, request) {
       await settle(page);
       await page.screenshot({ path: path.join(OUT, `sob-demanda-${ticker}-E1.png`), fullPage: true });
       result.captures.push({ file: `sob-demanda-${ticker}-E1.png`, riskState: "E1" });
-      await context.close();
+      await page.close();
       result.on_demand.computed = { ticker, elapsed_ms: attempt.elapsed_ms };
       return ticker;
     }
     attempt.outcome = finished ? attempt.final_state : "sem estado final em 10 min";
-    await context.close();
+    await page.close();
   }
   return null;
 }
@@ -953,13 +1044,14 @@ async function measureRate(browser) {
 }
 
 async function main() {
-  // A medida da taxa não apaga as capturas das conferências: grava o próprio resultado ao lado.
-  if (!MEASURE_RATE) await rm(OUT, { recursive: true, force: true });
+  // A medida da taxa e só a conta (M2.1b) não apagam as capturas das conferências: gravam o
+  // próprio resultado ao lado.
+  if (!MEASURE_RATE && !ONLY_ACCOUNT) await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
 
   // M2.3: a guarda do E1 antes de abrir o navegador; sem E1, aborta (a medida da taxa não pede a
-  // API antes dela e não passa pela guarda).
-  if (!MEASURE_RATE && !(await e1Guard())) {
+  // API antes dela e não passa pela guarda; só a conta, do M2.1b, também não).
+  if (!MEASURE_RATE && !ONLY_ACCOUNT && !(await e1Guard())) {
     console.log("abortado: o ITUB4 e o PETR4 precisam estar em E1 (Beat parado, nenhum cálculo em curso)");
     result.aborted = "e1_guard";
     await finish();
@@ -972,6 +1064,9 @@ async function main() {
     if (MEASURE_RATE) {
       // Só a medida da taxa (RF-17): nada antes dela pede a API.
       await measureRate(browser);
+    } else if (ONLY_ACCOUNT) {
+      // M2.1b: só a conta e a tela do ITUB4 logada.
+      await onlyAccount(browser);
     } else {
       // M2.3 (RF-12): o ITUB4 e o PETR4 nos dois níveis, nos dois temas, em 360 e 1440 px.
       for (const ticker of READING_TICKERS) {
@@ -1035,7 +1130,8 @@ async function finish() {
 
   result.finished_at = new Date().toISOString();
   result.ok = result.checks.every((c) => c.ok);
-  await writeFile(path.join(OUT, MEASURE_RATE ? "resultado-taxa.json" : "resultado.json"), `${JSON.stringify(result, null, 2)}\n`);
+  const file = MEASURE_RATE ? "resultado-taxa.json" : ONLY_ACCOUNT ? "resultado-conta.json" : "resultado.json";
+  await writeFile(path.join(OUT, file), `${JSON.stringify(result, null, 2)}\n`);
   const failed = result.checks.filter((c) => !c.ok);
   console.log(`\n${result.checks.length} conferências, ${failed.length} falharam; ${result.captures.length} capturas em ${OUT}`);
   if (result.page_errors.length) console.log(`erros de página: ${JSON.stringify(result.page_errors)}`);
