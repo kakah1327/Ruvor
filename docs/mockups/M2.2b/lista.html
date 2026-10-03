@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — as carteiras: a barra, a lista e a criação (mockup, M2.2b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da lista e da criação de carteiras (T2 do plano M2.2b): o RF-01 a o RF-06 da spec,
+   * a D-180 e a D-181, sobre a barra APROVADA do M2.1b (docs/mockups/M2.1b/conta.html, no ramo
+   * marco1/M2.1b-telas-de-acesso: o menu de conta por último, largura fixa, três linhas até
+   * 840 px) e a busca do M1.6b (docs/mockups/M1.6b/busca.html, frontend/src/components/SearchBox.tsx).
+   * Dado fictício, sem pedido à API: abre por file:// e pelo Vite.
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal.
+   *
+   * O que é novo, e o portão aprova:
+   *   - "Carteiras" na barra (D-180): .ruvor-nav do kit, logo depois da marca, só com a sessão
+   *     logada e a conta pronta; marcado como corrente nas rotas da carteira;
+   *   - o ponto de quebra da barra passa de 840 a 920 px (ver "Para o portão", na vista "os
+   *     textos"): com o item, a linha única de 841 px deixaria a busca com 123 px;
+   *   - a lista (carregando, vazia, com carteiras, "mostrar mais", erro, a chegada do arquivamento);
+   *   - a criação, com o editor da composição (a soma ao vivo em centésimos inteiros, as
+   *     conferências do cliente, cada details.reason da API na linha certa) e o seletor de ação
+   *     (a busca do catálogo, só ação ativa escolhível; índice, inativa e repetida desabilitadas,
+   *     com o motivo).
+   *
+   * Estilo local: m21b- (a barra do M2.1b, COPIADA SEM RENOMEAR: é o desenho aprovado lá, e a
+   * T10 do M2.1b o leva ao kit), m22b- (o que vai ao kit na T6 deste bloco, se o portão aprovar)
+   * e mk- (a moldura do mockup, que não é tela).
+   */
+
+  /* ================================================================ m21b-: COPIADO de
+     docs/mockups/M2.1b/conta.html (ramo marco1/M2.1b-telas-de-acesso), sem mudança. */
+  .m21b-slot {
+    box-sizing: border-box;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 200px;
+    min-height: 30px;
+    padding-left: var(--ruvor-space-3);
+    border-left: 1px solid var(--ruvor-topbar-control);
+  }
+  .ruvor-topbar.m21b-bar { position: relative; }
+  .m21b-signin {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1px solid var(--ruvor-topbar-control);
+    border-radius: var(--ruvor-radius-sm);
+    color: var(--ruvor-topbar-text);
+    font-size: var(--ruvor-type-small-size);
+    font-weight: var(--ruvor-type-small-weight);
+    line-height: var(--ruvor-type-micro-leading);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .m21b-signin:hover { background: var(--ruvor-topbar-control); }
+  .m21b-account {
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    background: transparent;
+    border: 0;
+    border-radius: var(--ruvor-radius-sm);
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+    cursor: pointer;
+    gap: var(--ruvor-space-2);
+  }
+  .m21b-account:hover .m21b-account__name { color: var(--ruvor-topbar-text); }
+  .m21b-account__name { min-width: 0; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m21b-account .ruvor-avatar { color: var(--ruvor-topbar-text); }
+  .m21b-account .ruvor-glyph { width: 12px; height: 12px; color: var(--ruvor-topbar-link); }
+  .m21b-account[aria-expanded="true"] .ruvor-glyph { transform: rotate(180deg); }
+  .m21b-menu {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + var(--ruvor-space-1));
+    right: 26px;
+    width: 280px;
+    max-width: calc(100vw - 2 * var(--ruvor-space-4));
+    box-sizing: border-box;
+    background: var(--ruvor-surface);
+    color: var(--ruvor-ink);
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    box-shadow: var(--ruvor-shadow);
+    overflow: hidden;
+  }
+  .m21b-menu[hidden] { display: none; }
+  .m21b-menu__error { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-4) var(--ruvor-space-3); color: var(--ruvor-critical-text); font-size: var(--ruvor-type-small-size); }
+  .m21b-menu__who, .m21b-menu__org { padding: var(--ruvor-space-3) var(--ruvor-space-4); }
+  .m21b-menu__who { border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__name { margin: 0; font-weight: var(--ruvor-type-small-weight); overflow-wrap: anywhere; }
+  .m21b-menu__email { margin: 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__org { display: flex; flex-direction: column; gap: var(--ruvor-space-1); background: var(--ruvor-table-head); border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__org .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m21b-menu__org p:last-child { margin: 0; font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__list { list-style: none; margin: 0; padding: var(--ruvor-space-1) 0; }
+  .m21b-menu__item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--ruvor-space-2);
+    width: 100%;
+    padding: 9px var(--ruvor-space-4);
+    border: 0;
+    background: transparent;
+    color: var(--ruvor-ink);
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .m21b-menu__item:hover { background: var(--ruvor-control-hover); }
+  .m21b-menu__item .ruvor-glyph { color: var(--ruvor-text-muted); }
+  .m21b-menu__sep { height: 1px; margin: var(--ruvor-space-1) 0; background: var(--ruvor-table-rule); }
+  .ruvor-topbar .m21b-menu :focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: -2px; }
+  .m21b-notice .ruvor-btn { align-self: flex-start; }
+  .m21b-page-notice { max-width: 640px; }
+  @media (max-width: 1023px) {
+    .m21b-slot { width: calc(72px + var(--ruvor-space-3) + 1px); }
+    .m21b-account__name { display: none; }
+  }
+  @media (max-width: 840px) {
+    .ruvor-topbar.m21b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
+    .m21b-bar .ruvor-topbar__spacer { display: none; }
+    .m21b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m21b-bar .ruvor-topbar__prefs { display: contents; }
+    .m21b-menu { right: var(--ruvor-space-4); }
+    .ruvor-topbar.m21b-bar { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
+  }
+
+  /* ================================================================ m22b-: NOVO */
+
+  /* --- A barra com "Carteiras" (D-180) ------------------------------------------------
+     O item é o .ruvor-nav do kit, logo depois da marca, em DOM: marca, item, busca, chaves.
+     Só existe com a sessão logada e a conta pronta: sem ele, a barra é a do M2.1b, igual.
+     Acima de 920 px, uma linha: a marca, o item (a 24 px dela, o gap do .ruvor-nav), a busca e
+     as chaves. A regra [hidden] precisa sobreviver: .ruvor-nav tem display: flex no kit. */
+  .m22b-nav[hidden] { display: none; }
+  /* O kit esconde o .ruvor-nav até 1000 px (components.css, o @media (max-width: 1000px), do
+     tempo das telas de referência): o item fica em todas as larguras. Para a T6: a vitrine
+     (docs/mockups/M1.6a/kit.html) usa o .ruvor-nav com cinco links, e a regra do kit vale para
+     ela; a exceção vai por um modificador escopado (ex.: .ruvor-nav--account), não por apagar
+     a regra. */
+  .ruvor-topbar.m22b-bar > .m22b-nav:not([hidden]) { display: flex; }
+  .ruvor-topbar.m22b-bar:has(> .m22b-nav:not([hidden])) { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+  .m22b-bar > .m22b-nav { margin-left: -14px; }   /* 38 px do gap da barra − 14 = 24 px da marca */
+
+  /* Até 920 px (NOVO PONTO DE QUEBRA; o do M2.1b era 840 px): a barra em três linhas. As
+     regras repetem as do M2.1b até 840 px (acima), estendidas a 920 px, e acrescentam o item.
+     Com o item: cinco colunas — a marca, o item e o alternador na primeira linha; o tema e a
+     conta na segunda, à direita, a conta por último (o lugar do M2.1b, que não se move); a
+     busca na terceira. Sem o item: as quatro colunas do M2.1b. */
+  @media (max-width: 920px) {
+    .ruvor-topbar.m22b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .m22b-bar .ruvor-topbar__spacer { display: none; }
+    .m22b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m22b-bar .ruvor-topbar__prefs { display: contents; }
+    .m22b-bar .m21b-menu { right: var(--ruvor-space-4); }
+    .m22b-bar > .ruvor-brand { grid-column: 1; grid-row: 1; }
+    .m22b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .m22b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
+    .m22b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
+    .ruvor-topbar.m22b-bar:has(> .m22b-nav:not([hidden])) { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+    .m22b-bar > .m22b-nav { grid-column: 2; grid-row: 1; margin-left: 0; align-self: stretch; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 3 / -1; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 5; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > .m21b-slot { grid-column: 5; }
+  }
+
+  /* --- A cabeça da página ------------------------------------------------------------- */
+  .m22b-head { flex-wrap: wrap; }
+  .m22b-head .ruvor-sub { margin-bottom: 0; }
+  .m22b-head__org { margin: var(--ruvor-space-2) 0 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+
+  /* --- A lista ------------------------------------------------------------------------ */
+  .m22b-list { table-layout: auto; }
+  .m22b-list th:not(:first-child), .m22b-list td:not(:first-child) { white-space: nowrap; }
+  .m22b-list__name { font-weight: var(--ruvor-type-small-weight); color: var(--ruvor-ink); text-decoration: none; overflow-wrap: anywhere; }
+  .m22b-list__name:hover { text-decoration: underline; }
+  .m22b-list__name:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: var(--ruvor-radius-sm); }
+  .m22b-list__muted { color: var(--ruvor-text-muted); }
+  .m22b-list__skel td { padding-block: 14px; }
+  .m22b-list__skel .ruvor-skeleton { display: block; height: 12px; }
+  .m22b-more { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-3) 18px; border-top: 1px solid var(--ruvor-table-rule); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m22b-more__error { flex-basis: 100%; margin: 0; color: var(--ruvor-critical-text); }
+
+  /* --- O formulário de criação -------------------------------------------------------- */
+  .m22b-form { display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .m22b-form__fields { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: start; }
+  .m22b-form__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); }
+  .m22b-form__general { margin: 0; }
+  .m22b-group { display: flex; flex-direction: column; gap: var(--ruvor-space-3); margin: 0; padding: 0; border: 0; min-width: 0; }
+  .m22b-group__title { margin: 0; padding: 0; font-size: var(--ruvor-type-small-size); font-weight: var(--ruvor-type-small-weight); }
+
+  /* --- O seletor de ação (D-181): a busca do catálogo dentro do editor ---------------- */
+  .m22b-picker { position: relative; max-width: 440px; }
+  .m22b-picker .ruvor-search__popover { min-width: 0; }
+  .m22b-picker .ruvor-search__list { max-height: 320px; overflow-y: auto; }
+  .m22b-pick > .ruvor-search__link { cursor: pointer; }
+  .m22b-pick--off > .ruvor-search__link { cursor: not-allowed; }
+  .m22b-pick--off > .ruvor-search__link:hover { background: transparent; }
+  .m22b-pick--off.ruvor-search__option--active > .ruvor-search__link { background: var(--ruvor-control-hover); box-shadow: inset 3px 0 0 var(--ruvor-border); }
+  .m22b-pick--off .ruvor-search__ticker, .m22b-pick--off .ruvor-search__name b { color: var(--ruvor-text-muted); }
+  .m22b-pick__why { color: var(--ruvor-text) !important; }
+
+  /* --- O editor da composição --------------------------------------------------------- */
+  .m22b-editor { table-layout: fixed; }
+  .m22b-editor col.m22b-editor__weight { width: 180px; }
+  .m22b-editor col.m22b-editor__remove { width: 56px; }
+  .m22b-editor td { vertical-align: top; }
+  .m22b-editor__ticker { font-family: var(--ruvor-font-mono); font-weight: var(--ruvor-type-small-weight); font-size: var(--ruvor-type-small-size); }
+  .m22b-editor__name { display: block; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); overflow-wrap: anywhere; }
+  .m22b-editor .ruvor-input { padding: 7px 9px; text-align: right; font-family: var(--ruvor-font-mono); font-variant-numeric: tabular-nums; }
+  .m22b-editor .ruvor-field__error { display: block; margin-top: var(--ruvor-space-1); }
+  .m22b-editor .ruvor-btn--icon { width: 32px; height: 32px; }
+  .m22b-editor__empty td { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m22b-editor tfoot td { border-top: 1px solid var(--ruvor-border); border-bottom: 0; background: var(--ruvor-table-head); vertical-align: middle; }
+  .m22b-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-1) var(--ruvor-space-3); }
+  .m22b-sum__value { font-family: var(--ruvor-font-mono); font-variant-numeric: tabular-nums; font-weight: var(--ruvor-type-small-weight); }
+  .m22b-sum__gap { font-size: var(--ruvor-type-small-size); color: var(--ruvor-text-muted); }
+  .m22b-sum__gap--exact { color: var(--ruvor-validated-text); }
+  .m22b-sum__out { flex-basis: 100%; margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .m22b-sum .ruvor-field__error { flex-basis: 100%; }
+  .m22b-sum-weight { text-align: right; }
+
+  @media (max-width: 720px) {
+    .m22b-form__fields { grid-template-columns: minmax(0, 1fr); }
+    .m22b-picker { max-width: none; }
+    /* A lista em blocos: uma carteira por bloco, os campos com o rótulo em cima. */
+    .m22b-list thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .m22b-list tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-3) var(--ruvor-space-4); border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m22b-list tr:last-child { border-bottom: 0; }
+    .m22b-list td { display: block; padding: 0; border: 0; white-space: normal !important; }
+    .m22b-list td:first-child { grid-column: 1 / -1; }
+    .m22b-list td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-label-size); font-weight: var(--ruvor-type-label-weight); letter-spacing: var(--ruvor-type-label-tracking); text-transform: uppercase; color: var(--ruvor-text-muted); }
+    .m22b-more { padding-inline: var(--ruvor-space-4); }
+    /* O editor em 360 px: menos recuo nas células, o peso mais estreito. */
+    .m22b-editor th, .m22b-editor td { padding-left: 6px; padding-right: 6px; }
+    .m22b-editor col.m22b-editor__weight { width: 96px; }
+    .m22b-editor col.m22b-editor__remove { width: 44px; }
+    .ruvor-panel__body.m22b-form-body { padding: var(--ruvor-space-4) var(--ruvor-space-3); }
+  }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-bar .ruvor-btn:disabled { opacity: .45; cursor: default; }
+  .mk-bar__hint { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-tail[hidden] { display: none; }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); max-width: 360px; }
+  .mk-frame iframe { width: 360px; height: 900px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-widths { display: flex; flex-direction: column; gap: var(--ruvor-space-4); overflow-x: auto; }
+  .mk-widths .mk-frame p { max-width: none; }
+  .mk-widths iframe { height: 150px; flex: none; }
+  .mk-widths .mk-frame--menu iframe { height: 460px; }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 26%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-code[hidden] { display: none; }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code, .mk-pad code, .mk-tail code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  [data-moldura="0"] .mk-tail { display: none; }
+  [data-moldura="0"] .mk-code { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-down" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-sign-out" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol>
+  <symbol id="i-buildings" viewBox="0 0 256 256"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-briefcase" viewBox="0 0 256 256"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+  <symbol id="i-duo-x-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-duo-check-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.2b · as carteiras · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Sessão">
+    <span>Sessão:</span>
+    <button class="ruvor-btn" type="button" data-mk-sessao="carregando">carregando</button>
+    <button class="ruvor-btn" type="button" data-mk-sessao="anonimo">anônimo</button>
+    <button class="ruvor-btn" type="button" data-mk-sessao="logado">logado</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="A lista">
+    <span>Lista:</span>
+    <button class="ruvor-btn" type="button" data-mk-lista="carregando">carregando</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="vazia">vazia</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="com">com carteiras</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="mais">com "mostrar mais"</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="maisErro">"mostrar mais" falhou</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="erro">erro</button>
+    <button class="ruvor-btn" type="button" data-mk-lista="arquivada">depois de arquivar</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="A criação">
+    <span>Criação:</span>
+    <button class="ruvor-btn" type="button" data-mk-preset="fechada">fechada</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="vazia">vazia</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="abaixo">soma abaixo</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="acima">soma acima</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="exata">0,01 + 65,40 + 34,59</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="texto">o texto como foi digitado</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="limite">20 ações</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="As conferências do cliente">
+    <span>Conferências do cliente:</span>
+    <button class="ruvor-btn" type="button" data-mk-preset="confNomeValor">nome e valor</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="confContagem">uma ação só</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="confPesos">os pesos</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="confSoma">a soma</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="As respostas da API">
+    <span>Resposta da API:</span>
+    <button class="ruvor-btn" type="button" data-mk-preset="apiItems">items (os cinco motivos)</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="apiContagem">count_out_of_range</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="apiSoma">weights_sum</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="apiForma">invalid_parameter</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="apiRede">rede, 5xx, 429, csrf_failed</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="api401">401</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="enviando">enviando</button>
+    <button class="ruvor-btn" type="button" data-mk-preset="api201">201</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="O seletor">
+    <span>Seletor:</span>
+    <button class="ruvor-btn" type="button" data-mk-seletor="buscando">buscando</button>
+    <button class="ruvor-btn" type="button" data-mk-seletor="resultados">com desabilitados</button>
+    <button class="ruvor-btn" type="button" data-mk-seletor="nenhumaServe">só o que não serve</button>
+    <button class="ruvor-btn" type="button" data-mk-seletor="semResultado">sem resultado</button>
+    <button class="ruvor-btn" type="button" data-mk-seletor="erro">erro</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk-vista="pagina">a página</button>
+    <button class="ruvor-btn" type="button" data-mk-vista="barras">a barra · larguras</button>
+    <button class="ruvor-btn" type="button" data-mk-vista="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk-vista="textos">os textos</button>
+  </div>
+  <p class="mk-bar__hint">O tema e o nível se trocam pela barra da tela, abaixo. O editor é vivo: digite os pesos, busque uma ação no seletor (o catálogo é fictício, filtrado como a API filtra), remova, e clique em "Criar carteira" — as conferências do cliente rodam; passando nelas, a resposta é a 201.</p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar m21b-bar m22b-bar" data-part="barra">
+  <a class="ruvor-brand" href="#" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <!-- NOVO (D-180): o item, só com a sessão logada e a conta pronta. -->
+  <nav class="ruvor-nav m22b-nav" data-part="nav" data-t-aria="carteiras.nav.rotulo" hidden>
+    <a class="ruvor-nav__link ruvor-nav__link--on" href="#" aria-current="page" title="/carteiras" data-t="carteiras.nav"></a>
+  </nav>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="ruvor-topbar__prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+    <div class="m21b-slot" data-account="loading" data-slot></div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full">
+  <!-- /carteiras -->
+  <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="pagina" data-screen="carteiras" hidden>
+    <p class="mk-tail" data-tail></p>
+    <div class="ruvor-page-head m22b-head" data-slot-head></div>
+    <div data-slot-body class="ruvor-stack ruvor-stack--loose"></div>
+  </main>
+
+  <div class="mk-view mk-pad" data-view="barras" hidden>
+    <p class="mk-tail">Moldura: a barra em cada largura do V-01 (e nas duas vizinhas do novo ponto de quebra, 921 e 920 px), na sessão, no nível e no tema escolhidos. Cada quadro tem a largura indicada; a moldura rola na horizontal, a barra não. Logado: "Carteiras" logo depois da marca; o lugar da conta fica onde o M2.1b o pôs. Anônimo e carregando: a barra do M2.1b, sem o item.</p>
+    <div class="mk-widths" data-frames-wide></div>
+  </div>
+
+  <div class="mk-view mk-pad" data-view="estreito" hidden>
+    <p class="mk-tail">Moldura: a página em 360 px, sem a moldura. Até 920 px, a marca, "Carteiras" e o alternador na primeira linha; o tema e a conta na segunda, à direita; a busca na terceira. Nada rola na horizontal.</p>
+    <div class="mk-frames" data-frames></div>
+  </div>
+
+  <div class="mk-view mk-pad" data-view="textos" hidden>
+    <p class="mk-tail">Moldura: as chaves que nascem neste mockup (prefixo <code>carteiras.*</code>, em <code>frontend/src/content/textos.ts</code>), com a saída de cada uma, e as herdadas. Nenhuma é número com frase (D-97): não ganham leitura avançada, e o alternador não muda nada nesta página.</p>
+    <section class="ruvor-panel"><div class="ruvor-panel__head"><h2 class="ruvor-h3">As chaves novas</h2></div><table class="ruvor-table mk-textos" data-textos></table></section>
+    <section class="ruvor-panel"><div class="ruvor-panel__head"><h2 class="ruvor-h3">As herdadas, sem mudança</h2></div><table class="ruvor-table mk-textos" data-herdados></table></section>
+    <section class="ruvor-panel">
+      <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos das chaves-função</h2></div>
+      <div class="ruvor-panel__body ruvor-stack">
+        <p class="ruvor-note">No molde do <code>EXEMPLOS</code> de <code>frontend/tests/exemplos.ts</code>: uma lista de argumentos por chave-função, cobrindo cada ramo.</p>
+        <pre class="mk-code" data-exemplos></pre>
+      </div>
+    </section>
+    <section class="ruvor-panel">
+      <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+      <div class="ruvor-panel__body">
+        <ul class="mk-notes">
+          <li><b>O lugar de "Carteiras" (D-180, decide-se aqui).</b> O <code>.ruvor-nav</code> do kit, <b>logo depois da marca</b> — o lugar da navegação nas telas de referência (<code>brand/ruvor/mockups/02-visao-geral.html</code>) —, com um link só, sem ícone, marcado com <code>.ruvor-nav__link--on</code> e <code>aria-current="page"</code> em <code>/carteiras</code> e <code>/carteiras/:id</code>. A 24 px da marca (o <code>gap</code> do <code>.ruvor-nav</code>), não a 38 (o da barra). O lugar da conta não se move: segue por último, com a largura fixa do M2.1b.</li>
+          <li><b>Só com a conta pronta.</b> O item aparece com a sessão <code>authenticated</code> e a conta pronta; carregando e anônimo, a barra é a do M2.1b, sem ele. Com a senha provisória por trocar, a troca obrigatória do M2.1b vem antes, e o item não aparece. <b>O item que aparece não muda a altura da barra</b> em nenhuma largura: até 920 px ele ocupa o vão da primeira linha, entre a marca e o alternador (que se alinha à direita); acima, só estreita a busca.</li>
+          <li><b>O ponto de quebra da barra passa de 840 a 920 px (decide-se aqui).</b> O item ocupa 50 px mais 24 de vão (medido). Na linha única, a busca cresce 1 px por pixel de janela: com o item, medida em 203 px a 921 px de janela, ela ficaria com 123 px a 841 — dentro da faixa de 78 a 156 px que levou o M2.1b a quebrar em 840. Com a quebra em 920 px, o piso da busca logada na linha única é o de 1024 px: 191 px (o nome na conta passa a 200 px), e ela fica abaixo de 197 px de 1024 até cerca de 1029 px; em 921 px, com só as iniciais, 203 px. <b>O portão decide se 191 px bastam</b>; se não, a quebra precisaria subir além de 1024 px, ou o nome na conta sumir antes. O ponto vale <b>com ou sem o item</b>: quebrar só com ele faria a barra crescer de uma para três linhas quando a sessão resolve. Para a T6: o <code>@media (max-width: 840px)</code> da barra (o do M2.1b, levado ao kit pela T10 dele) passa a 920 px; os seletores por posição seguem os desta folha (cinco colunas com o item, as quatro do M2.1b sem ele). Sem o item, em 1024 px a busca fica com 265 px, como no M2.1b; com ele, em 1023 px (só as iniciais), 305 px.</li>
+          <li><b>Medido</b> em 1440, 1024, 921, 920, 841, 840, 768, 720 e 360 px, logado, anônimo e carregando, nos dois temas: a página não rola na horizontal, e o lugar da conta fica na mesma posição com e sem o item em cada largura. Em 320 px (fora do V-01) a página não rola, mas o item se sobrepõe ao alternador: o texto de "Carteiras" termina em 171,5 px e o alternador começa em 161,8 px, cerca de 10 px de sobreposição (16 px contando o recuo do link). A primeira linha não comporta os três.</li>
+          <li><b>A lista (RF-03).</b> Nome (o link para <code>/carteiras/:id</code>), ações, versão, valor (ou "sem valor") e quando a composição mudou (<code>version_created_at</code>, dd/mm/aaaa hh:mm no fuso do navegador, o <code>formatInstant</code>), na ordem da API — da mais nova para a mais velha. "Mostrar mais" pede o <code>offset</code> seguinte (<code>limit</code> 50, o padrão); se ele falha, as já carregadas ficam e a mensagem vem com "Tentar de novo". Em 360 px, um bloco por carteira, com o rótulo em cima de cada campo (o arranjo dos usuários do M2.1b).</li>
+          <li><b>A chegada do arquivamento</b> ("depois de arquivar"): a mensagem do RF-08 aparece aqui, na lista. <b>A coordenar com a T3</b>, que desenha o diálogo: se o portão da T3 trouxer outra frase, vale a de lá, e esta chave sai daqui.</li>
+          <li><b>A criação (RF-04)</b> abre na própria página, por "Nova carteira" (ou "Criar a primeira carteira", na lista vazia); "Cancelar" fecha e descarta. O nome tem <code>maxlength="100"</code>. Ao criar (201), a tela vai a <code>/carteiras/{id}</code>. A falha (rede, 5xx, 429, <code>csrf_failed</code>) mostra a mensagem acima dos botões, com <code>role="alert"</code>, e mantém tudo o que foi digitado. O 401 põe o aviso de sessão terminada do M2.1b no lugar dos botões, e a barra passa a "Entrar" (sem o item); o resto do formulário fica como estava.</li>
+          <li><b>O valor (decide-se aqui; o plano só fixa a aritmética dos pesos).</b> Proposta: aceita a forma brasileira, com ponto no milhar e vírgula nos centavos (<code>10.000,00</code>), e a forma sem milhar, com vírgula ou ponto nos centavos (<code>10000,5</code>, <code>10000.50</code>); o ponto seguido de exatamente três algarismos é milhar (<code>1.000</code> é mil), com um ou dois é centavo (<code>10.5</code> é dez e cinquenta). A vírgula ou o ponto sem centavos vale (<code>10000,</code>, como o peso <code>5,</code>). Até 2 casas, de 0,01 a <b>16 algarismos inteiros</b> (o <code>max_digits=18, decimal_places=2</code> de <code>backend/apps/portfolios/serializers.py:24-31</code>), conferido no cliente com <code>carteiras.erro.valor</code>. <b>Tudo em texto de algarismos</b> — a parte inteira e os centavos como strings, sem <code>Number</code> nem <code>parseFloat</code> na leitura, no envio ou na exibição (16 algarismos passam do inteiro exato do JavaScript): vai à API como <code>"10000.00"</code>, e a lista mostra o <code>notional</code> que a API devolve agrupando os algarismos pelo texto.</li>
+          <li><b>O peso é um campo de texto</b> (<code>type="text"</code>, <code>inputmode="decimal"</code>), não <code>type="number"</code>: o RF-06 diz "campo numérico", mas o <code>number</code> do navegador recusa a vírgula em parte dos navegadores e reescreve o valor — e o plano exige que o campo guarde o texto como foi digitado ("5," continua "5,"). O teclado numérico vem pelo <code>inputmode</code>.</li>
+          <li><b>A soma ao vivo</b> é a soma dos centésimos inteiros (<code>parseWeight</code>, <code>sumCents</code>, <code>TOTAL_CENTS</code> do plano), com <code>aria-live="polite"</code>: "Fecha em 100,00", "0,01 abaixo de 100,00" ou "0,50 acima de 100,00". O peso que ainda não é número fica fora da soma, e a linha da soma diz quantos. A soma não usa cor de veredito: só a exata leva o sinal de conferido.</li>
+          <li><b>As conferências do cliente</b> rodam ao clicar em "Criar carteira" (o botão nunca fica desabilitado), na ordem da API: o nome, o valor, de 2 a 20 ações, o peso de cada linha (o formato, depois 0,01 a 100,00), a soma — esta só quando todos os pesos são números. A mensagem do formato também aparece ao sair do campo. O foco vai ao primeiro campo com erro. A repetida não chega a acontecer pelo seletor, que a desabilita; a conferência fica para a resposta da API.</li>
+          <li><b>As respostas da API (RF-06)</b>, pela lista fechada de <code>backend/apps/portfolios/services.py:93-136</code>: <code>count_out_of_range</code> (com <code>details.count</code>) e <code>weights_sum</code> (com <code>details.sum</code>, mostrado com vírgula, pelo texto, sem <code>parseFloat</code>) vão à linha da soma; <code>items</code> põe cada <code>reason</code> na linha do seu <code>index</code> — a posição na lista enviada, que é a ordem do editor: <code>duplicate</code>, <code>unknown_ticker</code>, <code>not_a_stock</code> e <code>inactive</code> embaixo do nome, <code>weight_out_of_range</code> embaixo do peso. O <code>invalid_parameter</code> de forma (<code>details.fields</code>, sem índice: <code>backend/apps/api/errors.py</code>) e um <code>reason</code> fora da lista mostram a mensagem geral. A API para na primeira etapa que falha (quantas, cada posição, a soma), e a tela mostra só o que ela devolveu. A moldura mostra o corpo de cada resposta.</li>
+          <li><b>O seletor (RF-05, D-181).</b> A busca do catálogo (<code>GET /api/v1/assets?q=&amp;limit=20</code>, a pausa de 200 ms e o descarte da resposta atrasada do <code>SearchBox</code>), com a lista suspensa do kit. Escolhível: <code>kind === "stock"</code> e <code>status === "active"</code> e fora da composição. O resto aparece com <code>aria-disabled="true"</code>, a tag do kit ("índice", "inativo") e o motivo no lugar do setor. As setas passam também pelos desabilitados (o leitor de tela lê o motivo); o Enter num desabilitado não faz nada. Ao escolher, o campo limpa, a lista fecha, a linha entra no fim da composição (na ordem em que se acrescenta; nunca por peso) e o foco vai ao peso dela. A página só com o que não serve diz isso e pede um termo mais preciso (D-181). Com 20 ações, o seletor fica desabilitado, com a dica.</li>
+          <li><b>O nome na linha</b> é o <code>name</code> do item da busca (a razão social), o mesmo que o <code>HoldingOut</code> da carteira devolve: a composição em edição (T3) e a criação mostram o mesmo texto.</li>
+          <li><b>Nenhum texto sugere peso, composição, ou tirar ou pôr ação</b> (D-116 item 3): o editor não preenche, não arredonda e não distribui; não há "distribuir igualmente". "Remover" é a ação da linha, sem conselho. As varreduras de vocabulário (<code>frontend/tests/vocabulario.test.ts</code>) passam nas chaves novas.</li>
+          <li><b>A sessão (o plano, "A sessão nas telas")</b>: carregando, o esqueleto, sem pedido; anônimo, o aviso "Esta página é para quem entrou na conta." do M2.1b, sem <code>ended</code>, com o <code>next</code> para <code>/carteiras</code> — nunca um pedido que volte 401 a quem nunca entrou.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------- os textos
+// Herdados: de frontend/src/content/textos.ts (casco.*, busca.*) e do mockup aprovado do M2.1b
+// (conta.*, docs/mockups/M2.1b/conta.html), literais.
+const HERDADOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "busca.buscando": "Buscando…",
+  "busca.semResultado": (q) => `Nenhum ativo com “${q}”.`,
+  "busca.semResultadoDica": "Confira o código ou tente uma parte do nome.",
+  "busca.erroTitulo": "A busca não respondeu.",
+  "busca.erroTexto": "Pode ser uma falha passageira do servidor.",
+  "busca.tentarDeNovo": "Tentar de novo",
+  "busca.suspensaRodape": (a, n) => `${fmtInt(a)} de ${fmtInt(n)} · continue digitando para filtrar`,
+  "busca.tagIndice": "índice",
+  "busca.tagInativo": "inativo",
+  "conta.entrar": "Entrar",
+  "conta.menu.rotulo": (nome) => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.pessoal": "Conta pessoal",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
+};
+
+// NOVOS em textos.ts, prefixo carteiras.* (RF-01 a RF-06, D-180, D-181).
+const TEXTOS = {
+  "carteiras.nav": "Carteiras",
+  "carteiras.nav.rotulo": "Navegação",
+  "carteiras.eyebrow": "Carteiras",
+  "carteiras.titulo": "Quanto a sua carteira pode perder?",
+  "carteiras.sub": "Monte a carteira com as ações e os pesos que você escolher. A plataforma estima a perda de 1 dia nos nove modelos, lado a lado.",
+  "carteiras.sub.organizacao": (org) => `As carteiras são da organização ${org}: quem é dela vê e muda cada uma.`,
+  "carteiras.nova": "Nova carteira",
+  "carteiras.lista.titulo": "As carteiras",
+  "carteiras.lista.contagem": (n) => (n === 1 ? "1 carteira" : `${fmtInt(n)} carteiras`),
+  "carteiras.col.nome": "Nome",
+  "carteiras.col.acoes": "Ações",
+  "carteiras.col.versao": "Versão",
+  "carteiras.col.valor": "Valor",
+  "carteiras.col.mudou": "Composição mudou em",
+  "carteiras.acoes": (n) => (n === 1 ? "1 ação" : `${fmtInt(n)} ações`),
+  "carteiras.semValor": "sem valor",
+  "carteiras.lista.carregando": "Carregando as carteiras.",
+  "carteiras.lista.vazia.titulo": "Nenhuma carteira ainda.",
+  "carteiras.lista.vazia.texto": "Uma carteira junta de 2 a 20 ações, cada uma com o peso que você der. Depois de criada, a plataforma calcula quanto ela pode perder em 1 dia.",
+  "carteiras.lista.vazia.criar": "Criar a primeira carteira",
+  "carteiras.lista.erro.titulo": "A lista de carteiras não carregou.",
+  "carteiras.lista.erro.texto": "Pode ser uma falha passageira do servidor.",
+  "carteiras.tentarDeNovo": "Tentar de novo",
+  "carteiras.mostrarMais": "Mostrar mais",
+  "carteiras.mostrando": (a, n) => `Mostrando ${fmtInt(a)} de ${fmtInt(n)}.`,
+  "carteiras.carregandoMais": "Carregando mais carteiras…",
+  "carteiras.maisErro": "As próximas carteiras não carregaram.",
+  "carteiras.arquivada": (nome) => `A carteira “${nome}” foi arquivada. O que foi calculado para ela fica guardado.`,
+  "carteiras.criar.titulo": "Nova carteira",
+  "carteiras.campo.nome": "Nome",
+  "carteiras.campo.nomeDica": "Até 100 caracteres.",
+  "carteiras.campo.valor": "Valor (opcional)",
+  "carteiras.campo.valorDica": "Em reais, como 10.000,00. Com o valor, a perda aparece também em reais; sem ele, só em %.",
+  "carteiras.composicao.titulo": "Composição",
+  "carteiras.composicao.dica": "De 2 a 20 ações. O peso de cada uma é em %, com até 2 casas, e a soma fecha em 100,00.",
+  "carteiras.seletor.rotulo": "Acrescentar ação",
+  "carteiras.seletor.placeholder": "Código ou nome da ação",
+  "carteiras.seletor.motivo.indice": "Índice: a carteira só aceita ações.",
+  "carteiras.seletor.motivo.inativa": "Ação inativa: não entra na carteira.",
+  "carteiras.seletor.motivo.naComposicao": "Já está na composição.",
+  "carteiras.seletor.nenhumaServe": (q) => `Nada do que a busca por “${q}” trouxe pode entrar na carteira.`,
+  "carteiras.seletor.nenhumaServeDica": "Só ação ativa entra. Tente um termo mais preciso, como o código da ação.",
+  "carteiras.seletor.limite": "A composição já tem 20 ações, o máximo.",
+  "carteiras.col.acao": "Ação",
+  "carteiras.col.peso": "Peso (%)",
+  "carteiras.col.remover": "Remover",
+  "carteiras.peso.rotulo": (ticker) => `Peso de ${ticker}, em %`,
+  "carteiras.remover": (ticker) => `Remover ${ticker} da composição`,
+  "carteiras.editor.vazio": "Nenhuma ação na composição ainda. Busque acima pelo código ou pelo nome.",
+  "carteiras.soma.rotulo": "Soma",
+  "carteiras.soma.exata": "Fecha em 100,00.",
+  "carteiras.soma.abaixo": (d) => `${d} abaixo de 100,00.`,
+  "carteiras.soma.acima": (d) => `${d} acima de 100,00.`,
+  "carteiras.soma.foraDaSoma": (n) => (n === 1 ? "1 peso ainda não é número e fica fora da soma." : `${fmtInt(n)} pesos ainda não são números e ficam fora da soma.`),
+  "carteiras.erro.nome": "Dê um nome à carteira.",
+  "carteiras.erro.valor": "Use um valor em reais com até 2 casas, de 0,01 até 16 algarismos antes da vírgula, como 10.000,00.",
+  "carteiras.erro.pesoFormato": "Use um número com até 2 casas, com vírgula ou ponto.",
+  "carteiras.erro.peso": "O peso vai de 0,01 a 100,00.",
+  "carteiras.erro.contagem": (n) => `A carteira precisa de 2 a 20 ações; a composição tem ${fmtInt(n)}.`,
+  "carteiras.erro.soma": (s) => `A soma dos pesos precisa ser exatamente 100,00; está em ${s}.`,
+  "carteiras.erro.repetida": "Esta ação aparece em outra linha da composição.",
+  "carteiras.erro.desconhecida": "Este código não está no catálogo.",
+  "carteiras.erro.naoAcao": "Este código é de um índice; a carteira só aceita ações.",
+  "carteiras.erro.inativa": "Esta ação está inativa no catálogo e não entra na carteira.",
+  "carteiras.erro.forma": "A composição não chegou no formato esperado. Confira os pesos e o valor e tente de novo.",
+  "carteiras.erro.envio": "Não foi possível criar a carteira agora. O que você digitou continua aqui; tente de novo.",
+  "carteiras.criar": "Criar carteira",
+  "carteiras.criando": "Criando…",
+  "carteiras.cancelar": "Cancelar",
+};
+
+// O registro de exemplos: os argumentos de cada chave-função, cobrindo cada ramo.
+const EXEMPLOS = {
+  "carteiras.sub.organizacao": [["Gestora Exemplo"]],
+  "carteiras.lista.contagem": [[1], [57]],
+  "carteiras.acoes": [[1], [4]],
+  "carteiras.mostrando": [[50, 57]],
+  "carteiras.arquivada": [["Bancos e energia"]],
+  "carteiras.seletor.nenhumaServe": [["IBOV"]],
+  "carteiras.peso.rotulo": [["PETR4"]],
+  "carteiras.remover": [["PETR4"]],
+  "carteiras.soma.abaixo": [["0,01"]],
+  "carteiras.soma.acima": [["0,50"]],
+  "carteiras.soma.foraDaSoma": [[1], [2]],
+  "carteiras.erro.contagem": [[1], [21]],
+  "carteiras.erro.soma": [["99,99"]],
+};
+
+const ONDE = {
+  "carteiras.nav": "o item da barra (D-180), só logado com a conta pronta → /carteiras",
+  "carteiras.nav.rotulo": "aria-label do <nav> que leva o item",
+  "carteiras.eyebrow": "sobrancelha da página",
+  "carteiras.titulo": "título da página (h1)",
+  "carteiras.sub": "a frase sob o título",
+  "carteiras.sub.organizacao": "a linha sob a frase, em organização não pessoal (organization.is_personal falso)",
+  "carteiras.nova": "o botão da cabeça, que abre a criação",
+  "carteiras.lista.titulo": "título do painel da lista",
+  "carteiras.lista.contagem": "ao lado do título do painel: o count da API",
+  "carteiras.col.nome": "cabeçalho da coluna (e rótulo do bloco em 360 px)",
+  "carteiras.col.acoes": "cabeçalho da coluna",
+  "carteiras.col.versao": "cabeçalho da coluna",
+  "carteiras.col.valor": "cabeçalho da coluna",
+  "carteiras.col.mudou": "cabeçalho da coluna (version_created_at)",
+  "carteiras.acoes": "a célula de ações: holdings.length",
+  "carteiras.semValor": "a célula de valor com notional nulo",
+  "carteiras.lista.carregando": "só para leitor de tela, no esqueleto",
+  "carteiras.lista.vazia.titulo": "título do estado vazio",
+  "carteiras.lista.vazia.texto": "frase do estado vazio",
+  "carteiras.lista.vazia.criar": "o botão do estado vazio, que abre a criação",
+  "carteiras.lista.erro.titulo": "título do erro da primeira leitura",
+  "carteiras.lista.erro.texto": "frase do erro",
+  "carteiras.tentarDeNovo": "o botão do erro e do \"mostrar mais\" que falhou",
+  "carteiras.mostrarMais": "o botão sob a lista, quando count > carregadas",
+  "carteiras.mostrando": "ao lado do botão",
+  "carteiras.carregandoMais": "no lugar do texto ao lado, enquanto a página seguinte carrega",
+  "carteiras.maisErro": "quando a página seguinte falha; as carregadas ficam",
+  "carteiras.arquivada": "a mensagem na lista depois do DELETE 204 (RF-08) — a coordenar com a T3",
+  "carteiras.criar.titulo": "título do painel da criação (h2)",
+  "carteiras.campo.nome": "rótulo do campo",
+  "carteiras.campo.nomeDica": "dica do campo",
+  "carteiras.campo.valor": "rótulo do campo",
+  "carteiras.campo.valorDica": "dica do campo",
+  "carteiras.composicao.titulo": "legenda do grupo do editor",
+  "carteiras.composicao.dica": "dica do grupo",
+  "carteiras.seletor.rotulo": "aria-label do campo do seletor",
+  "carteiras.seletor.placeholder": "placeholder do campo do seletor",
+  "carteiras.seletor.motivo.indice": "no item desabilitado, kind = index",
+  "carteiras.seletor.motivo.inativa": "no item desabilitado, status = inactive",
+  "carteiras.seletor.motivo.naComposicao": "no item desabilitado, já numa linha do editor",
+  "carteiras.seletor.nenhumaServe": "a página da busca só com itens que não servem (D-181)",
+  "carteiras.seletor.nenhumaServeDica": "a frase sob a anterior",
+  "carteiras.seletor.limite": "dica sob o seletor desabilitado, com 20 linhas",
+  "carteiras.col.acao": "cabeçalho da coluna do editor",
+  "carteiras.col.peso": "cabeçalho da coluna do editor",
+  "carteiras.col.remover": "cabeçalho da coluna do editor, só para leitor de tela",
+  "carteiras.peso.rotulo": "aria-label do campo do peso",
+  "carteiras.remover": "aria-label do botão de remover da linha",
+  "carteiras.editor.vazio": "a linha do editor sem ações",
+  "carteiras.soma.rotulo": "rótulo da linha da soma",
+  "carteiras.soma.exata": "ao lado da soma, com 10.000 centésimos",
+  "carteiras.soma.abaixo": "ao lado da soma, abaixo de 10.000 (a diferença em centésimos, com vírgula)",
+  "carteiras.soma.acima": "ao lado da soma, acima de 10.000",
+  "carteiras.soma.foraDaSoma": "sob a soma, quando algum peso não é número",
+  "carteiras.erro.nome": "conferência do cliente: nome vazio (aparado)",
+  "carteiras.erro.valor": "conferência do cliente: valor fora da forma, zero, ou com mais de 16 algarismos inteiros (max_digits=18, decimal_places=2 do serializador)",
+  "carteiras.erro.pesoFormato": "conferência do cliente: o peso não é número com até 2 casas (também ao sair do campo)",
+  "carteiras.erro.peso": "conferência do cliente e weight_out_of_range da API: fora de 0,01 a 100,00",
+  "carteiras.erro.contagem": "conferência do cliente e count_out_of_range da API (details.count), na linha da soma",
+  "carteiras.erro.soma": "conferência do cliente e weights_sum da API (details.sum), na linha da soma",
+  "carteiras.erro.repetida": "duplicate, na linha do index",
+  "carteiras.erro.desconhecida": "unknown_ticker, na linha do index",
+  "carteiras.erro.naoAcao": "not_a_stock, na linha do index",
+  "carteiras.erro.inativa": "inactive, na linha do index",
+  "carteiras.erro.forma": "invalid_parameter (details.fields, sem índice) e reason fora da lista: a mensagem geral",
+  "carteiras.erro.envio": "rede, 5xx, 429, csrf_failed: a mensagem geral, com role=alert",
+  "carteiras.criar": "o botão de envio",
+  "carteiras.criando": "o botão de envio, durante o POST (aria-busy)",
+  "carteiras.cancelar": "fecha a criação e descarta",
+};
+
+function fmtInt(n) { return new Intl.NumberFormat("pt-BR").format(n); }
+const T = (k, ...a) => {
+  const v = k in TEXTOS ? TEXTOS[k] : HERDADOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- a aritmética dos pesos
+// A do plano ("A aritmética dos pesos", literal): por algarismos, nunca por parseFloat.
+const TOTAL_CENTS = 10000;
+function parseWeight(text) {
+  const t = text.trim().replaceAll(",", ".");
+  if (!/^\d{0,3}([.]\d{0,2})?$/.test(t)) return null;
+  const [int = "", dec = ""] = t.split(".");
+  if (int === "" && dec === "") return null; // ao menos um algarismo
+  return (int === "" ? 0 : Number(int)) * 100 + Number((dec + "00").slice(0, 2));
+}
+const weightToApi = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, "0")}`;
+const sumCents = (ws) => ws.reduce((a, b) => a + b, 0);
+// Centésimos para a tela, com vírgula: 9999 → "99,99"; 1999980 → "19.999,80".
+const centsText = (c) => `${fmtInt(Math.floor(c / 100))},${String(c % 100).padStart(2, "0")}`;
+// O decimal da API em texto ("99.99") para a tela, pelo texto.
+// Algarismos em grupos de três, pelo texto: "250000" → "250.000". Sem Number: o valor vai a 16
+// algarismos inteiros, além do inteiro exato do JavaScript.
+const groupDigits = (int) => int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const apiDecText = (s) => { const [i, d = "00"] = String(s).split("."); return `${groupDigits(i)},${(d + "00").slice(0, 2)}`; };
+
+// O valor (proposta deste portão): forma brasileira com milhar, ou sem milhar com vírgula ou
+// ponto nos centavos ("10000," vale, como o peso "5,"). Tudo em texto de algarismos: devolve
+// { int, dec } (a parte inteira sem zeros à esquerda e os dois centavos), ou null — fora da
+// forma, zero, ou com mais de 16 algarismos inteiros (o max_digits=18, decimal_places=2 de
+// backend/apps/portfolios/serializers.py:24-31).
+const NOTIONAL_MAX_INT_DIGITS = 16;
+function parseNotional(text) {
+  const t = text.trim();
+  let int = null, dec = "";
+  let m = /^(\d{1,3}(?:\.\d{3})+)(?:,(\d{0,2}))?$/.exec(t);
+  if (m) { int = m[1].replaceAll(".", ""); dec = m[2] ?? ""; }
+  else if ((m = /^(\d+)(?:[.,](\d{0,2}))?$/.exec(t))) { int = m[1]; dec = m[2] ?? ""; }
+  if (int === null) return null;
+  int = int.replace(/^0+(?=\d)/, "");
+  dec = (dec + "00").slice(0, 2);
+  if (int.length > NOTIONAL_MAX_INT_DIGITS) return null;
+  if (int === "0" && dec === "00") return null; // a partir de 0,01
+  return { int, dec };
+}
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph${cls ? ` ${cls}` : ""}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const initials = (name, email) => {
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  if (w.length === 0) return email.trim().charAt(0).toUpperCase();
+  return (w.length === 1 ? w[0][0] : w[0][0] + w[w.length - 1][0]).toUpperCase();
+};
+const fold = (s) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- dados fictícios
+const ME = { name: "Ana Beatriz Souza", email: "ana.souza@exemplo.com", role: "admin", organization: { name: "Gestora Exemplo", is_personal: false } };
+
+// O catálogo: os campos do item de GET /api/v1/assets?q= (AssetItemSerializer,
+// backend/apps/api/serializers.py:101-121). Fictício.
+const stock = (ticker, name, trading_name, sector, status = "active") => ({ ticker, name, trading_name, kind: "stock", sector, status, has_prices: status === "active", has_risk: false });
+const CATALOGO = [
+  stock("ABEV3", "AMBEV S.A.", "AMBEV S/A", "Cervejas e Refrigerantes"),
+  stock("B3SA3", "B3 S.A. - BRASIL, BOLSA, BALCÃO", "B3", "Serviços Financeiros Diversos"),
+  stock("BBAS3", "BANCO DO BRASIL S.A.", "BRASIL", "Bancos"),
+  stock("BBDC3", "BANCO BRADESCO S.A.", "BRADESCO", "Bancos"),
+  stock("BBDC4", "BANCO BRADESCO S.A.", "BRADESCO", "Bancos"),
+  stock("BIDI4", "BANCO INTER S.A.", "BANCO INTER", "Bancos", "inactive"),
+  stock("CMIG4", "CIA ENERGETICA DE MINAS GERAIS - CEMIG", "CEMIG", "Energia Elétrica"),
+  stock("CSAN3", "COSAN S.A.", "COSAN", "Exploração, Refino e Distribuição"),
+  stock("ELET3", "CENTRAIS ELET BRAS S.A. - ELETROBRAS", "ELETROBRAS", "Energia Elétrica"),
+  stock("ELET6", "CENTRAIS ELET BRAS S.A. - ELETROBRAS", "ELETROBRAS", "Energia Elétrica"),
+  stock("EQTL3", "EQUATORIAL S.A.", "EQUATORIAL", "Energia Elétrica"),
+  stock("GGBR4", "GERDAU S.A.", "GERDAU", "Siderurgia"),
+  { ticker: "IBOV", name: "ÍNDICE BOVESPA", trading_name: "IBOVESPA", kind: "index", sector: null, status: "active", has_prices: true, has_risk: true },
+  stock("ITUB3", "ITAU UNIBANCO HOLDING S.A.", "ITAUUNIBANCO", "Bancos"),
+  stock("ITUB4", "ITAU UNIBANCO HOLDING S.A.", "ITAUUNIBANCO", "Bancos"),
+  stock("JBSS3", "JBS S.A.", "JBS", "Carnes e Derivados"),
+  stock("LREN3", "LOJAS RENNER S.A.", "LOJAS RENNER", "Tecidos, Vestuário e Calçados"),
+  stock("PETR3", "PETROLEO BRASILEIRO S.A. PETROBRAS", "PETROBRAS", "Exploração, Refino e Distribuição"),
+  stock("PETR4", "PETROLEO BRASILEIRO S.A. PETROBRAS", "PETROBRAS", "Exploração, Refino e Distribuição"),
+  stock("PRIO3", "PRIO S.A.", "PETRORIO", "Exploração, Refino e Distribuição"),
+  stock("RADL3", "RAIA DROGASIL S.A.", "RAIADROGASIL", "Medicamentos e Outros Produtos"),
+  stock("RENT3", "LOCALIZA RENT A CAR S.A.", "LOCALIZA", "Aluguel de carros"),
+  stock("SUZB3", "SUZANO S.A.", "SUZANO S.A.", "Papel e Celulose"),
+  stock("TAEE11", "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.", "TAESA", "Energia Elétrica"),
+  stock("VALE3", "VALE S.A.", "VALE", "Minerais Metálicos"),
+  stock("VVAR3", "VIA VAREJO S.A.", "VIAVAREJO", "Eletrodomésticos", "inactive"),
+  stock("WEGE3", "WEG S.A.", "WEG", "Motores, Compressores e Outros"),
+];
+const byTicker = (t) => CATALOGO.find((a) => a.ticker === t);
+const SEARCH_LIMIT = 20;
+// A busca da API (apps/api/views.py, a função do RF-12): ticker igual, prefixo de ticker, nome ou
+// nome de pregão contendo q (sem caixa e sem acento); ordem (grupo, ticker).
+function searchCatalog(q) {
+  const upper = q.trim().toUpperCase();
+  const f = fold(q.trim());
+  const hits = CATALOGO
+    .filter((a) => a.ticker.startsWith(upper) || fold(a.name).includes(f) || fold(a.trading_name).includes(f))
+    .map((a) => ({ a, g: a.ticker === upper ? 0 : a.ticker.startsWith(upper) ? 1 : 2 }))
+    .sort((x, y) => x.g - y.g || (x.a.ticker < y.a.ticker ? -1 : 1))
+    .map((x) => x.a);
+  return { count: hits.length, results: hits.slice(0, SEARCH_LIMIT) };
+}
+
+// A lista: os campos de PortfolioOut (backend/apps/portfolios/serializers.py:73-88).
+const P = (id, name, n, version, notional, changed, created) => ({ id, name, notional, version, holdings: Array.from({ length: n }, () => ({})), version_created_at: changed, created_at: created });
+const CARTEIRAS = [
+  P("6f1c2d3e-0000-4000-8000-000000000001", "Bancos e energia", 4, 3, "50000.00", "2026-10-02T14:31:00-03:00", "2026-09-29T10:00:00-03:00"),
+  P("6f1c2d3e-0000-4000-8000-000000000002", "Exportadoras", 5, 1, null, "2026-09-30T09:12:00-03:00", "2026-09-28T16:20:00-03:00"),
+  P("6f1c2d3e-0000-4000-8000-000000000003", "Teste de duas ações", 2, 7, "1000.00", "2026-10-03T09:40:00-03:00", "2026-09-10T08:15:00-03:00"),
+  P("6f1c2d3e-0000-4000-8000-000000000004", "Consumo e varejo — conta da família, acompanhamento mensal", 6, 2, "250000.50", "2026-09-02T11:03:00-03:00", "2026-09-01T18:30:00-03:00"),
+];
+const brl = (s) => `R$ ${apiDecText(s)}`;
+const instant = (iso) => {
+  const p = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso));
+  const g = (t) => p.find((x) => x.type === t)?.value ?? "";
+  return `${g("day")}/${g("month")}/${g("year")} ${g("hour")}:${g("minute")}`;
+};
+
+// ---------------------------------------------------------------- estado do mockup
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+const S = {
+  sessao: params.get("sessao") || "logado",   // carregando | anonimo | logado
+  lista: params.get("lista") || "com",        // carregando | vazia | com | mais | maisErro | erro | arquivada
+  preset: params.get("preset") || "exata",    // ver PRESETS
+  seletor: params.get("seletor") || null,     // buscando | resultados | nenhumaServe | semResultado | erro
+  menu: params.get("menu") === "aberto",
+  vista: params.get("vista") || "pagina",
+  tema: params.get("tema") || "system",
+  nivel: params.get("nivel") || "beginner",
+  ended: false,                               // o 401 na criação: a sessão passou a terminada
+};
+const sessaoEfetiva = () => (S.ended ? "anonimo" : S.sessao);
+
+// O editor: o texto digitado é o valor de cada campo; nada o reescreve.
+let E = null;
+function blankEditor() {
+  return { open: true, name: "", notional: "", rows: [], total: [], general: null, sending: false, apiBody: null, nameErr: null, notionalErr: null, created: false,
+           picker: { q: "", state: "empty", results: [], count: 0, active: -1 } };
+}
+const row = (ticker, text, extra = {}) => ({ ticker, name: byTicker(ticker).name, text, err: null, apiErr: null, ...extra });
+
+// O corpo de erro da API (D-86): { error: { code, message, details } }.
+const apiErr = (code, message, details) => ({ error: { code, message, details } });
+
+const PRESETS = {
+  fechada: () => { E = blankEditor(); E.open = false; },
+  vazia: () => { E = blankEditor(); },
+  abaixo: () => { E = blankEditor(); E.name = "Bancos e energia"; E.rows = [row("ITUB4", "33,33"), row("BBDC4", "33,33"), row("EQTL3", "33,33")]; },
+  acima: () => { E = blankEditor(); E.name = "Bancos e energia"; E.rows = [row("ITUB4", "50"), row("BBDC4", "30,5"), row("EQTL3", "20")]; },
+  exata: () => { E = blankEditor(); E.name = "Bancos e energia"; E.notional = "50.000,00"; E.rows = [row("ITUB4", "0,01"), row("BBDC4", "65,40"), row("EQTL3", "34,59")]; },
+  texto: () => { E = blankEditor(); E.name = "Exportadoras"; E.rows = [row("VALE3", "5,"), row("SUZB3", "33.4"), row("WEGE3", " 61,6 ")]; },
+  limite: () => {
+    E = blankEditor(); E.name = "Vinte ações";
+    const t = CATALOGO.filter((a) => a.kind === "stock" && a.status === "active").slice(0, 20);
+    E.rows = t.map((a) => row(a.ticker, "5"));
+  },
+  confNomeValor: () => { PRESETS.exata(); E.name = "   "; E.notional = "10.000,999"; check(); },
+  confContagem: () => { E = blankEditor(); E.name = "Uma ação"; E.rows = [row("PETR4", "100")]; check(); },
+  confPesos: () => { E = blankEditor(); E.name = "Pesos"; E.rows = [row("PETR4", "12,345"), row("VALE3", "0"), row("ITUB4", "150"), row("WEGE3", "40")]; check(); },
+  confSoma: () => { PRESETS.abaixo(); check(); },
+  // As respostas da API: o editor como foi enviado, e o corpo que voltou.
+  apiItems: () => {
+    E = blankEditor(); E.name = "Cinco motivos";
+    // Uma resposta só traz todas as linhas que falham (services.py:103-128). EXMP3 é um código
+    // fictício que saiu do catálogo depois de escolhido.
+    E.rows = [row("IBOV", "20"), row("BIDI4", "20"), { ticker: "EXMP3", name: "COMPANHIA EXEMPLO S.A.", text: "0,01", err: null, apiErr: null }, row("PETR4", "20"), row("PETR4", "19,99"), row("VALE3", "120")];
+    applyApi(400, apiErr("invalid_holdings", "Composição inválida.", { reason: "items", items: [
+      { index: 0, ticker: "IBOV", reason: "not_a_stock" },
+      { index: 1, ticker: "BIDI4", reason: "inactive" },
+      { index: 2, ticker: "EXMP3", reason: "unknown_ticker" },
+      { index: 4, ticker: "PETR4", reason: "duplicate" },
+      { index: 5, ticker: "VALE3", reason: "weight_out_of_range" },
+    ] }));
+  },
+  apiContagem: () => { E = blankEditor(); E.name = "Uma ação"; E.rows = [row("PETR4", "100")]; applyApi(400, apiErr("invalid_holdings", "Composição inválida.", { reason: "count_out_of_range", count: 1 })); },
+  apiSoma: () => { PRESETS.abaixo(); applyApi(400, apiErr("invalid_holdings", "Composição inválida.", { reason: "weights_sum", sum: "99.99" })); },
+  apiForma: () => { PRESETS.exata(); applyApi(400, apiErr("invalid_parameter", "Dados inválidos.", { fields: { holdings: ["{}", "{'weight': [ErrorDetail(string='Certifique-se de que não haja mais de 2 casas decimais.', code='max_decimal_places')]}", "{}"] } })); },
+  apiRede: () => { PRESETS.exata(); applyApi(0, null); },
+  api401: () => { PRESETS.exata(); applyApi(401, apiErr("not_authenticated", "Entre para continuar.", {})); },
+  enviando: () => { PRESETS.exata(); E.sending = true; },
+  api201: () => { PRESETS.exata(); E.created = true; },
+};
+
+// A tradução do corpo de erro para o lugar de cada mensagem (RF-06).
+const ITEM_REASON = { duplicate: "carteiras.erro.repetida", unknown_ticker: "carteiras.erro.desconhecida", not_a_stock: "carteiras.erro.naoAcao", inactive: "carteiras.erro.inativa", weight_out_of_range: "carteiras.erro.peso" };
+function applyApi(status, body) {
+  for (const r of E.rows) r.apiErr = null;
+  E.total = []; E.general = null; E.apiBody = body; E.apiStatus = status;
+  if (status === 401) { S.ended = true; return; }
+  const e = body?.error;
+  if (e?.code === "invalid_holdings") {
+    const d = e.details;
+    if (d.reason === "count_out_of_range") { E.total = [T("carteiras.erro.contagem", d.count)]; return; }
+    if (d.reason === "weights_sum") { E.total = [T("carteiras.erro.soma", apiDecText(d.sum))]; return; }
+    if (d.reason === "items" && d.items.every((it) => ITEM_REASON[it.reason] && E.rows[it.index])) {
+      for (const it of d.items) E.rows[it.index].apiErr = T(ITEM_REASON[it.reason]);
+      return;
+    }
+    E.general = T("carteiras.erro.forma"); // reason fora da lista: mudança de contrato
+    return;
+  }
+  if (e?.code === "invalid_parameter") { E.general = T("carteiras.erro.forma"); return; }
+  E.general = T("carteiras.erro.envio"); // rede, 5xx, 429, csrf_failed
+}
+
+// As conferências do cliente (RF-06), na ordem da API. Devolve true se passou.
+function check() {
+  E.nameErr = E.name.trim() === "" ? T("carteiras.erro.nome") : null;
+  E.notionalErr = E.notional.trim() !== "" && parseNotional(E.notional) === null ? T("carteiras.erro.valor") : null;
+  E.total = []; E.general = null; E.apiBody = null;
+  for (const r of E.rows) { r.apiErr = null; r.err = lineErr(r.text); }
+  if (E.rows.length < 2 || E.rows.length > 20) E.total.push(T("carteiras.erro.contagem", E.rows.length));
+  const cents = E.rows.map((r) => parseWeight(r.text));
+  if (E.rows.length > 0 && cents.every((c) => c !== null) && sumCents(cents) !== TOTAL_CENTS) E.total.push(T("carteiras.erro.soma", centsText(sumCents(cents))));
+  return !E.nameErr && !E.notionalErr && E.total.length === 0 && E.rows.every((r) => !r.err);
+}
+function lineErr(text) {
+  const c = parseWeight(text);
+  if (c === null) return T("carteiras.erro.pesoFormato");
+  if (c < 1 || c > TOTAL_CENTS) return T("carteiras.erro.peso");
+  return null;
+}
+
+// ---------------------------------------------------------------- a barra
+function renderBar() {
+  const sessao = sessaoEfetiva();
+  $("[data-part='nav']").hidden = sessao !== "logado";
+  const slot = $("[data-slot]");
+  if (sessao === "carregando") { slot.dataset.account = "loading"; slot.innerHTML = ""; return; }
+  if (sessao === "anonimo") {
+    slot.dataset.account = "anonymous";
+    slot.innerHTML = `<a class="m21b-signin" data-part="entrar" href="#" title="/entrar?next=%2Fcarteiras">${esc(T("conta.entrar"))}</a>`;
+    return;
+  }
+  slot.dataset.account = "authenticated";
+  slot.innerHTML = `
+    <button class="ruvor-account m21b-account" type="button" data-part="conta" aria-expanded="${S.menu}" aria-controls="m21b-menu" aria-label="${esc(T("conta.menu.rotulo", ME.name))}">
+      <span class="m21b-account__name">${esc(ME.name)}</span>
+      <span class="ruvor-avatar" aria-hidden="true">${esc(initials(ME.name, ME.email))}</span>
+      ${glyph("i-caret-down")}
+    </button>
+    <div class="m21b-menu" id="m21b-menu" data-part="menu"${S.menu ? "" : " hidden"}>
+      <div class="m21b-menu__who"><p class="m21b-menu__name">${esc(ME.name)}</p><p class="m21b-menu__email">${esc(ME.email)}</p></div>
+      <div class="m21b-menu__org"><p class="ruvor-eyebrow">${esc(T("conta.menu.organizacao"))}</p><p>${esc(ME.organization.name)}</p></div>
+      <ul class="m21b-menu__list">
+        <li><a class="m21b-menu__item" href="#">${glyph("i-shield-check")}<span>${esc(T("conta.menu.senha"))}</span></a></li>
+        <li><a class="m21b-menu__item" href="#">${glyph("i-buildings")}<span>${esc(T("conta.menu.usuarios"))}</span></a></li>
+        <li class="m21b-menu__sep" role="presentation"></li>
+        <li><button class="m21b-menu__item" type="button">${glyph("i-sign-out")}<span>${esc(T("conta.menu.sair"))}</span></button></li>
+      </ul>
+    </div>`;
+  $("[data-part='conta']", slot).addEventListener("click", () => { S.menu = !S.menu; renderBar(); });
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.menu) { S.menu = false; renderBar(); $("[data-part='conta']")?.focus(); } });
+document.addEventListener("click", (e) => { if (S.menu && !e.target.closest(".m21b-slot, .mk-bar")) { S.menu = false; renderBar(); } });
+
+// ---------------------------------------------------------------- a página
+function signInNotice(kind) {
+  const title = kind === "ended" ? T("conta.aviso.terminou") : T("conta.aviso.paraQuemEntrou");
+  return `<div class="ruvor-state ruvor-state--notice m21b-notice" data-signin-notice="${kind}"${kind === "ended" ? ' role="alert"' : ""}>
+    <span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(title)}</p>
+      <p class="ruvor-note">${esc(T("conta.aviso.volta"))}</p>
+      <a class="ruvor-btn ruvor-btn--primary" href="#" title="/entrar?next=%2Fcarteiras">${esc(T("conta.entrar"))}</a>
+    </div>
+  </div>`;
+}
+
+function renderHead() {
+  const logged = sessaoEfetiva() === "logado" || S.ended;
+  const showNew = logged && !S.ended && !(E && E.open) && S.lista !== "carregando" && S.lista !== "vazia";
+  $("[data-slot-head]").innerHTML = `<div>
+      <p class="ruvor-eyebrow">${esc(T("carteiras.eyebrow"))}</p>
+      <h1 class="ruvor-display">${esc(T("carteiras.titulo"))}</h1>
+      <p class="ruvor-sub">${esc(T("carteiras.sub"))}</p>
+      ${logged && !ME.organization.is_personal ? `<p class="m22b-head__org">${esc(T("carteiras.sub.organizacao", ME.organization.name))}</p>` : ""}
+    </div>
+    ${showNew ? `<button class="ruvor-btn ruvor-btn--primary ruvor-push" type="button" data-act="nova">${glyph("i-briefcase")}<span>${esc(T("carteiras.nova"))}</span></button>` : ""}`;
+}
+
+function listRows(items) {
+  return items.map((p) => `<tr>
+      <td><a class="m22b-list__name" href="#" title="/carteiras/${esc(p.id)}">${esc(p.name)}</a></td>
+      <td data-label="${esc(T("carteiras.col.acoes"))}">${esc(T("carteiras.acoes", p.holdings.length))}</td>
+      <td data-label="${esc(T("carteiras.col.versao"))}" class="ruvor-num">${p.version}</td>
+      <td data-label="${esc(T("carteiras.col.valor"))}" class="${p.notional ? "ruvor-num" : "m22b-list__muted"}">${p.notional ? esc(brl(p.notional)) : esc(T("carteiras.semValor"))}</td>
+      <td data-label="${esc(T("carteiras.col.mudou"))}" class="ruvor-num">${esc(instant(p.version_created_at))}</td>
+    </tr>`).join("");
+}
+
+function listPanel() {
+  const head = (count) => `<div class="ruvor-panel__head">${glyph("i-briefcase")}<h2 class="ruvor-h3">${esc(T("carteiras.lista.titulo"))}</h2>${count != null ? `<span class="ruvor-push ruvor-muted">${esc(T("carteiras.lista.contagem", count))}</span>` : ""}</div>`;
+  const thead = `<thead><tr><th scope="col">${esc(T("carteiras.col.nome"))}</th><th scope="col">${esc(T("carteiras.col.acoes"))}</th><th scope="col">${esc(T("carteiras.col.versao"))}</th><th scope="col">${esc(T("carteiras.col.valor"))}</th><th scope="col">${esc(T("carteiras.col.mudou"))}</th></tr></thead>`;
+  if (S.lista === "carregando") {
+    const sk = [0, 1, 2].map(() => `<tr class="m22b-list__skel"><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td></tr>`).join("");
+    return `<section class="ruvor-panel" aria-busy="true">${head(null)}<p class="ruvor-sr-only">${esc(T("carteiras.lista.carregando"))}</p><table class="ruvor-table m22b-list" aria-hidden="true">${thead}<tbody>${sk}</tbody></table></section>`;
+  }
+  if (S.lista === "erro") {
+    return `<div class="ruvor-callout ruvor-callout--critical" role="alert">
+      <span class="ruvor-icon ruvor-icon--critical"><svg aria-hidden="true" focusable="false"><use href="#i-duo-x-circle"/></svg></span>
+      <div class="ruvor-stack"><div><b>${esc(T("carteiras.lista.erro.titulo"))}</b><p class="ruvor-note">${esc(T("carteiras.lista.erro.texto"))}</p></div>
+      <div><button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("carteiras.tentarDeNovo"))}</span></button></div></div>
+    </div>`;
+  }
+  if (S.lista === "vazia") {
+    return `<section class="ruvor-panel">${head(0)}<div class="ruvor-panel__body ruvor-state">
+      <span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+      <div class="ruvor-state__body">
+        <p class="ruvor-state__title">${esc(T("carteiras.lista.vazia.titulo"))}</p>
+        <p class="ruvor-state__text">${esc(T("carteiras.lista.vazia.texto"))}</p>
+        ${E && E.open ? "" : `<div class="ruvor-state__actions"><button class="ruvor-btn ruvor-btn--primary" type="button" data-act="nova">${glyph("i-briefcase")}<span>${esc(T("carteiras.lista.vazia.criar"))}</span></button></div>`}
+      </div></div></section>`;
+  }
+  const many = S.lista === "mais" || S.lista === "maisErro";
+  const items = many ? [...CARTEIRAS, ...["Dividendos", "Energia elétrica", "Simulação de 20 ações", "Bancos, só ordinárias"].map((name, i) => ({ ...CARTEIRAS[i], id: CARTEIRAS[i].id.replace(/.$/, String(5 + i)), name }))] : CARTEIRAS;
+  const count = many ? 57 : CARTEIRAS.length;
+  const more = many ? `<div class="m22b-more">
+      <button class="ruvor-btn" type="button">${S.lista === "maisErro" ? `${glyph("i-arrows-clockwise")}<span>${esc(T("carteiras.tentarDeNovo"))}</span>` : esc(T("carteiras.mostrarMais"))}</button>
+      <span aria-live="polite">${esc(T("carteiras.mostrando", 50, count))}</span>
+      ${S.lista === "maisErro" ? `<p class="m22b-more__error" role="alert">${esc(T("carteiras.maisErro"))}</p>` : ""}
+    </div>` : "";
+  const tail = many ? `<p class="mk-tail">Moldura: a primeira página traz 50 (o limit padrão da API); o mockup desenha ${items.length}. "Mostrar mais" pede offset=50; enquanto carrega, o texto ao lado vira "${esc(T("carteiras.carregandoMais"))}" e o botão fica com aria-busy.</p>` : "";
+  const order = `<p class="mk-tail">Moldura: a ordem é a da API, da carteira criada mais recentemente para a mais antiga (<code>order_by("-created_at", "-id")</code>, <code>backend/apps/portfolios/services.py:203-206</code>), não a da coluna visível: "Teste de duas ações", criada antes das duas primeiras, teve a composição mudada depois delas (versão 7) e segue em terceiro. A tela não reordena.</p>`;
+  return `${order}${tail}<section class="ruvor-panel">${head(count)}<table class="ruvor-table m22b-list">${thead}<tbody>${listRows(items)}</tbody></table>${more}</section>`;
+}
+
+// ---------------------------------------------------------------- o seletor
+function pickerReason(a) {
+  if (a.kind !== "stock") return "carteiras.seletor.motivo.indice";
+  if (a.status !== "active") return "carteiras.seletor.motivo.inativa";
+  if (E.rows.some((r) => r.ticker === a.ticker)) return "carteiras.seletor.motivo.naComposicao";
+  return null;
+}
+function pickerPopover() {
+  const pk = E.picker;
+  if (pk.state === "empty") return "";
+  let inner = "";
+  if (pk.state === "loading") inner = `<div class="ruvor-search__msg ruvor-search__msg--loading" aria-live="polite">${glyph("i-spinner-gap", "ruvor-spin")}<span>${esc(T("busca.buscando"))}</span></div>`;
+  else if (pk.state === "none") inner = `<div class="ruvor-search__msg" aria-live="polite"><b>${esc(T("busca.semResultado", pk.q))}</b><p>${esc(T("busca.semResultadoDica"))}</p></div>`;
+  else if (pk.state === "error") inner = `<div class="ruvor-search__msg ruvor-search__msg--error" role="alert"><b>${esc(T("busca.erroTitulo"))}</b><p>${esc(T("busca.erroTexto"))}</p><button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("busca.tentarDeNovo"))}</span></button></div>`;
+  else {
+    const none = pk.results.every((a) => pickerReason(a) !== null);
+    const opts = pk.results.map((a, i) => {
+      const why = pickerReason(a);
+      return `<li class="ruvor-search__option m22b-pick${why ? " m22b-pick--off" : ""}${i === pk.active ? " ruvor-search__option--active" : ""}" id="pk-opt-${i}" role="option" aria-selected="${i === pk.active}"${why ? ' aria-disabled="true"' : ""} data-pick="${esc(a.ticker)}">
+        <div class="ruvor-search__link">
+          <span class="ruvor-search__ticker">${esc(a.ticker)}</span>
+          <span class="ruvor-search__name"><b>${esc(a.trading_name)}</b>${why ? `<span class="m22b-pick__why">${esc(T(why))}</span>` : a.sector ? `<span>${esc(a.sector)}</span>` : ""}</span>
+          <span class="ruvor-search__tags">${a.kind === "index" ? `<span class="ruvor-tag ruvor-tag--evidence">${esc(T("busca.tagIndice"))}</span>` : ""}${a.status === "inactive" ? `<span class="ruvor-tag ruvor-tag--review">${esc(T("busca.tagInativo"))}</span>` : ""}</span>
+        </div></li>`;
+    }).join("");
+    inner = `${none ? `<div class="ruvor-search__msg" aria-live="polite"><b>${esc(T("carteiras.seletor.nenhumaServe", pk.q))}</b><p>${esc(T("carteiras.seletor.nenhumaServeDica"))}</p></div>` : ""}
+      <ul class="ruvor-search__list" id="pk-list" role="listbox" aria-label="${esc(T("carteiras.seletor.rotulo"))}">${opts}</ul>
+      <div class="ruvor-search__foot" aria-live="polite">${esc(T("busca.suspensaRodape", pk.results.length, pk.count))}</div>`;
+  }
+  return `<div class="ruvor-search__popover" data-picker-pop>${inner}</div>`;
+}
+function picker() {
+  const full = E.rows.length >= 20;
+  const pk = E.picker;
+  const expanded = pk.state === "results";
+  return `<div class="m22b-picker" data-picker>
+    <div class="ruvor-search">
+      ${glyph("i-magnifying-glass")}
+      <input class="ruvor-input ruvor-search__input" id="pk-input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-controls="pk-list" aria-expanded="${expanded}"${expanded && pk.active >= 0 ? ` aria-activedescendant="pk-opt-${pk.active}"` : ""} aria-label="${esc(T("carteiras.seletor.rotulo"))}" placeholder="${esc(T("carteiras.seletor.placeholder"))}" value="${esc(pk.q)}"${full ? ' disabled aria-describedby="pk-full"' : ""}${E.sending ? " disabled" : ""}>
+    </div>
+    ${full ? `<p class="ruvor-hint" id="pk-full">${esc(T("carteiras.seletor.limite"))}</p>` : pickerPopover()}
+  </div>`;
+}
+function runSearch(q) {
+  E.picker.q = q; E.picker.active = -1;
+  if (q.trim() === "") { E.picker.state = "empty"; return; }
+  const r = searchCatalog(q);
+  E.picker.count = r.count; E.picker.results = r.results;
+  E.picker.state = r.count === 0 ? "none" : "results";
+}
+const SELETOR = {
+  buscando: () => { E.picker = { q: "ban", state: "loading", results: [], count: 0, active: -1 }; },
+  resultados: () => { if (!E.rows.some((r) => r.ticker === "ITUB4")) E.rows.unshift(row("ITUB4", "")); runSearch("b"); E.picker.active = 1; },
+  nenhumaServe: () => { runSearch("IBOV"); },
+  semResultado: () => { runSearch("xyz"); },
+  erro: () => { E.picker = { q: "ban", state: "error", results: [], count: 0, active: -1 }; },
+};
+
+// ---------------------------------------------------------------- o editor
+function sumHtml() {
+  const cents = E.rows.map((r) => parseWeight(r.text));
+  const good = cents.filter((c) => c !== null);
+  const out = cents.length - good.length;
+  const s = sumCents(good);
+  const gap = s === TOTAL_CENTS
+    ? `<span class="m22b-sum__gap m22b-sum__gap--exact">${glyph("i-check-circle", "ruvor-glyph--sm")} ${esc(T("carteiras.soma.exata"))}</span>`
+    : s < TOTAL_CENTS ? `<span class="m22b-sum__gap">${esc(T("carteiras.soma.abaixo", centsText(TOTAL_CENTS - s)))}</span>`
+    : `<span class="m22b-sum__gap">${esc(T("carteiras.soma.acima", centsText(s - TOTAL_CENTS)))}</span>`;
+  return `<span class="m22b-sum__value">${esc(centsText(s))}%</span>${gap}${out ? `<p class="m22b-sum__out">${esc(T("carteiras.soma.foraDaSoma", out))}</p>` : ""}`;
+}
+function editorTable() {
+  const rows = E.rows.map((r, i) => {
+    const wErr = r.err || (r.apiErr && r.apiErr === T("carteiras.erro.peso") ? r.apiErr : null);
+    const tErr = r.apiErr && r.apiErr !== T("carteiras.erro.peso") ? r.apiErr : null;
+    return `<tr data-row="${i}">
+      <td><span class="m22b-editor__ticker">${esc(r.ticker)}</span><span class="m22b-editor__name">${esc(r.name)}</span>${tErr ? `<span class="ruvor-field__error" id="r${i}-t-err">${esc(tErr)}</span>` : ""}</td>
+      <td><input class="ruvor-input" type="text" inputmode="decimal" autocomplete="off" data-weight="${i}" value="${esc(r.text)}" aria-label="${esc(T("carteiras.peso.rotulo", r.ticker))}"${wErr ? ` aria-invalid="true" aria-describedby="r${i}-w-err"` : tErr ? ` aria-describedby="r${i}-t-err"` : ""}${E.sending ? " disabled" : ""}>${wErr ? `<span class="ruvor-field__error" id="r${i}-w-err">${esc(wErr)}</span>` : ""}</td>
+      <td><button class="ruvor-btn ruvor-btn--ghost ruvor-btn--icon" type="button" data-remove="${i}" aria-label="${esc(T("carteiras.remover", r.ticker))}"${E.sending ? " disabled" : ""}>${glyph("i-x")}</button></td>
+    </tr>`;
+  }).join("");
+  const empty = `<tr class="m22b-editor__empty"><td colspan="3">${esc(T("carteiras.editor.vazio"))}</td></tr>`;
+  return `<table class="ruvor-table m22b-editor">
+    <colgroup><col><col class="m22b-editor__weight"><col class="m22b-editor__remove"></colgroup>
+    <thead><tr><th scope="col">${esc(T("carteiras.col.acao"))}</th><th scope="col" class="m22b-sum-weight">${esc(T("carteiras.col.peso"))}</th><th scope="col"><span class="ruvor-sr-only">${esc(T("carteiras.col.remover"))}</span></th></tr></thead>
+    <tbody>${E.rows.length ? rows : empty}</tbody>
+    <tfoot><tr><td><b>${esc(T("carteiras.soma.rotulo"))}</b> <span class="ruvor-muted">· ${esc(T("carteiras.acoes", E.rows.length))}</span></td>
+      <td colspan="2"><div class="m22b-sum" aria-live="polite" data-sum>${sumHtml()}</div></td></tr>
+      ${E.total.length ? `<tr><td colspan="3">${E.total.map((m) => `<span class="ruvor-field__error" role="alert">${glyph("i-warning", "ruvor-glyph--sm")}<span>${esc(m)}</span></span>`).join("")}</td></tr>` : ""}
+    </tfoot>
+  </table>`;
+}
+function formPanel() {
+  if (!E.open) return "";
+  const dis = E.sending ? " disabled" : "";
+  const field = (id, key, hintKey, value, err, extra) => `<div class="ruvor-field">
+      <label class="ruvor-label" for="${id}">${esc(T(key))}</label>
+      <input class="ruvor-input" id="${id}" type="text" autocomplete="off" value="${esc(value)}" aria-describedby="${id}-hint${err ? ` ${id}-err` : ""}"${err ? ' aria-invalid="true"' : ""} ${extra}${dis}>
+      <span class="ruvor-hint" id="${id}-hint">${esc(T(hintKey))}</span>
+      ${err ? `<span class="ruvor-field__error" id="${id}-err">${esc(err)}</span>` : ""}
+    </div>`;
+  const actions = S.ended
+    ? signInNotice("ended")
+    : `<div class="m22b-form__actions">
+        <button class="ruvor-btn ruvor-btn--primary" type="submit"${E.sending ? ' aria-busy="true" disabled' : ""}>${E.sending ? `${glyph("i-spinner-gap", "ruvor-spin")}<span>${esc(T("carteiras.criando"))}</span>` : esc(T("carteiras.criar"))}</button>
+        <button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="cancelar"${dis}>${esc(T("carteiras.cancelar"))}</button>
+      </div>`;
+  const body = E.apiBody !== null || E.apiStatus === 0
+    ? `<pre class="mk-code">${esc(E.apiStatus === 0 ? "moldura: a resposta que voltou\nfalha de rede (fetch rejeita), 5xx, 429 too_many_requests, 403 csrf_failed — a mesma mensagem" : `moldura: a resposta que voltou\nHTTP ${E.apiStatus}\n${JSON.stringify(E.apiBody, null, 2)}`)}</pre>` : "";
+  const created = E.created ? `<p class="mk-tail">Moldura: 201 — a tela vai a <code>/carteiras/6f1c2d3e-0000-4000-8000-000000000009</code>, a página da carteira nova (o <code>carteira.html</code>, T3). O corpo enviado: <code>${esc(JSON.stringify({ name: E.name.trim(), notional: E.notional.trim() === "" ? null : notionalToApi(parseNotional(E.notional)), holdings: E.rows.map((r) => ({ ticker: r.ticker, weight: weightToApi(parseWeight(r.text)) })) }))}</code></p>` : "";
+  return `<section class="ruvor-panel" aria-labelledby="h-criar" data-part="criacao">
+    <div class="ruvor-panel__head">${glyph("i-briefcase")}<h2 class="ruvor-h3" id="h-criar">${esc(T("carteiras.criar.titulo"))}</h2></div>
+    <div class="ruvor-panel__body m22b-form-body">
+      <form class="m22b-form" novalidate data-form>
+        <div class="ruvor-form-grid m22b-form__fields">
+          ${field("f-nome", "carteiras.campo.nome", "carteiras.campo.nomeDica", E.name, E.nameErr, 'maxlength="100" data-name')}
+          ${field("f-valor", "carteiras.campo.valor", "carteiras.campo.valorDica", E.notional, E.notionalErr, 'inputmode="decimal" data-notional')}
+        </div>
+        <fieldset class="m22b-group">
+          <legend class="m22b-group__title">${esc(T("carteiras.composicao.titulo"))}</legend>
+          <p class="ruvor-hint" style="margin:0">${esc(T("carteiras.composicao.dica"))}</p>
+          ${picker()}
+          ${editorTable()}
+        </fieldset>
+        ${E.general ? `<div class="ruvor-callout ruvor-callout--critical m22b-form__general" role="alert">${glyph("i-warning")}<span>${esc(E.general)}</span></div>` : ""}
+        ${actions}
+        ${body}
+        ${created}
+      </form>
+    </div>
+  </section>`;
+}
+const notionalToApi = (n) => `${n.int}.${n.dec}`; // "10000.00", pelo texto
+
+function renderPage() {
+  const sessao = sessaoEfetiva();
+  renderHead();
+  const body = $("[data-slot-body]");
+  const tail = $("[data-tail]");
+  tail.hidden = true;
+  if (sessao === "carregando") {
+    tail.hidden = false;
+    tail.innerHTML = "Moldura: a sessão ainda não resolveu (<code>auth/me</code> no ar). Nenhum pedido à API das carteiras; o esqueleto da lista, sem botão.";
+    body.innerHTML = `<section class="ruvor-panel" aria-busy="true"><p class="ruvor-sr-only">${esc(T("carteiras.lista.carregando"))}</p><div class="ruvor-panel__body ruvor-stack" aria-hidden="true"><span class="ruvor-skeleton ruvor-skeleton--short"></span><span class="ruvor-skeleton ruvor-skeleton--short"></span><span class="ruvor-skeleton ruvor-skeleton--short"></span></div></section>`;
+    return;
+  }
+  if (sessao === "anonimo" && !S.ended) {
+    tail.hidden = false;
+    tail.innerHTML = "Moldura: <code>/carteiras</code> aberta por quem não entrou. No lugar da tela, só o aviso do M2.1b (sem <code>ended</code>), com o <code>next</code> para <code>/carteiras</code>; nenhum pedido à API das carteiras.";
+    body.innerHTML = `<div class="m21b-page-notice">${signInNotice("required")}</div>`;
+    return;
+  }
+  if (S.ended) { tail.hidden = false; tail.innerHTML = "Moldura: o <code>POST portfolios</code> voltou 401. A sessão passa a terminada: a barra mostra \"Entrar\" e perde o item; o aviso vem no lugar dos botões, e o que foi digitado fica."; }
+  if (!S.ended && E?.apiBody?.error?.code === "invalid_holdings") { tail.hidden = false; tail.innerHTML = "Moldura: as conferências do cliente e o seletor evitam a maior parte destes casos antes do envio; a tela mostra o que a API devolver, cada <code>reason</code> na linha do seu <code>index</code>, ou na linha da soma. O corpo da resposta vem embaixo do formulário."; }
+  const arquivada = S.lista === "arquivada"
+    ? `<div class="ruvor-callout" role="status"><span class="ruvor-icon ruvor-icon--validated"><svg aria-hidden="true" focusable="false"><use href="#i-duo-check-circle"/></svg></span><div>${esc(T("carteiras.arquivada", "Exportadoras"))}</div></div>` : "";
+  body.innerHTML = `${arquivada}${formPanel()}${listPanel()}`;
+}
+
+// ---------------------------------------------------------------- os eventos do editor
+document.addEventListener("input", (e) => {
+  if (!E) return;
+  const t = e.target;
+  if (t.matches("[data-weight]")) {
+    E.rows[Number(t.dataset.weight)].text = t.value; // o texto como foi digitado
+    $("[data-sum]").innerHTML = sumHtml();           // só a soma muda: o campo fica como está
+  } else if (t.matches("[data-name]")) E.name = t.value;
+  else if (t.matches("[data-notional]")) E.notional = t.value;
+  else if (t.id === "pk-input") {
+    runSearch(t.value);
+    const pop = $("[data-picker-pop]");
+    const html = pickerPopover();
+    if (pop) pop.outerHTML = html || "<span hidden data-picker-pop></span>"; else t.closest("[data-picker]").insertAdjacentHTML("beforeend", html);
+    t.setAttribute("aria-expanded", String(E.picker.state === "results"));
+  }
+});
+// A mensagem do formato também aparece ao sair do campo.
+document.addEventListener("change", (e) => {
+  if (!E || !e.target.matches("[data-weight]")) return;
+  const i = Number(e.target.dataset.weight);
+  const err = lineErr(E.rows[i].text);
+  const was = E.rows[i].err;
+  E.rows[i].err = err === T("carteiras.erro.pesoFormato") ? err : (was ? err : null);
+  if (E.rows[i].err !== was) { E.rows[i].apiErr = null; renderPage(); }
+});
+function addTicker(ticker) {
+  const a = byTicker(ticker);
+  if (!a || pickerReason(a)) return; // desabilitado: nada
+  E.rows.push(row(ticker, ""));
+  E.picker = { q: "", state: "empty", results: [], count: 0, active: -1 };
+  renderPage();
+  $(`[data-weight="${E.rows.length - 1}"]`)?.focus();
+}
+document.addEventListener("click", (e) => {
+  if (!E) return;
+  const pick = e.target.closest("[data-pick]");
+  if (pick) { addTicker(pick.dataset.pick); return; }
+  const rm = e.target.closest("[data-remove]");
+  if (rm) { E.rows.splice(Number(rm.dataset.remove), 1); renderPage(); return; }
+  const act = e.target.closest("[data-act]");
+  if (act?.dataset.act === "nova") { E = blankEditor(); renderPage(); $("#f-nome")?.focus(); return; }
+  if (act?.dataset.act === "cancelar") { E = blankEditor(); E.open = false; renderPage(); return; }
+});
+document.addEventListener("keydown", (e) => {
+  if (!E || e.target.id !== "pk-input") return;
+  const pk = E.picker;
+  if (e.key === "ArrowDown" && pk.state === "results") { e.preventDefault(); pk.active = Math.min(pk.active + 1, pk.results.length - 1); }
+  else if (e.key === "ArrowUp" && pk.state === "results") { e.preventDefault(); pk.active = Math.max(pk.active - 1, 0); }
+  else if (e.key === "Enter") { e.preventDefault(); if (pk.state === "results") { const a = pk.results[pk.active >= 0 ? pk.active : 0]; if (a) addTicker(a.ticker); } return; }
+  else if (e.key === "Escape") { e.preventDefault(); runSearch(""); }
+  else return;
+  renderPage();
+  const inp = $("#pk-input"); inp?.focus(); inp?.setSelectionRange(inp.value.length, inp.value.length);
+});
+document.addEventListener("submit", (e) => {
+  if (!e.target.matches("[data-form]")) return;
+  e.preventDefault();
+  if (check()) E.created = true;
+  renderPage();
+  const first = document.querySelector("[data-form] [aria-invalid='true']");
+  if (first) first.focus();
+});
+
+// ---------------------------------------------------------------- os textos (vista "os textos")
+function renderTextos() {
+  const out = (k, v) => (typeof v === "function" ? (EXEMPLOS[k] ?? [[]]).map((a) => v(...a)) : [v]);
+  const table = (src, onde) => {
+    let rows = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+    for (const k of Object.keys(src)) {
+      const v = src[k];
+      const sig = typeof v === "function" ? `função de ${v.length} argumento${v.length === 1 ? "" : "s"}` : "texto";
+      rows += `<tr><td>${esc(k)}<small>${esc(sig)}</small></td><td>${out(k, v).map(esc).join("<br>")}${onde ? `<small>${esc(onde[k] ?? "")}</small>` : ""}</td></tr>`;
+    }
+    return `${rows}</tbody>`;
+  };
+  $("[data-textos]").innerHTML = table(TEXTOS, ONDE);
+  $("[data-herdados]").innerHTML = table(HERDADOS, null);
+  $("[data-exemplos]").textContent = `// novos em EXEMPLOS (frontend/tests/exemplos.ts)\n${JSON.stringify(EXEMPLOS, null, 2)}`;
+}
+
+// ---------------------------------------------------------------- tema, nível e vistas
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  S.tema = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+const readingBtns = document.querySelectorAll("[data-set-reading]");
+function setReading(next) {
+  S.nivel = next === "advanced" ? "advanced" : "beginner";
+  for (const b of readingBtns) b.setAttribute("aria-pressed", String(b.dataset.setReading === S.nivel));
+  refreshFrames(); // nenhum texto desta página muda com o nível
+}
+for (const b of readingBtns) b.addEventListener("click", () => setReading(b.dataset.setReading));
+
+function render() {
+  for (const v of document.querySelectorAll(".mk-view")) v.hidden = v.dataset.view !== S.vista;
+  for (const b of document.querySelectorAll("[data-mk-vista]")) b.setAttribute("aria-pressed", String(b.dataset.mkVista === S.vista));
+  for (const b of document.querySelectorAll("[data-mk-sessao]")) b.setAttribute("aria-pressed", String(b.dataset.mkSessao === S.sessao && !S.ended));
+  for (const b of document.querySelectorAll("[data-mk-lista]")) b.setAttribute("aria-pressed", String(b.dataset.mkLista === S.lista));
+  for (const b of document.querySelectorAll("[data-mk-preset]")) b.setAttribute("aria-pressed", String(b.dataset.mkPreset === S.preset));
+  for (const b of document.querySelectorAll("[data-mk-seletor]")) b.setAttribute("aria-pressed", String(b.dataset.mkSeletor === S.seletor));
+  renderBar();
+  if (S.vista === "pagina") renderPage();
+  refreshFrames();
+}
+function applyPreset() {
+  S.ended = false;
+  PRESETS[S.preset]();
+  if (S.seletor && E.open) SELETOR[S.seletor]();
+}
+for (const b of document.querySelectorAll("[data-mk-sessao]")) b.addEventListener("click", () => { S.sessao = b.dataset.mkSessao; S.ended = false; S.menu = false; if (S.preset === "api401") { S.preset = "exata"; applyPreset(); } render(); });
+for (const b of document.querySelectorAll("[data-mk-lista]")) b.addEventListener("click", () => { S.lista = b.dataset.mkLista; S.vista = "pagina"; render(); });
+for (const b of document.querySelectorAll("[data-mk-preset]")) b.addEventListener("click", () => { S.preset = b.dataset.mkPreset; S.seletor = null; S.vista = "pagina"; if (S.sessao !== "logado") S.sessao = "logado"; applyPreset(); render(); });
+for (const b of document.querySelectorAll("[data-mk-seletor]")) b.addEventListener("click", () => { S.seletor = b.dataset.mkSeletor; S.vista = "pagina"; S.sessao = "logado"; if (!E.open || S.ended) { S.preset = "exata"; PRESETS.exata(); S.ended = false; } SELETOR[S.seletor](); render(); });
+for (const b of document.querySelectorAll("[data-mk-vista]")) b.addEventListener("click", () => { S.vista = b.dataset.mkVista; S.menu = false; render(); });
+
+// Os quadros: a própria página, sem a moldura, no nível e no tema correntes.
+const src = (q) => `${location.pathname}?moldura=0&tema=${S.tema}&nivel=${S.nivel}&${q}`;
+function refreshFrames() {
+  if (S.vista === "barras") {
+    const sess = S.sessao;
+    const f = (w, label, q, menu = false) => `<div class="mk-frame${menu ? " mk-frame--menu" : ""}"><p>${esc(label)}</p><iframe style="width:${w}px" title="${esc(label)}" src="${src(q)}"></iframe></div>`;
+    const W = [1440, 1024, 921, 920, 841, 840, 768, 720, 360];
+    $("[data-frames-wide]").innerHTML = [
+      ...W.map((w) => f(w, `${w} px · ${sess}`, `vista=pagina&sessao=${sess}&preset=fechada`)),
+      f(1440, "1440 px · logado, o menu de conta aberto: o item não o move", "vista=pagina&sessao=logado&preset=fechada&menu=aberto", true),
+      f(360, "360 px · logado, o menu de conta aberto", "vista=pagina&sessao=logado&preset=fechada&menu=aberto", true),
+    ].join("");
+  }
+  if (S.vista === "estreito") {
+    const f = (label, q) => `<div class="mk-frame"><p>${esc(label)}</p><iframe title="${esc(label)}" src="${src(q)}"></iframe></div>`;
+    $("[data-frames]").innerHTML = [
+      f("a lista, com carteiras", "vista=pagina&sessao=logado&lista=com&preset=fechada"),
+      f("a lista vazia", "vista=pagina&sessao=logado&lista=vazia&preset=fechada"),
+      f("a lista: erro", "vista=pagina&sessao=logado&lista=erro&preset=fechada"),
+      f("a lista carregando", "vista=pagina&sessao=logado&lista=carregando&preset=fechada"),
+      f("anônimo: o aviso", "vista=pagina&sessao=anonimo"),
+      f("a criação: 0,01 + 65,40 + 34,59", "vista=pagina&sessao=logado&preset=exata"),
+      f("a criação: os pesos que não passam", "vista=pagina&sessao=logado&preset=confPesos"),
+      f("a criação: a API, os cinco motivos", "vista=pagina&sessao=logado&preset=apiItems"),
+      f("o seletor com desabilitados", "vista=pagina&sessao=logado&preset=exata&seletor=resultados"),
+      f("a criação: a falha de rede", "vista=pagina&sessao=logado&preset=apiRede"),
+    ].join("");
+  }
+}
+
+// ?vista=… &sessao=… &lista=… &preset=… &seletor=… &menu=aberto &tema=… &nivel=… &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+applyPreset();
+setReading(S.nivel);
+setTheme(S.tema);
+render();
+renderTextos();
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>
