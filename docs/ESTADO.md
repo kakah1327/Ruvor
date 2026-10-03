@@ -31,7 +31,7 @@ o **M1.4b fechou em 2026-10-03** — a correção do motor: o GARCH e o EGARCH s
 janela expansiva reestimada a cada 252 pregões, o motor `0.4.0` e os seis ativos cobertos recalculados do zero
 ([D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md) a
 [D-159](decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md)) —, já com a `main` do M2.2a e
-do M3.3 mesclada, e com a PR de implementação a abrir; o M2.1b tem spec e plano aprovados, a implementar; na
+do M3.3 mesclada, e com a PR única — spec, plano e implementação — a abrir (o portão da spec e do plano foi a aprovação do dono na conversa, em 2026-10-02); o M2.1b tem spec e plano aprovados, a implementar; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -1717,7 +1717,7 @@ mesmos pregões por ativo), 108 pares (ativo, modelo, nível):
 - **Os outros seis, com `var_latest` diferente em todos os 72 pares.** Nos tradicionais, o valor `0.3.0` era o quantil
   (ou a normal, ou a simulação) dos 252 primeiros retornos, constante no teste: o `0.4.0` difere dele nos 36 pares.
 - **O GARCH e o EGARCH tinham violações de menos** — viam o choque do dia. Corrigidos, as violações sobem nos seis
-  ativos e nos dois níveis, para perto das esperadas (~111 a 112 a 5% e ~22 a 1%, em 2.220 a 2.245 dias de teste): o
+  ativos e nos dois níveis — nos 24 pares —, chegando perto das esperadas (~111 a 112 a 5% e ~22 a 1%, em 2.220 a 2.245 dias de teste) no BBDC4, no IBOV e no ITUB4, e passando delas no AALR3: o
   EGARCH a 5% no ITUB4, de **48 para 101**; no IBOV, de 29 para 111; no BBDC4, de 32 para 104; a 1%, fora o AALR3, de
   4–12 para 20–41. O GARCH a 5%, de 49–63 para 65–100 (fora o AALR3, 116 → 142).
 - **Os tradicionais erravam para os dois lados, conforme o ativo.** O quantil de 2016–2017 era baixo para o AALR3, o
@@ -1756,7 +1756,7 @@ suspeita comparava as violações do teste inteiro, que o Kupiec usa, com a zona
 | Verificação | Resultado |
 |---|---|
 | Sem olhar à frente (V-01 a V-03) | ✅ por perturbação, nos seis não neurais, em *t* fora do piso da σ; contra o `arch`, nas posições 0, 100, 252 e 400 |
-| A lista fechada (V-07) | ✅ `git diff --stat origin/main -- engine/src/`: os sete arquivos da D-157; `base.py` só nas duas docstrings |
+| A lista fechada (V-07) | ✅ `git diff --stat origin/main -- engine/src/`: os seis arquivos da D-157 (o `pyproject.toml` fica fora de `engine/src/`); `base.py` só nas duas docstrings |
 | A linha de base (V-05) | ✅ as dez entradas das cinco famílias mudaram, as duas do `caviar` iguais; **25 verdes** no hospedeiro |
 | O trecho 0 (V-06) | ✅ só o `garchnet` mudou |
 | Mutações (T6) | ✅ todas reprovam: o laço antigo do GARCH, o VaR constante, o gerador por trecho, o hiperparâmetro fora, o script com o motor velho, a frase velha |

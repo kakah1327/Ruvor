@@ -30,7 +30,7 @@ código de `base.py`. A D-46 ("a Etapa 6 corre com esta configuração") passa a
 
 ## Consequências
 
-- A lista foi conferida no fecho por `git diff --stat origin/main -- engine/src/` (V-07): sete arquivos, todos da lista
+- A lista foi conferida no fecho por `git diff --stat origin/main -- engine/src/` (V-07): seis arquivos, todos da lista
   — `base.py` só nas duas docstrings, e o `_expanding.py` criado pelo plano.
 - A D-21 continua valendo para o que ela protege — biblioteca, arquitetura e hiperparâmetro de ML. Outra alteração no
   motor antes da Etapa 6 precisa de lista própria.
