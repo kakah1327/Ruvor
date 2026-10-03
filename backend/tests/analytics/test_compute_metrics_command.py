@@ -24,6 +24,7 @@ from django.utils import timezone
 
 from apps.analytics.metrics import Metrics
 from apps.analytics.models import BehaviorMetric
+from apps.analytics.stress import EpisodeResult
 from apps.assets.models import Asset, CollectionRun, Price
 
 pytestmark = pytest.mark.django_db
@@ -128,7 +129,10 @@ def test_falha_escreve_o_relatorio_antes_de_sair_1(
     com_serie_longa("BBB3")
 
     def fake_write(
-        asset: Asset, calculated_at: datetime, metrics: Metrics
+        asset: Asset,
+        calculated_at: datetime,
+        metrics: Metrics,
+        stress: list[EpisodeResult],
     ) -> BehaviorMetric:
         raise RuntimeError("gravacao quebrou")
 

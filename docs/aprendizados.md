@@ -1584,3 +1584,17 @@ mockup acha divergência que não é defeito — ou, pior, "corrige" a tela para
 **Faça:** antes de conferir texto contra o mockup, leia as "Correções registradas na execução" do plano e o índice de
 [`docs/mockups/README.md`](mockups/README.md), que marca o que o mockup não reflete. Ao aprovar uma emenda no portão,
 registre no plano, no mesmo commit, qual vista do mockup fica para trás — ou atualize o mockup antes da implementação.
+
+## A diferença de um ulp na soma some no passo seguinte, e a mutação da ordem sobrevive
+
+**Quando:** ao provar que um cálculo em `float` soma numa ordem fixa (a série da carteira do M2.2a
+soma as posições na ordem do ticker, para a web e o `worker` darem o mesmo índice bit a bit).
+
+**Problema:** o plano mandava afirmar, como pré-condição, que a soma dos termos em ordem inversa
+difere bit a bit da soma na ordem certa. A pré-condição passou e a mutação "somar na ordem do
+`dict`" **sobreviveu**: a diferença de um ulp em `R ≈ 0,1` desaparece no `1 + R` do índice, que é o
+número que o teste compara. Necessário, não suficiente.
+
+**Faça:** afirme a pré-condição sobre o **mesmo número que o teste compara** — aqui,
+`1.0 * (1 + soma_inversa) != I_2` —, e escolha os dados até ela valer (com `R ≈ −0,08`, a
+diferença sobrevive). Exerça a mutação antes de confiar no teste.

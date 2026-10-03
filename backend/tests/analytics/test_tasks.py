@@ -39,6 +39,7 @@ from apps.analytics.compute import (
 )
 from apps.analytics.metrics import Metrics
 from apps.analytics.models import BehaviorMetric
+from apps.analytics.stress import EpisodeResult
 from apps.analytics.tasks import _calcular_metricas
 from apps.assets.models import Asset, CollectionRun, Price
 
@@ -190,11 +191,14 @@ def test_com_um_ativo_falho_o_outro_fica_gravado(
         _make_prices(_make_asset(ticker))
 
     def escrita_que_falha_no_segundo(
-        asset: Asset, calculated_at: datetime, metrics: Metrics
+        asset: Asset,
+        calculated_at: datetime,
+        metrics: Metrics,
+        stress: list[EpisodeResult],
     ) -> BehaviorMetric:
         if asset.ticker == "BBB3":
             raise RuntimeError("gravacao quebrou")
-        return write_metrics(asset, calculated_at, metrics)
+        return write_metrics(asset, calculated_at, metrics, stress)
 
     monkeypatch.setattr(
         "apps.analytics.compute.write_metrics", escrita_que_falha_no_segundo

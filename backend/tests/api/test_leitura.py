@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from django.test import Client
 
-from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
 from apps.assets.models import Asset, CollectionRun, CorporateEvent, Price
 
 if TYPE_CHECKING:
@@ -396,7 +396,10 @@ def test_metricas_devolvem_a_ultima_linha_com_as_colunas_e_os_baldes(
     assert set(corpo) == {"ticker", "metric"}
     assert corpo["ticker"] == "ITUB4"
     metrica = corpo["metric"]
-    assert set(metrica) == CABECALHO_METRICA | _colunas_de_metrica() | {"histogram"}
+    assert set(metrica) == CABECALHO_METRICA | _colunas_de_metrica() | {
+        "histogram",
+        "stress",
+    }
     # a ultima linha, nao a primeira; instante no fuso de TIME_ZONE, com deslocamento
     assert metrica["calculated_at"] == "2026-09-25T10:00:00-03:00"
     assert metrica["price_count"] == 2480
@@ -446,9 +449,116 @@ def test_metricas_do_indice_tem_beta_correlacao_e_observacoes_nulos(
     corpo = _ok(client.get("/api/v1/assets/ibov/metrics"))
 
     metrica = corpo["metric"]
-    assert set(metrica) == CABECALHO_METRICA | _colunas_de_metrica() | {"histogram"}
+    assert set(metrica) == CABECALHO_METRICA | _colunas_de_metrica() | {
+        "histogram",
+        "stress",
+    }
     assert metrica["beta_60m"] is None
     assert metrica["correlation_60m"] is None
     assert metrica["benchmark_observations"] is None
     # o resto vem preenchido: e identidade do indice, nao falta de dado
     assert metrica["volatility_12m"] == "0.1234567890"
+
+
+# --- /metrics: o estresse (M3.3, RF-10; V-07) ---------------------------------------------
+
+CAMPOS_EPISODIO = [
+    "episode",
+    "start_date",
+    "end_date",
+    "missing",
+    "window_start_date",
+    "window_end_date",
+    "period_return",
+    "drawdown",
+    "drawdown_peak_date",
+    "drawdown_trough_date",
+    "recovery_date",
+    "recovery_sessions",
+    "benchmark_period_return",
+    "benchmark_drawdown",
+    "benchmark_recovery_sessions",
+]
+
+
+def _episodio(
+    metrica: BehaviorMetric, codigo: str, inicio: date, fim: date, **extra: Any
+) -> StressEpisode:
+    valores: dict[str, Any] = {
+        "window_start_date": inicio,
+        "window_end_date": fim,
+        "period_return": Decimal("-0.1000000000"),
+        "drawdown": Decimal("-0.2000000000"),
+        "drawdown_peak_date": inicio,
+        "drawdown_trough_date": fim,
+        "recovery_date": None,
+        "recovery_sessions": None,
+        "benchmark_period_return": Decimal("-0.0500000000"),
+        "benchmark_drawdown": Decimal("-0.1500000000"),
+        "benchmark_recovery_sessions": 12,
+    }
+    valores.update(extra)
+    return StressEpisode.objects.create(
+        metric=metrica, episode=codigo, start_date=inicio, end_date=fim, **valores
+    )
+
+
+def test_metricas_trazem_o_estresse_da_linha_devolvida_em_ordem(client: Client) -> None:
+    ativo = _ativo("ITUB4")
+    antiga = _metrica(ativo, CALCULADO - timedelta(days=1), price_count=1)
+    _episodio(antiga, "da_antiga", date(2017, 5, 17), date(2017, 6, 30))
+    nova = _metrica(ativo, CALCULADO)
+    # fora de ordem de proposito: a rota entrega por `start_date`
+    _episodio(nova, "covid_2020", date(2020, 2, 21), date(2020, 3, 31))
+    _episodio(
+        nova,
+        "jbs_2017",
+        date(2017, 5, 17),
+        date(2017, 6, 30),
+        missing="starts_after",
+        window_start_date=None,
+        window_end_date=None,
+        period_return=None,
+        drawdown=None,
+        drawdown_peak_date=None,
+        drawdown_trough_date=None,
+    )
+
+    metrica = _ok(client.get("/api/v1/assets/ITUB4/metrics"))["metric"]
+
+    estresse = metrica["stress"]
+    assert [e["episode"] for e in estresse] == ["jbs_2017", "covid_2020"]
+    assert all(list(e) == CAMPOS_EPISODIO for e in estresse)
+    assert estresse[1] == {
+        "episode": "covid_2020",
+        "start_date": "2020-02-21",
+        "end_date": "2020-03-31",
+        "missing": None,
+        "window_start_date": "2020-02-21",
+        "window_end_date": "2020-03-31",
+        "period_return": "-0.1000000000",
+        "drawdown": "-0.2000000000",
+        "drawdown_peak_date": "2020-02-21",
+        "drawdown_trough_date": "2020-03-31",
+        "recovery_date": None,
+        "recovery_sessions": None,
+        "benchmark_period_return": "-0.0500000000",
+        "benchmark_drawdown": "-0.1500000000",
+        "benchmark_recovery_sessions": 12,
+    }
+    assert estresse[0]["missing"] == "starts_after"
+    assert estresse[0]["period_return"] is None
+    assert estresse[0]["benchmark_period_return"] == "-0.0500000000"
+
+
+def test_metricas_de_linha_sem_episodios_trazem_estresse_vazio(client: Client) -> None:
+    # A linha gravada antes do M3.3 nao tem episodios, ainda que uma mais velha tenha.
+    ativo = _ativo("ITUB4")
+    antiga = _metrica(ativo, CALCULADO - timedelta(days=1), price_count=1)
+    _episodio(antiga, "jbs_2017", date(2017, 5, 17), date(2017, 6, 30))
+    _metrica(ativo, CALCULADO)
+
+    metrica = _ok(client.get("/api/v1/assets/ITUB4/metrics"))["metric"]
+
+    assert metrica["price_count"] == 2480
+    assert metrica["stress"] == []

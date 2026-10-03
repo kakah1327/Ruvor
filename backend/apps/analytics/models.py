@@ -111,3 +111,56 @@ class ReturnHistogramBin(models.Model):
 
     def __str__(self) -> str:
         return f"{self.metric_id} #{self.bin_index}"
+
+
+class StressEpisode(models.Model):
+    """O ativo e o Ibovespa num episodio de estresse da D-147, filho da linha de metrica.
+
+    Uma linha por `(metric, episode)` e por episodio da lista vigente no calculo (RF-07 do
+    M3.3). `episode` e texto livre: a lista muda por decisao nova, e as linhas antigas
+    guardam o codigo antigo. `start_date` e `end_date` sao a definicao usada, copiada da
+    lista, para a linha dizer de que recorte fala mesmo que a lista mude. Com `missing`, as
+    medidas do ativo sao nulas; as tres do indice nao dependem disso.
+    """
+
+    class Missing(models.TextChoices):
+        STARTS_AFTER = "starts_after"
+        STALE_START = "stale_start"
+        ENDS_BEFORE = "ends_before"
+        NO_TRADING = "no_trading"
+
+    metric = models.ForeignKey(
+        BehaviorMetric,
+        on_delete=models.CASCADE,
+        related_name="stress_episodes",
+    )
+    episode = models.CharField(max_length=40)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    missing = models.CharField(max_length=20, null=True, choices=Missing.choices)
+    window_start_date = models.DateField(null=True)
+    window_end_date = models.DateField(null=True)
+    period_return = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    drawdown = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    drawdown_peak_date = models.DateField(null=True)
+    drawdown_trough_date = models.DateField(null=True)
+    recovery_date = models.DateField(null=True)
+    recovery_sessions = models.IntegerField(null=True)
+    benchmark_period_return = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    benchmark_drawdown = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    benchmark_recovery_sessions = models.IntegerField(null=True)
+
+    class Meta:
+        db_table = 'gold"."stress_episode'
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["metric", "episode"], name="stress_episode_metric_episode"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.metric_id} {self.episode}"

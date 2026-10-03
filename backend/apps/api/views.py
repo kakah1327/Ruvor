@@ -40,7 +40,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
-from apps.analytics.models import BehaviorMetric, ReturnHistogramBin
+from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
 from apps.api.errors import ApiError
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import (
@@ -360,7 +360,8 @@ class AssetEventsView(APIView):
 
 class AssetMetricsView(APIView):
     """`GET /api/v1/assets/{ticker}/metrics`: a ultima linha de `gold.behavior_metric` e os
-    baldes do histograma; `metric` nulo se o ativo nunca foi calculado.
+    baldes do histograma e os episodios de estresse (M3.3); `metric` nulo se o ativo nunca foi
+    calculado.
     """
 
     permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
@@ -377,7 +378,11 @@ class AssetMetricsView(APIView):
                 Prefetch(
                     "bins",
                     queryset=ReturnHistogramBin.objects.order_by("bin_index"),
-                )
+                ),
+                Prefetch(
+                    "stress_episodes",
+                    queryset=StressEpisode.objects.order_by("start_date"),
+                ),
             )
             .order_by("-calculated_at")
             .first()

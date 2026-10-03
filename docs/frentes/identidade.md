@@ -14,21 +14,18 @@ Detalhe em [FRENTES.md](../FRENTES.md#cercas).
 
 ## Agora
 
-**Bloco:** M2.2a — Carteira (só o backend; as telas são o M2.2b, da `marco1`). Os três blocos
-anteriores fecharam: o M4.2 (PR #15), o M4.1 (PR #28) e o M2.1a (2026-09-30), este com a PR #29 aberta
-**Etapa:** spec do M2.2a aprovada pelo dono (2026-10-01); plano aprovado pelo dono (2026-10-01); PR de spec e plano aberta; **a PR de implementação só entra na `main` com o
-parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md))
-**Ramo:** `identidade/M2.2-carteira` (sobre o ramo da PR #29); `identidade/M2.1-identidade-e-acesso` (a PR #29)
+**Bloco:** nenhum aberto. Os quatro blocos da frente fecharam: o M4.2 (PR #15), o M4.1 (PR #28),
+o M2.1a (PR #29) e o M2.2a — Carteira, só o backend (PR #34, 2026-10-02); as telas da carteira são o
+M2.2b, da `marco1`. Sem comercialização, o parecer da CVM não segura a carteira
+([D-160](../decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
+**Ramo:** nenhum
 
 ## Próximo passo
 
-1. ~~A PR #29 do M2.1a~~ — mesclada em 2026-10-01.
-2. A spec do M2.2a: portão do dono e a PR da spec, que **passa pela `marco1`**
-   — a cerca nova, o que a carteira lê de `apps/risk/` e o M2.2b nascendo na `marco1`. Depois, o
-   plano.
-3. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
+1. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
    para 401, na mesma rodada de revisão da PR dele.
-4. Pedir o parecer da CVM: sem ele, a implementação do M2.2a fica no ramo.
+2. Definir o próximo bloco da frente com o dono ([ROADMAP](../ROADMAP.md)).
+3. Antes de comercializar a plataforma, pedir o parecer da CVM e registrá-lo numa decisão nova (D-160).
 
 ## O que esta frente espera de outras
 
@@ -59,3 +56,6 @@ parecer da CVM** ([D-116](../decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec
 | 2026-10-01 | PR #29 (M2.1a) na `main`. Spec do M2.2a: revisão 2 reprovou (1 grave: `select_for_update(of=...)` gera `FOR UPDATE OF "gold"."…"`, que o PostgreSQL recusa — reproduzido no `ruvor-web-1`; trocado pela trava consultiva da execução, `pg_advisory_xact_lock(7104, run_id)`, com releitura; 2 médios, 11 leves), absorvidos; **revisão 3 aprovou** (1 médio: o V-16 concorrente nas duas ordens; 6 leves), absorvidos. Verbete novo em aprendizados. A spec vai ao portão do dono |
 | 2026-10-01 | Spec do M2.2a aprovada pelo dono. Plano escrito, em rascunho: T0 a T8 — a app e as cinco tabelas; a série e o provedor; os serviços e as rotas da composição; o pedido e a leitura do risco; as tarefas e a conversão; 25 mutações; a execução real e o FECHA |
 | 2026-10-01 | Plano do M2.2a: revisão 1 reprovou (4 médios: a metade do RF-20 sem prova, `tests/test_celery_registro.py` fora da cerca, as mutações 5 e 12 que podiam sobreviver), a 2 reprovou (1 médio: o critério rodaria no checkout principal, não no worktree — agora contêiner avulso com `RUVOR_DB_NAME=ruvor_m22`), **a 3 aprovou** (2 leves). O plano vai ao portão do dono |
+| 2026-10-01 | PR #30 (M1.5c) e PR #31 (spec e plano do M2.2a) na `main`. **T0 do M2.2a executada:** ramo avançado à `main` `804cda4` sem conflito; a `main` não trouxe migration nova de `accounts` (`0006_report`) nem de `assets` (`0003_yahoo_chart_price_corporate_event`); imagem do `worker` reconstruída; banco `ruvor_m22` já existia, `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0; o teste de mentira em `tests/portfolios` apareceu na coleta do avulso. Linha de base: `1397 passed` em 14 min 45 s, `mypy` sem erros em 225 arquivos, `ruff check` e `ruff format --check` limpos |
+| 2026-10-02 | M2.2a: **T1 a T6 executadas**, um commit cada — as cinco tabelas e os gatilhos (`1c25905`), a série e o provedor (`5cc26da`), os serviços da composição (`69a403a`), as rotas, a chave e o esquema (`c88495b`), pedir e ler o risco (`06830fe`), as três tarefas e a conversão (`0127446`); suíte inteira verde depois de cada uma (1466, 1484, 1521, 1572, 1620 e 1652 testes), `mypy` e `ruff` limpos. A pré-condição da mutação 5 do plano não bastava — a diferença de um ulp some no `1 + R` —, e os preços do teste foram trocados (verbete novo em aprendizados). **T7:** as 25 mutações reprovaram. **T8:** principal em `git switch --detach 0127446`, `web` e `worker` nele, Beat parado; V-25 pelo proxy do Vite — `PETR4 40` / `VALE3 30` / `ITUB4 30`, `ok` em 143 s, 18 resultados, `series_sha256` igual ao reconstruído do `psql`, 409 ao pedir de novo, versão 2 em 148 s, a chave lê e recebe 403 no `POST`, o gatilho recusa o `UPDATE`. Principal de volta ao ramo de antes. FECHA escrito; a `main` (M1.7 e M2.3) entrou no ramo, 1711 testes; PR #34 aberta, CI verde nos quatro trabalhos, segurada até o parecer |
+| 2026-10-02 | PR #34 (implementação do M2.2a) na `main`. Decidido com o dono: a plataforma não vai ser comercializada por enquanto, e o parecer da CVM deixa de segurar a carteira — só vale antes de comercializar ([D-160](../decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md), que substitui a D-116, item 2, e a D-153, item 2; o lado seguro, item 3 da D-116, continua). **M2.2a fechado na `main`.** ESTADO, ROADMAP, FRENTES, PRODUTO e `CLAUDE.md` sem a trava |
