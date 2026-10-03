@@ -202,6 +202,8 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "motivos.serieCurta": [["312", "503"]],
   "motivos.expirado": [["30"]],
   "motivos.desconhecido": [["qualquer outro texto"]],
+  // acesso.*: o registro EXEMPLOS do entrada.html (M2.1b) — segundos, minutos e sem o número.
+  "acesso.erro.tentativas": [[42], [900], [null]],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.

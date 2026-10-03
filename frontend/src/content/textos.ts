@@ -724,6 +724,43 @@ export const TEXTOS = {
   "comunicados.semCodigo":
     "O catálogo não tem o código desta companhia na CVM, e os comunicados dela não puderam ser ligados.",
   "comunicados.semLigacao": "Os comunicados desta companhia não puderam ser ligados.",
+
+  // acesso.* — a tela de entrada (M2.1b, RF-06): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/entrada.html` aprovado. Os sobretítulos ficam em caixa normal, como
+  // `busca.eyebrow`; a folha os põe em maiúsculas. A mensagem da API nunca entra aqui: a tela
+  // traduz pelo `code`.
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto":
+    "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.eyebrow": "Acesso à plataforma",
+  "acesso.titulo": "Que bom te ver de novo.",
+  "acesso.sub": "Entre com o e-mail e a senha da sua conta.",
+  "acesso.email.rotulo": "E-mail",
+  "acesso.email.placeholder": "nome@exemplo.com",
+  "acesso.senha.rotulo": "Senha",
+  "acesso.senha.nota":
+    "Não há recuperação de senha por e-mail. Numa organização, peça uma senha provisória a quem a administra; numa conta pessoal, a senha não pode ser recuperada.",
+  "acesso.entrar": "Entrar",
+  "acesso.entrando": "Entrando…",
+  "acesso.semConta": "Ainda não tem conta?",
+  "acesso.criarConta": "Criar conta",
+  "acesso.continuar": "Continuar sem entrar",
+  "acesso.erro.emailVazio": "Informe o e-mail.",
+  "acesso.erro.senhaVazia": "Informe a senha.",
+  "acesso.erro.credenciais": "E-mail ou senha incorretos.",
+  // tentativas(n) — n: `details.wait_seconds`, inteiro; ausente (null) → a frase sem o número;
+  // de 60 s em diante, em minutos arredondados para cima (o bloqueio por e-mail e IP dura 900 s).
+  "acesso.erro.tentativas": (n: number | null): string =>
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

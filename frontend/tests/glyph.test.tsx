@@ -34,7 +34,9 @@ const REGULAR: RegularGlyph[] = [
   "magnifying-glass",
   "scales",
   "spinner-gap",
+  "warning",
   "x",
+  "x-circle",
 ];
 const DUOTONE: DuotoneGlyph[] = ["info", "warning", "x-circle"];
 

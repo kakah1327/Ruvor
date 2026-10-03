@@ -24,7 +24,9 @@ import info from "@brand/icons/regular/info.svg?raw";
 import magnifyingGlass from "@brand/icons/regular/magnifying-glass.svg?raw";
 import scales from "@brand/icons/regular/scales.svg?raw";
 import spinnerGap from "@brand/icons/regular/spinner-gap.svg?raw";
+import warning from "@brand/icons/regular/warning.svg?raw";
 import x from "@brand/icons/regular/x.svg?raw";
+import xCircle from "@brand/icons/regular/x-circle.svg?raw";
 
 const REGULAR = {
   "arrow-left": arrowLeft,
@@ -39,7 +41,9 @@ const REGULAR = {
   "magnifying-glass": magnifyingGlass,
   scales,
   "spinner-gap": spinnerGap,
+  warning,
   x,
+  "x-circle": xCircle,
 } as const;
 
 /** Os duotone só vão nos sinais (`.ruvor-icon`), pela D-93. */

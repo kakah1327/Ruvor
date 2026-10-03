@@ -11,6 +11,7 @@ import { Shell } from "./components/Shell";
 import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { SearchScreen } from "./screens/SearchScreen";
+import { SignInScreen } from "./screens/SignInScreen";
 import { SessionProvider } from "./session/SessionProvider";
 
 /**
@@ -35,7 +36,9 @@ function AssetRoute() {
 /**
  * As rotas (RF-01): a busca, o ativo e o resto, que é "página não encontrada", no casco. Na
  * raiz, a rota de layout do estado de sessão (M2.1b, RF-03), pai do casco e das telas fora
- * dele: quem monta `routes` recebe o provedor.
+ * dele: quem monta `routes` recebe o provedor. A entrada (`/entrar`, RF-04) fica fora do casco,
+ * em tela cheia; vem depois dele na lista, e o roteador a escolhe pela especificidade — o
+ * caminho fixo ganha do `*` —, não pela ordem.
  */
 export const routes: RouteObject[] = [
   {
@@ -49,6 +52,7 @@ export const routes: RouteObject[] = [
           { path: "*", element: <NotFoundScreen /> },
         ],
       },
+      { path: "entrar", element: <SignInScreen /> },
     ],
   },
 ];
