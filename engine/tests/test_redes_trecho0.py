@@ -3,7 +3,9 @@
 O trecho de teste 0 da `var_series` -- os 252 dias previstos pelo treino inicial, antes do
 primeiro retreino -- de `lstm`, `gru` e `garchnet`, nos dois niveis, sobre a serie de 552
 pontos de `conftest.serie_da_linha_de_base`, com `DEFAULT_SEED`, tem de sair IGUAL, bit a
-bit, a referencia capturada com o motor `0.2.0` no `worker` ja travado pelo lock (RF-16).
+bit, a referencia capturada no `worker` ja travado pelo lock (RF-16) -- recapturada com o motor
+`0.4.0` no M1.4b, porque a sigma do GARCH que o `garchnet` recebe mudou; `lstm` e `gru` sairam
+iguais a do `0.2.0`.
 A semente por retreino (RF-05) muda os trechos seguintes; o primeiro, nunca.
 
 So roda no `worker` (`RUVOR_REFERENCE_ENV=worker`, que o `compose.yaml` define ali e so
@@ -101,7 +103,7 @@ def _confere_forma(referencia: dict) -> None:
             )
 
 
-def test_o_trecho_0_das_redes_e_igual_a_referencia_do_0_2_0() -> None:
+def test_o_trecho_0_das_redes_e_igual_a_referencia() -> None:
     if os.environ.get("RUVOR_CAPTURE_REFERENCE") == "1":
         referencia = {
             "captured_with_engine": version("ruvor-engine"),
@@ -130,4 +132,4 @@ def test_o_trecho_0_das_redes_e_igual_a_referencia_do_0_2_0() -> None:
         for nivel in referencia["var_series_trecho0"][rede]
         if obtidos[rede][nivel] != referencia["var_series_trecho0"][rede][nivel]
     ]
-    assert not divergentes, f"trecho 0 diferente da referencia do 0.2.0: {divergentes}"
+    assert not divergentes, f"trecho 0 diferente da referencia: {divergentes}"
