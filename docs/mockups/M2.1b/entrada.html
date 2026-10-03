@@ -25,6 +25,12 @@
    * O fundo da cena era var(--ink) no 01-login, que no tema escuro do kit vira claro
    * (#ECEBE7): a cena usa var(--ruvor-topbar) e var(--ruvor-topbar-text), escuros nos dois
    * temas.
+   *
+   * Resultado para a T10: esta tela não traz token de cor novo — as três cores do 01-login
+   * viraram tokens existentes ou saíram com o elemento delas. O que ela traz é um par de
+   * contraste novo, o sobretítulo da cena: ["review", "topbar", 4.5] em PAIRS de
+   * frontend/tests/tokens.test.ts (claro #B79754 sobre #292A2E, 5,17:1; escuro #D1B06A sobre
+   * #0C0D0F, 9,38:1). O texto da cena, topbar-account sobre topbar, já está em PAIRS.
    */
 </style>
 <style>
@@ -35,8 +41,21 @@
    * kit, sem foundation.css. Só var(--ruvor-*) e valores estruturais: nenhuma cor literal
    * (o bloco acima explica as três do 01-login).
    *
-   * Estilo local: m21b- (a cena e o arranjo de tela cheia, que a T10 leva ao kit se o portão
-   * aprovar — RF-17) e mk- (a moldura do mockup, que não é tela).
+   * Estilo local: m21b- e mk-. TODO m21b- vai ao kit na T10 (RF-17), com o nome proposto
+   * (ou a classe do kit que o substitui); mk- é a moldura do mockup, que não é tela.
+   *
+   *   .m21b-access                    -> .ruvor-access          o arranjo de tela cheia, duas colunas (uma até 720 px)
+   *   .m21b-scene, __logo, __copy,    -> .ruvor-scene, __logo,  a cena de acesso
+   *     __title, __text                  __copy, __title, __text
+   *   .m21b-side                      -> .ruvor-access__side    a coluna do formulário
+   *   .m21b-auth, __head, __title     -> .ruvor-auth, __head,   o formulário de acesso (largura, ritmo, título)
+   *                                      __title
+   *   .m21b-note                      -> .ruvor-hint--top       a dica longa, com o ícone na primeira linha
+   *   .m21b-alert                     -> .ruvor-form-error      a caixa de erro do formulário (sobre .ruvor-callout--critical)
+   *   .m21b-wide                      -> .ruvor-btn--block      o botão na largura do formulário
+   *   .m21b-signup                    -> .ruvor-auth__alt       a linha "Ainda não tem conta? Criar conta"
+   *   .m21b-link                      -> .ruvor-link            o link no meio do texto
+   *   .m21b-access [hidden]           -> nenhuma: é do mockup; a tela não monta o que não mostra
    */
 
   /* --- NOVO: o arranjo de tela cheia em duas colunas ------------------------------- */
@@ -165,7 +184,8 @@
     <button class="ruvor-btn" type="button" data-mk-state="vazios">os dois campos vazios</button>
     <button class="ruvor-btn" type="button" data-mk-state="senha-vazia">senha vazia</button>
     <button class="ruvor-btn" type="button" data-mk-state="invalid_credentials">invalid_credentials</button>
-    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests">429 com wait_seconds</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests">429 com 42 s</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests-min">429 com 900 s (o bloqueio)</button>
     <button class="ruvor-btn" type="button" data-mk-state="too_many_requests-sem">429 sem wait_seconds</button>
     <button class="ruvor-btn" type="button" data-mk-state="csrf_failed">csrf_failed</button>
     <button class="ruvor-btn" type="button" data-mk-state="rede">rede ou fora do formato</button>
@@ -262,6 +282,7 @@
         <li>o texto da cena "Compare modelos de VaR, … para times de risco." e o subtítulo "Entre no workspace da sua organização.", trocados por <code>acesso.cena.texto</code> e <code>acesso.sub</code>;</li>
         <li>a mensagem de erro "Não foi possível autenticar. Verifique o workspace e tente novamente.".</li>
       </ol>
+      <p class="ruvor-note">Fora da lista, sai também o placeholder da senha do 01-login, <code>"••••••••••"</code>: o campo de senha fica sem placeholder. O do e-mail troca <code>nome@empresa.com</code> por <code>acesso.email.placeholder</code>.</p>
     </div>
   </section>
   <section class="ruvor-panel">
@@ -271,10 +292,12 @@
         <li><b>A saudação</b>: "Que bom te ver de novo." é a proposta da spec (neutra, sem gênero); o portão aprova ou troca. Quem nunca entrou e chega aqui lê a mesma frase.</li>
         <li><b>O tema</b>: a tela não tem chave de tema — está fora do casco, e o tema escolhido no casco já vale nela (<code>initTheme()</code> em <code>frontend/src/main.tsx</code> aplica a escolha guardada em <code>ruvor-theme</code>, ou o do sistema). Os dois temas se conferem pela chave da moldura, acima. Se o portão quiser a chave na própria tela, ela entra na cena (o <code>.ruvor-segmented</code> foi desenhado para fundo escuro).</li>
         <li><b>As cores</b>: nenhuma cor nova. A cena usa as cores da barra do casco (<code>--ruvor-topbar</code>, <code>--ruvor-topbar-text</code>, <code>--ruvor-topbar-account</code>), escuras nos dois temas; o erro, <code>--ruvor-critical-text</code> sobre <code>--ruvor-critical-soft</code>. O bloco <code>/* tokens propostos — M2.1b, T10 */</code> registra o destino das três cores do 01-login, sem declarar nenhuma.</li>
+        <li><b>O estilo local vai ao kit</b>: todo <code>.m21b-*</code> vai a <code>brand/ruvor/components.css</code> na T10, com o nome proposto — <code>.ruvor-access</code> (o arranjo), <code>.ruvor-scene</code> e os elementos dela (a cena), <code>.ruvor-access__side</code>, <code>.ruvor-auth</code> e os elementos dele (o formulário), <code>.ruvor-hint--top</code> (a nota), <code>.ruvor-form-error</code> (a caixa de erro), <code>.ruvor-btn--block</code> (os botões largos), <code>.ruvor-auth__alt</code> (a linha do cadastro) e <code>.ruvor-link</code> (o link). A tabela completa está no comentário do <code>&lt;style&gt;</code> local.</li>
         <li><b>Enviando</b>: o botão mostra "Entrando…" com o ícone que gira, fica desabilitado e com <code>aria-busy</code>; os campos continuam como estavam.</li>
         <li><b>O erro de campo vazio</b> não manda pedido: o campo fica com <code>aria-invalid="true"</code> e <code>aria-describedby</code> apontando o erro (e, na senha, também a nota). O erro geral fica na caixa acima do botão, com <code>role="alert"</code>; os dois não aparecem juntos.</li>
-        <li><b>O bloqueio por (e-mail, IP) e o limite por IP</b> saem com o mesmo texto: a API não os distingue. Sem <code>details.wait_seconds</code>, a frase sem o número.</li>
-        <li><b>Depois de um erro geral</b>, o mockup mostra os dois campos ainda preenchidos; a spec não decide se a senha é apagada.</li>
+        <li><b>O foco</b>: com campo vazio, vai ao primeiro campo vazio (o e-mail, se os dois estiverem vazios). Depois de um erro geral, a caixa de erro é anunciada pelo <code>role="alert"</code> e o foco fica no botão "Entrar".</li>
+        <li><b>O bloqueio por (e-mail, IP) e o limite por IP</b> saem com o mesmo texto: a API não os distingue. A espera vem de <code>details.wait_seconds</code>: abaixo de 60 s, em segundos ("Tente de novo em 42 s."); de 60 s em diante, em minutos arredondados para cima ("Tente de novo em 15 min.", para os 900 s do bloqueio — <code>BLOCK_SECONDS = 900</code>, <code>backend/apps/accounts/lockout.py:20</code>); sem o campo, a frase sem o número. O limite por IP (10 por minuto) cai no ramo dos segundos.</li>
+        <li><b>Depois de um erro geral</b>, os dois campos ficam preenchidos.</li>
         <li><b>As marcas</b>: <code>data-screen="entrada"</code> na raiz e, só no estado de base (vazio), os nove <code>data-part</code> da tabela do plano, uma vez cada — <code>campo-email</code> e <code>campo-senha</code> no <code>.ruvor-field</code> inteiro (rótulo, campo e mensagens). Nos outros estados, a página tira as marcas.</li>
         <li>"Criar conta" leva a <code>/cadastro</code> com o mesmo <code>next</code>; "Continuar sem entrar", a <code>next</code> (ou <code>/</code>). Os links do mockup não navegam.</li>
       </ul>
@@ -305,14 +328,19 @@ const TEXTOS = {
   "acesso.erro.emailVazio": "Informe o e-mail.",
   "acesso.erro.senhaVazia": "Informe a senha.",
   "acesso.erro.credenciais": "E-mail ou senha incorretos.",
-  // n: details.wait_seconds, inteiro; ausente (null) -> a frase sem o número.
+  // n: details.wait_seconds, inteiro; ausente (null) -> a frase sem o número; de 60 s em
+  // diante, em minutos arredondados para cima (o bloqueio por e-mail e IP dura 900 s).
   "acesso.erro.tentativas": (n) =>
-    n == null ? "Muitas tentativas. Aguarde um pouco e tente de novo." : `Muitas tentativas. Tente de novo em ${n} s.`,
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
   "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
   "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
   "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
 };
-const EXEMPLOS = { "acesso.erro.tentativas": [[42], [null]] };
+const EXEMPLOS = { "acesso.erro.tentativas": [[42], [900], [null]] };
 const NOTAS = {
   "acesso.cena.marca": "o texto alternativo do logotipo da cena",
   "acesso.cena.eyebrow": "sobretítulo da cena, em maiúsculas pela folha",
@@ -352,6 +380,7 @@ const GLYPH_SPIN = '<svg class="ruvor-glyph ruvor-spin" aria-hidden="true" focus
 const ERROS_GERAIS = {
   invalid_credentials: () => T("acesso.erro.credenciais"),
   too_many_requests: () => T("acesso.erro.tentativas", 42),
+  "too_many_requests-min": () => T("acesso.erro.tentativas", 900),
   "too_many_requests-sem": () => T("acesso.erro.tentativas", null),
   csrf_failed: () => T("acesso.erro.csrf"),
   rede: () => T("acesso.erro.rede"),
@@ -400,7 +429,7 @@ function renderTextos() {
     rows += `<tr><td>${esc(k)}<small>${esc(NOTAS[k] ?? "texto")}</small></td><td>${out}</td></tr>`;
   }
   $("[data-textos]").innerHTML = `${rows}</tbody>`;
-  $("[data-exemplos]").textContent = `  "acesso.erro.tentativas": [[42], [null]],`;
+  $("[data-exemplos]").textContent = `  "acesso.erro.tentativas": [[42], [900], [null]],`;
 }
 
 // ---------------------------------------------------------------- a moldura
