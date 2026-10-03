@@ -11,8 +11,10 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 
 import { ApiError, apiPost } from "../api/client";
 import { Glyph } from "../components/Glyph";
+import { SectionSkeleton } from "../components/SectionStatus";
+import { SignInNotice } from "../components/SignInNotice";
 import { TEXTOS } from "../content/textos";
-import { safeNext, signInHref } from "../session/next";
+import { safeNext } from "../session/next";
 import { useSession } from "../session/SessionProvider";
 import { apiFieldLists, FieldErrorList, PasswordHint } from "./SignUpScreen";
 
@@ -84,13 +86,15 @@ function fieldErrorsOf(caught: unknown): FieldErrors | null {
  * terminada no lugar do formulário, e a tela chama `expired()` só no clique em "Entrar", antes
  * de navegar à entrada com a URL corrente: chamar no 401 tiraria a obrigatória de cena, e
  * navegar com a sessão ainda logada faria a entrada devolver aqui.
+ *
+ * A voluntária aberta por quem não entrou mostra só o aviso "para quem entrou" (`SignInNotice`
+ * sem `ended`, RF-16) e, com a sessão carregando, o esqueleto — sem formulário nem pedido.
  */
 export function PasswordScreen({ mode }: { mode: "voluntary" | "required" }) {
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const here = location.pathname + location.search;
   const voluntary = mode === "voluntary";
 
   const destination = safeNext(params.get("next"));
@@ -369,30 +373,27 @@ export function PasswordScreen({ mode }: { mode: "voluntary" | "required" }) {
 
   // O aviso de sessão terminada (RF-16), no lugar do formulário.
   const ended = (
-    <div
-      className="ruvor-state ruvor-state--notice ruvor-state--signin"
-      data-signin-notice="ended"
-      role="alert"
-    >
-      <span className="ruvor-icon ruvor-icon--evidence">
-        <Glyph name="info" weight="duotone" />
-      </span>
-      <div className="ruvor-state__body">
-        <p className="ruvor-state__title">{TEXTOS["conta.aviso.terminou"]}</p>
-        <p className="ruvor-note">{TEXTOS["conta.aviso.volta"]}</p>
-        <Link
-          ref={linkRef}
-          className="ruvor-btn ruvor-btn--primary"
-          to={signInHref(here)}
-          onClick={() => session.expired()}
-        >
-          {TEXTOS["conta.entrar"]}
-        </Link>
-      </div>
-    </div>
+    <SignInNotice ended linkRef={linkRef} onSignIn={() => session.expired()} />
   );
 
   if (voluntary) {
+    // Quem não entrou (anônimo desde a carga) vê só o aviso "para quem entrou", no lugar da
+    // tela (RF-16, o `conta.html`); enquanto a sessão carrega, o esqueleto. Nenhum dos dois
+    // pede nada. O 401 de quem estava logado continua no aviso de sessão terminada, abaixo.
+    if (outcome !== "ended" && session.status === "anonymous") {
+      return (
+        <div className="ruvor-page-notice" data-screen="senha">
+          <SignInNotice ended={false} />
+        </div>
+      );
+    }
+    if (outcome !== "ended" && session.status === "loading") {
+      return (
+        <div className="ruvor-stack" data-screen="senha" aria-busy="true">
+          <SectionSkeleton />
+        </div>
+      );
+    }
     return (
       <div className="ruvor-stack ruvor-stack--loose" data-screen="senha">
         <div className="ruvor-page-head">

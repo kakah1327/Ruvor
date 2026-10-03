@@ -817,11 +817,22 @@ export const TEXTOS = {
     "As outras sessões desta conta foram encerradas. Esta continua aberta.",
   "senha.sucesso.continuar": "Continuar",
 
-  // conta.* — as chaves do `docs/mockups/M2.1b/conta.html` aprovado que a troca de senha usa
-  // (o aviso de sessão terminada do RF-16 e o Sair que falha); o resto de conta.* chega com o menu.
+  // conta.* — o menu de conta (RF-09, RF-10), o convite a entrar para calcular (RF-15) e os dois
+  // avisos do RF-16: do registro `TEXTOS` do `docs/mockups/M2.1b/conta.html` aprovado. Nenhuma é
+  // número com frase: não têm leitura avançada.
   "conta.entrar": "Entrar",
+  // rotulo(nome) — o `aria-label` do botão de conta, com o nome de quem entrou (`me.name`).
+  "conta.menu.rotulo": (nome: string): string => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.pessoal": "Conta pessoal",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
   "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
+  "conta.convite.entrar": "Entrar para calcular",
+  "conta.convite.frase": "Pedir um cálculo exige entrar na conta.",
   "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
   "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
 } as const;
 
