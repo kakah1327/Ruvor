@@ -3,7 +3,8 @@
  * dublês de navegador nos testes"):
  *
  * - `HTMLDialogElement.prototype.showModal` e `close`: abrem e fecham pelo atributo `open`, e o
- *   `close` dispara o evento `close`, como o navegador. O foco preso dentro do diálogo e o `Esc`
+ *   `close` dispara o evento `close` numa tarefa (`setTimeout`), como o navegador — nunca na
+ *   hora. O foco preso dentro do diálogo e o `Esc`
  *   são do navegador, não daqui: provam-se na execução real (T16);
  * - `navigator.clipboard.writeText`: grava o texto em `areaDeTransferencia.textos`, que o teste
  *   lê; com `areaDeTransferencia.falhar`, rejeita, como o navegador que nega a permissão.
@@ -29,10 +30,21 @@ function showModal(this: HTMLDialogElement): void {
   this.setAttribute("open", "");
 }
 
+/** Os `close` ainda na fila: o `restaurarDublesDeNavegador()` os descarta. */
+const pendingCloses = new Set<ReturnType<typeof setTimeout>>();
+
 function close(this: HTMLDialogElement): void {
   if (!this.hasAttribute("open")) return;
   this.removeAttribute("open");
-  this.dispatchEvent(new Event("close"));
+  // Como o navegador: o atributo sai na hora, e o evento `close` vai **numa tarefa** — a
+  // especificação HTML, "close the dialog": "queue an element task on the user interaction task
+  // source given the subject element to fire an event named close at subject". Entre um e outro,
+  // a tela pode renderizar com o diálogo já fechado e o estado dele ainda aberto.
+  const timer = setTimeout(() => {
+    pendingCloses.delete(timer);
+    this.dispatchEvent(new Event("close"));
+  }, 0);
+  pendingCloses.add(timer);
 }
 
 export function instalarDublesDeNavegador(): void {
@@ -78,6 +90,8 @@ function put(target: object, key: string, descriptor: PropertyDescriptor | undef
 
 export function restaurarDublesDeNavegador(): void {
   if (saved === null) return;
+  for (const timer of pendingCloses) clearTimeout(timer);
+  pendingCloses.clear();
   put(HTMLDialogElement.prototype, "showModal", saved.showModal);
   put(HTMLDialogElement.prototype, "close", saved.close);
   put(navigator, "clipboard", saved.clipboard);

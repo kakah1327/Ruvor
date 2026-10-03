@@ -246,6 +246,10 @@ export function UsersScreen() {
   const opener = useRef<HTMLElement | null>(null);
   const openerSpot = useRef<Spot | null>(null);
   const focusFirst = useRef(false);
+  // O elemento em que o `showModal()` já foi chamado para o diálogo corrente. O `close()` tira o
+  // `open` na hora, mas o evento `close` chega numa tarefa: a renderização que vem antes dele
+  // (a linha trocada, por exemplo) não pode reabrir o `<dialog>`. Zera quando o diálogo é nulo.
+  const shownIn = useRef<HTMLDialogElement | null>(null);
   const skipRestore = useRef(false);
   const restore = useRef<{ opener: HTMLElement | null; spot: Spot | null } | null>(
     null,
@@ -427,8 +431,12 @@ export function UsersScreen() {
 
   useEffect(() => {
     const element = dialogRef.current;
+    if (dialog === null) shownIn.current = null;
     if (dialog !== null && element !== null) {
-      if (!element.open) element.showModal();
+      if (shownIn.current !== element) {
+        shownIn.current = element;
+        if (!element.open) element.showModal();
+      }
       if (focusFirst.current) {
         focusFirst.current = false;
         element.querySelector<HTMLElement>(FIRST_CONTROL)?.focus();

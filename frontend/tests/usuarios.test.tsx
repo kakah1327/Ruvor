@@ -146,12 +146,23 @@ function renderUsers(path = "/organizacao/usuarios") {
   return router;
 }
 
-/** Esvazia as promessas pendentes — a cadeia fetch → json → estado — dentro do `act`. */
+async function microtasks(): Promise<void> {
+  for (let i = 0; i < 20; i += 1) {
+    await Promise.resolve();
+  }
+}
+
+/**
+ * Esvazia as promessas pendentes — a cadeia fetch → json → estado — dentro do `act`, e depois
+ * deixa correr as tarefas já na fila, num `act` à parte: o `close` do `<dialog>` chega numa
+ * tarefa (`dubles.ts`), **depois** da renderização que o primeiro `act` descarrega — a ordem do
+ * navegador.
+ */
 async function flush(): Promise<void> {
+  await act(microtasks);
   await act(async () => {
-    for (let i = 0; i < 20; i += 1) {
-      await Promise.resolve();
-    }
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    await microtasks();
   });
 }
 
@@ -996,6 +1007,174 @@ describe("as ações da linha (RF-14)", () => {
       TEXTOS["usuarios.erro.rede"],
     );
   });
+});
+
+describe("o diálogo fecha de vez, com o close numa tarefa (o defeito achado na T16)", () => {
+  /** Fechado, vazio e assim continua depois de mais uma volta de tarefas. */
+  async function expectClosedForGood(): Promise<void> {
+    expect(isDialogOpen()).toBe(false);
+    expect(dialogEl().childElementCount).toBe(0);
+    expect(dialogEl().hasAttribute("data-dialog")).toBe(false);
+    await flush();
+    expect(isDialogOpen()).toBe(false);
+    expect(document.querySelectorAll("dialog[open]")).toHaveLength(0);
+  }
+
+  const DIEGO_PATH = `${USERS}/diego.alves%40exemplo.com`;
+  const BRUNO_PATH = `${USERS}/bruno.costa%40exemplo.com`;
+
+  it.each([
+    // [o caso, o e-mail da linha, o botão que abre, o PATCH, a resposta, o botão que recebe o foco]
+    [
+      "Desativar",
+      ANA.email,
+      "usuarios.acao.desativar",
+      ANA_PATH,
+      { ...ANA, is_active: false },
+      "usuarios.acao.reativar",
+    ],
+    [
+      "Reativar",
+      DIEGO.email,
+      "usuarios.acao.reativar",
+      DIEGO_PATH,
+      { ...DIEGO, is_active: true },
+      "usuarios.acao.desativar",
+    ],
+    [
+      "Mudar para administração",
+      ANA.email,
+      "usuarios.acao.admin",
+      ANA_PATH,
+      { ...ANA, role: "admin" },
+      "usuarios.acao.member",
+    ],
+    [
+      "Mudar para membro",
+      BRUNO.email,
+      "usuarios.acao.member",
+      BRUNO_PATH,
+      { ...BRUNO, role: "member" },
+      "usuarios.acao.admin",
+    ],
+  ] as const)(
+    "%s confirmado: o <dialog> não reabre, e o foco volta à mesma posição na linha",
+    async (_n, email, action, path, body, focused) => {
+      reply(`PATCH ${path}`, ok(body));
+      renderUsers();
+      await flush();
+      await click(rowButton(email, TEXTOS[action]));
+      expect(isDialogOpen()).toBe(true);
+      await click(inDialog().getByRole("button", { name: TEXTOS[action] }));
+      expect(callsTo("PATCH", path)).toHaveLength(1);
+      await expectClosedForGood();
+      expect(document.activeElement).toBe(rowButton(email, TEXTOS[focused]));
+    },
+  );
+
+  it("Cancelar: o <dialog> não reabre, e o foco volta a quem abriu", async () => {
+    renderUsers();
+    await flush();
+    const opener = rowButton(ANA.email, TEXTOS["usuarios.acao.desativar"]);
+    await click(opener);
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.confirmar.cancelar"] }),
+    );
+    await expectClosedForGood();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("Fechar a senha de quem foi criado: o <dialog> não reabre, e o foco volta a 'Criar usuário'", async () => {
+    reply(`POST ${USERS}`, ok({ user: GABRIELA, temporary_password: PASSWORD }, 201));
+    renderUsers();
+    await flush();
+    await fillAndCreate(GABRIELA.name, GABRIELA.email);
+    expect(isDialogOpen()).toBe(true);
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.senha.fechar"] }),
+    );
+    await expectClosedForGood();
+    expect(document.activeElement).toBe(submitButton());
+  });
+
+  it("Fechar a nova senha provisória: o <dialog> não reabre, e o foco volta a quem abriu", async () => {
+    const path = `${ANA_PATH}/temporary-password`;
+    reply(`POST ${path}`, ok({ user: ANA, temporary_password: PASSWORD }));
+    renderUsers();
+    await flush();
+    const opener = rowButton(ANA.email, TEXTOS["usuarios.acao.senha"]);
+    await click(opener);
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.acao.senha"] }),
+    );
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.senha.fechar"] }),
+    );
+    await expectClosedForGood();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("Fechar depois de user_not_found: o <dialog> não reabre", async () => {
+    reply(`PATCH ${ANA_PATH}`, fail(404, "user_not_found"));
+    reply(FIRST, page([ANA, BRUNO, CARLA, DIEGO]), page([BRUNO, CARLA, DIEGO]));
+    renderUsers();
+    await flush();
+    await click(rowButton(ANA.email, TEXTOS["usuarios.acao.desativar"]));
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.acao.desativar"] }),
+    );
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.confirmar.fechar"] }),
+    );
+    await expectClosedForGood();
+  });
+
+  it("Fechar depois do 401: o <dialog> não reabre, e o foco volta a quem abriu", async () => {
+    reply(`PATCH ${ANA_PATH}`, fail(401, "not_authenticated"));
+    renderUsers();
+    await flush();
+    const opener = rowButton(ANA.email, TEXTOS["usuarios.acao.desativar"]);
+    await click(opener);
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.acao.desativar"] }),
+    );
+    await click(
+      inDialog().getByRole("button", { name: TEXTOS["usuarios.confirmar.fechar"] }),
+    );
+    await expectClosedForGood();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it.each([
+    [
+      "rebaixar a si mesma",
+      `${USERS}/carla.mendes%40exemplo.com`,
+      CARLA.email,
+      "usuarios.acao.member",
+      ok({ ...CARLA, role: "member" }),
+    ],
+    [
+      "permission_denied",
+      ANA_PATH,
+      ANA.email,
+      "usuarios.acao.desativar",
+      fail(403, "permission_denied"),
+    ],
+  ] as const)(
+    "%s (o dismissDialog): nenhum <dialog> aberto fica, e o foco vai ao caso 'membro'",
+    async (_n, path, email, action, r) => {
+      reply(`PATCH ${path}`, r);
+      reply(ME_KEY, ok(ME), ok(MEMBER));
+      renderUsers();
+      await flush();
+      await click(rowButton(email, TEXTOS[action]));
+      await click(inDialog().getByRole("button", { name: TEXTOS[action] }));
+      await flush();
+      expect(document.querySelectorAll("dialog[open]")).toHaveLength(0);
+      const title = screen.getByText(TEXTOS["usuarios.membro.titulo"]);
+      expect(document.activeElement).toBe(title.closest(".ruvor-state"));
+    },
+  );
 });
 
 describe("a rota (RF-04)", () => {
