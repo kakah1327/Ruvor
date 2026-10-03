@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — a tela de entrada (mockup, M2.1b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /* tokens propostos — M2.1b, T10 */
+  /*
+   * As três cores do brand/ruvor/mockups/01-login.html fora de token, e o que o mockup faz
+   * com cada uma. Nenhuma vira valor novo: todas caem em token que o kit já tem, nos dois
+   * temas — este bloco não declara cor (a T10 não tem token de cor a acrescentar por causa
+   * desta tela; se o portão preferir nomes próprios para a cena, eles são apelidos destes).
+   *
+   *   #c7c5c0  o texto da cena, sobre o fundo escuro  ->  var(--ruvor-topbar-account)
+   *            (claro #D2D2D0, escuro #C4C4C2; o texto secundário que o kit já usa sobre a
+   *            barra, do mesmo fundo escuro da cena)
+   *   #d3c29f  a linha "Ambiente institucional · dados segregados por workspace"  ->  sai
+   *            com a linha (item 7 da lista fechada do RF-06); nenhum elemento a usa
+   *   #853b38  o texto da caixa de erro, sobre --critical-soft  ->  var(--ruvor-critical-text)
+   *            (claro #8D3F3B, escuro #EEA9A3; o par que o kit já mede)
+   *
+   * O fundo da cena era var(--ink) no 01-login, que no tema escuro do kit vira claro
+   * (#ECEBE7): a cena usa var(--ruvor-topbar) e var(--ruvor-topbar-text), escuros nos dois
+   * temas.
+   */
+</style>
+<style>
+  /*
+   * Mockup da tela de entrada (T5 do plano M2.1b, RF-06 da spec). Deriva do
+   * brand/ruvor/mockups/01-login.html — a cena escura com a marca e o texto à esquerda, o
+   * formulário à direita, tela cheia, fora do casco — sobre tokens.css e components.css do
+   * kit, sem foundation.css. Só var(--ruvor-*) e valores estruturais: nenhuma cor literal
+   * (o bloco acima explica as três do 01-login).
+   *
+   * Estilo local: m21b- (a cena e o arranjo de tela cheia, que a T10 leva ao kit se o portão
+   * aprovar — RF-17) e mk- (a moldura do mockup, que não é tela).
+   */
+
+  /* --- NOVO: o arranjo de tela cheia em duas colunas ------------------------------- */
+  .m21b-access {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    background: var(--ruvor-bg);
+  }
+
+  /* O [hidden] do mockup perde para o display dos componentes com ícone (:has(> .ruvor-glyph));
+     a tela implementada não monta o que não mostra. */
+  .m21b-access [hidden] { display: none; }
+
+  /* --- NOVO: a cena de acesso ------------------------------------------------------ */
+  .m21b-scene {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 68px;
+    background: var(--ruvor-topbar);
+    color: var(--ruvor-topbar-text);
+  }
+  /* O padrão de pontos do 01-login, na cor de revisão do tema. */
+  .m21b-scene::after {
+    content: "";
+    position: absolute;
+    inset: auto -90px -120px auto;
+    width: 430px;
+    height: 430px;
+    background-image: radial-gradient(circle, var(--ruvor-review) 0 4px, transparent 4.5px);
+    background-size: 31px 31px;
+    opacity: 0.28;
+    transform: rotate(-9deg);
+    pointer-events: none;
+  }
+  .m21b-scene__logo { display: block; width: 156px; height: auto; }
+  /* Sem a linha de rodapé do 01-login (item 7), o texto fica no meio da altura que sobra. */
+  .m21b-scene__copy { position: relative; z-index: 1; max-width: 500px; margin-block: auto; }
+  .m21b-scene__copy .ruvor-eyebrow { color: var(--ruvor-review); }
+  .m21b-scene__title { font-size: 48px; }
+  .m21b-scene__text { margin: var(--ruvor-space-4) 0 0; max-width: 52ch; font-size: 15px; color: var(--ruvor-topbar-account); }
+
+  /* --- NOVO: o lado do formulário -------------------------------------------------- */
+  .m21b-side { display: grid; place-items: center; padding: 60px; }
+  .m21b-auth { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: var(--ruvor-space-4); }
+  .m21b-auth__head { margin-bottom: var(--ruvor-space-3); }
+  .m21b-auth__title { font-size: 31px; }
+  .m21b-auth .ruvor-sub { margin-top: var(--ruvor-space-3); }
+  /* A nota sob a senha tem duas frases: o ícone fica na primeira linha. */
+  .ruvor-hint.m21b-note { align-items: flex-start; }
+  .m21b-note > .ruvor-glyph { margin-top: 2px; }
+  .m21b-alert { color: var(--ruvor-critical-text); padding: var(--ruvor-space-3) var(--ruvor-space-4); border-radius: var(--ruvor-radius-sm); }
+  .m21b-alert > .ruvor-glyph { margin-top: 2px; }
+  .m21b-wide { width: 100%; padding: 12px; text-align: center; }
+  .m21b-signup { margin: 0; text-align: center; color: var(--ruvor-text-muted); }
+  .m21b-link {
+    color: var(--ruvor-decision-text);
+    font-weight: var(--ruvor-type-small-weight);
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-underline-offset: 3px;
+  }
+  .m21b-link:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
+
+  /* --- NOVO: até 720 px, a cena vira faixa acima do formulário -------------------------- */
+  @media (max-width: 720px) {
+    .m21b-access { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+    .m21b-scene { padding: var(--ruvor-space-5) var(--ruvor-space-4); }
+    .m21b-scene::after { width: 220px; height: 220px; inset: auto -60px -90px auto; background-size: 22px 22px; background-image: radial-gradient(circle, var(--ruvor-review) 0 3px, transparent 3.5px); }
+    .m21b-scene__logo { width: 112px; }
+    .m21b-scene__copy { margin-block: var(--ruvor-space-5) 0; }
+    .m21b-scene__title { font-size: 28px; }
+    .m21b-scene__text { font-size: var(--ruvor-type-body-size); }
+    .m21b-side { place-items: start center; padding: var(--ruvor-space-6) var(--ruvor-space-4) var(--ruvor-space-7); }
+    .m21b-auth__title { font-size: var(--ruvor-type-h2-size); }
+  }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); background: var(--ruvor-canvas); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-frame iframe { width: 360px; height: 900px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 26%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code, .mk-pad code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/regular/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 256 256"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.1b · a entrada · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Estado">
+    <span>Estado:</span>
+    <button class="ruvor-btn" type="button" data-mk-state="vazio">vazio (base)</button>
+    <button class="ruvor-btn" type="button" data-mk-state="digitando">digitando</button>
+    <button class="ruvor-btn" type="button" data-mk-state="enviando">enviando</button>
+    <button class="ruvor-btn" type="button" data-mk-state="vazios">os dois campos vazios</button>
+    <button class="ruvor-btn" type="button" data-mk-state="senha-vazia">senha vazia</button>
+    <button class="ruvor-btn" type="button" data-mk-state="invalid_credentials">invalid_credentials</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests">429 com wait_seconds</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests-sem">429 sem wait_seconds</button>
+    <button class="ruvor-btn" type="button" data-mk-state="csrf_failed">csrf_failed</button>
+    <button class="ruvor-btn" type="button" data-mk-state="rede">rede ou fora do formato</button>
+    <button class="ruvor-btn" type="button" data-mk-state="outro">outro code</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk-view="tela">largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk-view="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk-view="textos">os textos</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Tema do mockup">
+    <span>Tema:</span>
+    <button class="ruvor-btn" type="button" data-set-theme="light">Claro</button>
+    <button class="ruvor-btn" type="button" data-set-theme="dark">Escuro</button>
+    <button class="ruvor-btn" type="button" data-set-theme="system">Sistema</button>
+  </div>
+</div>
+
+<!-- ============================================================ A TELA -->
+<div class="mk-view" data-view="tela" hidden>
+  <main class="m21b-access" data-screen="entrada">
+    <section class="m21b-scene" data-mark="cena">
+      <img class="m21b-scene__logo" src="../../../brand/ruvor/ruvor-logo-reverse.svg" data-t-alt="acesso.cena.marca">
+      <div class="m21b-scene__copy">
+        <p class="ruvor-eyebrow" data-t="acesso.cena.eyebrow"></p>
+        <h1 class="ruvor-display m21b-scene__title" data-t="acesso.cena.titulo"></h1>
+        <p class="m21b-scene__text" data-t="acesso.cena.texto"></p>
+      </div>
+    </section>
+
+    <section class="m21b-side">
+      <form class="m21b-auth" novalidate aria-labelledby="entrada-titulo" data-mark="form">
+        <div class="m21b-auth__head">
+          <p class="ruvor-eyebrow" data-t="acesso.eyebrow"></p>
+          <h2 class="ruvor-h2 m21b-auth__title" id="entrada-titulo" data-mark="titulo" data-t="acesso.titulo"></h2>
+          <p class="ruvor-sub" data-t="acesso.sub"></p>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-email">
+          <label class="ruvor-label" for="entrada-email" data-t="acesso.email.rotulo"></label>
+          <input class="ruvor-input" id="entrada-email" name="email" type="email" autocomplete="username" spellcheck="false" data-t-placeholder="acesso.email.placeholder">
+          <span class="ruvor-field__error" id="entrada-email-erro" hidden><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><span data-t="acesso.erro.emailVazio"></span></span>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-senha">
+          <label class="ruvor-label" for="entrada-senha" data-t="acesso.senha.rotulo"></label>
+          <input class="ruvor-input" id="entrada-senha" name="password" type="password" autocomplete="current-password" aria-describedby="entrada-senha-nota">
+          <span class="ruvor-field__error" id="entrada-senha-erro" hidden><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg><span data-t="acesso.erro.senhaVazia"></span></span>
+          <span class="ruvor-hint m21b-note" id="entrada-senha-nota" data-mark="nota-senha"><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="acesso.senha.nota"></span></span>
+        </div>
+
+        <!-- O erro geral: a caixa de erro do 01-login, com role="alert". Vazia e oculta no estado de base. -->
+        <div class="ruvor-callout ruvor-callout--critical m21b-alert" role="alert" data-alert hidden><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-warning"/></svg><span data-alert-text></span></div>
+
+        <button class="ruvor-btn ruvor-btn--primary m21b-wide" type="submit" data-mark="botao-entrar" data-submit><span data-t="acesso.entrar"></span></button>
+
+        <p class="m21b-signup"><span data-t="acesso.semConta"></span> <a class="m21b-link" href="#" data-mark="link-cadastro" data-t="acesso.criarConta"></a></p>
+
+        <a class="ruvor-btn ruvor-btn--ghost m21b-wide" href="#" data-mark="link-continuar" data-t="acesso.continuar"></a>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- 360 px: a própria página em moldura estreita, no tema escolhido. -->
+<div class="mk-view mk-pad" data-view="estreito" hidden>
+  <p class="mk-tail">Moldura: a mesma página em 360 px, sem a barra do mockup, no tema escolhido acima. Até 720 px (a quebra do kit) a tela tem uma coluna: a cena vira uma faixa acima do formulário — a marca, o sobretítulo, o título e o texto, menores, com o padrão de pontos menor —, e o formulário vem logo abaixo, na largura da tela. Nada rola na horizontal.</p>
+  <div class="mk-frames" data-frames></div>
+</div>
+
+<!-- Os textos. -->
+<div class="mk-view mk-pad" data-view="textos" hidden>
+  <p class="mk-tail">Moldura: as chaves que nascem neste mockup, todas novas em <code>frontend/src/content/textos.ts</code>, com o prefixo <code>acesso.*</code> do plano (seção "Os textos"). Os textos são os da tabela do RF-06 da spec, literais; o sobretítulo é guardado em caixa normal, como <code>busca.eyebrow</code>, e a folha o põe em maiúsculas.</p>
+  <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos da chave-função</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">No molde de <code>EXEMPLOS</code>, em <code>frontend/tests/exemplos.ts</code> (Correções registradas do plano): um exemplo por ramo. As outras chaves são texto, sem exemplo.</p>
+      <pre class="mk-code" data-exemplos></pre>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">O que sai do 01-login (a lista fechada do RF-06)</h2></div>
+    <div class="ruvor-panel__body">
+      <ol class="mk-notes">
+        <li>o seletor "Workspace";</li>
+        <li>o rótulo "E-mail corporativo" e a dica "Use o endereço associado à organização.";</li>
+        <li>"Esqueci minha senha";</li>
+        <li>o separador "ou" e "Entrar com SSO institucional";</li>
+        <li>o bloco "Estado previsto" do limite de usuários simultâneos;</li>
+        <li>o rodapé "Suporte · Privacidade · v0.1";</li>
+        <li>a linha "Ambiente institucional · dados segregados por workspace", com o ícone dela;</li>
+        <li>o texto da cena "Compare modelos de VaR, … para times de risco." e o subtítulo "Entre no workspace da sua organização.", trocados por <code>acesso.cena.texto</code> e <code>acesso.sub</code>;</li>
+        <li>a mensagem de erro "Não foi possível autenticar. Verifique o workspace e tente novamente.".</li>
+      </ol>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+    <div class="ruvor-panel__body">
+      <ul class="mk-notes">
+        <li><b>A saudação</b>: "Que bom te ver de novo." é a proposta da spec (neutra, sem gênero); o portão aprova ou troca. Quem nunca entrou e chega aqui lê a mesma frase.</li>
+        <li><b>O tema</b>: a tela não tem chave de tema — está fora do casco, e o tema escolhido no casco já vale nela (<code>initTheme()</code> em <code>frontend/src/main.tsx</code> aplica a escolha guardada em <code>ruvor-theme</code>, ou o do sistema). Os dois temas se conferem pela chave da moldura, acima. Se o portão quiser a chave na própria tela, ela entra na cena (o <code>.ruvor-segmented</code> foi desenhado para fundo escuro).</li>
+        <li><b>As cores</b>: nenhuma cor nova. A cena usa as cores da barra do casco (<code>--ruvor-topbar</code>, <code>--ruvor-topbar-text</code>, <code>--ruvor-topbar-account</code>), escuras nos dois temas; o erro, <code>--ruvor-critical-text</code> sobre <code>--ruvor-critical-soft</code>. O bloco <code>/* tokens propostos — M2.1b, T10 */</code> registra o destino das três cores do 01-login, sem declarar nenhuma.</li>
+        <li><b>Enviando</b>: o botão mostra "Entrando…" com o ícone que gira, fica desabilitado e com <code>aria-busy</code>; os campos continuam como estavam.</li>
+        <li><b>O erro de campo vazio</b> não manda pedido: o campo fica com <code>aria-invalid="true"</code> e <code>aria-describedby</code> apontando o erro (e, na senha, também a nota). O erro geral fica na caixa acima do botão, com <code>role="alert"</code>; os dois não aparecem juntos.</li>
+        <li><b>O bloqueio por (e-mail, IP) e o limite por IP</b> saem com o mesmo texto: a API não os distingue. Sem <code>details.wait_seconds</code>, a frase sem o número.</li>
+        <li><b>Depois de um erro geral</b>, o mockup mostra os dois campos ainda preenchidos; a spec não decide se a senha é apagada.</li>
+        <li><b>As marcas</b>: <code>data-screen="entrada"</code> na raiz e, só no estado de base (vazio), os nove <code>data-part</code> da tabela do plano, uma vez cada — <code>campo-email</code> e <code>campo-senha</code> no <code>.ruvor-field</code> inteiro (rótulo, campo e mensagens). Nos outros estados, a página tira as marcas.</li>
+        <li>"Criar conta" leva a <code>/cadastro</code> com o mesmo <code>next</code>; "Continuar sem entrar", a <code>next</code> (ou <code>/</code>). Os links do mockup não navegam.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------- os textos
+// NOVOS em textos.ts, com o prefixo acesso.* (RF-06 da spec, a tabela dos textos propostos).
+const TEXTOS = {
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto": "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.eyebrow": "Acesso à plataforma",
+  "acesso.titulo": "Que bom te ver de novo.",
+  "acesso.sub": "Entre com o e-mail e a senha da sua conta.",
+  "acesso.email.rotulo": "E-mail",
+  "acesso.email.placeholder": "nome@exemplo.com",
+  "acesso.senha.rotulo": "Senha",
+  "acesso.senha.nota": "Não há recuperação de senha por e-mail. Numa organização, peça uma senha provisória a quem a administra; numa conta pessoal, a senha não pode ser recuperada.",
+  "acesso.entrar": "Entrar",
+  "acesso.entrando": "Entrando…",
+  "acesso.semConta": "Ainda não tem conta?",
+  "acesso.criarConta": "Criar conta",
+  "acesso.continuar": "Continuar sem entrar",
+  "acesso.erro.emailVazio": "Informe o e-mail.",
+  "acesso.erro.senhaVazia": "Informe a senha.",
+  "acesso.erro.credenciais": "E-mail ou senha incorretos.",
+  // n: details.wait_seconds, inteiro; ausente (null) -> a frase sem o número.
+  "acesso.erro.tentativas": (n) =>
+    n == null ? "Muitas tentativas. Aguarde um pouco e tente de novo." : `Muitas tentativas. Tente de novo em ${n} s.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
+};
+const EXEMPLOS = { "acesso.erro.tentativas": [[42], [null]] };
+const NOTAS = {
+  "acesso.cena.marca": "o texto alternativo do logotipo da cena",
+  "acesso.cena.eyebrow": "sobretítulo da cena, em maiúsculas pela folha",
+  "acesso.eyebrow": "sobretítulo do formulário, em maiúsculas pela folha",
+  "acesso.titulo": "a saudação neutra — o texto final se aprova neste portão",
+  "acesso.email.placeholder": "o exemplo dentro do campo",
+  "acesso.entrando": "o botão enquanto o pedido não volta",
+  "acesso.semConta": "antes do link \"Criar conta\"",
+  "acesso.criarConta": "leva a /cadastro, com o mesmo next",
+  "acesso.continuar": "leva a next, ou /",
+  "acesso.erro.emailVazio": "campo vazio, sem pedido",
+  "acesso.erro.senhaVazia": "campo vazio, sem pedido",
+  "acesso.erro.credenciais": "code invalid_credentials",
+  "acesso.erro.tentativas": "code too_many_requests (o bloqueio e o limite, sem distinção)",
+  "acesso.erro.csrf": "code csrf_failed, depois da repetição do RF-02",
+  "acesso.erro.rede": "erro de rede ou resposta fora do formato",
+  "acesso.erro.outro": "qualquer outro code",
+};
+const T = (k, ...a) => { const v = TEXTOS[k]; return typeof v === "function" ? v(...a) : v; };
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+for (const n of document.querySelectorAll("[data-t-alt]")) n.setAttribute("alt", T(n.dataset.tAlt));
+
+// ---------------------------------------------------------------- os estados
+const email = $("#entrada-email");
+const senha = $("#entrada-senha");
+const emailErro = $("#entrada-email-erro");
+const senhaErro = $("#entrada-senha-erro");
+const alertBox = $("[data-alert]");
+const submit = $("[data-submit]");
+const form = $("[data-mark='form']");
+const GLYPH_SPIN = '<svg class="ruvor-glyph ruvor-spin" aria-hidden="true" focusable="false"><use href="#i-spinner-gap"/></svg>';
+
+const ERROS_GERAIS = {
+  invalid_credentials: () => T("acesso.erro.credenciais"),
+  too_many_requests: () => T("acesso.erro.tentativas", 42),
+  "too_many_requests-sem": () => T("acesso.erro.tentativas", null),
+  csrf_failed: () => T("acesso.erro.csrf"),
+  rede: () => T("acesso.erro.rede"),
+  outro: () => T("acesso.erro.outro"),
+};
+const STATES = ["vazio", "digitando", "enviando", "vazios", "senha-vazia", ...Object.keys(ERROS_GERAIS)];
+
+function fieldError(input, error, on, extra) {
+  error.hidden = !on;
+  if (on) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+  const ids = [on ? error.id : null, extra].filter(Boolean);
+  if (ids.length) input.setAttribute("aria-describedby", ids.join(" ")); else input.removeAttribute("aria-describedby");
+}
+
+function render(state) {
+  const filled = !["vazio", "vazios"].includes(state);
+  email.value = filled ? "ana@exemplo.com" : "";
+  senha.value = filled && state !== "senha-vazia" ? "senha-de-exemplo" : "";
+  fieldError(email, emailErro, state === "vazios", null);
+  fieldError(senha, senhaErro, state === "vazios" || state === "senha-vazia", "entrada-senha-nota");
+
+  const geral = ERROS_GERAIS[state];
+  alertBox.hidden = !geral;
+  $("[data-alert-text]").textContent = geral ? geral() : "";
+
+  const busy = state === "enviando";
+  submit.disabled = busy;
+  if (busy) submit.setAttribute("aria-busy", "true"); else submit.removeAttribute("aria-busy");
+  if (busy) form.setAttribute("aria-busy", "true"); else form.removeAttribute("aria-busy");
+  submit.innerHTML = busy ? `${GLYPH_SPIN}<span>${esc(T("acesso.entrando"))}</span>` : `<span>${esc(T("acesso.entrar"))}</span>`;
+
+  // data-part só no estado de base (As marcas para o navegador, no plano).
+  for (const n of document.querySelectorAll("[data-mark]")) {
+    if (state === "vazio") n.setAttribute("data-part", n.dataset.mark); else n.removeAttribute("data-part");
+  }
+}
+
+// ---------------------------------------------------------------- os textos (vista "os textos")
+function renderTextos() {
+  let rows = "<thead><tr><th>chave</th><th>texto</th></tr></thead><tbody>";
+  for (const k of Object.keys(TEXTOS)) {
+    const v = TEXTOS[k];
+    const out = typeof v === "function"
+      ? EXEMPLOS[k].map((args) => `${esc(T(k, ...args))}<small>(${args.map(String).join(", ")})</small>`).join("<br>")
+      : esc(v);
+    rows += `<tr><td>${esc(k)}<small>${esc(NOTAS[k] ?? "texto")}</small></td><td>${out}</td></tr>`;
+  }
+  $("[data-textos]").innerHTML = `${rows}</tbody>`;
+  $("[data-exemplos]").textContent = `  "acesso.erro.tentativas": [[42], [null]],`;
+}
+
+// ---------------------------------------------------------------- a moldura
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+let theme = "system";
+let state = "vazio";
+let view = "tela";
+
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  theme = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  if (view === "estreito") refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+
+const stateBtns = document.querySelectorAll("[data-mk-state]");
+function setState(next) {
+  state = STATES.includes(next) ? next : "vazio";
+  for (const b of stateBtns) b.setAttribute("aria-pressed", String(b.dataset.mkState === state));
+  render(state);
+  if (view === "estreito") refreshFrames();
+}
+for (const b of stateBtns) b.addEventListener("click", () => setState(b.dataset.mkState));
+
+const viewBtns = document.querySelectorAll("[data-mk-view]");
+function setView(next) {
+  view = ["tela", "estreito", "textos"].includes(next) ? next : "tela";
+  for (const v of document.querySelectorAll("[data-view]")) v.hidden = v.dataset.view !== view;
+  for (const b of viewBtns) b.setAttribute("aria-pressed", String(b.dataset.mkView === view));
+  if (view === "estreito") refreshFrames();
+}
+for (const b of viewBtns) b.addEventListener("click", () => setView(b.dataset.mkView));
+
+// As vistas em 360 px: o estado escolhido e, ao lado, a base e um erro geral.
+function refreshFrames() {
+  const src = (s) => `${location.pathname}?moldura=0&vista=tela&estado=${s}&tema=${theme}`;
+  const shown = [...new Set([state, "vazio", "vazios", "invalid_credentials"])];
+  $("[data-frames]").innerHTML = shown
+    .map((s) => `<div class="mk-frame"><p>${esc(s)}, 360 px</p><iframe title="A entrada em 360 px, estado ${esc(s)}" src="${src(s)}"></iframe></div>`)
+    .join("");
+}
+
+// ?vista=tela|estreito|textos &estado=<um de STATES> &tema=light|dark|system &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+form.addEventListener("submit", (e) => e.preventDefault());
+for (const a of document.querySelectorAll("a[href='#']")) a.addEventListener("click", (e) => e.preventDefault());
+renderTextos();
+setTheme(params.get("tema") || "system");
+setState(params.get("estado") || "vazio");
+setView(params.get("vista") || "tela");
+</script>
+</body>
+</html>

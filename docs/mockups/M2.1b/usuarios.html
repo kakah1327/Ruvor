@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — a gestão de usuários (mockup, M2.1b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da gestão de usuários (T9 do plano M2.1b; RF-11 a RF-14 da spec). No casco de hoje
+   * (a barra do M2.3, docs/mockups/M2.3/casco-e-preco.html), com o formulário derivado do
+   * brand/ruvor/mockups/03-nova-analise.html: o título e a frase da seção à esquerda, os campos
+   * à direita, as ações no pé. Dado fictício, sem pedido à API. Só var(--ruvor-*) e valores
+   * estruturais: nenhuma cor literal, e nenhum token novo.
+   *
+   * O que é novo, e o portão aprova:
+   *   - a lista com a própria linha marcada "você", a senha provisória por trocar, "nunca
+   *     entrou" e "mostrar mais" (RF-11);
+   *   - o formulário de criação, com o papel em .ruvor-segmented (RF-13). O kit comenta a classe
+   *     como "só na barra": as cores dela são as da barra escura, e sobre a superfície clara o
+   *     botão não marcado ficaria ilegível. m21b-segmented a recolore com os tokens da superfície
+   *     — a T10 decide se isso vira variante do kit;
+   *   - o diálogo da senha provisória, com copiar e a confirmação de cópia, e as confirmações de
+   *     cada ação, com o efeito dito (RF-13, RF-14). O diálogo é <dialog> com showModal(): na
+   *     vista "a lista", os botões abrem o diálogo de verdade — o foco fica preso nele, o Esc
+   *     fecha, e o foco volta ao botão que o abriu;
+   *   - os casos do RF-12 e os erros.
+   * O menu de conta (T8) não está aprovado: a barra não o mostra. O aviso do anônimo e o de
+   * sessão terminada nascem no conta.html (T8); aqui só aparece o lugar deles.
+   *
+   * Estilo local: m21b- (o que a T10 leva ao kit, se o portão aprovar) e mk- (a moldura do
+   * mockup, que não é tela).
+   */
+
+  /* --- NOVO: o formulário de criação, no arranjo do 03-nova-analise --------------- */
+  .m21b-form { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: var(--ruvor-space-6); }
+  .m21b-form__intro p { margin: 6px 0 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m21b-form__fields { display: flex; flex-direction: column; gap: 17px; min-width: 0; }
+  .m21b-form__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--ruvor-space-3); }
+
+  /* --- NOVO: o papel em .ruvor-segmented, sobre a superfície ---------------------- */
+  .ruvor-segmented.m21b-segmented { justify-self: start; border-color: var(--ruvor-border); background: var(--ruvor-surface); }
+  .m21b-segmented .ruvor-segmented__btn { font-size: var(--ruvor-type-small-size); padding: 7px 14px; color: var(--ruvor-text-muted); }
+  .m21b-segmented .ruvor-segmented__btn:hover { color: var(--ruvor-ink); background: var(--ruvor-control-hover); }
+  .m21b-segmented .ruvor-segmented__btn[aria-pressed="true"] { background: var(--ruvor-ink); color: var(--ruvor-paper); }
+  .m21b-segmented .ruvor-segmented__btn:focus-visible { outline-color: var(--ruvor-focus); }
+
+  /* --- NOVO: a lista ----------------------------------------------------------------- */
+  .m21b-users__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1) var(--ruvor-space-2); font-weight: var(--ruvor-type-small-weight); }
+  .m21b-users__email { overflow-wrap: anywhere; color: var(--ruvor-text-muted); }
+  .m21b-users .ruvor-tag-list { gap: var(--ruvor-space-1); }
+  .m21b-users .ruvor-btn-group { justify-content: flex-end; }
+  .m21b-users .ruvor-btn-group .ruvor-btn { font-size: var(--ruvor-type-micro-size); }
+  .m21b-users__muted { color: var(--ruvor-text-muted); }
+
+  /* --- NOVO: o diálogo (<dialog> com showModal) ------------------------------------ */
+  .m21b-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-lg); background: var(--ruvor-surface); color: var(--ruvor-ink); box-shadow: var(--ruvor-shadow); }
+  .m21b-dialog::backdrop { background: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent); }
+  .m21b-dialog__body { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
+  .m21b-dialog__body p { margin: 0; }
+  .m21b-dialog__list { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-1); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m21b-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ruvor-space-2); padding: var(--ruvor-space-4) var(--ruvor-space-5); border-top: 1px solid var(--ruvor-border); }
+
+  /* --- NOVO: o campo somente leitura com copiar, e a confirmação ------------------- */
+  .m21b-copy { display: flex; gap: var(--ruvor-space-2); }
+  .m21b-copy .ruvor-input { font-family: var(--ruvor-font-mono); letter-spacing: .04em; }
+  .m21b-copy__reply { margin: 0; display: flex; align-items: center; gap: var(--ruvor-space-1); font-size: var(--ruvor-type-small-size); color: var(--ruvor-validated-text); }
+  .m21b-copy__reply--critical { color: var(--ruvor-critical-text); }
+
+  @media (max-width: 720px) {
+    .m21b-form { grid-template-columns: minmax(0, 1fr); gap: var(--ruvor-space-4); }
+    .m21b-form__actions { justify-content: stretch; }
+    .m21b-form__actions .ruvor-btn { flex: 1; }
+    /* A lista vira um cartão por pessoa: o cabeçalho só para o leitor de tela, cada célula
+       numa linha, com o rótulo da coluna antes. */
+    .m21b-users thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .m21b-users tr { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ruvor-space-2); padding: var(--ruvor-space-3) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m21b-users tr:last-child { border-bottom: 0; }
+    .m21b-users td { display: block; padding: 0; border: 0; }
+    .m21b-users td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-label-size); font-weight: var(--ruvor-type-label-weight); letter-spacing: var(--ruvor-type-label-tracking); text-transform: uppercase; color: var(--ruvor-text-muted); }
+    .m21b-users .ruvor-btn-group { justify-content: flex-start; }
+    .m21b-copy { flex-direction: column; }
+    .m21b-dialog__actions { flex-direction: column-reverse; }
+    .m21b-dialog__actions .ruvor-btn { width: 100%; }
+  }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-bar__hint { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-tail code { font-family: var(--ruvor-font-mono); }
+  .mk-case { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-case > .mk-cap { margin: 0; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-dialogs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: var(--ruvor-space-5); align-items: start; }
+  .mk-scrim { padding: var(--ruvor-space-5); border-radius: var(--ruvor-radius-md); background: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent); }
+  .mk-scrim .m21b-dialog { position: static; display: block; margin: 0 auto; }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-frame iframe { width: 360px; height: 1700px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 30%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+    .mk-scrim { padding: var(--ruvor-space-3); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/regular/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></symbol>
+  <symbol id="i-buildings" viewBox="0 0 256 256"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-shield-warning" viewBox="0 0 256 256"><path d="M120,136V96a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,48a12,12,0,1,0-12-12A12,12,0,0,0,128,184ZM224,56v56c0,52.72-25.52,84.67-46.93,102.19-23.06,18.86-46,25.27-47,25.53a8,8,0,0,1-4.2,0c-1-.26-23.91-6.67-47-25.53C57.52,196.67,32,164.72,32,112V56A16,16,0,0,1,48,40H208A16,16,0,0,1,224,56Zm-16,0L48,56l0,56c0,37.3,13.82,67.51,41.07,89.81A128.25,128.25,0,0,0,128,223.62a129.3,129.3,0,0,0,39.41-22.2C194.34,179.16,208,149.07,208,112Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.1b · gestão de usuários · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk="lista">a lista · largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk="estados">os estados e os casos</button>
+    <button class="ruvor-btn" type="button" data-mk="dialogos">os diálogos</button>
+    <button class="ruvor-btn" type="button" data-mk="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk="textos">os textos</button>
+  </div>
+  <p class="mk-bar__hint">O tema se troca pela barra da tela, abaixo; as vistas em 360 px seguem a escolha. Na vista "a lista", os botões abrem os diálogos de verdade.</p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="#" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <!-- A barra do M2.3, sem mudança. O menu de conta entra aqui como o conta.html (T8) aprovar. -->
+  <div class="ruvor-topbar__prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div id="views">
+
+    <!-- ======================================== A LISTA: o estado de base (os data-part) -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="lista" data-screen="usuarios" hidden>
+      <div class="ruvor-page-head" data-slot="head"></div>
+
+      <section class="ruvor-panel" aria-labelledby="h-criar">
+        <div class="ruvor-panel__body">
+          <form class="m21b-form" data-part="form-criar" data-form="live" novalidate>
+            <!-- preenchido pelo script: o mesmo desenho das variantes da vista "os estados" -->
+          </form>
+        </div>
+      </section>
+
+      <section class="ruvor-panel" aria-labelledby="h-lista" data-part="lista">
+        <div class="ruvor-panel__head">
+          <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-user"/></svg>
+          <h2 class="ruvor-h3" id="h-lista" data-t="usuarios.lista.titulo"></h2>
+          <span class="ruvor-tag ruvor-tag--neutral ruvor-push" data-slot="count"></span>
+        </div>
+        <div class="ruvor-panel__body" data-slot="list"></div>
+      </section>
+
+      <p class="mk-tail">Moldura: a amostra tem as primeiras linhas da página; na tela, a primeira página traz 50 (<code>GET organization/users?limit=50&amp;offset=0</code>), ordenadas por e-mail, e "Mostrar mais" pede a próxima (<code>offset=50</code>) sem repetir e-mail. Aqui, "Mostrar mais" acrescenta três linhas de exemplo. Depois de criar, a lista é relida da primeira página — não se insere a linha à mão.</p>
+    </main>
+
+    <!-- ======================================== OS ESTADOS E OS CASOS -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="estados" hidden>
+      <p class="mk-tail">Moldura: cada bloco é um estado da mesma tela, com a legenda em cima (fora da tela). As mensagens por campo marcadas como "da API" são o que a API manda em <code>details.fields</code>, mostradas como chegam — dado, não texto da tela (RF-07, RF-13).</p>
+      <div class="ruvor-stack ruvor-stack--loose" data-slot="estados"></div>
+    </main>
+
+    <!-- ======================================== OS DIÁLOGOS -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="dialogos" hidden>
+      <p class="mk-tail">Moldura: cada diálogo desenhado parado, sobre o véu que o showModal() põe atrás. Na tela, um só abre por vez, no centro, com o foco preso nele; o Esc e "Cancelar" fecham sem fazer nada, e o foco volta ao botão da linha que o abriu. Para ver o comportamento, use a vista "a lista".</p>
+      <div class="mk-dialogs" data-slot="dialogos"></div>
+    </main>
+
+    <!-- ======================================== 360 px -->
+    <div class="mk-view mk-pad" data-view="estreito" hidden>
+      <p class="mk-tail">Moldura: a mesma página em 360 px de largura, sem a barra do mockup, no tema escolhido. A barra é a do M2.3 em ≤ 720 px. A lista vira um cartão por pessoa — o nome e o e-mail em cima, depois o papel, a situação, o último acesso e as ações, cada um com o rótulo da coluna —, o formulário vira uma coluna, e as ações do diálogo se empilham, com a principal em cima. Nada rola na horizontal.</p>
+      <div class="mk-frames" data-frames></div>
+    </div>
+
+    <!-- ======================================== OS TEXTOS -->
+    <div class="mk-view mk-pad" data-view="textos" hidden>
+      <p class="mk-tail">Moldura: as chaves que nascem neste mockup, todas com o prefixo <code>usuarios.*</code> (a seção "Os textos" do plano), com a saída de cada forma. As das funções saem dos exemplos abaixo.</p>
+      <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos das chaves-função</h2></div>
+        <div class="ruvor-panel__body ruvor-stack">
+          <p class="ruvor-note">No molde do <code>EXEMPLOS</code> de <code>frontend/tests/exemplos.ts</code> (a correção registrada da T11 a T14: os exemplos moram lá desde o M2.3). Nenhuma destas chaves é número com frase: não têm leitura avançada.</p>
+          <pre class="mk-code" data-exemplos></pre>
+        </div>
+      </section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+        <div class="ruvor-panel__body">
+          <ul class="mk-notes">
+            <li><b>O papel no feminino fixo.</b> A spec nomeia os papéis "administradora ou membro" (RF-11); o mockup segue, e a amostra tem um homem administrador (Bruno Costa) para o portão ver como fica. Trocar por "administração" ou "admin" é decisão do portão.</li>
+            <li><b>O papel em <code>.ruvor-segmented</code></b>, como pede o RF-13. O kit comenta a classe como "só na barra" (<code>components.css</code>, a chave de tema): as cores dela são as da barra escura, e sobre a superfície clara o botão não marcado sairia em <code>--ruvor-topbar-link</code> sobre <code>--ruvor-surface</code>, perto de 1,9:1. O mockup a recolore com os tokens da superfície (<code>m21b-segmented</code>: o marcado em tinta cheia, como os atalhos do gráfico). A T10 leva isso ao kit como variante, se aprovado.</li>
+            <li><b>As ações na própria linha</b>: só a mudança de papel. "Desativar" e "Nova senha provisória" não existem nela (RF-14); a própria pessoa troca a senha pelo menu de conta.</li>
+            <li><b>Rebaixar a si mesma</b> pede a confirmação própria; feito, a tela relê a conta e mostra o caso "membro" do RF-12 (na vista "a lista", "Mudar para membro" na linha "você" leva a ele).</li>
+            <li><b>Depois de cada ação</b>, a linha mostra o estado que a API devolve (o papel, a situação, a marca da senha provisória). Não há aviso de sucesso à parte: a linha mudada é a confirmação.</li>
+            <li><b>Os avisos do anônimo e de sessão terminada</b> são do <code>conta.html</code> (T8). Na vista "os estados", o lugar deles aparece com o texto da spec, entre aspas, até o portão da T8.</li>
+            <li><b>Nenhum token novo.</b> O véu atrás do diálogo é <code>color-mix</code> de <code>--ruvor-topbar</code> com transparente, escuro nos dois temas; a T10 decide se vira token.</li>
+            <li><b>Erros de permissão no meio do uso</b> (<code>permission_denied</code>, <code>personal_organization</code> numa ação) trocam a tela pelo caso do RF-12; <code>password_change_required</code> relê a conta e o desvio do RF-05 assume (a troca obrigatória do <code>senha.html</code>); 401 põe o aviso de sessão terminada no lugar da tela.</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<!-- O diálogo de verdade da vista "a lista": um só, com o conteúdo trocado a cada abertura. -->
+<dialog class="m21b-dialog" id="live-dialog" aria-labelledby="live-dialog-title"></dialog>
+
+<script type="module">
+// ---------------------------------------------------------------- os textos
+// Herdados: os de frontend/src/content/textos.ts que o casco usa, literais.
+const HERDADOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+};
+
+// Do conta.html (T8), ainda sem portão: só o lugar. O texto é a frase da spec (RF-16), entre aspas.
+const DA_T8 = {
+  "anonimo": "“esta página é para quem entrou na conta”",
+  "terminou": "“a sua sessão terminou”",
+  "entrar": "Entrar",
+};
+
+// NOVOS em textos.ts, prefixo usuarios.* (RF-11 a RF-14).
+const TEXTOS = {
+  // a página
+  "usuarios.eyebrow": "Organização",
+  "usuarios.titulo": "Usuários da organização",
+  "usuarios.sub": (org) => `Quem entra no Ruvor pela ${org}. Aqui você cria contas, muda o papel de cada pessoa, desativa quem não deve mais entrar e gera senhas provisórias.`,
+  // a criação (RF-13)
+  "usuarios.criar.titulo": "Novo usuário",
+  "usuarios.criar.texto": "A conta nasce com uma senha provisória, que a pessoa troca no primeiro acesso. O Ruvor não envia e-mail: a senha aparece para você entregar.",
+  "usuarios.campo.nome": "Nome",
+  "usuarios.campo.email": "E-mail",
+  "usuarios.campo.email.exemplo": "nome@exemplo.com",
+  "usuarios.campo.papel": "Papel",
+  "usuarios.campo.papel.dica": "Membro usa o Ruvor. Administradora usa e também gere os usuários desta página.",
+  "usuarios.papel.member": "Membro",
+  "usuarios.papel.admin": "Administradora",
+  "usuarios.criar.botao": "Criar usuário",
+  "usuarios.criar.enviando": "Criando…",
+  // os erros
+  "usuarios.erro.nomeVazio": "Informe o nome.",
+  "usuarios.erro.emailVazio": "Informe o e-mail.",
+  "usuarios.erro.emailTaken": "Este e-mail já tem conta no Ruvor.",
+  "usuarios.erro.muitos": (n) => `Muitos pedidos seguidos. Tente de novo em ${n} s.`,
+  "usuarios.erro.muitosSemTempo": "Muitos pedidos seguidos. Aguarde um pouco e tente de novo.",
+  "usuarios.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "usuarios.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "usuarios.erro.outro": "Não foi possível concluir agora. Tente de novo.",
+  "usuarios.erro.lastAdmin": "A organização precisa de ao menos uma administradora ativa. Mude outra pessoa para administradora antes.",
+  "usuarios.erro.naoEncontrado": "Esta pessoa não está mais na organização. A lista foi atualizada.",
+  // a lista (RF-11)
+  "usuarios.lista.titulo": "Usuários",
+  "usuarios.lista.contagem": (n) => (n === 1 ? "1 usuário" : `${n} usuários`),
+  "usuarios.col.nome": "Nome",
+  "usuarios.col.email": "E-mail",
+  "usuarios.col.papel": "Papel",
+  "usuarios.col.situacao": "Situação",
+  "usuarios.col.ultimoAcesso": "Último acesso",
+  "usuarios.col.acoes": "Ações",
+  "usuarios.voce": "você",
+  "usuarios.situacao.ativa": "ativa",
+  "usuarios.situacao.desativada": "desativada",
+  "usuarios.provisoria": "senha provisória por trocar",
+  "usuarios.nuncaEntrou": "nunca entrou",
+  "usuarios.ultimoAcesso": (data, hora) => `${data} às ${hora}`,
+  "usuarios.mostrando": (n, total) => `Mostrando ${n} de ${total}.`,
+  "usuarios.mostrarMais": "Mostrar mais",
+  "usuarios.erroLista": "Não foi possível carregar a lista de usuários.",
+  "usuarios.erroMais": "Não foi possível carregar mais usuários.",
+  "usuarios.tentarDeNovo": "Tentar de novo",
+  // as ações da linha (RF-14)
+  "usuarios.acoes.rotulo": (nome) => `Ações para ${nome}`,
+  "usuarios.acao.admin": "Mudar para administradora",
+  "usuarios.acao.member": "Mudar para membro",
+  "usuarios.acao.desativar": "Desativar",
+  "usuarios.acao.reativar": "Reativar",
+  "usuarios.acao.senha": "Nova senha provisória",
+  // as confirmações (RF-14)
+  "usuarios.confirmar.admin.titulo": (nome) => `Mudar ${nome} para administradora?`,
+  "usuarios.confirmar.admin.texto": "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização.",
+  "usuarios.confirmar.member.titulo": (nome) => `Mudar ${nome} para membro?`,
+  "usuarios.confirmar.member.texto": "A pessoa deixa de gerir os usuários da organização. O resto do Ruvor continua igual para ela.",
+  "usuarios.confirmar.rebaixarSi.titulo": "Deixar de administrar a organização?",
+  "usuarios.confirmar.rebaixarSi.texto": "Você passa a membro e perde a gestão dos usuários: esta página deixa de abrir para você. Para voltar a administradora, outra administradora da organização precisa mudar o seu papel.",
+  "usuarios.confirmar.desativar.titulo": (nome) => `Desativar ${nome}?`,
+  "usuarios.confirmar.desativar.texto": "A pessoa deixa de conseguir entrar. As sessões abertas e as chaves de API dela são encerradas agora. A conta continua na lista e pode ser reativada.",
+  "usuarios.confirmar.reativar.titulo": (nome) => `Reativar ${nome}?`,
+  "usuarios.confirmar.reativar.texto": "A pessoa volta a entrar com a senha que já tinha. As chaves de API encerradas na desativação não voltam.",
+  "usuarios.confirmar.senha.titulo": (nome) => `Gerar uma senha provisória nova para ${nome}?`,
+  "usuarios.confirmar.senha.texto": "A senha atual da pessoa deixa de valer, e as sessões abertas e as chaves de API dela são encerradas agora. A senha nova aparece uma vez, para você entregar.",
+  "usuarios.confirmar.cancelar": "Cancelar",
+  "usuarios.confirmar.enviando": "Enviando…",
+  // o diálogo da senha provisória (RF-13, RF-14)
+  "usuarios.senha.criado.titulo": "Usuário criado",
+  "usuarios.senha.criado.texto": (nome, email) => `${nome} (${email}) já pode entrar, com a senha provisória abaixo.`,
+  "usuarios.senha.nova.titulo": "Senha provisória nova",
+  "usuarios.senha.nova.texto": (nome, email) => `A senha de ${nome} (${email}) foi trocada por esta. As sessões e as chaves de API da pessoa foram encerradas.`,
+  "usuarios.senha.campo": "Senha provisória",
+  "usuarios.senha.umaVez": "Ela aparece só agora. Depois de fechar esta janela, não será mostrada de novo.",
+  "usuarios.senha.trocar": "No primeiro acesso, a pessoa entra com ela e precisa trocá-la antes de usar o Ruvor.",
+  "usuarios.senha.entrega": "O Ruvor não envia e-mail: entregue a senha à pessoa por outro meio, de forma reservada.",
+  "usuarios.senha.copiar": "Copiar",
+  "usuarios.senha.copiada": "Copiada",
+  "usuarios.senha.copiadaAviso": "Senha copiada para a área de transferência.",
+  "usuarios.senha.copiaFalhou": "Não foi possível copiar. Selecione a senha e copie com o teclado.",
+  "usuarios.senha.fechar": "Fechar",
+  // quem não pode gerir (RF-12)
+  "usuarios.membro.titulo": "Só quem administra a organização gere os usuários.",
+  "usuarios.membro.texto": (org) => `Você é membro da ${org}. Para criar uma conta, mudar um papel ou gerar uma senha provisória, fale com uma administradora da organização.`,
+  "usuarios.pessoal.titulo": "A conta pessoal não tem outros usuários.",
+  "usuarios.pessoal.texto": "Ela é só sua. Uma organização com várias pessoas é criada pela equipe que opera o Ruvor.",
+};
+
+// O registro de exemplos (o molde do EXEMPLOS de frontend/tests/exemplos.ts).
+const EXEMPLOS = {
+  "usuarios.sub": [["Gestora Exemplo"]],
+  "usuarios.erro.muitos": [[12]],
+  "usuarios.lista.contagem": [[1], [63]],
+  "usuarios.ultimoAcesso": [["03/10/2026", "10:41"]],
+  "usuarios.mostrando": [[50, 63]],
+  "usuarios.acoes.rotulo": [["Ana Lima"]],
+  "usuarios.confirmar.admin.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.member.titulo": [["Bruno Costa"]],
+  "usuarios.confirmar.desativar.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.reativar.titulo": [["Diego Alves"]],
+  "usuarios.confirmar.senha.titulo": [["Ana Lima"]],
+  "usuarios.senha.criado.texto": [["Gabriela Rocha", "gabriela.rocha@exemplo.com"]],
+  "usuarios.senha.nova.texto": [["Ana Lima", "ana.lima@exemplo.com"]],
+  "usuarios.membro.texto": [["Gestora Exemplo"]],
+};
+
+const T = (k, ...a) => {
+  const v = k in TEXTOS ? TEXTOS[k] : HERDADOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, extra = "") => `<svg class="ruvor-glyph ${extra}" aria-hidden="true" focusable="false"><use href="#i-${id}"/></svg>`;
+const tx = (k, ...a) => esc(T(k, ...a));
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- o dado fictício
+// Os campos do corpo `user` da API (services.user_body): email, name, role, is_active,
+// must_change_password, created_at, last_login — o último acesso já no fuso da B3.
+const ORG = "Gestora Exemplo";
+const SELF = "carla.mendes@exemplo.com";
+const TOTAL = 63;
+const PRIMEIRA = [
+  { email: "ana.lima@exemplo.com", name: "Ana Lima", role: "member", is_active: true, must_change_password: true, last_login: null },
+  { email: "bruno.costa@exemplo.com", name: "Bruno Costa", role: "admin", is_active: true, must_change_password: false, last_login: ["29/09/2026", "18:02"] },
+  { email: "carla.mendes@exemplo.com", name: "Carla Mendes", role: "admin", is_active: true, must_change_password: false, last_login: ["03/10/2026", "10:41"] },
+  { email: "diego.alves@exemplo.com", name: "Diego Alves", role: "member", is_active: false, must_change_password: false, last_login: ["12/08/2026", "17:05"] },
+  { email: "elisa.prado@exemplo.com", name: "Elisa Prado", role: "member", is_active: true, must_change_password: false, last_login: ["01/10/2026", "16:20"] },
+  { email: "fabio.nunes+risco@exemplo.com", name: "Fábio Nunes", role: "member", is_active: true, must_change_password: true, last_login: ["30/09/2026", "09:15"] },
+];
+const MAIS = [
+  { email: "renata.dias@exemplo.com", name: "Renata Dias", role: "member", is_active: true, must_change_password: false, last_login: ["02/10/2026", "11:07"] },
+  { email: "sergio.matos@exemplo.com", name: "Sérgio Matos", role: "admin", is_active: true, must_change_password: false, last_login: ["25/09/2026", "08:30"] },
+  { email: "tania.reis@exemplo.com", name: "Tânia Reis", role: "member", is_active: true, must_change_password: true, last_login: null },
+];
+const SENHA_EXEMPLO = "k7Qm2vXa9RtB4nLp"; // a forma da gerada: 16 letras e algarismos (accounts/passwords.py)
+
+// ---------------------------------------------------------------- a cabeça da página
+function head(sub = true) {
+  return `<div>
+    <p class="ruvor-eyebrow">${tx("usuarios.eyebrow")}</p>
+    <h1 class="ruvor-display">${tx("usuarios.titulo")}</h1>
+    ${sub ? `<p class="ruvor-sub">${tx("usuarios.sub", ORG)}</p>` : ""}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- o formulário de criação
+// opts: { base, values, errors: {name, email}, general, sending }
+let formSeq = 0;
+function formHtml(opts = {}) {
+  const id = `f${++formSeq}`;
+  const v = opts.values ?? {};
+  const e = opts.errors ?? {};
+  const role = v.role ?? "member";
+  const part = (p) => (opts.base ? ` data-part="${p}"` : "");
+  const field = (key, name, type, extra = "") => {
+    const err = e[name];
+    const errId = `${id}-${name}-err`;
+    return `<div class="ruvor-field">
+      <label class="ruvor-label" for="${id}-${name}">${tx(key)}</label>
+      <input class="ruvor-input" id="${id}-${name}" name="${name}" type="${type}" ${extra} value="${esc(v[name] ?? "")}"${err ? ` aria-invalid="true" aria-describedby="${errId}"` : ""}${opts.sending ? " disabled" : ""}>
+      ${err ? `<span class="ruvor-field__error" id="${errId}">${err.map(esc).join("<br>")}</span>` : ""}
+    </div>`;
+  };
+  const general = opts.general
+    ? `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(opts.general)}</span></div>`
+    : "";
+  return `
+    <div class="m21b-form__intro">
+      <h2 class="ruvor-h3"${opts.base ? ' id="h-criar"' : ""}>${tx("usuarios.criar.titulo")}</h2>
+      <p>${tx("usuarios.criar.texto")}</p>
+    </div>
+    <div class="m21b-form__fields">
+      ${general}
+      <div class="ruvor-form-grid">
+        ${field("usuarios.campo.nome", "name", "text", 'autocomplete="off"')}
+        ${field("usuarios.campo.email", "email", "email", `autocomplete="off" spellcheck="false" placeholder="${tx("usuarios.campo.email.exemplo")}"`)}
+      </div>
+      <div class="ruvor-field">
+        <span class="ruvor-label" id="${id}-role">${tx("usuarios.campo.papel")}</span>
+        <div class="ruvor-segmented m21b-segmented" role="group" aria-labelledby="${id}-role" aria-describedby="${id}-role-hint">
+          <button class="ruvor-segmented__btn" type="button" data-role="member" aria-pressed="${role === "member"}"${opts.sending ? " disabled" : ""}>${tx("usuarios.papel.member")}</button>
+          <button class="ruvor-segmented__btn" type="button" data-role="admin" aria-pressed="${role === "admin"}"${opts.sending ? " disabled" : ""}>${tx("usuarios.papel.admin")}</button>
+        </div>
+        <span class="ruvor-hint" id="${id}-role-hint">${tx("usuarios.campo.papel.dica")}</span>
+      </div>
+      <div class="m21b-form__actions">
+        ${opts.sending
+          ? `<button class="ruvor-btn ruvor-btn--primary" type="submit" aria-busy="true" disabled>${glyph("spinner-gap", "ruvor-spin")}<span>${tx("usuarios.criar.enviando")}</span></button>`
+          : `<button class="ruvor-btn ruvor-btn--primary" type="submit"${part("botao-criar")}>${tx("usuarios.criar.botao")}</button>`}
+      </div>
+    </div>`;
+}
+
+// ---------------------------------------------------------------- a lista
+function rowHtml(u, opts = {}) {
+  const self = u.email === SELF;
+  const part = opts.part ? ` data-part="${opts.part}"` : "";
+  const acts = [];
+  acts.push(u.role === "admin"
+    ? `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="${self ? "rebaixarSi" : "member"}">${tx("usuarios.acao.member")}</button>`
+    : `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="admin">${tx("usuarios.acao.admin")}</button>`);
+  if (!self) {
+    acts.push(u.is_active
+      ? `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="desativar">${tx("usuarios.acao.desativar")}</button>`
+      : `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="reativar">${tx("usuarios.acao.reativar")}</button>`);
+    acts.push(`<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="senha">${tx("usuarios.acao.senha")}</button>`);
+  }
+  const tags = [
+    u.is_active
+      ? `<li><span class="ruvor-tag ruvor-tag--validated">${tx("usuarios.situacao.ativa")}</span></li>`
+      : `<li><span class="ruvor-tag ruvor-tag--neutral">${tx("usuarios.situacao.desativada")}</span></li>`,
+    u.must_change_password ? `<li><span class="ruvor-tag ruvor-tag--review">${tx("usuarios.provisoria")}</span></li>` : "",
+  ].join("");
+  return `<tr data-email="${esc(u.email)}"${part}>
+    <td><span class="m21b-users__name">${esc(u.name)}${self ? ` <span class="ruvor-tag ruvor-tag--decision">${tx("usuarios.voce")}</span>` : ""}</span></td>
+    <td class="m21b-users__email">${esc(u.email)}</td>
+    <td data-label="${tx("usuarios.col.papel")}">${tx(`usuarios.papel.${u.role}`)}</td>
+    <td data-label="${tx("usuarios.col.situacao")}"><ul class="ruvor-tag-list">${tags}</ul></td>
+    <td data-label="${tx("usuarios.col.ultimoAcesso")}" class="${u.last_login ? "ruvor-num" : "m21b-users__muted"}">${u.last_login ? tx("usuarios.ultimoAcesso", ...u.last_login) : tx("usuarios.nuncaEntrou")}</td>
+    <td><div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="${tx("usuarios.acoes.rotulo", u.name)}">${acts.join("")}</div></td>
+  </tr>`;
+}
+
+function tableHtml(users, opts = {}) {
+  let firstOther = true;
+  const rows = users.map((u) => {
+    let part = null;
+    if (opts.base) {
+      if (u.email === SELF) part = "linha-voce";
+      else if (firstOther) { part = "linha"; firstOther = false; }
+    }
+    return rowHtml(u, { part });
+  }).join("");
+  return `<table class="ruvor-table m21b-users">
+    <thead><tr>
+      <th scope="col">${tx("usuarios.col.nome")}</th>
+      <th scope="col">${tx("usuarios.col.email")}</th>
+      <th scope="col">${tx("usuarios.col.papel")}</th>
+      <th scope="col">${tx("usuarios.col.situacao")}</th>
+      <th scope="col">${tx("usuarios.col.ultimoAcesso")}</th>
+      <th scope="col"><span class="ruvor-sr-only">${tx("usuarios.col.acoes")}</span></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function footHtml(shown, total, opts = {}) {
+  const more = shown < total;
+  return `<div class="ruvor-docs__foot">
+    <span class="ruvor-muted">${tx("usuarios.mostrando", shown, total)}</span>
+    ${opts.error
+      ? `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${tx("usuarios.erroMais")}</span><button class="ruvor-btn" type="button">${glyph("arrows-clockwise")}<span>${tx("usuarios.tentarDeNovo")}</span></button></div>`
+      : more ? `<button class="ruvor-btn" type="button" data-more>${tx("usuarios.mostrarMais")}</button>` : ""}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- os diálogos
+let dlgSeq = 0;
+// { titulo, texto, confirmar, erro, sending, live }
+function confirmHtml(o) {
+  const tid = o.live ? "live-dialog-title" : `d${++dlgSeq}-t`;
+  return `<div class="m21b-dialog__body">
+      <h2 class="ruvor-h3" id="${tid}">${esc(o.titulo)}</h2>
+      <p>${esc(o.texto)}</p>
+      ${o.erro ? `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(o.erro)}</span></div>` : ""}
+    </div>
+    <div class="m21b-dialog__actions">
+      <button class="ruvor-btn" type="button" data-close${o.sending ? " disabled" : ""}>${tx("usuarios.confirmar.cancelar")}</button>
+      ${o.semConfirmar ? "" : o.sending
+        ? `<button class="ruvor-btn ruvor-btn--primary" type="button" aria-busy="true" disabled>${glyph("spinner-gap", "ruvor-spin")}<span>${tx("usuarios.confirmar.enviando")}</span></button>`
+        : `<button class="ruvor-btn ruvor-btn--primary" type="button" data-confirm>${esc(o.confirmar)}</button>`}
+    </div>`;
+}
+
+// { kind: "criado" | "nova", nome, email, senha, copy: null | "ok" | "falhou", live }
+function senhaHtml(o) {
+  const tid = o.live ? "live-dialog-title" : `d${++dlgSeq}-t`;
+  const fid = `d${++dlgSeq}-f`;
+  const reply = o.copy === "ok"
+    ? `<p class="m21b-copy__reply" role="status">${glyph("check-circle")}<span>${tx("usuarios.senha.copiadaAviso")}</span></p>`
+    : o.copy === "falhou"
+      ? `<p class="m21b-copy__reply m21b-copy__reply--critical" role="status">${glyph("warning")}<span>${tx("usuarios.senha.copiaFalhou")}</span></p>`
+      : `<p class="m21b-copy__reply" role="status"></p>`;
+  return `<div class="m21b-dialog__body">
+      <h2 class="ruvor-h3" id="${tid}">${tx(`usuarios.senha.${o.kind}.titulo`)}</h2>
+      <p>${tx(`usuarios.senha.${o.kind}.texto`, o.nome, o.email)}</p>
+      <div class="ruvor-field">
+        <label class="ruvor-label" for="${fid}">${tx("usuarios.senha.campo")}</label>
+        <div class="m21b-copy">
+          <input class="ruvor-input" id="${fid}" type="text" readonly value="${esc(o.senha)}" spellcheck="false" autocomplete="off">
+          <button class="ruvor-btn" type="button" data-copy>${o.copy === "ok" ? `${glyph("check-circle")}<span>${tx("usuarios.senha.copiada")}</span>` : tx("usuarios.senha.copiar")}</button>
+        </div>
+        ${reply}
+      </div>
+      <ul class="m21b-dialog__list">
+        <li>${tx("usuarios.senha.umaVez")}</li>
+        <li>${tx("usuarios.senha.trocar")}</li>
+        <li>${tx("usuarios.senha.entrega")}</li>
+      </ul>
+    </div>
+    <div class="m21b-dialog__actions">
+      <button class="ruvor-btn ruvor-btn--primary" type="button" data-close>${tx("usuarios.senha.fechar")}</button>
+    </div>`;
+}
+
+function confirmFor(act, u, extra = {}) {
+  const map = {
+    admin: { titulo: T("usuarios.confirmar.admin.titulo", u.name), texto: T("usuarios.confirmar.admin.texto"), confirmar: T("usuarios.acao.admin") },
+    member: { titulo: T("usuarios.confirmar.member.titulo", u.name), texto: T("usuarios.confirmar.member.texto"), confirmar: T("usuarios.acao.member") },
+    rebaixarSi: { titulo: T("usuarios.confirmar.rebaixarSi.titulo"), texto: T("usuarios.confirmar.rebaixarSi.texto"), confirmar: T("usuarios.acao.member") },
+    desativar: { titulo: T("usuarios.confirmar.desativar.titulo", u.name), texto: T("usuarios.confirmar.desativar.texto"), confirmar: T("usuarios.acao.desativar") },
+    reativar: { titulo: T("usuarios.confirmar.reativar.titulo", u.name), texto: T("usuarios.confirmar.reativar.texto"), confirmar: T("usuarios.acao.reativar") },
+    senha: { titulo: T("usuarios.confirmar.senha.titulo", u.name), texto: T("usuarios.confirmar.senha.texto"), confirmar: T("usuarios.acao.senha") },
+  };
+  return confirmHtml({ ...map[act], ...extra });
+}
+
+// ---------------------------------------------------------------- RF-12 e o lugar dos avisos da T8
+function stateHtml(icon, tone, titulo, texto, action = "") {
+  return `<div class="ruvor-panel"><div class="ruvor-panel__body"><div class="ruvor-state">
+    <span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"><use href="#i-${icon}"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(titulo)}</p>
+      <p class="ruvor-state__text">${esc(texto)}</p>
+      ${action}
+    </div>
+  </div></div></div>`;
+}
+
+// ================================================================= A VISTA "A LISTA" (viva)
+const live = { users: PRIMEIRA.map((u) => ({ ...u })), shown: 50, more: false, role: "member" };
+const listView = $("[data-view='lista']");
+const liveDialog = $("#live-dialog");
+let opener = null;
+
+function renderLiveList() {
+  const users = live.more ? [...live.users, ...MAIS] : live.users;
+  $("[data-slot='count']", listView).textContent = T("usuarios.lista.contagem", TOTAL);
+  $("[data-slot='list']", listView).innerHTML = tableHtml(users, { base: true }) + footHtml(live.more ? TOTAL : live.shown, TOTAL);
+}
+
+function renderLiveForm(opts = {}) {
+  const form = $("[data-form='live']", listView);
+  form.innerHTML = formHtml({ base: true, values: { role: live.role, ...(opts.values ?? {}) }, errors: opts.errors });
+}
+
+function openDialog(html, from) {
+  opener = from ?? document.activeElement;
+  liveDialog.innerHTML = html;
+  if (!liveDialog.open) liveDialog.showModal();
+}
+// O diálogo devolve o foco a quem o abriu, explicitamente (o contrato da T14).
+liveDialog.addEventListener("close", () => {
+  liveDialog.innerHTML = ""; // a senha sai da memória da tela ao fechar
+  const target = opener && document.contains(opener) ? opener : null;
+  opener = null;
+  target?.focus();
+});
+
+$("[data-slot='head']", listView).innerHTML = head();
+renderLiveForm();
+renderLiveList();
+
+listView.addEventListener("click", (ev) => {
+  const roleBtn = ev.target.closest("[data-role]");
+  if (roleBtn) {
+    live.role = roleBtn.dataset.role;
+    for (const b of roleBtn.parentElement.querySelectorAll("[data-role]")) b.setAttribute("aria-pressed", String(b === roleBtn));
+    return;
+  }
+  if (ev.target.closest("[data-more]")) { live.more = true; renderLiveList(); return; }
+  const actBtn = ev.target.closest("[data-act]");
+  if (actBtn) {
+    const email = actBtn.closest("tr").dataset.email;
+    const u = [...live.users, ...MAIS].find((x) => x.email === email);
+    openDialog(confirmFor(actBtn.dataset.act, u, { live: true }), actBtn);
+    liveDialog.dataset.act = actBtn.dataset.act;
+    liveDialog.dataset.email = email;
+  }
+});
+
+$("[data-form='live']", listView).addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const form = ev.currentTarget;
+  const values = { name: form.elements.name.value.trim(), email: form.elements.email.value.trim() };
+  const errors = {};
+  if (!values.name) errors.name = [T("usuarios.erro.nomeVazio")];
+  if (!values.email) errors.email = [T("usuarios.erro.emailVazio")];
+  if (Object.keys(errors).length) {
+    renderLiveForm({ values, errors });
+    $(`[aria-invalid="true"]`, form)?.focus();
+    return;
+  }
+  const submit = $("[type='submit']", form);
+  openDialog(senhaHtml({ kind: "criado", nome: values.name, email: values.email.toLowerCase(), senha: SENHA_EXEMPLO, copy: null, live: true }), submit);
+  liveDialog.dataset.act = "criado";
+  renderLiveForm(); // o formulário volta vazio; a lista é relida da primeira página (offset=0)
+  opener = $("[type='submit']", form);
+});
+
+liveDialog.addEventListener("click", async (ev) => {
+  if (ev.target.closest("[data-close]")) { liveDialog.close(); return; }
+  const copyBtn = ev.target.closest("[data-copy]");
+  if (copyBtn) {
+    const value = $("input[readonly]", liveDialog).value;
+    const reply = $(".m21b-copy__reply", liveDialog);
+    try {
+      await navigator.clipboard.writeText(value);
+      copyBtn.innerHTML = `${glyph("check-circle")}<span>${tx("usuarios.senha.copiada")}</span>`;
+      reply.className = "m21b-copy__reply";
+      reply.innerHTML = `${glyph("check-circle")}<span>${tx("usuarios.senha.copiadaAviso")}</span>`;
+    } catch {
+      reply.className = "m21b-copy__reply m21b-copy__reply--critical";
+      reply.innerHTML = `${glyph("warning")}<span>${tx("usuarios.senha.copiaFalhou")}</span>`;
+      $("input[readonly]", liveDialog).select();
+    }
+    return;
+  }
+  if (ev.target.closest("[data-confirm]")) {
+    const act = liveDialog.dataset.act;
+    const u = [...live.users, ...MAIS].find((x) => x.email === liveDialog.dataset.email);
+    if (act === "senha") {
+      u.must_change_password = true;
+      const keep = opener;
+      liveDialog.innerHTML = senhaHtml({ kind: "nova", nome: u.name, email: u.email, senha: SENHA_EXEMPLO.split("").reverse().join(""), copy: null, live: true });
+      opener = keep;
+      renderLiveList();
+      opener = $(`tr[data-email="${CSS.escape(u.email)}"] [data-act="senha"]`, listView) ?? keep;
+      return;
+    }
+    if (act === "rebaixarSi") { liveDialog.close(); setView("estados"); location.hash = "caso-membro"; $("#caso-membro")?.scrollIntoView(); return; }
+    if (act === "admin") u.role = "admin";
+    if (act === "member") u.role = "member";
+    if (act === "desativar") u.is_active = false;
+    if (act === "reativar") u.is_active = true;
+    renderLiveList();
+    // a linha mostra o estado devolvido pela API; o foco volta ao botão equivalente da linha redesenhada
+    opener = $(`tr[data-email="${CSS.escape(u.email)}"] [data-act]`, listView);
+    liveDialog.close();
+  }
+});
+
+// ================================================================= A VISTA "OS ESTADOS"
+function caseBlock(id, cap, html) {
+  return `<div class="mk-case"${id ? ` id="${id}"` : ""}><p class="mk-cap">${esc(cap)}</p>${html}</div>`;
+}
+function formPanel(opts) {
+  return `<section class="ruvor-panel"><div class="ruvor-panel__body"><form class="m21b-form" novalidate>${formHtml(opts)}</form></div></section>`;
+}
+function listPanel(body) {
+  return `<section class="ruvor-panel">
+    <div class="ruvor-panel__head">${glyph("user")}<h2 class="ruvor-h3">${tx("usuarios.lista.titulo")}</h2>${body.count ? `<span class="ruvor-tag ruvor-tag--neutral ruvor-push">${tx("usuarios.lista.contagem", TOTAL)}</span>` : ""}</div>
+    <div class="ruvor-panel__body"${body.busy ? ' aria-busy="true"' : ""}>${body.html}</div>
+  </section>`;
+}
+const gerais = [
+  T("usuarios.erro.muitos", 12),
+  T("usuarios.erro.muitosSemTempo"),
+  T("usuarios.erro.csrf"),
+  T("usuarios.erro.rede"),
+  T("usuarios.erro.outro"),
+];
+const entrarLink = `<div class="ruvor-state__actions"><a class="ruvor-btn ruvor-btn--primary" href="#">${esc(DA_T8.entrar)}</a></div>`;
+
+$("[data-slot='estados']").innerHTML = [
+  caseBlock("", "Criar · campos vazios, conferidos no navegador antes do pedido", formPanel({ values: { name: "", email: "" }, errors: { name: [T("usuarios.erro.nomeVazio")], email: [T("usuarios.erro.emailVazio")] } })),
+  caseBlock("", "Criar · invalid_parameter: as mensagens por campo são as da API (details.fields), mostradas como chegam", formPanel({ values: { name: "", email: "ana@" }, errors: { name: ["Informe um nome de 1 a 120 caracteres."], email: ["Informe um e-mail válido."] } })),
+  caseBlock("", "Criar · email_taken, no campo do e-mail", formPanel({ values: { name: "Elisa Prado", email: "elisa.prado@exemplo.com", role: "member" }, errors: { email: [T("usuarios.erro.emailTaken")] } })),
+  caseBlock("", "Criar · enviando: o botão espera, os campos ficam travados", formPanel({ values: { name: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", role: "admin" }, sending: true })),
+  caseBlock("", "Criar · erro geral na caixa do formulário (role=alert): too_many_requests com e sem details.wait_seconds, csrf_failed depois da repetição, rede ou fora do formato, e qualquer outro code — um de cada vez na tela", `<div class="ruvor-stack">${gerais.map((g) => `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(g)}</span></div>`).join("")}</div>`),
+  caseBlock("", "A lista · carregando", listPanel({ busy: true, html: `<div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div>` })),
+  caseBlock("", "A lista · a primeira página não veio (rede, 429 ou outro code)", listPanel({ html: `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${tx("usuarios.erroLista")}</span><button class="ruvor-btn" type="button">${glyph("arrows-clockwise")}<span>${tx("usuarios.tentarDeNovo")}</span></button></div>` })),
+  caseBlock("", "A lista · \"Mostrar mais\" falhou: as linhas já mostradas ficam", listPanel({ count: true, html: tableHtml(PRIMEIRA.slice(0, 2)) + footHtml(50, TOTAL, { error: true }) })),
+  caseBlock("", "A lista · tudo mostrado: sem \"Mostrar mais\"", listPanel({ count: true, html: footHtml(TOTAL, TOTAL) })),
+  caseBlock("caso-membro", "RF-12 · membro: pelo me antes do pedido, ou por 403 permission_denied (também depois de rebaixar a si mesma)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("shield-warning", "review", T("usuarios.membro.titulo"), T("usuarios.membro.texto", ORG))}`),
+  caseBlock("caso-pessoal", "RF-12 · organização pessoal: pelo me (organization.is_personal), ou por 409 personal_organization", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("buildings", "evidence", T("usuarios.pessoal.titulo"), T("usuarios.pessoal.texto"))}`),
+  caseBlock("caso-anonimo", "RF-12 · anônimo desde a carga: o aviso do RF-16, do conta.html (T8) — aqui só o lugar, com a frase da spec", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("user", "evidence", DA_T8.anonimo, "", entrarLink)}`),
+  caseBlock("caso-terminou", "RF-16 · 401 numa ação ou na lista, depois de estar logada: o aviso de sessão terminada no lugar da tela, sem mudar de rota — do conta.html (T8)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("clock", "review", DA_T8.terminou, "", entrarLink)}`),
+  caseBlock("", "RF-12 · password_change_required: a tela relê a conta e o desvio do RF-05 assume — a troca obrigatória do senha.html (T7), fora do casco", `<p class="mk-tail">Moldura: sem desenho aqui; é a tela da T7.</p>`),
+].join("");
+
+// ================================================================= A VISTA "OS DIÁLOGOS"
+const ANA = PRIMEIRA[0], BRUNO = PRIMEIRA[1], DIEGO = PRIMEIRA[3], ELISA = PRIMEIRA[4];
+const scrim = (cap, inner) => caseBlock("", cap, `<div class="mk-scrim"><dialog class="m21b-dialog" open>${inner}</dialog></div>`);
+$("[data-slot='dialogos']").innerHTML = [
+  scrim("A senha provisória · depois de criar (201)", senhaHtml({ kind: "criado", nome: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", senha: SENHA_EXEMPLO, copy: null })),
+  scrim("A senha provisória · depois de copiar", senhaHtml({ kind: "criado", nome: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", senha: SENHA_EXEMPLO, copy: "ok" })),
+  scrim("A senha provisória · a cópia não foi permitida pelo navegador (a senha fica selecionada)", senhaHtml({ kind: "criado", nome: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", senha: SENHA_EXEMPLO, copy: "falhou" })),
+  scrim("A senha provisória nova · depois de gerar (200)", senhaHtml({ kind: "nova", nome: ANA.name, email: ANA.email, senha: "pL4nBtR9aXv2mQ7k", copy: null })),
+  scrim("Confirmar · mudar para administradora", confirmFor("admin", ELISA)),
+  scrim("Confirmar · mudar para membro (outra pessoa)", confirmFor("member", BRUNO)),
+  scrim("Confirmar · rebaixar a si mesma (a linha \"você\")", confirmFor("rebaixarSi", PRIMEIRA[2])),
+  scrim("Confirmar · desativar", confirmFor("desativar", ELISA)),
+  scrim("Confirmar · reativar", confirmFor("reativar", DIEGO)),
+  scrim("Confirmar · gerar senha provisória nova", confirmFor("senha", ANA)),
+  scrim("Confirmar · enviando", confirmFor("desativar", ELISA, { sending: true })),
+  scrim("Erro · last_admin (rebaixar ou desativar a última administradora ativa)", confirmFor("rebaixarSi", PRIMEIRA[2], { erro: T("usuarios.erro.lastAdmin") })),
+  scrim("Erro · user_not_found (a lista é relida por trás; resta só Cancelar)", confirmFor("desativar", ELISA, { erro: T("usuarios.erro.naoEncontrado"), semConfirmar: true })),
+  scrim("Erro · rede (e, no mesmo lugar, too_many_requests, csrf_failed, invalid_parameter e qualquer outro code)", confirmFor("senha", ANA, { erro: T("usuarios.erro.rede") })),
+].join("");
+
+// ================================================================= A VISTA "OS TEXTOS"
+function renderTextos() {
+  const out = (v, ex) => (typeof v === "function" ? (ex ?? [[]]).map((a) => v(...a)) : [v]);
+  let rows = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+  for (const [k, v] of Object.entries(TEXTOS)) {
+    const sig = typeof v === "function" ? `função de ${v.length} argumento${v.length === 1 ? "" : "s"}` : "texto";
+    rows += `<tr><td>${esc(k)}<small>${esc(sig)}</small></td><td>${out(v, EXEMPLOS[k]).map(esc).join("<br><br>")}</td></tr>`;
+  }
+  $("[data-textos]").innerHTML = `${rows}</tbody>`;
+  $("[data-exemplos]").textContent = `const EXEMPLOS = ${JSON.stringify(EXEMPLOS, null, 2)};`;
+}
+renderTextos();
+
+// ================================================================= tema e vistas
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+let theme = "system";
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  theme = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+// O alternador de leitura fica como no casco: nenhum texto desta tela muda com o nível.
+for (const b of document.querySelectorAll("[data-set-reading]")) b.addEventListener("click", () => {
+  for (const o of document.querySelectorAll("[data-set-reading]")) o.setAttribute("aria-pressed", String(o === b));
+});
+
+const mkBtns = document.querySelectorAll("[data-mk]");
+let view = "lista";
+function setView(next) {
+  view = next;
+  for (const b of mkBtns) b.setAttribute("aria-pressed", String(b.dataset.mk === next));
+  for (const v of document.querySelectorAll(".mk-view")) v.hidden = v.dataset.view !== next;
+  refreshFrames();
+}
+for (const b of mkBtns) b.addEventListener("click", () => setView(b.dataset.mk));
+
+function refreshFrames() {
+  const host = $("[data-frames]");
+  if (!host || view !== "estreito") return;
+  const src = (v) => `${location.pathname}?moldura=0&vista=${v}&tema=${theme}`;
+  host.innerHTML = `
+    <div class="mk-frame"><p>A lista, 360 px</p><iframe title="A lista em 360 px" src="${src("lista")}"></iframe></div>
+    <div class="mk-frame"><p>Os estados e os casos, 360 px</p><iframe title="Os estados em 360 px" src="${src("estados")}"></iframe></div>
+    <div class="mk-frame"><p>Os diálogos, 360 px</p><iframe title="Os diálogos em 360 px" src="${src("dialogos")}"></iframe></div>`;
+}
+
+// ?vista=lista|estados|dialogos|estreito|textos &tema=light|dark|system &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "lista");
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>
