@@ -240,29 +240,13 @@
         <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
         <div class="ruvor-panel__body">
           <ul class="mk-notes">
-            <li><b>O papel no feminino fixo.</b> A spec nomeia os papéis "administradora ou membro" (RF-11); o mockup segue, e a amostra tem um homem administrador (Bruno Costa) para o portão ver como fica. Trocar por "administração" ou "admin" é decisão do portão.</li>
-            <li><b>As duas formas do rótulo do papel</b>, para o portão escolher. Nas duas, o valor da API (<code>admin</code>) não muda; muda o texto.
-              <div class="ruvor-grid ruvor-grid--2 mk-alt">
-                <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-stack">
-                  <p class="ruvor-eyebrow">A · "Administradora" (a spec, a do mockup)</p>
-                  <div class="ruvor-segmented m21b-segmented" role="group" aria-label="Papel, forma A"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Membro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Administradora</button></div>
-                  <table class="ruvor-table"><thead><tr><th scope="col">Nome</th><th scope="col">Papel</th></tr></thead><tbody><tr><td>Bruno Costa</td><td>Administradora</td></tr><tr><td>Ana Lima</td><td>Membro</td></tr></tbody></table>
-                  <p class="ruvor-note">Ações: "Mudar para administradora"; textos: "uma administradora da organização", "Para voltar a administradora".</p>
-                </div></div>
-                <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-stack">
-                  <p class="ruvor-eyebrow">B · "Administração"</p>
-                  <div class="ruvor-segmented m21b-segmented" role="group" aria-label="Papel, forma B"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Membro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Administração</button></div>
-                  <table class="ruvor-table"><thead><tr><th scope="col">Nome</th><th scope="col">Papel</th></tr></thead><tbody><tr><td>Bruno Costa</td><td>Administração</td></tr><tr><td>Ana Lima</td><td>Membro</td></tr></tbody></table>
-                  <p class="ruvor-note">Ações: "Mudar para administração"; textos: "quem administra a organização", "Para voltar à administração" — a forma B reescreve as frases que citam o papel, com as mesmas chaves.</p>
-                </div></div>
-              </div>
-            </li>
-            <li><b>A regra do foco.</b> O diálogo guarda quem o abriu. Ao fechar, o foco volta a esse botão; se ele deixou de existir depois de uma ação bem-sucedida ("Desativar" vira "Reativar"), vai ao botão <b>da mesma posição</b> na linha redesenhada. Quando o conteúdo do diálogo aberto é trocado (confirmar "Nova senha provisória" mostra o diálogo da senha), o foco vai ao primeiro controle do novo conteúdo. Depois de criar, volta a "Criar usuário". Rebaixar a si mesma troca a tela pelo caso "membro", e o foco vai ao aviso dele. A vista "a lista" segue a regra.</li>
+            <li><b>O rótulo do papel: o portão escolheu "Administração" (2026-10-03).</b> Entre "Administradora" (a forma da spec, RF-11) e "Administração", o dono aprovou a segunda, sem gênero. O valor da API (<code>admin</code>) não muda; mudam o rótulo — "Administração" no papel e na coluna, "Mudar para administração" na ação — e as frases que citam o papel, reescritas sem gênero com as mesmas chaves ("quem administra a organização", "Para voltar à administração").</li>
+            <li><b>A regra do foco.</b> O diálogo guarda quem o abriu. Ao fechar, o foco volta a esse botão; se ele deixou de existir depois de uma ação bem-sucedida ("Desativar" vira "Reativar"), vai ao botão <b>da mesma posição</b> na linha redesenhada. Quando o conteúdo do diálogo aberto é trocado (confirmar "Nova senha provisória" mostra o diálogo da senha), o foco vai ao primeiro controle do novo conteúdo. Depois de criar, volta a "Criar usuário". Rebaixar o próprio papel troca a tela pelo caso "membro", e o foco vai ao aviso dele. A vista "a lista" segue a regra.</li>
             <li><b>A linha desativada</b> mantém a mudança de papel, e a confirmação diz que ela vale quando a conta for reativada — as posições dos botões são as mesmas na linha ativa e na desativada, o que a regra do foco usa.</li>
             <li><b>Para a T10.</b> O <code>m21b-segmented</code> vira variante do kit, <code>.ruvor-segmented--surface</code>, com o estilo de <code>:disabled</code> (o formulário enviando trava os dois botões). O véu vira token, <code>--ruvor-scrim</code>, nos dois temas, declarado no próprio <code>::backdrop</code> do diálogo.</li>
             <li><b>O papel em <code>.ruvor-segmented</code></b>, como pede o RF-13. O kit comenta a classe como "só na barra" (<code>components.css</code>, a chave de tema): as cores dela são as da barra escura, e sobre a superfície clara o botão não marcado sairia em <code>--ruvor-topbar-link</code> sobre <code>--ruvor-surface</code>, perto de 1,9:1. O mockup a recolore com os tokens da superfície (<code>m21b-segmented</code>: o marcado em tinta cheia, como os atalhos do gráfico). A T10 leva isso ao kit como variante, se aprovado.</li>
             <li><b>As ações na própria linha</b>: só a mudança de papel. "Desativar" e "Nova senha provisória" não existem nela (RF-14); a própria pessoa troca a senha pelo menu de conta.</li>
-            <li><b>Rebaixar a si mesma</b> pede a confirmação própria; feito, a tela relê a conta e mostra o caso "membro" do RF-12 (na vista "a lista", "Mudar para membro" na linha "você" leva a ele).</li>
+            <li><b>Rebaixar o próprio papel</b> pede a confirmação própria; feito, a tela relê a conta e mostra o caso "membro" do RF-12 (na vista "a lista", "Mudar para membro" na linha "você" leva a ele).</li>
             <li><b>Depois de cada ação</b>, a linha mostra o estado que a API devolve (o papel, a situação, a marca da senha provisória). Não há aviso de sucesso à parte: a linha mudada é a confirmação.</li>
             <li><b>O 401 segue o RF-16: o aviso fica no lugar da ação</b>, com os textos do <code>conta.html</code> (<code>conta.aviso.terminou</code>, <code>conta.aviso.volta</code>, <code>conta.entrar</code>; <code>role="alert"</code>). Numa ação do diálogo, o aviso entra no diálogo; ao carregar a lista ou ao criar, no lugar da lista ou do formulário — a página não muda de rota nem some. Só o anônimo desde a carga vê o aviso "para quem entrou" no lugar da tela.</li>
             <li><b>Nenhum token novo no mockup.</b> O véu atrás do diálogo é <code>color-mix</code> de <code>--ruvor-topbar</code> com transparente, escuro nos dois temas; na T10, vira <code>--ruvor-scrim</code> (acima).</li>
@@ -323,9 +307,9 @@ const TEXTOS = {
   "usuarios.campo.email": "E-mail",
   "usuarios.campo.email.exemplo": "nome@exemplo.com",
   "usuarios.campo.papel": "Papel",
-  "usuarios.campo.papel.dica": "Membro usa o Ruvor. Administradora usa e também gere os usuários desta página.",
+  "usuarios.campo.papel.dica": "Membro usa o Ruvor. Administração usa e também gere os usuários desta página.",
   "usuarios.papel.member": "Membro",
-  "usuarios.papel.admin": "Administradora",
+  "usuarios.papel.admin": "Administração",
   "usuarios.criar.botao": "Criar usuário",
   "usuarios.criar.enviando": "Criando…",
   // os erros
@@ -337,7 +321,7 @@ const TEXTOS = {
   "usuarios.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
   "usuarios.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
   "usuarios.erro.outro": "Não foi possível concluir agora. Tente de novo.",
-  "usuarios.erro.lastAdmin": "A organização precisa de ao menos uma administradora ativa. Mude outra pessoa para administradora antes.",
+  "usuarios.erro.lastAdmin": "A organização precisa de ao menos uma pessoa ativa na administração. Mude outra pessoa para administração antes.",
   "usuarios.erro.naoEncontrado": "Esta pessoa não está mais na organização. A lista foi atualizada.",
   // a lista (RF-11)
   "usuarios.lista.titulo": "Usuários",
@@ -361,18 +345,18 @@ const TEXTOS = {
   "usuarios.tentarDeNovo": "Tentar de novo",
   // as ações da linha (RF-14)
   "usuarios.acoes.rotulo": (nome) => `Ações para ${nome}`,
-  "usuarios.acao.admin": "Mudar para administradora",
+  "usuarios.acao.admin": "Mudar para administração",
   "usuarios.acao.member": "Mudar para membro",
   "usuarios.acao.desativar": "Desativar",
   "usuarios.acao.reativar": "Reativar",
   "usuarios.acao.senha": "Nova senha provisória",
   // as confirmações (RF-14)
-  "usuarios.confirmar.admin.titulo": (nome) => `Mudar ${nome} para administradora?`,
+  "usuarios.confirmar.admin.titulo": (nome) => `Mudar ${nome} para administração?`,
   "usuarios.confirmar.admin.texto": "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização, e a gerar senhas provisórias para eles.",
   "usuarios.confirmar.member.titulo": (nome) => `Mudar ${nome} para membro?`,
   "usuarios.confirmar.member.texto": "A pessoa deixa de gerir os usuários da organização. O resto do Ruvor continua igual para ela.",
   "usuarios.confirmar.rebaixarSi.titulo": "Deixar de administrar a organização?",
-  "usuarios.confirmar.rebaixarSi.texto": "Você passa a membro e perde a gestão dos usuários: esta página deixa de abrir para você. Para voltar a administradora, outra administradora da organização precisa mudar o seu papel.",
+  "usuarios.confirmar.rebaixarSi.texto": "Você passa a membro e perde a gestão dos usuários: esta página deixa de abrir para você. Para voltar à administração, outra pessoa da administração precisa mudar o seu papel.",
   "usuarios.confirmar.desativar.titulo": (nome) => `Desativar ${nome}?`,
   "usuarios.confirmar.desativar.texto": "A pessoa deixa de conseguir entrar. As sessões abertas e as chaves de API dela são encerradas agora. A conta continua na lista e pode ser reativada.",
   "usuarios.confirmar.reativar.titulo": (nome) => `Reativar ${nome}?`,
@@ -399,7 +383,7 @@ const TEXTOS = {
   "usuarios.senha.fechar": "Fechar",
   // quem não pode gerir (RF-12)
   "usuarios.membro.titulo": "Só quem administra a organização gere os usuários.",
-  "usuarios.membro.texto": (org) => `Você é membro da ${org}. Para criar uma conta, mudar um papel ou gerar uma senha provisória, fale com uma administradora da organização.`,
+  "usuarios.membro.texto": (org) => `Você é membro da ${org}. Para criar uma conta, mudar um papel ou gerar uma senha provisória, fale com quem administra a organização.`,
   "usuarios.pessoal.titulo": "A conta pessoal não tem outros usuários.",
   "usuarios.pessoal.texto": "Ela é só sua. Uma organização com várias pessoas é criada pela equipe que opera o Ruvor.",
 };
@@ -645,7 +629,7 @@ function confirmFor(act, u, extra = {}) {
 }
 
 // ---------------------------------------------------------------- o aviso para entrar (RF-16), o do conta.html
-// ended: 401 de quem estava logada, com role="alert"; required: anônimo desde a carga.
+// ended: 401 de quem tinha entrado, com role="alert"; required: anônimo desde a carga.
 function signInNotice(kind) {
   const title = kind === "ended" ? T("conta.aviso.terminou") : T("conta.aviso.paraQuemEntrou");
   return `<div class="ruvor-state ruvor-state--notice m21b-notice" data-signin-notice="${kind}"${kind === "ended" ? ' role="alert"' : ""}>
@@ -832,10 +816,10 @@ $("[data-slot='estados']").innerHTML = [
   caseBlock("", "A lista · a primeira página não veio (rede, 429 ou outro code)", listPanel({ html: `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${tx("usuarios.erroLista")}</span><button class="ruvor-btn" type="button">${glyph("arrows-clockwise")}<span>${tx("usuarios.tentarDeNovo")}</span></button></div>` })),
   caseBlock("", "A lista · \"Mostrar mais\" falhou: as linhas já mostradas ficam", listPanel({ count: true, html: tableHtml(PRIMEIRA.slice(0, 2)) + footHtml(50, TOTAL, { error: true }) })),
   caseBlock("", "A lista · tudo mostrado: sem \"Mostrar mais\"", listPanel({ count: true, html: footHtml(TOTAL, TOTAL) })),
-  caseBlock("caso-membro", "RF-12 · membro: pelo me antes do pedido, ou por 403 permission_denied (também depois de rebaixar a si mesma)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("shield-warning", "review", T("usuarios.membro.titulo"), T("usuarios.membro.texto", ORG))}`),
+  caseBlock("caso-membro", "RF-12 · membro: pelo me antes do pedido, ou por 403 permission_denied (também depois de rebaixar o próprio papel)", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("shield-warning", "review", T("usuarios.membro.titulo"), T("usuarios.membro.texto", ORG))}`),
   caseBlock("caso-pessoal", "RF-12 · organização pessoal: pelo me (organization.is_personal), ou por 409 personal_organization", `<div class="ruvor-page-head">${head(false)}</div>${stateHtml("buildings", "evidence", T("usuarios.pessoal.titulo"), T("usuarios.pessoal.texto"))}`),
   caseBlock("caso-anonimo", "RF-12 · anônimo desde a carga: o aviso \"para quem entrou\" do conta.html no lugar da tela (nada dela chega a aparecer)", `<div class="ruvor-page-head">${head(false)}</div>${signInNotice("required")}`),
-  caseBlock("caso-401-lista", "RF-16 · 401 ao carregar a lista (ou o \"Mostrar mais\"), depois de estar logada: o aviso de sessão terminada no lugar da lista; o resto da página fica", listPanel({ html: signInNotice("ended") })),
+  caseBlock("caso-401-lista", "RF-16 · 401 ao carregar a lista (ou o \"Mostrar mais\"), depois de ter entrado: o aviso de sessão terminada no lugar da lista; o resto da página fica", listPanel({ html: signInNotice("ended") })),
   caseBlock("caso-401-criar", "RF-16 · 401 ao criar: o aviso de sessão terminada no lugar do formulário", `<section class="ruvor-panel"><div class="ruvor-panel__body">${signInNotice("ended")}</div></section>`),
   caseBlock("", "RF-12 · password_change_required: a tela relê a conta e o desvio do RF-05 assume — a troca obrigatória do senha.html (T7), fora do casco", `<p class="mk-tail">Moldura: sem desenho aqui; é a tela da T7.</p>`),
 ].join("");
@@ -848,14 +832,14 @@ $("[data-slot='dialogos']").innerHTML = [
   scrim("A senha provisória · depois de copiar", senhaHtml({ kind: "criado", nome: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", senha: SENHA_EXEMPLO, copy: "ok" })),
   scrim("A senha provisória · a cópia não foi permitida pelo navegador (a senha fica selecionada)", senhaHtml({ kind: "criado", nome: "Gabriela Rocha", email: "gabriela.rocha@exemplo.com", senha: SENHA_EXEMPLO, copy: "falhou" })),
   scrim("A senha provisória nova · depois de gerar (200)", senhaHtml({ kind: "nova", nome: ANA.name, email: ANA.email, senha: "pL4nBtR9aXv2mQ7k", copy: null })),
-  scrim("Confirmar · mudar para administradora", confirmFor("admin", ELISA)),
+  scrim("Confirmar · mudar para administração", confirmFor("admin", ELISA)),
   scrim("Confirmar · mudar para membro (outra pessoa)", confirmFor("member", BRUNO)),
-  scrim("Confirmar · rebaixar a si mesma (a linha \"você\")", confirmFor("rebaixarSi", PRIMEIRA[2])),
+  scrim("Confirmar · rebaixar o próprio papel (a linha \"você\")", confirmFor("rebaixarSi", PRIMEIRA[2])),
   scrim("Confirmar · desativar", confirmFor("desativar", ELISA)),
   scrim("Confirmar · reativar", confirmFor("reativar", DIEGO)),
   scrim("Confirmar · gerar senha provisória nova", confirmFor("senha", ANA)),
   scrim("Confirmar · enviando", confirmFor("desativar", ELISA, { sending: true })),
-  scrim("Erro · last_admin (a última administradora ativa rebaixa a si mesma)", confirmFor("rebaixarSi", PRIMEIRA[2], { erro: T("usuarios.erro.lastAdmin") })),
+  scrim("Erro · last_admin (a última pessoa ativa na administração rebaixa o próprio papel)", confirmFor("rebaixarSi", PRIMEIRA[2], { erro: T("usuarios.erro.lastAdmin") })),
   scrim("Erro · user_not_found (a lista é relida por trás): só o título, o erro e Fechar", confirmFor("desativar", ELISA, { erro: T("usuarios.erro.naoEncontrado"), semConfirmar: true, semTexto: true })),
   scrim("Erro · 401 numa ação (RF-16): o aviso de sessão terminada dentro do diálogo, no lugar da ação, com Entrar", confirmFor("desativar", ELISA, { semConfirmar: true, semTexto: true, sessao: true })),
   scrim("Confirmar · mudar o papel na linha desativada (a frase de quando vale)", confirmFor("admin", DIEGO)),
