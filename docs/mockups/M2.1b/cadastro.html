@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — o cadastro (mockup, M2.1b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup do cadastro (T6 do plano M2.1b, RF-07 da spec). A MESMA cena da entrada aprovada
+   * (docs/mockups/M2.1b/entrada.html, T5): o arranjo, a cena, o formulário, a caixa de erro,
+   * os botões largos e o link são as mesmas classes locais m21b-, com o mesmo destino no kit.
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal. Não há bloco
+   * "tokens propostos": o cadastro não traz cor nova (a entrada já mostrou que as três cores
+   * do 01-login caem em token existente).
+   *
+   * Estilo local: m21b- e mk-. TODO m21b- vai ao kit na T10 (RF-17); mk- é a moldura.
+   *
+   *   Da entrada, sem mudança (a tabela de lá vale):
+   *   .m21b-access                    -> .ruvor-access
+   *   .m21b-scene, __logo, __copy,    -> .ruvor-scene, __logo, __copy, __title, __text
+   *     __title, __text
+   *   .m21b-side                      -> .ruvor-access__side
+   *   .m21b-auth, __head, __title     -> .ruvor-auth, __head, __title
+   *   .m21b-note                      -> .ruvor-hint--top
+   *   .m21b-alert                     -> .ruvor-form-error
+   *   .m21b-wide                      -> .ruvor-btn--block
+   *   .m21b-signup                    -> .ruvor-auth__alt
+   *   .m21b-link                      -> .ruvor-link
+   *   .m21b-access [hidden]           -> nenhuma: é do mockup
+   *
+   *   NOVOS neste mockup:
+   *   .m21b-reqs                      -> .ruvor-hint__list      a lista dos requisitos dentro da dica
+   *   .m21b-errors                    -> .ruvor-field__errors   as mensagens de um campo, uma por linha
+   *                                                             (a API manda uma lista por campo)
+   */
+
+  /* --- Da entrada, igual ------------------------------------------------------------ */
+  .m21b-access {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    background: var(--ruvor-bg);
+  }
+  .m21b-access [hidden] { display: none; }
+  .m21b-scene {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 68px;
+    background: var(--ruvor-topbar);
+    color: var(--ruvor-topbar-text);
+  }
+  .m21b-scene::after {
+    content: "";
+    position: absolute;
+    inset: auto -90px -120px auto;
+    width: 430px;
+    height: 430px;
+    background-image: radial-gradient(circle, var(--ruvor-review) 0 4px, transparent 4.5px);
+    background-size: 31px 31px;
+    opacity: 0.28;
+    transform: rotate(-9deg);
+    pointer-events: none;
+  }
+  .m21b-scene__logo { display: block; width: 156px; height: auto; }
+  .m21b-scene__copy { position: relative; z-index: 1; max-width: 500px; margin-block: auto; }
+  .m21b-scene__copy .ruvor-eyebrow { color: var(--ruvor-review); }
+  .m21b-scene__title { font-size: 48px; }
+  .m21b-scene__text { margin: var(--ruvor-space-4) 0 0; max-width: 52ch; font-size: 15px; color: var(--ruvor-topbar-account); }
+  .m21b-side { display: grid; place-items: center; padding: 60px; }
+  .m21b-auth { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: var(--ruvor-space-4); }
+  .m21b-auth__head { margin-bottom: var(--ruvor-space-3); }
+  .m21b-auth__title { font-size: 31px; }
+  .m21b-auth .ruvor-sub { margin-top: var(--ruvor-space-3); }
+  .ruvor-hint.m21b-note { align-items: flex-start; }
+  .m21b-note > .ruvor-glyph { margin-top: 2px; }
+  .m21b-alert { color: var(--ruvor-critical-text); padding: var(--ruvor-space-3) var(--ruvor-space-4); border-radius: var(--ruvor-radius-sm); }
+  .m21b-alert > .ruvor-glyph { margin-top: 2px; }
+  .m21b-wide { width: 100%; padding: 12px; text-align: center; }
+  .m21b-signup { margin: 0; text-align: center; color: var(--ruvor-text-muted); }
+  .m21b-link {
+    color: var(--ruvor-decision-text);
+    font-weight: var(--ruvor-type-small-weight);
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-underline-offset: 3px;
+  }
+  .m21b-link:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
+
+  /* --- NOVO: a lista dos requisitos, dentro da dica (o ícone na primeira linha, como a nota) */
+  .m21b-reqs { margin: var(--ruvor-space-1) 0 0; padding-left: var(--ruvor-space-4); list-style: disc; }
+  .m21b-reqs li + li { margin-top: 2px; }
+
+  /* --- NOVO: as mensagens de um campo, uma por linha --------------------------------- */
+  .m21b-errors { display: grid; gap: 4px; }
+  .m21b-errors > .ruvor-field__error { align-items: flex-start; }
+  .m21b-errors > .ruvor-field__error > .ruvor-glyph { margin-top: 1px; flex: none; }
+
+  /* --- Da entrada, igual: até 720 px, a cena vira faixa acima do formulário ------------ */
+  @media (max-width: 720px) {
+    .m21b-access { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+    .m21b-scene { padding: var(--ruvor-space-5) var(--ruvor-space-4); }
+    .m21b-scene::after { width: 220px; height: 220px; inset: auto -60px -90px auto; background-size: 22px 22px; background-image: radial-gradient(circle, var(--ruvor-review) 0 3px, transparent 3.5px); }
+    .m21b-scene__logo { width: 112px; }
+    .m21b-scene__copy { margin-block: var(--ruvor-space-5) 0; }
+    .m21b-scene__title { font-size: 28px; }
+    .m21b-scene__text { font-size: var(--ruvor-type-body-size); }
+    .m21b-side { place-items: start center; padding: var(--ruvor-space-6) var(--ruvor-space-4) var(--ruvor-space-7); }
+    .m21b-auth__title { font-size: var(--ruvor-type-h2-size); }
+  }
+
+  /* --- Moldura do mockup: não é tela (a da entrada) ------------------------------------- */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); background: var(--ruvor-canvas); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-frame iframe { width: 360px; height: 1180px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 30%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code, .mk-pad code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/regular/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 256 256"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.1b · o cadastro · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Estado">
+    <span>Estado:</span>
+    <button class="ruvor-btn" type="button" data-mk-state="vazio">vazio (base)</button>
+    <button class="ruvor-btn" type="button" data-mk-state="digitando">digitando</button>
+    <button class="ruvor-btn" type="button" data-mk-state="enviando">enviando</button>
+    <button class="ruvor-btn" type="button" data-mk-state="vazios">os quatro campos vazios</button>
+    <button class="ruvor-btn" type="button" data-mk-state="confirmacao">confirmação diferente</button>
+    <button class="ruvor-btn" type="button" data-mk-state="api-identidade">invalid_parameter: nome e e-mail</button>
+    <button class="ruvor-btn" type="button" data-mk-state="api-senha">invalid_parameter: senha curta, comum, numérica</button>
+    <button class="ruvor-btn" type="button" data-mk-state="api-name">invalid_parameter: parecida com "name"</button>
+    <button class="ruvor-btn" type="button" data-mk-state="api-email">invalid_parameter: parecida com "email"</button>
+    <button class="ruvor-btn" type="button" data-mk-state="email_taken">email_taken</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests">429 com 42 s</button>
+    <button class="ruvor-btn" type="button" data-mk-state="too_many_requests-sem">429 sem wait_seconds</button>
+    <button class="ruvor-btn" type="button" data-mk-state="csrf_failed">csrf_failed</button>
+    <button class="ruvor-btn" type="button" data-mk-state="rede">rede ou fora do formato</button>
+    <button class="ruvor-btn" type="button" data-mk-state="outro">outro code</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk-view="tela">largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk-view="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk-view="textos">os textos</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Tema do mockup">
+    <span>Tema:</span>
+    <button class="ruvor-btn" type="button" data-set-theme="light">Claro</button>
+    <button class="ruvor-btn" type="button" data-set-theme="dark">Escuro</button>
+    <button class="ruvor-btn" type="button" data-set-theme="system">Sistema</button>
+  </div>
+</div>
+
+<!-- ============================================================ A TELA -->
+<div class="mk-view" data-view="tela" hidden>
+  <main class="m21b-access" data-screen="cadastro">
+    <section class="m21b-scene" data-mark="cena">
+      <img class="m21b-scene__logo" src="../../../brand/ruvor/ruvor-logo-reverse.svg" data-t-alt="acesso.cena.marca">
+      <div class="m21b-scene__copy">
+        <p class="ruvor-eyebrow" data-t="acesso.cena.eyebrow"></p>
+        <h1 class="ruvor-display m21b-scene__title" data-t="acesso.cena.titulo"></h1>
+        <p class="m21b-scene__text" data-t="acesso.cena.texto"></p>
+      </div>
+    </section>
+
+    <section class="m21b-side">
+      <form class="m21b-auth" novalidate aria-labelledby="cadastro-titulo" data-mark="form">
+        <div class="m21b-auth__head">
+          <p class="ruvor-eyebrow" data-t="acesso.eyebrow"></p>
+          <h2 class="ruvor-h2 m21b-auth__title" id="cadastro-titulo" data-t="cadastro.titulo"></h2>
+          <p class="ruvor-sub" data-t="cadastro.sub"></p>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-nome">
+          <label class="ruvor-label" for="cadastro-nome" data-t="cadastro.nome.rotulo"></label>
+          <input class="ruvor-input" id="cadastro-nome" name="name" type="text" autocomplete="name">
+          <div class="m21b-errors" id="cadastro-nome-erro" data-errors="name" hidden></div>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-email">
+          <label class="ruvor-label" for="cadastro-email" data-t="acesso.email.rotulo"></label>
+          <input class="ruvor-input" id="cadastro-email" name="email" type="email" autocomplete="username" spellcheck="false" data-t-placeholder="acesso.email.placeholder">
+          <div class="m21b-errors" id="cadastro-email-erro" data-errors="email" hidden></div>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-senha">
+          <label class="ruvor-label" for="cadastro-senha" data-t="acesso.senha.rotulo"></label>
+          <!-- A dica dos requisitos vem ANTES do campo (RF-07): quem lê, lê antes de digitar. -->
+          <div class="ruvor-hint m21b-note" id="cadastro-senha-dica" data-mark="dica-senha">
+            <svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-info"/></svg>
+            <div>
+              <span data-t="acesso.senha.dica"></span>
+              <ul class="m21b-reqs">
+                <li data-t="acesso.senha.requisito.tamanho"></li>
+                <li data-t="acesso.senha.requisito.numeros"></li>
+                <li data-t="acesso.senha.requisito.parecida"></li>
+                <li data-t="acesso.senha.requisito.comum"></li>
+              </ul>
+            </div>
+          </div>
+          <input class="ruvor-input" id="cadastro-senha" name="password" type="password" autocomplete="new-password" aria-describedby="cadastro-senha-dica">
+          <div class="m21b-errors" id="cadastro-senha-erro" data-errors="password" hidden></div>
+        </div>
+
+        <div class="ruvor-field" data-mark="campo-confirmacao">
+          <label class="ruvor-label" for="cadastro-confirmacao" data-t="cadastro.confirmacao.rotulo"></label>
+          <input class="ruvor-input" id="cadastro-confirmacao" name="password_confirmation" type="password" autocomplete="new-password">
+          <div class="m21b-errors" id="cadastro-confirmacao-erro" data-errors="confirmation" hidden></div>
+        </div>
+
+        <!-- A frase da conta pessoal (RF-07, D-101). -->
+        <div class="ruvor-hint m21b-note" id="cadastro-pessoal"><svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span><span data-t="cadastro.pessoal"></span> <span data-t="cadastro.pessoal.organizacao"></span></span></div>
+
+        <!-- O erro geral: a caixa de erro da entrada, com role="alert". Vazia e oculta no estado de base. -->
+        <div class="ruvor-callout ruvor-callout--critical m21b-alert" role="alert" data-alert hidden><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-warning"/></svg><span data-alert-text></span></div>
+
+        <button class="ruvor-btn ruvor-btn--primary m21b-wide" type="submit" data-mark="botao-criar" data-submit><span data-t="cadastro.criar"></span></button>
+
+        <p class="m21b-signup"><span data-t="cadastro.temConta"></span> <a class="m21b-link" href="#" data-t="acesso.entrar"></a></p>
+
+        <a class="ruvor-btn ruvor-btn--ghost m21b-wide" href="#" data-t="acesso.continuar"></a>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- 360 px: a própria página em moldura estreita, no tema escolhido. -->
+<div class="mk-view mk-pad" data-view="estreito" hidden>
+  <p class="mk-tail">Moldura: a mesma página em 360 px, sem a barra do mockup, no tema escolhido acima. Como na entrada aprovada: até 720 px a tela tem uma coluna, a cena vira uma faixa acima do formulário, e o formulário vem logo abaixo, na largura da tela. O formulário do cadastro é mais alto que o da entrada (quatro campos e a dica): a página rola na vertical, nunca na horizontal.</p>
+  <div class="mk-frames" data-frames></div>
+</div>
+
+<!-- Os textos. -->
+<div class="mk-view mk-pad" data-view="textos" hidden>
+  <p class="mk-tail">Moldura: as chaves que esta tela usa, em <code>frontend/src/content/textos.ts</code>. As marcadas <b>da entrada</b> já foram aprovadas no portão da T5 e são reaproveitadas com o mesmo texto; as marcadas <b>nova</b> nascem aqui, com o prefixo <code>cadastro.*</code> do plano (seção "Os textos"). As mensagens da API por campo (<code>details.fields</code>) não estão aqui: são dado, não texto da tela — a tabela abaixo delas lista as reais, conferidas.</p>
+  <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos da chave-função</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">Nenhuma chave-função nova: a única desta tela, <code>acesso.erro.tentativas</code>, é a da entrada, e o exemplo dela (<code>[[42], [900], [null]]</code>) será registrado pela T11, com a entrada. O cadastro não acrescenta linha a <code>EXEMPLOS</code> em <code>frontend/tests/exemplos.ts</code>.</p>
+      <pre class="mk-code" data-exemplos></pre>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">As mensagens da API por campo, como chegam (dado, não texto da tela)</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">Conferidas no código: as de identidade em <code>backend/apps/accounts/services.py</code> (<code>_validate_identity</code>); as da senha são dos quatro validadores de <code>AUTH_PASSWORD_VALIDATORS</code> (<code>backend/config/settings.py</code>), em <code>pt-br</code> (<code>LANGUAGE_CODE</code>), geradas pelo Django 6.1 do <code>.venv</code> com o modelo <code>User</code> de hoje — sem <code>verbose_name</code> em <code>email</code> nem em <code>name</code>. A tela mostra cada uma no campo dela, uma por linha, sem reescrever.</p>
+      <table class="ruvor-table mk-textos" data-api></table>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+    <div class="ruvor-panel__body">
+      <ul class="mk-notes">
+        <li><b>A cena é a da entrada aprovada</b>, sem mudança: as mesmas chaves <code>acesso.cena.*</code>, o mesmo arranjo, a mesma quebra em 720 px. O sobretítulo do formulário também é o da entrada (<code>acesso.eyebrow</code>); mudam o título e o subtítulo.</li>
+        <li><b>A dica da senha vem antes do campo</b>, entre o rótulo e a caixa, sempre visível (RF-07): os quatro requisitos, cada um de um validador — o tamanho (<code>MinimumLengthValidator</code>, 10), só números (<code>NumericPasswordValidator</code>), parecida com o e-mail ou o nome (<code>UserAttributeSimilarityValidator</code>, <code>("email", "name")</code>) e comum (<code>CommonPasswordValidator</code>). O campo da senha tem <code>aria-describedby</code> apontando a dica (e, com erro, também as mensagens).</li>
+        <li><b>A confirmação</b> é conferida no navegador e não vai à API (a API não a recebe): diferente, o erro fica no campo dela e <b>nenhum pedido sai</b>.</li>
+        <li><b>Campo vazio</b> (proposta, como na entrada e na gestão de usuários aprovadas): nome, e-mail, senha ou confirmação vazios dão o erro no próprio campo e não mandam pedido. No nome e no e-mail, "vazio" é depois de aparar os espaços; na senha e na confirmação, só <code>""</code> (espaço é caractere de senha). O erro de um campo some quando a pessoa edita aquele campo. O que o navegador não confere — e-mail mal formado, nome longo demais, a força da senha — vai à API, e a resposta aparece no campo, como chega.</li>
+        <li><b>As mensagens da API são mostradas como chegam</b>, uma por linha, todas as da lista. <b>Duas citam o campo em inglês</b>: "A senha é muito parecida com name" (o risco registrado na spec) e também <b>"A senha é muito parecida com email"</b> — a spec só registra a do <code>name</code>, mas <code>User.email</code> também não tem <code>verbose_name</code>. A tela não reescreve; a correção é da <code>identidade</code> (<code>verbose_name</code> nos dois campos). Fica como <b>risco registrado</b>, pedido à <code>identidade</code>.</li>
+        <li><b>Campo que a tela não conhece</b>: se <code>details.fields</code> trouxer uma chave fora de <code>name</code>, <code>email</code> e <code>password</code> (por exemplo <code>non_field_errors</code>), a tela não a mostra crua: cai na caixa de erro geral, com <code>cadastro.erro.outro</code>.</li>
+        <li><b><code>email_taken</code></b> fica no campo do e-mail, com o link "Entrar", que leva a <code>/entrar</code> com o mesmo <code>next</code>. A entrada abre vazia: o e-mail não vai na URL nem é preenchido.</li>
+        <li><b>O 429 do cadastro</b> é o limite por IP (<code>AuthRateThrottle</code>, 10 por minuto), não o bloqueio da entrada: a espera fica quase sempre abaixo de 60 s. O texto é o da entrada, a mesma função (<code>acesso.erro.tentativas</code>), com o ramo dos minutos se a espera chegar a 60 s.</li>
+        <li><b><code>csrf_failed</code></b> (depois da repetição do RF-02) e <b>rede</b> usam os textos da entrada. <b>Qualquer outro code</b> tem frase própria, "Não foi possível criar a conta agora.", porque a da entrada diz "entrar".</li>
+        <li><b>Enviando</b>: o botão mostra "Criando a conta…" com o ícone que gira, fica desabilitado e com <code>aria-busy</code>; os campos continuam como estavam.</li>
+        <li><b>O foco</b>: com erro de campo (do navegador ou da API), vai ao primeiro campo com erro, na ordem da tela. Depois de um erro geral, a caixa é anunciada pelo <code>role="alert"</code> e o foco fica no botão. Erro de campo e erro geral não aparecem juntos.</li>
+        <li><b>Depois de um erro</b>, os campos ficam preenchidos — as duas senhas inclusive.</li>
+        <li><b>Sucesso</b>: 201 <code>me</code>, já logado (<code>services.signup</code> abre a sessão) → <code>next</code>, com <code>replace</code>. Não há tela de sucesso.</li>
+        <li><b>Os links de baixo</b> são os da entrada, invertidos: "Já tem conta? Entrar" leva a <code>/entrar</code> com o mesmo <code>next</code>; "Continuar sem entrar", a <code>next</code> (ou <code>/</code>). Os links do mockup não navegam.</li>
+        <li><b>As marcas</b>: <code>data-screen="cadastro"</code> na raiz e, só no estado de base (vazio), os oito <code>data-part</code> da tabela do plano, uma vez cada — <code>campo-*</code> no <code>.ruvor-field</code> inteiro; <code>dica-senha</code> dentro de <code>campo-senha</code>. Nos outros estados, a página tira as marcas.</li>
+        <li><b>O estilo local</b>: o da entrada, sem mudança, e duas classes novas que vão ao kit na T10 — <code>.m21b-reqs</code> → <code>.ruvor-hint__list</code> (a lista dentro da dica) e <code>.m21b-errors</code> → <code>.ruvor-field__errors</code> (as mensagens de um campo, uma por linha). Nenhuma cor nova.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+// ---------------------------------------------------------------- os textos
+// "entrada": as chaves aprovadas no portão da T5 (entrada.html), reaproveitadas com o mesmo texto.
+// "nova": nascem aqui, com o prefixo cadastro.*.
+const TEXTOS = {
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto": "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.eyebrow": "Acesso à plataforma",
+  "cadastro.titulo": "Crie a sua conta.",
+  "cadastro.sub": "Informe o seu nome, o e-mail e uma senha.",
+  "cadastro.nome.rotulo": "Nome",
+  "acesso.email.rotulo": "E-mail",
+  "acesso.email.placeholder": "nome@exemplo.com",
+  "acesso.senha.rotulo": "Senha",
+  "acesso.senha.dica": "A senha precisa:",
+  "acesso.senha.requisito.tamanho": "ter no mínimo 10 caracteres;",
+  "acesso.senha.requisito.numeros": "não ser só números;",
+  "acesso.senha.requisito.parecida": "não ser parecida com o seu e-mail ou o seu nome;",
+  "acesso.senha.requisito.comum": "não ser uma senha comum.",
+  "cadastro.confirmacao.rotulo": "Repita a senha",
+  "cadastro.pessoal": "A conta é pessoal: você é a única pessoa da organização dela.",
+  "cadastro.pessoal.organizacao": "Se você vai usar o Ruvor numa organização, peça a conta a quem a administra.",
+  "cadastro.criar": "Criar conta",
+  "cadastro.criando": "Criando a conta…",
+  "cadastro.temConta": "Já tem conta?",
+  "acesso.entrar": "Entrar",
+  "acesso.continuar": "Continuar sem entrar",
+  "cadastro.erro.nomeVazio": "Informe o nome.",
+  "acesso.erro.emailVazio": "Informe o e-mail.",
+  "acesso.erro.senhaVazia": "Informe a senha.",
+  "cadastro.erro.confirmacaoVazia": "Repita a senha.",
+  "acesso.erro.confirmacaoDiferente": "As duas senhas não são iguais.",
+  "cadastro.erro.emailTaken": "Este e-mail já tem conta.",
+  "cadastro.erro.emailTakenLink": "Entrar",
+  // a função da entrada, sem mudança (n: details.wait_seconds)
+  "acesso.erro.tentativas": (n) =>
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "cadastro.erro.outro": "Não foi possível criar a conta agora. Tente de novo.",
+};
+const EXEMPLOS = { "acesso.erro.tentativas": [[42], [900], [null]] };
+const NOTAS = {
+  "acesso.cena.marca": "da entrada · o texto alternativo do logotipo da cena",
+  "acesso.cena.eyebrow": "da entrada · sobretítulo da cena",
+  "acesso.cena.titulo": "da entrada",
+  "acesso.cena.texto": "da entrada",
+  "acesso.eyebrow": "da entrada · sobretítulo do formulário, em maiúsculas pela folha",
+  "cadastro.titulo": "nova · o título do formulário",
+  "cadastro.sub": "nova · o subtítulo",
+  "cadastro.nome.rotulo": "nova",
+  "acesso.email.rotulo": "da entrada",
+  "acesso.email.placeholder": "da entrada · o exemplo dentro do campo",
+  "acesso.senha.rotulo": "da entrada",
+  "acesso.senha.dica": "nova, compartilhada com senha.html · abre a lista dos requisitos, antes do campo",
+  "acesso.senha.requisito.tamanho": "nova, compartilhada · MinimumLengthValidator (10)",
+  "acesso.senha.requisito.numeros": "nova, compartilhada · NumericPasswordValidator",
+  "acesso.senha.requisito.parecida": "nova, compartilhada · UserAttributeSimilarityValidator (email, name)",
+  "acesso.senha.requisito.comum": "nova, compartilhada · CommonPasswordValidator",
+  "cadastro.confirmacao.rotulo": "nova · conferida no navegador; a API não a recebe",
+  "cadastro.pessoal": "nova · a frase da conta pessoal (D-101)",
+  "cadastro.pessoal.organizacao": "nova · logo depois: o e-mail é único entre organizações — uma conta pessoal tomaria o e-mail que a organização usaria",
+  "cadastro.criar": "nova · o botão de envio (o mesmo texto de acesso.criarConta, que segue sendo o link da entrada)",
+  "cadastro.criando": "nova · o botão enquanto o pedido não volta",
+  "cadastro.temConta": "nova · antes do link \"Entrar\"",
+  "acesso.entrar": "da entrada · aqui, o link para /entrar, com o mesmo next",
+  "acesso.continuar": "da entrada · leva a next, ou /",
+  "cadastro.erro.nomeVazio": "nova · campo vazio, sem pedido",
+  "acesso.erro.emailVazio": "da entrada · campo vazio, sem pedido",
+  "acesso.erro.senhaVazia": "da entrada · campo vazio, sem pedido",
+  "cadastro.erro.confirmacaoVazia": "nova · campo vazio, sem pedido",
+  "acesso.erro.confirmacaoDiferente": "nova, compartilhada com senha.html · a confirmação diferente, sem pedido",
+  "cadastro.erro.emailTaken": "nova · code email_taken, no campo do e-mail",
+  "cadastro.erro.emailTakenLink": "nova · o link logo depois, para /entrar com o mesmo next",
+  "acesso.erro.tentativas": "da entrada · code too_many_requests",
+  "acesso.erro.csrf": "da entrada · code csrf_failed, depois da repetição do RF-02",
+  "acesso.erro.rede": "da entrada · erro de rede ou resposta fora do formato",
+  "cadastro.erro.outro": "nova · qualquer outro code",
+};
+// As mensagens reais da API, por campo (details.fields), e de onde vêm. Dado, não texto da tela.
+const API = [
+  ["email", "Informe um e-mail válido.", "services._validate_identity (validate_email do Django)"],
+  ["name", "Informe um nome de 1 a 120 caracteres.", "services._validate_identity (vazio depois do strip, ou mais de 120)"],
+  ["password", "Esta senha é muito curta. Ela precisa conter pelo menos 10 caracteres.", "MinimumLengthValidator, min_length 10"],
+  ["password", "Esta senha é muito comum.", "CommonPasswordValidator"],
+  ["password", "Esta senha é inteiramente numérica.", "NumericPasswordValidator"],
+  ["password", "A senha é muito parecida com name", "UserAttributeSimilarityValidator — User.name sem verbose_name"],
+  ["password", "A senha é muito parecida com email", "UserAttributeSimilarityValidator — User.email sem verbose_name"],
+];
+const T = (k, ...a) => { const v = TEXTOS[k]; return typeof v === "function" ? v(...a) : v; };
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+for (const n of document.querySelectorAll("[data-t-alt]")) n.setAttribute("alt", T(n.dataset.tAlt));
+
+// ---------------------------------------------------------------- os estados
+const inputs = {
+  name: $("#cadastro-nome"),
+  email: $("#cadastro-email"),
+  password: $("#cadastro-senha"),
+  confirmation: $("#cadastro-confirmacao"),
+};
+const BASE_DESCRIBED = { password: "cadastro-senha-dica" };
+const alertBox = $("[data-alert]");
+const submit = $("[data-submit]");
+const form = $("[data-mark='form']");
+const GLYPH_X = '<svg class="ruvor-glyph ruvor-glyph--sm" aria-hidden="true" focusable="false"><use href="#i-x-circle"/></svg>';
+const GLYPH_SPIN = '<svg class="ruvor-glyph ruvor-spin" aria-hidden="true" focusable="false"><use href="#i-spinner-gap"/></svg>';
+
+const PREENCHIDO = { name: "Ana Souza", email: "ana.souza@exemplo.com", password: "sol-de-inverno-42", confirmation: "sol-de-inverno-42" };
+const VAZIO = { name: "", email: "", password: "", confirmation: "" };
+const msg = (text) => `${GLYPH_X}<span>${esc(text)}</span>`;
+const TAKEN = `${GLYPH_X}<span>${esc(T("cadastro.erro.emailTaken"))} <a class="m21b-link" href="#">${esc(T("cadastro.erro.emailTakenLink"))}</a></span>`;
+
+// Cada estado: os valores dos campos, os erros por campo (HTML de cada linha) e o erro geral.
+const STATES_DEF = {
+  vazio: { values: VAZIO },
+  digitando: { values: { ...PREENCHIDO, confirmation: "sol-de-inv" } },
+  enviando: { values: PREENCHIDO, busy: true },
+  vazios: { values: VAZIO, fields: {
+    name: [msg(T("cadastro.erro.nomeVazio"))],
+    email: [msg(T("acesso.erro.emailVazio"))],
+    password: [msg(T("acesso.erro.senhaVazia"))],
+    confirmation: [msg(T("cadastro.erro.confirmacaoVazia"))],
+  } },
+  confirmacao: { values: { ...PREENCHIDO, confirmation: "sol-de-inverno-24" }, fields: {
+    confirmation: [msg(T("acesso.erro.confirmacaoDiferente"))],
+  } },
+  "api-identidade": { values: { ...PREENCHIDO, name: "Ana ".repeat(31).trim(), email: "ana.souza@exemplo" }, fields: {
+    name: [msg("Informe um nome de 1 a 120 caracteres.")],
+    email: [msg("Informe um e-mail válido.")],
+  } },
+  "api-senha": { values: { ...PREENCHIDO, password: "12345678", confirmation: "12345678" }, fields: {
+    password: [
+      msg("Esta senha é muito curta. Ela precisa conter pelo menos 10 caracteres."),
+      msg("Esta senha é muito comum."),
+      msg("Esta senha é inteiramente numérica."),
+    ],
+  } },
+  "api-name": { values: { ...PREENCHIDO, password: "anasouza12", confirmation: "anasouza12" }, fields: {
+    password: [msg("A senha é muito parecida com name")],
+  } },
+  "api-email": { values: { ...PREENCHIDO, password: "ana.souza@exemplo", confirmation: "ana.souza@exemplo" }, fields: {
+    password: [msg("A senha é muito parecida com email")],
+  } },
+  email_taken: { values: PREENCHIDO, fields: { email: [TAKEN] } },
+  too_many_requests: { values: PREENCHIDO, alert: () => T("acesso.erro.tentativas", 42) },
+  "too_many_requests-sem": { values: PREENCHIDO, alert: () => T("acesso.erro.tentativas", null) },
+  csrf_failed: { values: PREENCHIDO, alert: () => T("acesso.erro.csrf") },
+  rede: { values: PREENCHIDO, alert: () => T("acesso.erro.rede") },
+  outro: { values: PREENCHIDO, alert: () => T("cadastro.erro.outro") },
+};
+const STATES = Object.keys(STATES_DEF);
+
+function render(state) {
+  const def = STATES_DEF[state];
+  for (const [key, input] of Object.entries(inputs)) {
+    input.value = def.values[key];
+    const box = $(`[data-errors='${key}']`);
+    const lines = def.fields?.[key] ?? [];
+    box.hidden = lines.length === 0;
+    box.innerHTML = lines.map((l) => `<span class="ruvor-field__error">${l}</span>`).join("");
+    if (lines.length) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+    const ids = [BASE_DESCRIBED[key], lines.length ? box.id : null].filter(Boolean);
+    if (ids.length) input.setAttribute("aria-describedby", ids.join(" ")); else input.removeAttribute("aria-describedby");
+  }
+
+  alertBox.hidden = !def.alert;
+  $("[data-alert-text]").textContent = def.alert ? def.alert() : "";
+
+  const busy = def.busy === true;
+  submit.disabled = busy;
+  if (busy) submit.setAttribute("aria-busy", "true"); else submit.removeAttribute("aria-busy");
+  if (busy) form.setAttribute("aria-busy", "true"); else form.removeAttribute("aria-busy");
+  submit.innerHTML = busy ? `${GLYPH_SPIN}<span>${esc(T("cadastro.criando"))}</span>` : `<span>${esc(T("cadastro.criar"))}</span>`;
+
+  for (const a of form.querySelectorAll("a[href='#']")) a.onclick = (e) => e.preventDefault();
+
+  // data-part só no estado de base (As marcas para o navegador, no plano).
+  for (const n of document.querySelectorAll("[data-mark]")) {
+    if (state === "vazio") n.setAttribute("data-part", n.dataset.mark); else n.removeAttribute("data-part");
+  }
+}
+
+// ---------------------------------------------------------------- os textos (vista "os textos")
+function renderTextos() {
+  let rows = "<thead><tr><th>chave</th><th>texto</th></tr></thead><tbody>";
+  for (const k of Object.keys(TEXTOS)) {
+    const v = TEXTOS[k];
+    const out = typeof v === "function"
+      ? EXEMPLOS[k].map((args) => `${esc(T(k, ...args))}<small>(${args.map(String).join(", ")})</small>`).join("<br>")
+      : esc(v);
+    rows += `<tr><td>${esc(k)}<small>${esc(NOTAS[k] ?? "texto")}</small></td><td>${out}</td></tr>`;
+  }
+  $("[data-textos]").innerHTML = `${rows}</tbody>`;
+  $("[data-exemplos]").textContent = `  "acesso.erro.tentativas": [[42], [900], [null]],  // da entrada, a registrar pela T11; o cadastro não acrescenta linha`;
+  let api = "<thead><tr><th>campo</th><th>mensagem</th></tr></thead><tbody>";
+  for (const [f, m, src] of API) api += `<tr><td>${esc(f)}<small>${esc(src)}</small></td><td>${esc(m)}</td></tr>`;
+  $("[data-api]").innerHTML = `${api}</tbody>`;
+}
+
+// ---------------------------------------------------------------- a moldura
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+let theme = "system";
+let state = "vazio";
+let view = "tela";
+
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  theme = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  if (view === "estreito") refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+
+const stateBtns = document.querySelectorAll("[data-mk-state]");
+function setState(next) {
+  state = STATES.includes(next) ? next : "vazio";
+  for (const b of stateBtns) b.setAttribute("aria-pressed", String(b.dataset.mkState === state));
+  render(state);
+  if (view === "estreito") refreshFrames();
+}
+for (const b of stateBtns) b.addEventListener("click", () => setState(b.dataset.mkState));
+
+const viewBtns = document.querySelectorAll("[data-mk-view]");
+function setView(next) {
+  view = ["tela", "estreito", "textos"].includes(next) ? next : "tela";
+  for (const v of document.querySelectorAll("[data-view]")) v.hidden = v.dataset.view !== view;
+  for (const b of viewBtns) b.setAttribute("aria-pressed", String(b.dataset.mkView === view));
+  if (view === "estreito") refreshFrames();
+}
+for (const b of viewBtns) b.addEventListener("click", () => setView(b.dataset.mkView));
+
+// As vistas em 360 px: o estado escolhido e, ao lado, a base, os campos vazios e um erro da API.
+function refreshFrames() {
+  const src = (s) => `${location.pathname}?moldura=0&vista=tela&estado=${s}&tema=${theme}`;
+  const shown = [...new Set([state, "vazio", "vazios", "api-senha", "email_taken"])];
+  $("[data-frames]").innerHTML = shown
+    .map((s) => `<div class="mk-frame"><p>${esc(s)}, 360 px</p><iframe title="O cadastro em 360 px, estado ${esc(s)}" src="${src(s)}"></iframe></div>`)
+    .join("");
+}
+
+// ?vista=tela|estreito|textos &estado=<um de STATES> &tema=light|dark|system &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+form.addEventListener("submit", (e) => e.preventDefault());
+renderTextos();
+setTheme(params.get("tema") || "system");
+setState(params.get("estado") || "vazio");
+setView(params.get("vista") || "tela");
+</script>
+</body>
+</html>
