@@ -20,6 +20,8 @@
  *   logado, o botão; carregando, nenhum —, e do `POST`, o 401 (o aviso de sessão terminada no
  *   lugar do botão, sem mudar de rota) e o 403 `password_change_required` (um `auth/me` novo e
  *   a troca obrigatória). Os testes do pedido entram logados (`SIGNED_IN`).
+ * - M2.4 (T10): o duplo reconhece o `/lab` (a tela o pede desde a T10) e conta os pedidos que
+ *   não reconhece — todo teste exige zero.
  *
  * O `fetch` é um duplo que responde pela rota e pelo método; o uPlot, um duplo mínimo.
  */
@@ -40,6 +42,7 @@ import {
   type AssetDetail,
   type ComputeRequest,
   type InProgress,
+  type Lab,
   MODEL_ORDER,
   type ModelName,
   type PriceRow,
@@ -242,6 +245,7 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
+  | "lab"
   | "disclosures"
   | "post"
   | "csrf"
@@ -265,6 +269,8 @@ type Call = {
 
 let calls: Call[] = [];
 let replies: Partial<Record<Route, Reply>> = {};
+/** Os pedidos que o duplo não reconhece: `routeOf` lança dentro da promessa, que rejeita em silêncio. */
+let unexpected: string[] = [];
 
 /**
  * O `auth/me` da rota de layout da sessão (M2.1b, RF-03), a rota `me`: responde na hora —
@@ -296,10 +302,13 @@ function routeOf(url: string, method: string): Route {
   if (url === "/api/v1/auth/csrf" && method === "GET") return "csrf";
   if (url === ME_URL && method === "GET") return "me";
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
-  if (match === null) throw new Error(`pedido inesperado: ${url}`);
+  if (match === null) {
+    unexpected.push(url);
+    throw new Error(`pedido inesperado: ${url}`);
+  }
   if (method === "POST") {
     if (match[1] !== "risk") throw new Error(`POST inesperado: ${url}`);
     return "post";
@@ -371,6 +380,21 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     metrics: ok({ ticker: "ITUB4", metric: null }),
     risk: ok(E1),
     fundamentals: ok({ ticker: "ITUB4", indicator: null, peers: null }),
+    lab: ok({
+      ticker: "ITUB4",
+      active: true,
+      decade: {
+        first_price_date: "2016-09-22",
+        end_date: "2026-09-22",
+        last_price_date: "2026-10-02",
+        complete: true,
+        sessions: 2491,
+      },
+      risk_engine_version: "0.4.0",
+      pending: true,
+      latest: null,
+      last_failure: null,
+    } satisfies Lab),
     disclosures: ok({
       ticker: "ITUB4",
       company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },
@@ -398,6 +422,7 @@ function clearCookie(): void {
 
 beforeEach(() => {
   meHeld = false;
+  unexpected = [];
   allOk();
   stubFetch();
 });
@@ -407,6 +432,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   clearCookie();
   limparNivel();
+  expect(unexpected).toEqual([]);
 });
 
 // ---------------------------------------------------------------- as partes
