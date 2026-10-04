@@ -13,6 +13,8 @@
  * relido, e, com `pending`, de novo a cada `POLL_INTERVAL_MS` até chegar o `latest` — e nunca na
  * montagem. O duplo conta os pedidos que não reconhece, e todo teste exige zero.
  *
+ * M5.1 (T10): o `/returns` entra na carga e no `reloadAll()`, como as outras rotas.
+ *
  * M2.3 (T10): a tabela dos nove nasce recolhida na iniciante; o teste que confere a tabela à
  * vista durante o `reloadAll()` declara a leitura avançada, em que ela nasce aberta.
  */
@@ -277,6 +279,7 @@ type Route =
   | "risk"
   | "fundamentals"
   | "lab"
+  | "returns"
   | "disclosures";
 type Call = { route: Route; url: URL; resolve: (body: unknown) => void };
 
@@ -293,7 +296,7 @@ let unexpected: string[] = [];
 /** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
 function routeOf(url: string): Route {
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab|returns)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
   if (match === null) {
@@ -319,6 +322,8 @@ function bodyOf(route: Route, url: URL): unknown | null {
       return fundamentalsBody;
     case "lab":
       return labQueue.length > 1 ? labQueue.shift() : labQueue[0];
+    case "returns":
+      return { ticker: "AALR3", latest: null };
     case "disclosures":
       return disclosuresPage(url);
   }
@@ -472,6 +477,7 @@ describe("V-12 — ao terminar, recarrega as rotas", () => {
         "events",
         "metrics",
         "fundamentals",
+        "returns",
         "disclosures",
       ] as const) {
         expect(count(route)).toBe(2);

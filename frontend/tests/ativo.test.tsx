@@ -12,6 +12,7 @@
  *   do `data-ready`;
  * - M2.4 (T10, RF-18): o `/lab` na carga e no `reloadAll()`, fora do `data-ready` — a tela fica
  *   pronta com o `/lab` ainda carregando ou em erro;
+ * - M5.1 (T10): o `/returns` na carga e no `reloadAll()`, também fora do `data-ready`;
  * - V-09 do M1.7 (RF-10): a busca da barra não pede a sugestão — **todo teste** confere, no
  *   `afterEach`, que a rota `suggestion` recebeu `suggestionsExpected` pedidos (0, menos na tela
  *   "ativo não encontrado", que monta a caixa de página e pede exatamente 1).
@@ -55,6 +56,7 @@ import {
   MODEL_ORDER,
   type PriceRow,
   type Prices,
+  type Returns,
   type Risk,
   type RiskResult,
   type RiskRun,
@@ -255,6 +257,9 @@ const LAB: Lab = {
   last_failure: null,
 };
 
+/** O `/returns` (M5.1): sem validação ainda. A seção chega na T12. */
+const RETURNS: Returns = { ticker: "ITUB4", latest: null };
+
 const DISCLOSURES: Disclosures = {
   ticker: "ITUB4",
   company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },
@@ -284,6 +289,7 @@ type Route =
   | "risk"
   | "fundamentals"
   | "lab"
+  | "returns"
   | "disclosures"
   | "suggestion"
   | "me";
@@ -320,7 +326,7 @@ function routeOf(url: string): Route {
   if (url === SUGGESTION_URL) return "suggestion";
   if (url === ME_URL) return "me";
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab|returns)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
   if (match === null) throw new Error(`pedido inesperado: ${url}`);
@@ -401,6 +407,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     risk: ok(RISK),
     fundamentals: ok(FUNDAMENTALS),
     lab: ok(LAB),
+    returns: ok(RETURNS),
     disclosures: ok(DISCLOSURES),
     suggestion: ok(SUGGESTION),
     me: ANON,
@@ -480,8 +487,8 @@ function openMoments(): void {
 
 // ---------------------------------------------------------------- RF-06
 
-describe("RF-06 e RF-15 do M1.6c — as oito rotas, cada seção sozinha", () => {
-  it("pede as oito juntas, antes de qualquer resposta — com o /lab do M2.4", () => {
+describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () => {
+  it("pede as nove juntas, antes de qualquer resposta — com o /lab do M2.4 e o /returns do M5.1", () => {
     replies = {};
     renderAsset();
     expect(count("suggestion")).toBe(0);
@@ -494,6 +501,7 @@ describe("RF-06 e RF-15 do M1.6c — as oito rotas, cada seção sozinha", () =>
         "/api/v1/assets/ITUB4/risk",
         "/api/v1/assets/ITUB4/fundamentals",
         "/api/v1/assets/ITUB4/lab",
+        "/api/v1/assets/ITUB4/returns",
         "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
       ].sort(),
     );
@@ -689,8 +697,9 @@ describe("data-ready e reloadAll()", () => {
 
     await reply("risk", ok(RISK));
     expect(readyAttr()).toBe("true");
-    // o /lab (M2.4) foi pedido e segue sem resposta: o data-ready não o espera
+    // o /lab (M2.4) e o /returns (M5.1) foram pedidos e seguem sem resposta: o data-ready não os espera
     expect(calls.filter((c) => c.route === "lab")).toHaveLength(1);
+    expect(calls.filter((c) => c.route === "returns")).toHaveLength(1);
     // as duas seções do M1.6c seguem carregando: o data-ready não as espera
     expect(fundamentalsSection().getAttribute("data-state")).toBe("loading");
     expect(disclosuresSection().getAttribute("data-state")).toBe("loading");
@@ -718,6 +727,17 @@ describe("data-ready e reloadAll()", () => {
     expect(calls.filter((c) => c.route === "lab")).toHaveLength(1);
   });
 
+  it.each([
+    ["pendente", undefined],
+    ["em erro", fail(500)],
+  ])("o /returns %s não segura o data-ready (M5.1)", async (_caso, returnsReply) => {
+    allOk({ returns: returnsReply });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(readyAttr()).toBe("true"));
+    expect(calls.filter((c) => c.route === "returns")).toHaveLength(1);
+  });
+
   it("o risco em erro também termina", async () => {
     allOk({ risk: fail(500) });
     stubFetch();
@@ -733,12 +753,13 @@ describe("data-ready e reloadAll()", () => {
     expect(main().querySelector("[data-ready]")).toBeNull();
   });
 
-  it("reloadAll pede as sete de novo — com o /lab do M2.4 — sem apagar o que já chegou, incrementa o reloadToken, e troca quando o novo chega", async () => {
+  it("reloadAll pede as oito de novo — com o /lab do M2.4 e o /returns do M5.1 — sem apagar o que já chegou, incrementa o reloadToken, e troca quando o novo chega", async () => {
     const { result } = renderHook(() => useAssetData("ITUB4"));
     await waitFor(() => expect(result.current.risk.state).toBe("ok"));
     await waitFor(() => expect(result.current.asset.state).toBe("ok"));
     await waitFor(() => expect(result.current.fundamentals.state).toBe("ok"));
     await waitFor(() => expect(result.current.lab.state).toBe("ok"));
+    await waitFor(() => expect(result.current.returns.state).toBe("ok"));
     // o hook não pede /disclosures: é a seção Comunicados que pede
     expect(calls.some((c) => c.route === "disclosures")).toBe(false);
     const token = result.current.reloadToken;
@@ -751,7 +772,16 @@ describe("data-ready e reloadAll()", () => {
         .slice(before)
         .map((c) => c.route)
         .sort(),
-    ).toEqual(["asset", "events", "fundamentals", "lab", "metrics", "prices", "risk"]);
+    ).toEqual([
+      "asset",
+      "events",
+      "fundamentals",
+      "lab",
+      "metrics",
+      "prices",
+      "returns",
+      "risk",
+    ]);
     expect(result.current.reloadToken).toBe(token + 1);
     // enquanto recarrega, o dado anterior fica
     for (const key of [
@@ -762,6 +792,7 @@ describe("data-ready e reloadAll()", () => {
       "risk",
       "fundamentals",
       "lab",
+      "returns",
     ] as const) {
       expect(result.current[key].state).toBe("ok");
     }

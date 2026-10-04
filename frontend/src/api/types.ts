@@ -340,6 +340,59 @@ export type Lab = {
   last_failure: LabFailure | null;
 };
 
+/**
+ * Um resultado da validação do retorno por modelo (M5.1, RF-14); com `error`, todo número, a
+ * data e os dois booleanos nulos. `model_name` é texto livre (RF-15).
+ */
+export type ReturnResult = {
+  model_name: string;
+  hyperparameters: Record<string, unknown>;
+  mse: Dec | null;
+  mse_reference: Dec | null;
+  r2_os: Dec | null;
+  direction_days: number | null;
+  hit_rate: Dec | null;
+  up_share: Dec | null;
+  forecast_up_share: Dec | null;
+  dm_statistic: Dec | null;
+  dm_p_value: Dec | null;
+  cw_statistic: Dec | null;
+  cw_p_value: Dec | null;
+  pt_statistic: Dec | null;
+  pt_p_value: Dec | null;
+  beats_reference: boolean | null;
+  direction_skill: boolean | null;
+  next_forecast: Dec | null;
+  next_forecast_date: string | null;
+  error: string;
+};
+
+/** O `latest` do `/returns`: a `return_run` de maior `calculated_at`. */
+export type ReturnRun = {
+  calculated_at: string;
+  engine_version: string;
+  as_of_date: string;
+  first_price_date: string;
+  price_count: number;
+  train_count: number;
+  test_count: number;
+  train_window_days: number;
+  // `gold.return_run.price_run` é chave estrangeira sem `null=True`, como em `risk_run`.
+  price_run: {
+    id: number;
+    source: string;
+    started_at: string;
+    finished_at: string | null;
+  };
+  results: ReturnResult[];
+};
+
+/** `GET /api/v1/assets/{ticker}/returns` (M5.1, RF-14). */
+export type Returns = {
+  ticker: string;
+  latest: ReturnRun | null;
+};
+
 /** O plano de contas do balanço (`AccountPlan` em `backend/apps/fundamentals/models.py`). */
 export type AccountPlan = "general" | "bank" | "insurance" | "unknown";
 
