@@ -31,7 +31,12 @@ o **M1.4b fechou em 2026-10-03** — a correção do motor: o GARCH e o EGARCH s
 janela expansiva reestimada a cada 252 pregões, o motor `0.4.0` e os seis ativos cobertos recalculados do zero
 ([D-157](decisoes/D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md) a
 [D-159](decisoes/D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md)) —, já com a `main` do M2.2a e
-do M3.3 mesclada, e com a PR única — spec, plano e implementação — a abrir (o portão da spec e do plano foi a aprovação do dono na conversa, em 2026-10-02); o M2.1b tem spec e plano aprovados, a implementar; na
+do M3.3 mesclada, e entrou na `main` pela PR #38, única — spec, plano e implementação (o portão da spec e do plano foi a
+aprovação do dono na conversa, em 2026-10-02); o **M2.1b fechou em 2026-10-03** — as telas de acesso: entrar, cadastro,
+troca de senha (inclusive a obrigatória), menu de conta e gestão de usuários, cada uma com mockup aprovado, e o pedido de
+cálculo só com conta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)) —, com a PR de
+implementação a abrir pelo dono, revisada pela `identidade`, depois do ajuste dela no caso anônimo do
+`test_requested_by.py`; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -40,7 +45,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -127,7 +132,11 @@ fechada, com o `silver` como veio
 Iniciante/Avançada no casco, lembrado no navegador (`ruvor-reading`), troca a frase de cada um dos 55 números da lista
 fechada pela técnica — o que é, como se calcula, sobre que janela — e abre, na avançada, o que a iniciante recolhe: a
 assimetria e a curtose, a tabela dos nove modelos com os testes de cada um e a trilha do cálculo. O número é o mesmo nos
-dois níveis, e a troca não pede nada à API.
+dois níveis, e a troca não pede nada à API. **Desde o M2.1b há telas de acesso:** `/entrar` e `/cadastro`, em tela cheia,
+fora do casco; `/conta/senha` e `/organizacao/usuarios`, no casco; a troca obrigatória da senha provisória no lugar de
+qualquer rota, sem mudar a URL; o menu de conta por último na barra, com o Sair; os avisos de sessão terminada e de página
+só para quem entrou; e, para o anônimo, o convite a entrar no lugar do botão de calcular — porque o `POST /risk` passou a
+exigir conta pronta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)).
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1789,22 +1798,76 @@ versão `"0.3.0"` literal em duas asserções, que reprovam **até o ramo recebe
 mesclada, **nenhum outro ramo é servido pelo stack**: o checkout principal fica no HEAD deste, porque um cálculo com o
 motor `0.3.0` montado gravaria números velhos com o rótulo `0.4.0`, para sempre (D-16).
 
+### M2.1b — Telas de acesso
+
+Spec em [`specs/M2.1b-telas-de-acesso.md`](specs/M2.1b-telas-de-acesso.md) e plano em
+[`planos/M2.1b-telas-de-acesso.md`](planos/M2.1b-telas-de-acesso.md). Frente `marco1`, ramo
+`marco1/M2.1b-telas-de-acesso`, no worktree `E:/Temp/Trilobit/varlab-wt/M2.1b-telas-de-acesso`. Dezesseis tarefas: T1
+(`3461a9b`), T2 (`24a424f`), T3 (`aedee23`), T4 (`611c5a9`); os cinco mockups (T5 a T9), cada um com revisão e portão,
+aprovados pelo dono em 2026-10-03; T10 (`b367557`), T11 (`8e5125f`), T12 (`5c391c6`), T13 (`ca686d2`), T14 (`7b1b990`,
+e `45a06c5`, a correção que a execução real pediu); a T15 sem arquivo; a T16, o roteiro (`77b989d`) e o FECHA. Uma
+decisão, com a spec: [D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md) (o pedido de cálculo
+exige conta pronta); a D-141 e a D-142 ficaram sem uso. **Fechou em 2026-10-03**; a PR de implementação é do dono,
+revisada pela `identidade`, e **espera o ajuste dela** no caso anônimo do `tests/accounts/test_requested_by.py`.
+
+**O que passou a existir:** no backend, só a permissão do `POST /risk` — `ReadOpenWriteAccountReady`
+(`apps/api/permissions.py`), o 401 e o 403 no esquema do `post` e os docstrings do pedido (o de `ComputeRequest`
+inclusive) dizendo o que o código faz. No frontend: o cliente HTTP com `apiPatch`, `apiDelete`, corpo JSON, 204 sem
+corpo, o `auth/csrf` antes de toda escrita sem cookie e uma repetição em `csrf_failed`; o proxy do Vite com
+`changeOrigin: false`; a sessão em `src/session/` (`SessionProvider` na rota de layout da raiz, um `auth/me` por carga,
+`safeNext` e `signInHref`); as telas `SignInScreen`, `SignUpScreen`, `PasswordScreen` (voluntária e obrigatória) e
+`UsersScreen`; o `AccountMenu` por último na barra e o `SignInNotice`; o convite do E7/E8 pela sessão, e o 401 e o 403 do
+`POST`; no kit, a cena de acesso, o lugar da conta e o menu, o diálogo, o copiar, os tokens novos e a barra estreita até
+840 px; os textos `acesso.*`, `cadastro.*`, `senha.*`, `conta.*` e `usuarios.*`; e o roteiro `frontend/e2e/acesso.mjs`,
+com a conta do passo 4 do `capturas.mjs` criada pelo próprio roteiro e a chave `RUVOR_E2E_SO_CONTA`.
+
+**O que os portões mudaram** (registrado no plano): o menu de conta **por último** na barra, depois da chave de tema, num
+lugar de largura fixa, só com as iniciais abaixo de 1024 px; a barra estreita em três linhas até 840 px (era 720); o papel
+`admin` se mostra **"Administração"** na gestão de usuários; a dica da senha compartilhada pelo cadastro e pelas duas
+trocas; o "Continuar" depois do sucesso da troca; o 401 nas trocas e na gestão no lugar da ação.
+
+**A execução real**, com o checkout principal no HEAD do ramo e o Beat parado, pelo orquestrador:
+
+| Passo | O que aconteceu |
+|---|---|
+| O proxy (T1) | o `/health` pela porta 5273 do hospedeiro respondeu **200** |
+| `acesso.mjs`, 1ª rodada | **129 de 130**: o diálogo da gestão de usuários reabria antes do `close` do navegador (ver abaixo); a organização `e2e-20261003163511` foi gasta nela |
+| `acesso.mjs`, 2ª rodada | ✅ **133 conferências, 0 falhas, 36 comparações com os mockups sem diferença**; 7 pedidos no limite `auth`, **0 esperas**. O cadastro `e2e-u-20261003194338@exemplo.com`; o membro `e2e-m-20261003194338@exemplo.com`; a administradora `e2e-20261003164333@exemplo.com`, da organização `e2e-20261003164333`; o ticker sem risco, **ABCB4** |
+| `capturas.mjs`, `RUVOR_E2E_SO_CONTA=1` | ✅ 3 conferências, 0 falhas — a tela do ativo abre logada |
+| `capturas.mjs` completo | a 1ª rodada reprovou por **429** — a taxa do anônimo, 60/min, com o `auth/me` a mais por carga; a 2ª, com `RUVOR_THROTTLE_ANON=100000/min` só durante a rodada, ✅ **644 conferências, 0 falhas**. O `.env` voltou igual, com o sha256 conferido |
+| O fim | o Beat religado e o checkout principal de volta à `main` |
+
+| Verificação | Resultado |
+|---|---|
+| Suíte do backend | **1 failed, 1752 passed** (1753). A falha é `tests/accounts/test_requested_by.py::test_v19_o_pedido_anonimo_grava_nulo_no_pedido_e_na_execucao`: o caso anônimo, que espera 202 e autor nulo, e com a D-140 recebe 401. É da `identidade`, na cerca dela — a pré-condição externa do plano —, e **a PR espera esse ajuste**. `mypy` e `ruff` limpos |
+| Frontend | ✅ **1621 testes** (eram 1265); lint, `typecheck` e build limpos — o build avisa do pacote acima de 500 kB, registrado na T12, sem ação neste bloco |
+| A cerca do backend | ✅ `git diff --stat` mostra só os sete arquivos da T2 — `apps/api/models.py`, `apps/api/permissions.py`, `apps/api/views.py` e os quatro de `tests/api/`; nada em `backend/tests/accounts/` |
+| Mutações (T15) | as 22 da tabela, mais a nova da T12 (a obrigatória chama `reload()` no 204) e quatro variantes, de novo sobre `2c4f730`: **todas reprovam**, cada uma revertida com o `git status --porcelain` vazio — backend 4 e 2 falhas (M1, M2), frontend de 1 a 10 falhas por mutação |
+
+**O que a execução mostrou:** o dublê de `<dialog>` dos testes disparava o evento `close` de forma síncrona, e no
+navegador ele chega numa tarefa enfileirada: entre o `close()` e o evento, a linha trocada renderizava com o diálogo já
+fechado e o estado ainda aberto, e o efeito chamava `showModal()` de novo. Os 1610 testes passavam; só o `acesso.mjs`
+mostrou. A correção (`45a06c5`) guarda o elemento em que o `showModal()` já foi chamado, e o dublê passou a disparar o
+`close` num `setTimeout`, com um teste que reprova sem a correção. E o `capturas.mjs` completo precisa da taxa do anônimo
+subida, agora com um pedido a mais por carga. Os dois em [aprendizados](aprendizados.md).
+
+**Pendência para a `identidade`:** `verbose_name` em `User.name` e `User.email`. A mensagem de semelhança da senha, que o
+cadastro e a troca mostram como a API a manda, cita o campo em inglês ("…parecida com name", "…parecida com email").
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M1.4b** (implementação, T0 a T7), que o dono abre logo e mescla com a CI verde. **Até a
-mesclagem, o stack não serve outro ramo**: o checkout principal fica no HEAD do M1.4b, e a imagem do `worker` já diz
-`0.4.0` (ver "A imagem é uma só", no fecho do M1.4b). Mesclada, o checkout principal recebe a `main` (`git pull`) e só
-então volta a outro ramo; **cada ramo aberto recebe a `main` antes de rodar a suíte de backend** — o
-`test_compute.py` deles tem a versão `"0.3.0"` literal. O M3.3 entrou pela PR #37. Depois, **implementar o M2.1b** — a
-T14 do M2.1a entrou antes dele (ver o fecho do M2.1a), e o M2.1b ajusta a ordem por ela; **o menu de conta**, se entrar
-em `.ruvor-topbar__prefs`, refaz os seletores por posição (`:first-child` o alternador, `:last-child` o tema) que a T4
-do M2.3 escreveu. Ramos e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md). As duas
-entradas do motor e a da zona de Basileia, em [Aberto](#aberto-e-aguardando-decisão), fecharam no M1.4b.
+**Na frente `marco1`, a PR do M2.1b** (implementação, T1 a T16), que o dono abre e mescla com a CI verde, **revisada
+pela `identidade`** — ela muda o contrato do `POST /risk` (D-140). **A PR espera o ajuste da `identidade`** no caso
+anônimo de `backend/tests/accounts/test_requested_by.py`, que passa a esperar 401: sem ele, o job `backend` fica vermelho
+por esse teste só. O M1.4b entrou pela PR #38. Depois, o próximo bloco da frente é escolha do dono — o M2.2b, as telas da
+carteira, é o candidato do ROADMAP. Ramos e a regra de onde cada comando roda estão em
+[frentes/marco1.md](frentes/marco1.md).
 
-**Antes de expor a aplicação fora da máquina**, a hospedagem precisa decidir limite por IP ou login:
-qualquer pedido bem-sucedido torna o ativo coberto para sempre
-([D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)) — o `AALR3` já entrou assim
-—, e decidir o cache e a compressão do `/prices` (341 KiB sem compressão).
+**Antes de expor a aplicação fora da máquina**, a hospedagem decide o cache e a compressão do `/prices` (341 KiB sem
+compressão). O recado da [D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md) — "limite por IP ou
+login" — fecha pelo login com o M2.1b ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)), mas
+login não é cota: o cadastro é aberto, e qualquer pedido bem-sucedido torna o ativo coberto para sempre — o `AALR3` já
+entrou assim.
 
 **O tique do Beat num dia útil já foi visto** (2026-09-28, ver o M1.6b): a rotina inteira, sem
 treino. **O que falta medir** é um dia em que um ativo coberto pague provento — se ele aparecer com
@@ -1865,6 +1928,8 @@ de comunicados, de segunda a sexta às 20h, é leve.
 | **O V-04 é verificação manual.** O primeiro trecho das três redes igual à referência — recapturada no `0.4.0` pelo M1.4b, com o `lstm` e o `gru` iguais aos do `0.2.0` e só o `garchnet` mudado (`engine/tests/test_redes_trecho0.py`) só roda no `worker`, onde `RUVOR_REFERENCE_ENV=worker`; fora dele pula com motivo. **Nenhum job da CI o roda** — o `backend` roda só `backend/tests`, e o `motor` roda no Linux da CI, que não é o do `worker` | `engine/tests/test_redes_trecho0.py`, `engine/tests/fixtures/redes_trecho0.json` | **Não se paga: se roda à mão** — `docker compose exec -T worker python -m pytest /repo/engine/tests/test_redes_trecho0.py` — em toda mudança que possa alterar o que o motor calcula, como a linha de base |
 | **A prova por seção no avançado cobre só 2 das 6 chaves do estresse** (revisão da PR #37, do M3.3, achado médio): a prova de que cada chave da seção sai na avançada e nunca na iniciante, como a do M2.3 para as outras seções, só exerce `period_return` e `benchmark_recovery_sessions` das seis medidas do estresse | `frontend/tests/estresse.test.tsx` | No próximo bloco que tocar o `StressBlock` ou as frases do estresse |
 | **Dois ramos do índice no estresse sem teste** (revisão da PR #37, achado médio): `benchmark_drawdown = 0` e `benchmark_recovery_sessions = null`, no Ibovespa do episódio, não são exercidos | `frontend/src/components/StressBlock.tsx`, `frontend/tests/estresse.test.tsx` | Idem |
+| **A mensagem de semelhança da senha cita o campo em inglês** ("…parecida com name", "…parecida com email"): o cadastro e a troca de senha do M2.1b mostram as mensagens de `details.fields` como a API as manda, e o validador do Django usa o nome do campo, porque `User.name` e `User.email` não têm `verbose_name` | `backend/apps/accounts/models.py` (frente `identidade`) | Quando a `identidade` puser o `verbose_name` em português nos dois campos — pedido registrado no fecho do M2.1b |
+| **O pacote do build do frontend passou de 500 kB** (510,60 kB na T12 do M2.1b): o Vite só avisa, e o build sai 0 | `frontend/`, `npm run build` | Quando o tempo de carga pedir, com divisão por rota |
 | **Os menores da revisão da PR #37:** "1 pregões" (o plural de `comportamento.estresse.pregoes` com *n* = 1); o `data-field` da célula "Sem dado"; a tabela de chaves do plano do M3.3 (o portão aprovou duas chaves fora dela); e o registro da frente `marco1` sem as PRs #33 e #36 | `frontend/src/content/textos.ts`, `frontend/src/components/StressBlock.tsx`, `docs/planos/M3.3-estresse-historico.md`, `docs/frentes/marco1.md` | Num bloco de acabamento da `marco1` |
 
 ## Aberto e aguardando decisão

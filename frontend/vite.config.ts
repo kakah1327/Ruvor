@@ -17,7 +17,12 @@ export default defineConfig({
   server: {
     host: true,
     fs: { allow: [repoRoot] },
-    proxy: { "/health": proxyTarget, "/api": proxyTarget },
+    // A forma curta liga o changeOrigin, e a checagem de origem do CSRF do Django (D-100)
+    // passa a comparar Origin: localhost:<porta> com Host: web:8000 e recusa (RF-19).
+    proxy: {
+      "/health": { target: proxyTarget, changeOrigin: false },
+      "/api": { target: proxyTarget, changeOrigin: false },
+    },
     // Sondagem: o aviso de alteracao de arquivo nao atravessa a montagem
     // Windows -> conteiner. Medido na T6 do F3 -- o conteiner enxerga o arquivo novo,
     // mas o Vite nao emite evento algum, e a tela so muda com recarga manual.

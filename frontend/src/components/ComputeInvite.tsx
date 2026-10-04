@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
 
 import { ApiError, apiPost } from "../api/client";
 import type { Risk } from "../api/types";
 import { TEXTOS } from "../content/textos";
+import { signInHref } from "../session/next";
+import { useSession } from "../session/SessionProvider";
 import { Glyph } from "./Glyph";
+import { SignInNotice } from "./SignInNotice";
 
 /** A resposta do pedido que fica junto do botão (RF-19); as outras mudam o estado da seção. */
 type Reply =
@@ -36,6 +40,13 @@ function isRisk(value: unknown): value is Risk {
  *   mensagem da D-86 dentro da frase do pedido não aceito — e o botão de volta.
  *
  * Enquanto o `POST` não volta, o botão fica `aria-busy` e desabilitado.
+ *
+ * O lugar depende da sessão (RF-15, D-140, o `conta.html` aprovado): **logado**, o botão;
+ * **anônimo**, o convite a entrar para calcular — o link para `/entrar?next=/ativos/{ticker}` e a
+ * frase —; **carregando**, nada (a seção nem monta o lugar). Do `POST` (RF-16, RF-03): **401**
+ * → `expired()` e, no lugar do botão, o aviso de sessão terminada, sem navegar — o aviso fica
+ * enquanto a tela estiver montada, e a página nova mostra o anônimo normal; **403
+ * `password_change_required`** → `reload()`, e o bloqueio da troca obrigatória assume.
  */
 export function ComputeInvite({
   ticker,
@@ -49,8 +60,11 @@ export function ComputeInvite({
   onRisk: (risk: Risk) => void;
   onInactive: () => void;
 }) {
+  const session = useSession();
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState<Reply | null>(null);
+  const [ended, setEnded] = useState(false);
+  const enterRef = useRef<HTMLAnchorElement>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -58,6 +72,11 @@ export function ComputeInvite({
       mounted.current = false;
     };
   }, []);
+
+  // O botão que recebeu o 401 some: o foco vai ao "Entrar" do aviso que tomou o lugar dele.
+  useEffect(() => {
+    if (ended) enterRef.current?.focus();
+  }, [ended]);
 
   const request = async () => {
     setBusy(true);
@@ -73,6 +92,11 @@ export function ComputeInvite({
       if (!mounted.current) return;
       if (!(error instanceof ApiError)) {
         next = { kind: "noResponse" };
+      } else if (error.code === "not_authenticated") {
+        setEnded(true);
+        session.expired();
+      } else if (error.code === "password_change_required") {
+        void session.reload();
       } else if (error.code === "asset_already_covered" && isRisk(error.details)) {
         onRisk(error.details);
       } else if (error.code === "asset_inactive") {
@@ -92,26 +116,49 @@ export function ComputeInvite({
     setReply(next);
   };
 
+  if (ended) {
+    return <SignInNotice ended linkRef={enterRef} />;
+  }
+  if (session.status === "loading") {
+    return null;
+  }
+  if (session.status === "anonymous") {
+    return (
+      <div className="ruvor-invite" data-risk-invite="signin" data-part="convite">
+        <Link
+          className="ruvor-btn ruvor-btn--primary"
+          to={signInHref(`/ativos/${encodeURIComponent(ticker)}`)}
+        >
+          <Glyph name="user" />
+          <span>{TEXTOS["conta.convite.entrar"]}</span>
+        </Link>
+        <p className="ruvor-note">{TEXTOS["conta.convite.frase"]}</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <button
-        className="ruvor-btn ruvor-btn--primary"
-        type="button"
-        aria-busy={busy ? true : undefined}
-        disabled={busy}
-        onClick={() => {
-          void request();
-        }}
-      >
-        {busy ? (
-          <Glyph name="spinner-gap" className="ruvor-spin" />
-        ) : (
-          <Glyph name="chart-line" />
-        )}
-        <span>
-          {again ? TEXTOS["risco.pedido.deNovo"] : TEXTOS["risco.pedido.calcular"]}
-        </span>
-      </button>
+      <div className="ruvor-invite" data-risk-invite="compute">
+        <button
+          className="ruvor-btn ruvor-btn--primary"
+          type="button"
+          aria-busy={busy ? true : undefined}
+          disabled={busy}
+          onClick={() => {
+            void request();
+          }}
+        >
+          {busy ? (
+            <Glyph name="spinner-gap" className="ruvor-spin" />
+          ) : (
+            <Glyph name="chart-line" />
+          )}
+          <span>
+            {again ? TEXTOS["risco.pedido.deNovo"] : TEXTOS["risco.pedido.calcular"]}
+          </span>
+        </button>
+      </div>
       {busy && (
         <p className="ruvor-state__reply ruvor-state__reply--muted" role="status">
           {TEXTOS["risco.pedido.enviando"]}

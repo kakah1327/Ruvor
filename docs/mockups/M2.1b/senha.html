@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — a troca de senha, voluntária e obrigatória (mockup, M2.1b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da troca de senha (T7 do plano M2.1b, RF-08 da spec), nos dois modos, com o mesmo
+   * formulário — senha atual, senha nova, a confirmação e a dica dos requisitos:
+   *
+   *   - VOLUNTÁRIA (/conta/senha?next=), no casco: a barra aprovada no conta.html (T8) — o lugar
+   *     da conta por último em .ruvor-topbar__prefs, largura fixa, três linhas até 840 px —, com a
+   *     pessoa logada; o 401 mostra o aviso de sessão terminada do conta.html no lugar da ação;
+   *   - OBRIGATÓRIA (RF-05), fora do casco: a cena aprovada no entrada.html (T5), com a frase do
+   *     porquê e o botão "Sair".
+   *
+   * Dado fictício, sem pedido à API: abre por file:// e pelo Vite. Só var(--ruvor-*) e valores
+   * estruturais: nenhuma cor literal, nenhum token novo.
+   *
+   * Estilo local: m21b- e mk-. As classes m21b- são as dos dois mockups aprovados, copiadas sem
+   * mudança (o nome no kit é o que eles propuseram para a T10); NOVO só o marcado abaixo. mk- é a
+   * moldura do mockup, que não é tela.
+   *
+   *   do entrada.html: .m21b-access, .m21b-scene (e __logo, __copy, __title, __text),
+   *                    .m21b-side, .m21b-auth (e __head, __title), .m21b-note, .m21b-alert,
+   *                    .m21b-wide
+   *   do conta.html:   .m21b-bar, .m21b-slot, .m21b-signin, .m21b-account (e __name),
+   *                    .m21b-menu (e __who, __name, __email, __org, __list, __item, __sep),
+   *                    .m21b-notice
+   *   do cadastro.html (T6, em portão): .m21b-reqs (-> .ruvor-hint__list), .m21b-errors
+   *                    (-> .ruvor-field__errors) — a mesma marcação da dica e dos erros
+   *   NOVO:           .m21b-pane  -> .ruvor-panel--narrow   o painel do formulário no casco,
+   *                                                          na largura do formulário da cena
+   *                    .m21b-auth__head .ruvor-note          o respiro da linha "Você entrou
+   *                                    -> no .ruvor-auth__head  como …", sob o subtítulo
+   *                    .m21b-pane [hidden]                   o [hidden] do mockup, como o da
+   *                                                          cena (a tela não monta o que não mostra)
+   */
+
+  /* --- do entrada.html (aprovado): o arranjo de tela cheia e a cena --------------------- */
+  .m21b-access {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    background: var(--ruvor-bg);
+  }
+  .m21b-access [hidden], .m21b-pane [hidden] { display: none; }
+  .m21b-scene {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 68px;
+    background: var(--ruvor-topbar);
+    color: var(--ruvor-topbar-text);
+  }
+  .m21b-scene::after {
+    content: "";
+    position: absolute;
+    inset: auto -90px -120px auto;
+    width: 430px;
+    height: 430px;
+    background-image: radial-gradient(circle, var(--ruvor-review) 0 4px, transparent 4.5px);
+    background-size: 31px 31px;
+    opacity: 0.28;
+    transform: rotate(-9deg);
+    pointer-events: none;
+  }
+  .m21b-scene__logo { display: block; width: 156px; height: auto; }
+  .m21b-scene__copy { position: relative; z-index: 1; max-width: 500px; margin-block: auto; }
+  .m21b-scene__copy .ruvor-eyebrow { color: var(--ruvor-review); }
+  .m21b-scene__title { font-size: 48px; }
+  .m21b-scene__text { margin: var(--ruvor-space-4) 0 0; max-width: 52ch; font-size: 15px; color: var(--ruvor-topbar-account); }
+  .m21b-side { display: grid; place-items: center; padding: 60px; }
+  .m21b-auth { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: var(--ruvor-space-4); }
+  .m21b-auth__head { margin-bottom: var(--ruvor-space-3); }
+  .m21b-auth__title { font-size: 31px; }
+  .m21b-auth .ruvor-sub { margin-top: var(--ruvor-space-3); }
+  .ruvor-hint.m21b-note { align-items: flex-start; }
+  .m21b-note > .ruvor-glyph { margin-top: 2px; }
+  .m21b-alert { color: var(--ruvor-critical-text); padding: var(--ruvor-space-3) var(--ruvor-space-4); border-radius: var(--ruvor-radius-sm); }
+  .m21b-alert > .ruvor-glyph { margin-top: 2px; }
+  .m21b-wide { width: 100%; padding: 12px; text-align: center; }
+  @media (max-width: 720px) {
+    .m21b-access { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+    .m21b-scene { padding: var(--ruvor-space-5) var(--ruvor-space-4); }
+    .m21b-scene::after { width: 220px; height: 220px; inset: auto -60px -90px auto; background-size: 22px 22px; background-image: radial-gradient(circle, var(--ruvor-review) 0 3px, transparent 3.5px); }
+    .m21b-scene__logo { width: 112px; }
+    .m21b-scene__copy { margin-block: var(--ruvor-space-5) 0; }
+    .m21b-scene__title { font-size: 28px; }
+    .m21b-scene__text { font-size: var(--ruvor-type-body-size); }
+    .m21b-side { place-items: start center; padding: var(--ruvor-space-6) var(--ruvor-space-4) var(--ruvor-space-7); }
+    .m21b-auth__title { font-size: var(--ruvor-type-h2-size); }
+  }
+
+  /* --- do conta.html (aprovado): o lugar da conta na barra e o menu --------------------- */
+  .m21b-slot {
+    box-sizing: border-box;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 200px;
+    min-height: 30px;
+    padding-left: var(--ruvor-space-3);
+    border-left: 1px solid var(--ruvor-topbar-control);
+  }
+  .ruvor-topbar.m21b-bar { position: relative; }
+  .m21b-signin {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1px solid var(--ruvor-topbar-control);
+    border-radius: var(--ruvor-radius-sm);
+    color: var(--ruvor-topbar-text);
+    font-size: var(--ruvor-type-small-size);
+    font-weight: var(--ruvor-type-small-weight);
+    line-height: var(--ruvor-type-micro-leading);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .m21b-signin:hover { background: var(--ruvor-topbar-control); }
+  .m21b-account {
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    background: transparent;
+    border: 0;
+    border-radius: var(--ruvor-radius-sm);
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+    cursor: pointer;
+    gap: var(--ruvor-space-2);
+  }
+  .m21b-account:hover .m21b-account__name { color: var(--ruvor-topbar-text); }
+  .m21b-account__name { min-width: 0; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m21b-account .ruvor-avatar { color: var(--ruvor-topbar-text); }
+  .m21b-account .ruvor-glyph { width: 12px; height: 12px; color: var(--ruvor-topbar-link); }
+  .m21b-account[aria-expanded="true"] .ruvor-glyph { transform: rotate(180deg); }
+  .m21b-menu {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + var(--ruvor-space-1));
+    right: 26px;
+    width: 280px;
+    max-width: calc(100vw - 2 * var(--ruvor-space-4));
+    box-sizing: border-box;
+    background: var(--ruvor-surface);
+    color: var(--ruvor-ink);
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    box-shadow: var(--ruvor-shadow);
+    overflow: hidden;
+  }
+  .m21b-menu[hidden] { display: none; }
+  .m21b-menu__who, .m21b-menu__org { padding: var(--ruvor-space-3) var(--ruvor-space-4); }
+  .m21b-menu__who { border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__name { margin: 0; font-weight: var(--ruvor-type-small-weight); overflow-wrap: anywhere; }
+  .m21b-menu__email { margin: 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__org { display: flex; flex-direction: column; gap: var(--ruvor-space-1); background: var(--ruvor-table-head); border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__org .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m21b-menu__org p:last-child { margin: 0; font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__list { list-style: none; margin: 0; padding: var(--ruvor-space-1) 0; }
+  .m21b-menu__item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--ruvor-space-2);
+    width: 100%;
+    padding: 9px var(--ruvor-space-4);
+    border: 0;
+    background: transparent;
+    color: var(--ruvor-ink);
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .m21b-menu__item:hover { background: var(--ruvor-control-hover); }
+  .m21b-menu__item .ruvor-glyph { color: var(--ruvor-text-muted); }
+  .m21b-menu__sep { height: 1px; margin: var(--ruvor-space-1) 0; background: var(--ruvor-table-rule); }
+  .ruvor-topbar .m21b-menu :focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: -2px; }
+  .m21b-notice .ruvor-btn { align-self: flex-start; }
+  @media (max-width: 1023px) {
+    .m21b-slot { width: calc(72px + var(--ruvor-space-3) + 1px); }
+    .m21b-account__name { display: none; }
+  }
+  @media (max-width: 840px) {
+    .ruvor-topbar.m21b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
+    .m21b-bar .ruvor-topbar__spacer { display: none; }
+    .m21b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m21b-bar .ruvor-topbar__prefs { display: contents; }
+    .m21b-menu { right: var(--ruvor-space-4); }
+    .ruvor-topbar.m21b-bar { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
+  }
+
+  /* --- NOVO: o painel do formulário no casco ------------------------------------------ */
+  /* O painel acompanha o formulário: os 440 px do formulário da cena, mais o respiro do
+     painel (18 px de cada lado) e a borda — sem vão à direita. Abaixo disso, a coluna. */
+  .m21b-pane { max-width: calc(440px + 2 * 18px + 2px); }
+  .m21b-pane .m21b-auth { max-width: none; }
+  /* NOVO: a linha "Você entrou como …" da obrigatória, sob o subtítulo. */
+  .m21b-auth__head .ruvor-note { margin-top: var(--ruvor-space-2); }
+
+  /* --- do cadastro.html (T6): a lista dos requisitos e os erros de um campo ----------- */
+  .m21b-reqs { margin: var(--ruvor-space-1) 0 0; padding-left: var(--ruvor-space-4); list-style: disc; }
+  .m21b-reqs li + li { margin-top: 2px; }
+  .m21b-errors { display: grid; gap: 4px; }
+  .m21b-errors > .ruvor-field__error { align-items: flex-start; }
+  .m21b-errors > .ruvor-field__error > .ruvor-glyph { margin-top: 1px; flex: none; }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-bar .ruvor-btn:disabled { opacity: .45; cursor: default; }
+  .mk-bar__hint { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); background: var(--ruvor-canvas); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); max-width: 360px; }
+  .mk-frame iframe { width: 360px; height: 900px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 26%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code, .mk-pad code, .mk-tail code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  [data-moldura="0"] .mk-tail { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-x-circle" viewBox="0 0 256 256"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-down" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-sign-out" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol>
+  <symbol id="i-buildings" viewBox="0 0 256 256"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+  <symbol id="i-duo-check-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.1b · a troca de senha · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Modo">
+    <span>Modo:</span>
+    <button class="ruvor-btn" type="button" data-mk-modo="voluntaria">voluntária · /conta/senha, no casco</button>
+    <button class="ruvor-btn" type="button" data-mk-modo="obrigatoria">obrigatória · na cena (RF-05)</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Estado">
+    <span>Estado:</span>
+    <button class="ruvor-btn" type="button" data-mk-estado="vazio">vazio (base)</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="digitando">digitando</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="enviando">enviando</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="vazios">os três campos vazios</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="diferente">confirmação diferente</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="invalid_credentials">invalid_credentials</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="nova-fraca">invalid_parameter · curta, comum, numérica</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="nova-parecida">invalid_parameter · parecida com o nome</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="nova-igual">invalid_parameter · igual à atual</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="too_many_requests">429 com 42 s</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="too_many_requests-sem">429 sem wait_seconds</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="csrf_failed">csrf_failed</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="rede">rede ou fora do formato</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="outro">outro code</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="sucesso">sucesso (204)</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="sessao-terminou">401 · a sessão terminou</button>
+    <button class="ruvor-btn" type="button" data-mk-estado="sair-falhou">o Sair falhou · só obrigatória</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk-vista="tela">largura da janela</button>
+    <button class="ruvor-btn" type="button" data-mk-vista="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk-vista="textos">os textos</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Tema do mockup">
+    <span>Tema:</span>
+    <button class="ruvor-btn" type="button" data-mk-tema="light">Claro</button>
+    <button class="ruvor-btn" type="button" data-mk-tema="dark">Escuro</button>
+    <button class="ruvor-btn" type="button" data-mk-tema="system">Sistema</button>
+  </div>
+  <p class="mk-bar__hint">Na voluntária, o tema também se troca pela barra da tela e o menu abre pelo botão de conta. Os estados marcados "só" ficam desligados no outro modo.</p>
+</div>
+
+<!-- ============================================================ A TELA · VOLUNTÁRIA (no casco) -->
+<div class="mk-view" data-view="voluntaria" hidden>
+  <header class="ruvor-topbar m21b-bar">
+    <a class="ruvor-brand" href="#" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+    <div class="ruvor-topbar__search" role="search">
+      <div class="ruvor-search ruvor-search--bar">
+        <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+        <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+      </div>
+    </div>
+    <div class="ruvor-topbar__prefs">
+      <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+        <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+        <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+      </div>
+      <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+        <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+        <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+        <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+      </div>
+      <!-- O lugar da conta do conta.html (T8): por último, largura fixa. -->
+      <div class="m21b-slot" data-account="authenticated" data-slot></div>
+    </div>
+  </header>
+
+  <div class="ruvor-workspace ruvor-workspace--full">
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose" data-screen="senha">
+      <div class="ruvor-page-head">
+        <div>
+          <p class="ruvor-eyebrow" data-t="senha.eyebrow"></p>
+          <h1 class="ruvor-display" id="vol-titulo" data-t="senha.titulo"></h1>
+          <p class="ruvor-sub" data-t="senha.sub"></p>
+        </div>
+      </div>
+      <!-- O painel com o formulário (ou a frase do sucesso); no 401, o aviso no lugar do painel. -->
+      <div data-vol-slot></div>
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================ A TELA · OBRIGATÓRIA (na cena) -->
+<div class="mk-view" data-view="obrigatoria" hidden>
+  <main class="m21b-access" data-screen="senha-obrigatoria">
+    <section class="m21b-scene" data-mark="cena">
+      <img class="m21b-scene__logo" src="../../../brand/ruvor/ruvor-logo-reverse.svg" data-t-alt="acesso.cena.marca">
+      <div class="m21b-scene__copy">
+        <p class="ruvor-eyebrow" data-t="acesso.cena.eyebrow"></p>
+        <h1 class="ruvor-display m21b-scene__title" data-t="acesso.cena.titulo"></h1>
+        <p class="m21b-scene__text" data-t="acesso.cena.texto"></p>
+      </div>
+    </section>
+    <section class="m21b-side" data-obr-side></section>
+  </main>
+</div>
+
+<!-- ============================================================ 360 px -->
+<div class="mk-view mk-pad" data-view="estreito" hidden>
+  <p class="mk-tail">Moldura: a mesma página em 360 px, sem a moldura, no tema escolhido acima. Na voluntária, a barra do <code>conta.html</code> em três linhas (até 840 px), com só as iniciais no botão de conta, e o painel na largura da coluna. Na obrigatória, a cena do <code>entrada.html</code> vira faixa acima do formulário (até 720 px). Nada rola na horizontal.</p>
+  <div class="mk-frames" data-frames></div>
+</div>
+
+<!-- ============================================================ OS TEXTOS -->
+<div class="mk-view mk-pad" data-view="textos" hidden>
+  <p class="mk-tail">Moldura: as chaves que nascem neste mockup, todas novas em <code>frontend/src/content/textos.ts</code>, com o prefixo <code>senha.*</code> do plano (seção "Os textos"); e as que ele reaproveita dos mockups aprovados, sem mudar o texto. Nenhuma é número com frase: não ganham leitura avançada.</p>
+  <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">Novas e compartilhadas com o cadastro (prefixo acesso.*)</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">A dica dos requisitos e a confirmação diferente são as mesmas no cadastro (<code>cadastro.html</code>, T6) e na troca de senha: uma chave só, com o prefixo da entrada, e o <code>cadastro.html</code> passa a usar estas.</p>
+      <table class="ruvor-table mk-textos" data-compartilhados></table>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">Reaproveitadas dos mockups aprovados</h2></div>
+    <div class="ruvor-panel__body"><table class="ruvor-table mk-textos" data-herdados></table></div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos da chave-função</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">No molde de <code>EXEMPLOS</code>, em <code>frontend/tests/exemplos.ts</code> (Correções registradas do plano). As outras chaves novas são texto, sem exemplo.</p>
+      <pre class="mk-code" data-exemplos></pre>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">As mensagens da API, que não são texto da tela</h2></div>
+    <div class="ruvor-panel__body ruvor-stack">
+      <p class="ruvor-note">As listas de <code>details.fields.new_password</code> do <code>invalid_parameter</code> aparecem no campo da senha nova <b>como a API as manda</b> (RF-07, RF-08): são dado, não entram em <code>textos.ts</code>. As do mockup são as reais — a última, de <code>backend/apps/accounts/services.py</code> (<code>change_password</code>); as outras, dos validadores de <code>AUTH_PASSWORD_VALIDATORS</code> (<code>backend/config/settings.py</code>) em <code>pt-br</code>, conferidas no catálogo <code>django/contrib/auth/locale/pt_BR</code>:</p>
+      <ul class="mk-notes" data-api-msgs></ul>
+    </div>
+  </section>
+  <section class="ruvor-panel">
+    <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+    <div class="ruvor-panel__body">
+      <ul class="mk-notes">
+        <li><b>O mesmo formulário nos dois modos</b> (RF-08): senha atual, senha nova e a confirmação, com a dica dos requisitos <b>antes do campo da senha nova</b>, entre o rótulo e o campo, ligada a ele por <code>aria-describedby</code>. Os campos levam <code>autocomplete="current-password"</code> e <code>"new-password"</code>. O pedido é <code>POST auth/password</code> com <code>{current_password, new_password}</code> (<code>PasswordIn</code>, <code>backend/apps/accounts/serializers.py</code>); a confirmação não vai à API.</li>
+        <li><b>A dica</b>, em lista, com as chaves compartilhadas com o cadastro (<code>acesso.senha.dica</code> e os quatro <code>acesso.senha.requisito.*</code>) e a mesma marcação dele: <code>.ruvor-hint</code> com o ícone, a frase e a lista <code>.m21b-reqs</code>, entre o rótulo e o campo, ligada por <code>aria-describedby</code>. Os quatro itens são os validadores de <code>AUTH_PASSWORD_VALIDATORS</code>: no mínimo 10 caracteres (<code>MinimumLengthValidator</code>, <code>min_length: 10</code>), não só números (<code>NumericPasswordValidator</code>), não parecida com o e-mail nem com o nome (<code>UserAttributeSimilarityValidator</code>, <code>("email", "name")</code>), não comum (<code>CommonPasswordValidator</code>). Os erros de um campo ficam agrupados como no cadastro: um <code>.m21b-errors</code> com um <code>id</code>, que entra no <code>aria-describedby</code> do campo, uma mensagem por linha. A confirmação diferente usa o texto do cadastro, na chave compartilhada <code>acesso.erro.confirmacaoDiferente</code>.</li>
+        <li><b>Conferido no navegador, sem pedido</b>: um campo vazio (o erro no campo, com <code>aria-invalid</code> e <code>aria-describedby</code>; o foco no primeiro vazio) e, com os três preenchidos, a confirmação diferente da nova (o erro no campo da confirmação). A API aceitaria a senha atual vazia e responderia <code>invalid_credentials</code> (o <code>_text()</code> tem <code>allow_blank=True</code>); a tela não manda.</li>
+        <li><b>Os erros da API, pelo <code>code</code></b> (nunca a <code>message</code>): <code>invalid_credentials</code> (400, <code>services.change_password</code>: <code>check_password</code> falhou) no campo da senha atual, com "Senha atual incorreta."; <code>invalid_parameter</code> (400) com <code>details.fields.new_password</code> no campo da senha nova, a lista como chega — inclui "A nova senha precisa ser diferente da atual.", que o serviço manda quando a nova é igual à atual; <code>too_many_requests</code> (429, o limite <code>auth</code> de 10 por minuto por IP, <code>AuthRateThrottle</code> em <code>PasswordView</code>; o bloqueio por e-mail e IP é só da entrada) com a frase de <code>acesso.erro.tentativas</code> — a espera, aqui, fica até 60 s; <code>csrf_failed</code> (403, depois da repetição do RF-02) e a rede com as frases da entrada; qualquer outro <code>code</code>, <code>senha.erro.outro</code>. O erro geral fica na caixa acima do botão, com <code>role="alert"</code>; o de campo, no campo.</li>
+        <li><b>O 401 <code>not_authenticated</code></b> (a sessão acabou enquanto a página estava aberta), nos dois modos: o aviso de sessão terminada do <code>conta.html</code> (<code>conta.aviso.terminou</code>, <code>conta.aviso.volta</code>, <code>conta.entrar</code>; <code>role="alert"</code>) <b>no lugar do formulário</b>, e o foco vai ao "Entrar". Na voluntária, o aviso fica no lugar do painel (sem caixa dentro de caixa); o título da página fica, a rota não muda e a barra passa a "Entrar". Na obrigatória, o aviso fica na cena, no lugar do formulário. O "Entrar" leva a <code>/entrar?next=</code> com a URL corrente inteira codificada (na voluntária, <code>/conta/senha?next=…</code>; na obrigatória, a rota que a troca bloqueava, aqui <code>/ativos/AALR3</code>). <b>O mecanismo, para a T12</b>: a tela mostra o aviso localmente e chama <code>expired()</code> <b>só no clique em "Entrar"</b>, antes de navegar. Chamar no 401 tiraria a obrigatória de cena (o bloqueio do RF-05 deixaria de valer e o aviso sumiria); e navegar a <code>/entrar</code> com a sessão ainda marcada como logada faria a entrada devolver ao <code>next</code>, um laço.</li>
+        <li><b>O sucesso (204)</b>: o serviço troca a senha, tira o <code>must_change_password</code> e chama <code>update_session_auth_hash</code> — <b>esta sessão continua, as outras sessões da conta deixam de valer</b> (<code>backend/tests/accounts/test_conta.py</code>, <code>test_v08_troca_mantem_esta_sessao_derruba_a_outra_e_tira_a_flag</code>). <b>As chaves de API não são revogadas</b> pela troca: a D-111 (<code>docs/decisoes/D-111-a-chave-guarda-so-o-hash-e-a-conta-mudada-revoga.md</code>) diz "Trocar a própria senha não revoga", e <code>change_password</code> não chama <code>_revoke_all</code> (só a desativação e a senha provisória nova chamam). Por isso a frase fala só das sessões.</li>
+        <li><b>O sucesso com "Continuar"</b> — o formulário dá lugar à frase, e o foco vai ao "Continuar". <b>O mecanismo, para a T12</b>: <b>voluntária</b> — 204 → <code>reload()</code> e a frase; "Continuar" é um link para <code>safeNext(next)</code> (sem <code>next</code>, <code>/</code>). <b>Obrigatória</b> — 204 → a frase, <b>sem</b> <code>reload()</code>; "Continuar" → <code>reload()</code> → o provedor, sem o <code>must_change_password</code>, mostra o <code>&lt;Outlet&gt;</code> na mesma URL. Se o <code>reload()</code> rodasse no 204, o bloqueio cairia na hora e a frase sumiria antes de ser lida. Isso ajusta duas frases da T12 do plano ("no voluntário, <code>navigate(safeNext(next))</code>" e "no obrigatório … <code>reload()</code> … volta a renderizar o <code>&lt;Outlet&gt;</code>"): a volta passa a ser pelo "Continuar".</li>
+        <li><b>Ressalvas de destino</b>: o "Continuar" da voluntária com <code>next</code> em <code>/conta/senha</code> cai em <code>/</code> (o <code>next</code> que aponta para a própria página não volta a ela). O "Sair" da obrigatória segue o RF-10: se a URL corrente é <code>/conta/*</code> ou <code>/organizacao/*</code>, vai a <code>/</code>; nas públicas (<code>/</code>, <code>/ativos/*</code>), fica nela, que passa a mostrar a tela anônima.</li>
+        <li><b>A obrigatória</b>: a cena do <code>entrada.html</code> com os mesmos textos (<code>acesso.cena.*</code>); o formulário diz por quê, com o e-mail de quem entrou (<code>me.email</code>, para quem entrou com a conta errada perceber e sair). <b>Sair</b> chama o <code>signOut()</code> (204 ou 401 → anônimo, e a mesma URL passa a mostrar a tela dela, anônima). Se o Sair falha (rede, 403 <code>csrf_failed</code>, 5xx — o <code>signOut()</code> rejeita fora de 204 e 401, como no portão da T8), a sessão fica e a caixa de erro mostra <code>conta.menu.sairFalhou</code>. Fora do casco, sem barra: o tema é o escolhido no casco (<code>initTheme()</code>), como na entrada.</li>
+        <li><b>O foco</b>: no sucesso, no "Continuar"; no 401, no "Entrar"; com campo vazio, no primeiro vazio; com erro de campo da API, no campo; com erro geral, fica no botão "Trocar a senha" (a caixa é anunciada pelo <code>role="alert"</code>).</li>
+        <li><b>Enviando</b>: o botão mostra "Trocando…" com o ícone que gira, fica desabilitado e com <code>aria-busy</code>; os campos continuam como estavam. <b>Depois de um erro</b>, os três campos ficam preenchidos.</li>
+        <li><b>As marcas</b>: <code>data-screen="senha"</code> (voluntária) ou <code>"senha-obrigatoria"</code> na raiz. Só no estado de base (vazio) de cada modo, os <code>data-part</code> da tabela do plano, uma vez cada — voluntária: <code>form</code>, <code>campo-atual</code>, <code>campo-nova</code>, <code>campo-confirmacao</code> (no <code>.ruvor-field</code> inteiro), <code>dica-senha</code>, <code>botao-trocar</code>; obrigatória: <code>cena</code>, <code>form-obrigatoria</code>, <code>botao-sair</code>. O modo que não está à vista não leva marca. O roteiro abre cada base por <code>?modo=voluntaria&amp;estado=vazio</code> e <code>?modo=obrigatoria&amp;estado=vazio</code>. A barra da voluntária é a do <code>conta.html</code>, mas sem os <code>data-part</code> dela, que pertencem àquele mockup.</li>
+        <li><b>Anônimo desde a carga em <code>/conta/senha</code></b>: o aviso "Esta página é para quem entrou na conta." do <code>conta.html</code> (vista "/conta/senha sem conta"), aprovado lá; não se repete aqui.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------------------------------------------------------------- os textos
+// Reaproveitados, literais, dos mockups aprovados e de frontend/src/content/textos.ts.
+const HERDADOS = {
+  // casco (textos.ts de hoje)
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  // entrada.html (T5, aprovado)
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto": "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.erro.tentativas": (n) =>
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  // conta.html (T8, aprovado)
+  "conta.entrar": "Entrar",
+  "conta.menu.rotulo": (nome) => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.pessoal": "Conta pessoal",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
+  "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
+};
+// NOVAS em textos.ts, compartilhadas com o cadastro.html (T6), prefixo acesso.*.
+const COMPARTILHADOS = {
+  "acesso.senha.dica": "A senha precisa:",
+  "acesso.senha.requisito.tamanho": "ter no mínimo 10 caracteres;",
+  "acesso.senha.requisito.numeros": "não ser só números;",
+  "acesso.senha.requisito.parecida": "não ser parecida com o seu e-mail ou o seu nome;",
+  "acesso.senha.requisito.comum": "não ser uma senha comum.",
+  "acesso.erro.confirmacaoDiferente": "As duas senhas não são iguais.",
+};
+const ONDE_COMPARTILHADOS = {
+  "acesso.senha.dica": "a frase da dica, antes do campo da senha nova",
+  "acesso.senha.requisito.tamanho": "item da lista — MinimumLengthValidator, min_length 10",
+  "acesso.senha.requisito.numeros": "item da lista — NumericPasswordValidator",
+  "acesso.senha.requisito.parecida": "item da lista — UserAttributeSimilarityValidator (email, name)",
+  "acesso.senha.requisito.comum": "item da lista — CommonPasswordValidator",
+  "acesso.erro.confirmacaoDiferente": "confirmação diferente da nova, sem pedido, no campo da confirmação",
+};
+const ONDE_HERDADOS = {
+  "casco.marca": "textos.ts — a marca da barra (voluntária)",
+  "casco.marca.rotulo": "textos.ts — o rótulo do link da marca",
+  "casco.busca.placeholder": "textos.ts — a busca da barra",
+  "casco.busca.rotulo": "textos.ts — o rótulo da busca",
+  "casco.tema.rotulo": "textos.ts — a chave de tema",
+  "casco.tema.claro": "textos.ts — a chave de tema",
+  "casco.tema.escuro": "textos.ts — a chave de tema",
+  "casco.tema.sistema": "textos.ts — a chave de tema",
+  "casco.leitura.rotulo": "textos.ts — o alternador de leitura",
+  "casco.leitura.iniciante": "textos.ts — o alternador de leitura",
+  "casco.leitura.avancada": "textos.ts — o alternador de leitura",
+  "acesso.cena.marca": "entrada.html — o texto alternativo do logotipo da cena (obrigatória)",
+  "acesso.cena.eyebrow": "entrada.html — a cena (obrigatória)",
+  "acesso.cena.titulo": "entrada.html — a cena (obrigatória)",
+  "acesso.cena.texto": "entrada.html — a cena (obrigatória)",
+  "acesso.erro.tentativas": "entrada.html — code too_many_requests (RF-08: \"como no RF-06\")",
+  "acesso.erro.csrf": "entrada.html — code csrf_failed, depois da repetição do RF-02",
+  "acesso.erro.rede": "entrada.html — erro de rede ou resposta fora do formato",
+  "conta.entrar": "conta.html — o Entrar da barra e do aviso de sessão terminada",
+  "conta.menu.rotulo": "conta.html — aria-label do botão de conta",
+  "conta.menu.organizacao": "conta.html — o menu",
+  "conta.menu.pessoal": "conta.html — o menu (organização pessoal)",
+  "conta.menu.senha": "conta.html — o menu (a ação que abre esta página)",
+  "conta.menu.usuarios": "conta.html — o menu (admin em organização não pessoal)",
+  "conta.menu.sair": "conta.html — o menu",
+  "conta.menu.sairFalhou": "conta.html — o Sair da obrigatória que falhou, na caixa de erro",
+  "conta.aviso.terminou": "conta.html — 401 no auth/password (os dois modos)",
+  "conta.aviso.volta": "conta.html — a frase do aviso",
+};
+
+// NOVOS em textos.ts, prefixo senha.* (RF-08).
+const TEXTOS = {
+  "senha.eyebrow": "Sua conta",
+  "senha.titulo": "Trocar a senha",
+  "senha.sub": "Confirme a senha atual e escolha uma nova.",
+  "senha.obrigatoria.eyebrow": "Senha provisória",
+  "senha.obrigatoria.titulo": "Troque a senha para continuar.",
+  "senha.obrigatoria.sub": "A sua senha é provisória e precisa ser trocada antes de usar o Ruvor.",
+  "senha.obrigatoria.conta": (email) => `Você entrou como ${email}.`,
+  "senha.obrigatoria.sair": "Sair",
+  "senha.atual.rotulo": "Senha atual",
+  "senha.nova.rotulo": "Senha nova",
+  "senha.confirmacao.rotulo": "Repita a senha nova",
+  "senha.trocar": "Trocar a senha",
+  "senha.trocando": "Trocando…",
+  "senha.erro.atualVazia": "Informe a senha atual.",
+  "senha.erro.novaVazia": "Informe a senha nova.",
+  "senha.erro.confirmacaoVazia": "Repita a senha nova.",
+  "senha.erro.atualIncorreta": "Senha atual incorreta.",
+  "senha.erro.outro": "Não foi possível trocar a senha agora. Tente de novo.",
+  "senha.sucesso.titulo": "Senha trocada.",
+  "senha.sucesso.texto": "As outras sessões desta conta foram encerradas. Esta continua aberta.",
+  "senha.sucesso.continuar": "Continuar",
+};
+const EXEMPLOS = { "senha.obrigatoria.conta": [["ana.souza@exemplo.com"]] };
+const NOTAS = {
+  "senha.eyebrow": "voluntária — sobretítulo da página, em maiúsculas pela folha",
+  "senha.titulo": "voluntária — o título da página (o mesmo texto da ação do menu, conta.menu.senha)",
+  "senha.sub": "voluntária — o subtítulo",
+  "senha.obrigatoria.eyebrow": "obrigatória — sobretítulo do formulário, em maiúsculas pela folha",
+  "senha.obrigatoria.titulo": "obrigatória — o título do formulário",
+  "senha.obrigatoria.sub": "obrigatória — a frase do porquê (RF-08)",
+  "senha.obrigatoria.conta": "obrigatória — função do e-mail de quem entrou (me.email)",
+  "senha.obrigatoria.sair": "obrigatória — o botão Sair (signOut)",
+  "senha.atual.rotulo": "rótulo; campo autocomplete=current-password",
+  "senha.nova.rotulo": "rótulo; campo autocomplete=new-password",
+  "senha.confirmacao.rotulo": "rótulo; conferida no navegador, não vai à API",
+  "senha.trocar": "o botão",
+  "senha.trocando": "o botão enquanto o pedido não volta",
+  "senha.erro.atualVazia": "campo vazio, sem pedido",
+  "senha.erro.novaVazia": "campo vazio, sem pedido",
+  "senha.erro.confirmacaoVazia": "campo vazio, sem pedido",
+  "senha.erro.atualIncorreta": "code invalid_credentials, no campo da senha atual",
+  "senha.erro.outro": "qualquer outro code",
+  "senha.sucesso.titulo": "204 — no lugar do formulário",
+  "senha.sucesso.texto": "204 — as outras sessões (update_session_auth_hash); as chaves de API não são revogadas",
+  "senha.sucesso.continuar": "o foco vai a ele; voluntária: link para safeNext(next); obrigatória: reload() e a mesma URL mostra a tela dela",
+};
+const API_MSGS = [
+  "Esta senha é muito curta. Ela precisa conter pelo menos 10 caracteres.",
+  "Esta senha é muito comum.",
+  "Esta senha é inteiramente numérica.",
+  "A senha é muito parecida com name",
+  "A nova senha precisa ser diferente da atual.",
+];
+const T = (k, ...a) => {
+  const v = k in TEXTOS ? TEXTOS[k] : k in COMPARTILHADOS ? COMPARTILHADOS[k] : HERDADOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const initials = (name, email) => {
+  const w = name.trim().split(/\s+/).filter(Boolean);
+  if (w.length === 0) return email.trim().charAt(0).toUpperCase();
+  return (w.length === 1 ? w[0][0] : w[0][0] + w[w.length - 1][0]).toUpperCase();
+};
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+for (const n of document.querySelectorAll("[data-t-alt]")) n.setAttribute("alt", T(n.dataset.tAlt));
+
+// ---------------------------------------------------------------- dados fictícios
+const ME = { name: "Ana Beatriz Souza", email: "ana.souza@exemplo.com", role: "admin", organization: { name: "Gestora Exemplo", is_personal: false } };
+// A página de onde a pessoa veio (o next da rota) e a página atual inteira.
+const NEXT = "/ativos/AALR3";
+const AQUI = `/conta/senha?next=${encodeURIComponent(NEXT)}`;
+
+// ---------------------------------------------------------------- estado do mockup
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+const MODOS = ["voluntaria", "obrigatoria"];
+const SO = { "sair-falhou": "obrigatoria" };
+const API_ERROS = {
+  "nova-fraca": API_MSGS.slice(0, 3),
+  "nova-parecida": [API_MSGS[3]],
+  "nova-igual": [API_MSGS[4]],
+};
+const GERAIS = {
+  too_many_requests: () => T("acesso.erro.tentativas", 42),
+  "too_many_requests-sem": () => T("acesso.erro.tentativas", null),
+  csrf_failed: () => T("acesso.erro.csrf"),
+  rede: () => T("acesso.erro.rede"),
+  outro: () => T("senha.erro.outro"),
+  "sair-falhou": () => T("conta.menu.sairFalhou"),
+};
+const ESTADOS = ["vazio", "digitando", "enviando", "vazios", "diferente", "invalid_credentials", ...Object.keys(API_ERROS), ...Object.keys(GERAIS).filter((k) => k !== "sair-falhou"), "sucesso", "sessao-terminou", "sair-falhou"];
+const S = {
+  modo: MODOS.includes(params.get("modo")) ? params.get("modo") : "voluntaria",
+  estado: params.get("estado") || "vazio",
+  vista: params.get("vista") || "tela",
+  tema: params.get("tema") || "system",
+  menu: false,
+};
+const valido = (modo, estado) => ESTADOS.includes(estado) && (!SO[estado] || SO[estado] === modo);
+
+// ---------------------------------------------------------------- o formulário (os dois modos)
+// p: o prefixo dos ids (vol | obr). Os data-mark viram data-part só no estado de base.
+// A dica (como no cadastro.html): o ícone, a frase e a lista dos quatro requisitos.
+const REQUISITOS = ["tamanho", "numeros", "parecida", "comum"];
+function hintHtml(id, mark) {
+  return `<div class="ruvor-hint m21b-note" id="${id}"${mark ? ` data-mark="${mark}"` : ""}>
+      ${glyph("i-info", " ruvor-glyph--sm")}
+      <div>
+        <span>${esc(T("acesso.senha.dica"))}</span>
+        <ul class="m21b-reqs">${REQUISITOS.map((r) => `<li>${esc(T(`acesso.senha.requisito.${r}`))}</li>`).join("")}</ul>
+      </div>
+    </div>`;
+}
+function fieldHtml(p, key, { label, auto, hint, errors, value, mark, hintMark }) {
+  const id = `${p}-${key}`;
+  const hintId = hint ? `${id}-dica` : null;
+  // Os erros do campo num grupo só, com um id (como no cadastro.html), uma mensagem por linha.
+  const errId = `${id}-erro`;
+  const describedby = [hintId, errors.length ? errId : null].filter(Boolean).join(" ");
+  return `<div class="ruvor-field"${mark ? ` data-mark="${mark}"` : ""}>
+    <label class="ruvor-label" for="${id}">${esc(label)}</label>
+    ${hint ? hintHtml(hintId, hintMark) : ""}
+    <input class="ruvor-input" id="${id}" name="${key}" type="password" autocomplete="${auto}" value="${esc(value)}"${errors.length ? ' aria-invalid="true"' : ""}${describedby ? ` aria-describedby="${describedby}"` : ""}>
+    <div class="m21b-errors" id="${errId}"${errors.length ? "" : " hidden"}>${errors.map((m) => `<span class="ruvor-field__error">${glyph("i-x-circle", " ruvor-glyph--sm")}<span>${esc(m)}</span></span>`).join("")}</div>
+  </div>`;
+}
+
+function formHtml(modo, estado) {
+  const p = modo === "voluntaria" ? "vol" : "obr";
+  const vol = modo === "voluntaria";
+  const vazios = estado === "vazios";
+  const filled = !["vazio", "vazios"].includes(estado);
+  const v = {
+    // nova-igual: a atual e a nova iguais, com a mesma quantidade de pontos.
+    atual: filled ? (estado === "nova-igual" ? "nova-senha-longa-9" : "senha-atual-1") : "",
+    nova: filled ? (estado === "nova-fraca" ? "1234567" : "nova-senha-longa-9") : "",
+    conf: filled ? (estado === "diferente" ? "nova-senha-longa-8" : estado === "nova-fraca" ? "1234567" : "nova-senha-longa-9") : "",
+  };
+  const err = { atual: [], nova: [], conf: [] };
+  if (vazios) {
+    err.atual = [T("senha.erro.atualVazia")];
+    err.nova = [T("senha.erro.novaVazia")];
+    err.conf = [T("senha.erro.confirmacaoVazia")];
+  }
+  if (estado === "diferente") err.conf = [T("acesso.erro.confirmacaoDiferente")];
+  if (estado === "invalid_credentials") err.atual = [T("senha.erro.atualIncorreta")];
+  if (API_ERROS[estado]) err.nova = API_ERROS[estado];
+  const geral = GERAIS[estado];
+  const busy = estado === "enviando";
+  const head = vol ? "" : `<div class="m21b-auth__head">
+      <p class="ruvor-eyebrow">${esc(T("senha.obrigatoria.eyebrow"))}</p>
+      <h2 class="ruvor-h2 m21b-auth__title" id="obr-titulo">${esc(T("senha.obrigatoria.titulo"))}</h2>
+      <p class="ruvor-sub">${esc(T("senha.obrigatoria.sub"))}</p>
+      <p class="ruvor-note">${esc(T("senha.obrigatoria.conta", ME.email))}</p>
+    </div>`;
+  return `<form class="m21b-auth" novalidate aria-labelledby="${p}-titulo" data-mark="${vol ? "form" : "form-obrigatoria"}"${busy ? ' aria-busy="true"' : ""}>
+    ${head}
+    ${fieldHtml(p, "current_password", { label: T("senha.atual.rotulo"), auto: "current-password", errors: err.atual, value: v.atual, mark: vol && "campo-atual" })}
+    ${fieldHtml(p, "new_password", { label: T("senha.nova.rotulo"), auto: "new-password", hint: true, errors: err.nova, value: v.nova, mark: vol && "campo-nova", hintMark: vol && "dica-senha" })}
+    ${fieldHtml(p, "confirmation", { label: T("senha.confirmacao.rotulo"), auto: "new-password", errors: err.conf, value: v.conf, mark: vol && "campo-confirmacao" })}
+    <div class="ruvor-callout ruvor-callout--critical m21b-alert" role="alert"${geral ? "" : " hidden"}>${glyph("i-warning")}<span>${geral ? esc(geral()) : ""}</span></div>
+    <button class="ruvor-btn ruvor-btn--primary m21b-wide" type="submit"${vol ? ' data-mark="botao-trocar"' : ""}${busy ? ' disabled aria-busy="true"' : ""}>${busy ? glyph("i-spinner-gap", " ruvor-spin") : ""}<span>${esc(T(busy ? "senha.trocando" : "senha.trocar"))}</span></button>
+    ${vol ? "" : `<button class="ruvor-btn ruvor-btn--ghost m21b-wide" type="button" data-mark="botao-sair">${glyph("i-sign-out")}<span>${esc(T("senha.obrigatoria.sair"))}</span></button>`}
+  </form>`;
+}
+
+// O sucesso, no lugar do formulário: a frase das outras sessões e "Continuar".
+function successHtml(modo) {
+  const action = modo === "voluntaria"
+    ? `<a class="ruvor-btn ruvor-btn--primary" href="#" data-autofocus title="safeNext(next) = ${esc(NEXT)} (sem next, /)">${esc(T("senha.sucesso.continuar"))}</a>`
+    : `<button class="ruvor-btn ruvor-btn--primary" type="button" data-autofocus title="reload(): a mesma URL mostra a tela dela">${esc(T("senha.sucesso.continuar"))}</button>`;
+  return `<div class="ruvor-state" role="status">
+    <span class="ruvor-icon ruvor-icon--validated"><svg aria-hidden="true" focusable="false"><use href="#i-duo-check-circle"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(T("senha.sucesso.titulo"))}</p>
+      <p class="ruvor-state__text">${esc(T("senha.sucesso.texto"))}</p>
+      <div class="ruvor-state__actions">${action}</div>
+    </div>
+  </div>`;
+}
+
+// O aviso de sessão terminada do conta.html (RF-16), no lugar da ação. aqui: a URL corrente.
+// A tela o mostra localmente; o expired() roda só no clique em Entrar, antes de navegar.
+function signInNotice(aqui) {
+  return `<div class="ruvor-state ruvor-state--notice m21b-notice" data-signin-notice="ended" role="alert">
+    <span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(T("conta.aviso.terminou"))}</p>
+      <p class="ruvor-note">${esc(T("conta.aviso.volta"))}</p>
+      <a class="ruvor-btn ruvor-btn--primary" href="#" data-autofocus title="expired(), depois /entrar?next=${esc(encodeURIComponent(aqui))}">${esc(T("conta.entrar"))}</a>
+    </div>
+  </div>`;
+}
+
+// ---------------------------------------------------------------- a barra: o lugar da conta (conta.html)
+function renderSlot(anonimo) {
+  const slot = $("[data-slot]");
+  if (anonimo) {
+    slot.dataset.account = "anonymous";
+    slot.innerHTML = `<a class="m21b-signin" href="#" title="/entrar?next=${esc(encodeURIComponent(AQUI))}">${esc(T("conta.entrar"))}</a>`;
+    return;
+  }
+  slot.dataset.account = "authenticated";
+  slot.innerHTML = `
+    <button class="ruvor-account m21b-account" type="button" aria-expanded="${S.menu}" aria-controls="m21b-menu" aria-label="${esc(T("conta.menu.rotulo", ME.name))}">
+      <span class="m21b-account__name">${esc(ME.name)}</span>
+      <span class="ruvor-avatar" aria-hidden="true">${esc(initials(ME.name, ME.email))}</span>
+      ${glyph("i-caret-down")}
+    </button>
+    <div class="m21b-menu" id="m21b-menu"${S.menu ? "" : " hidden"}>
+      <div class="m21b-menu__who">
+        <p class="m21b-menu__name">${esc(ME.name)}</p>
+        <p class="m21b-menu__email">${esc(ME.email)}</p>
+      </div>
+      <div class="m21b-menu__org">
+        <p class="ruvor-eyebrow">${esc(T("conta.menu.organizacao"))}</p>
+        <p>${esc(ME.organization.is_personal ? T("conta.menu.pessoal") : ME.organization.name)}</p>
+      </div>
+      <ul class="m21b-menu__list">
+        <li><a class="m21b-menu__item" href="#" aria-current="page">${glyph("i-shield-check")}<span>${esc(T("conta.menu.senha"))}</span></a></li>
+        <li><a class="m21b-menu__item" href="#">${glyph("i-buildings")}<span>${esc(T("conta.menu.usuarios"))}</span></a></li>
+        <li class="m21b-menu__sep" role="presentation"></li>
+        <li><button class="m21b-menu__item" type="button">${glyph("i-sign-out")}<span>${esc(T("conta.menu.sair"))}</span></button></li>
+      </ul>
+    </div>`;
+  $("button.m21b-account", slot).addEventListener("click", () => setMenu(!S.menu));
+  for (const a of slot.querySelectorAll(".m21b-menu__item")) a.addEventListener("click", (e) => { e.preventDefault(); setMenu(false); });
+}
+function setMenu(open, refocus = false) {
+  S.menu = open;
+  const btn = $("button.m21b-account");
+  const menu = $("#m21b-menu");
+  if (!btn || !menu) return;
+  btn.setAttribute("aria-expanded", String(open));
+  menu.hidden = !open;
+  if (!open && refocus) btn.focus();
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.menu) setMenu(false, true); });
+document.addEventListener("click", (e) => { if (S.menu && !e.target.closest(".m21b-slot, .mk-bar")) setMenu(false); });
+
+// ---------------------------------------------------------------- render
+function render() {
+  if (!valido(S.modo, S.estado)) S.estado = "vazio";
+  const vol = S.modo === "voluntaria";
+
+  // a voluntária: o painel com o formulário ou a frase; no 401, o aviso no lugar do painel
+  const volEstado = vol ? S.estado : "vazio";
+  const panel = (inner) => `<section class="ruvor-panel m21b-pane"><div class="ruvor-panel__body">${inner}</div></section>`;
+  $("[data-vol-slot]").innerHTML = volEstado === "sessao-terminou"
+    ? `<div class="m21b-pane">${signInNotice(AQUI)}</div>`
+    : panel(volEstado === "sucesso" ? successHtml("voluntaria") : formHtml("voluntaria", volEstado));
+  renderSlot(volEstado === "sessao-terminou");
+
+  // a obrigatória (a URL corrente é a rota que a troca bloqueia: aqui, NEXT)
+  const obrEstado = vol ? "vazio" : S.estado;
+  $("[data-obr-side]").innerHTML = obrEstado === "sucesso"
+    ? `<div class="m21b-auth">${successHtml("obrigatoria")}</div>`
+    : obrEstado === "sessao-terminou"
+      ? `<div class="m21b-auth">${signInNotice(NEXT)}</div>`
+      : formHtml("obrigatoria", obrEstado);
+
+  // data-part: só no estado de base, e só no modo à vista.
+  for (const n of document.querySelectorAll("[data-part]")) n.removeAttribute("data-part");
+  if (S.estado === "vazio") {
+    for (const n of $(`[data-view="${S.modo}"]`).querySelectorAll("[data-mark]")) n.setAttribute("data-part", n.dataset.mark);
+  }
+
+  // a tela e a moldura
+  const tela = S.vista === "tela" ? S.modo : S.vista;
+  for (const v of document.querySelectorAll(".mk-view")) v.hidden = v.dataset.view !== tela;
+  for (const b of document.querySelectorAll("[data-mk-modo]")) b.setAttribute("aria-pressed", String(b.dataset.mkModo === S.modo));
+  for (const b of document.querySelectorAll("[data-mk-estado]")) {
+    b.setAttribute("aria-pressed", String(b.dataset.mkEstado === S.estado));
+    b.disabled = !valido(S.modo, b.dataset.mkEstado);
+  }
+  for (const b of document.querySelectorAll("[data-mk-vista]")) b.setAttribute("aria-pressed", String(b.dataset.mkVista === S.vista));
+  if (S.vista === "estreito") refreshFrames();
+  // O foco: no "Continuar" do sucesso e no "Entrar" do 401.
+  if (S.vista === "tela") $(`[data-view="${S.modo}"] [data-autofocus]`)?.focus();
+}
+
+// ---------------------------------------------------------------- tema e nível
+function setTheme(next) {
+  S.tema = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of document.querySelectorAll("[data-set-theme]")) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  for (const b of document.querySelectorAll("[data-mk-tema]")) b.setAttribute("aria-pressed", String(b.dataset.mkTema === next));
+  if (S.vista === "estreito") refreshFrames();
+}
+for (const b of document.querySelectorAll("[data-set-theme]")) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+for (const b of document.querySelectorAll("[data-mk-tema]")) b.addEventListener("click", () => setTheme(b.dataset.mkTema));
+for (const b of document.querySelectorAll("[data-set-reading]")) b.addEventListener("click", () => {
+  for (const o of document.querySelectorAll("[data-set-reading]")) o.setAttribute("aria-pressed", String(o === b)); // nenhum texto desta tela muda com o nível
+});
+
+for (const b of document.querySelectorAll("[data-mk-modo]")) b.addEventListener("click", () => { S.modo = b.dataset.mkModo; S.menu = false; render(); });
+for (const b of document.querySelectorAll("[data-mk-estado]")) b.addEventListener("click", () => { S.estado = b.dataset.mkEstado; S.menu = false; render(); });
+for (const b of document.querySelectorAll("[data-mk-vista]")) b.addEventListener("click", () => { S.vista = b.dataset.mkVista; S.menu = false; render(); });
+
+// As vistas em 360 px: o modo e o estado escolhidos e, ao lado, as duas bases e um erro.
+function refreshFrames() {
+  const src = (m, e) => `${location.pathname}?moldura=0&vista=tela&modo=${m}&estado=${e}&tema=${S.tema}`;
+  const pares = [[S.modo, S.estado], ["voluntaria", "vazio"], ["obrigatoria", "vazio"], ["voluntaria", "nova-fraca"], ["voluntaria", "sessao-terminou"], ["obrigatoria", "sessao-terminou"], ["obrigatoria", "sair-falhou"], ["voluntaria", "sucesso"], ["obrigatoria", "sucesso"]];
+  const vistos = new Set();
+  $("[data-frames]").innerHTML = pares
+    .filter(([m, e]) => { const k = `${m}/${e}`; if (vistos.has(k)) return false; vistos.add(k); return true; })
+    .map(([m, e]) => `<div class="mk-frame"><p>${esc(m)} · ${esc(e)}, 360 px</p><iframe title="A troca de senha em 360 px, ${esc(m)}, ${esc(e)}" src="${src(m, e)}"></iframe></div>`)
+    .join("");
+}
+
+// ---------------------------------------------------------------- os textos (vista "os textos")
+function renderTextos() {
+  const out = (k, v) => (typeof v === "function" ? (EXEMPLOS[k] ?? [[]]).map((a) => `${esc(v(...a))}<small>(${a.map(String).join(", ")})</small>`).join("<br>") : esc(v));
+  let rows = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+  for (const k of Object.keys(TEXTOS)) rows += `<tr><td>${esc(k)}<small>${esc(NOTAS[k] ?? "texto")}</small></td><td>${out(k, TEXTOS[k])}</td></tr>`;
+  $("[data-textos]").innerHTML = `${rows}</tbody>`;
+  let c = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+  for (const k of Object.keys(COMPARTILHADOS)) c += `<tr><td>${esc(k)}<small>${esc(ONDE_COMPARTILHADOS[k])}</small></td><td>${esc(COMPARTILHADOS[k])}</td></tr>`;
+  $("[data-compartilhados]").innerHTML = `${c}</tbody>`;
+  const ARGS_HERDADOS = { "acesso.erro.tentativas": [[42], [null]], "conta.menu.rotulo": [[ME.name]] };
+  let h = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+  for (const k of Object.keys(ONDE_HERDADOS)) {
+    const v = HERDADOS[k];
+    const txt = typeof v === "function" ? ARGS_HERDADOS[k].map((a) => esc(v(...a))).join("<br>") : esc(v);
+    h += `<tr><td>${esc(k)}<small>${esc(ONDE_HERDADOS[k])}</small></td><td>${txt}</td></tr>`;
+  }
+  $("[data-herdados]").innerHTML = `${h}</tbody>`;
+  $("[data-exemplos]").textContent = `  "senha.obrigatoria.conta": [["ana.souza@exemplo.com"]],`;
+  $("[data-api-msgs]").innerHTML = API_MSGS.map((m) => `<li>${esc(m)}</li>`).join("");
+}
+
+// ?modo=voluntaria|obrigatoria &estado=<um de ESTADOS> &vista=tela|estreito|textos &tema=light|dark|system &moldura=0
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+document.addEventListener("submit", (e) => e.preventDefault());
+document.addEventListener("click", (e) => { if (e.target.closest("a[href='#']")) e.preventDefault(); });
+renderTextos();
+setTheme(S.tema);
+render();
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>
