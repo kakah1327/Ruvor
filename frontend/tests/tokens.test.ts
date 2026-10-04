@@ -735,3 +735,40 @@ describe("M2.4 — a grade do laboratório no kit", () => {
     );
   });
 });
+
+// M5.1 (T11): o que o retorno.html aprovado pediu ao kit e que a vista não confere sozinha — a
+// previsão do próximo pregão com destaque menor que o do veredito (portão da T9): o tamanho
+// micro, como a tag, mas em texto suave, sem fundo e sem peso, e o número também suave (L3 da
+// revisão do mockup). As cores são tokens já medidos no V-04 (texto suave sobre surface; a tag
+// --evidence sobre o -soft dela): nenhum par novo.
+describe("M5.1 — o retorno no kit", () => {
+  it("a linha da previsão é micro e suave, sem fundo nem peso", () => {
+    const line = ".ruvor-returns-forecast__line";
+    expect(ruleValue(COMPONENTS_CSS, line, "font-size")).toBe(
+      "var(--ruvor-type-micro-size)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, line, "color")).toBe("var(--ruvor-text-muted)");
+    const body = COMPONENT_RULES.filter((rule) => rule.selector === line)
+      .map((rule) => rule.body)
+      .join(";");
+    expect(body).not.toMatch(/(?<![\w-])(background|font-weight)\s*:/);
+  });
+
+  it("o número da previsão também é suave, e não a tinta do veredito", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-returns-forecast__line .ruvor-num", "color"),
+    ).toBe("var(--ruvor-text-muted)");
+  });
+
+  it("a tag do veredito tem fundo e peso, que a previsão não tem", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag", "font-size")).toBe(
+      "var(--ruvor-type-micro-size)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag", "font-weight")).toBe(
+      "var(--ruvor-type-micro-weight)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag--evidence", "background")).toBe(
+      "var(--ruvor-evidence-soft)",
+    );
+  });
+});
