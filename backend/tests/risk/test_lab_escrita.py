@@ -442,8 +442,9 @@ def _corrida(
             assert segundo_partiu.wait(ESPERA)
             time.sleep(0.5)  # a outra chega a trava, ou a uma conferencia antes dela
         else:
-            # sob a trava: o `ok` ja gravou e confirmou quando a outra chega aqui
-            segundo_no_desvio.append(ok_terminou.is_set())
+            # sob a trava: o `ok` ja gravou e confirmou quando a outra chega aqui. Confere no
+            # banco, e nao por `ok_terminou`: a trava sai no commit, antes do `finally` do `ok`
+            segundo_no_desvio.append(LabRun.objects.filter(status=LabRun.Status.OK).exists())
             ok_terminou.wait(ESPERA)
 
     def grava(status: str) -> None:
