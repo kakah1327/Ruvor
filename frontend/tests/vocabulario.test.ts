@@ -223,3 +223,58 @@ describe("V-09 do M1.6c — o radical da imprensa nas entradas comunicados.*", (
     expect(achados).toEqual([]);
   });
 });
+
+/**
+ * RF-17 do M2.4: a seção do laboratório não elege modelo. Além da varredura de sempre, as
+ * entradas `laboratorio.*` — nas duas leituras, avaliadas pelos exemplos — não usam as palavras
+ * do "ranking" da Etapa 6 do TCC; palavra inteira, sem caixa.
+ */
+const PROIBIDAS_LABORATORIO =
+  /(?<![\p{L}\p{N}_])(pior|piores|vencedor|vencedores|venceu|ranking|campeão)(?![\p{L}\p{N}_])/iu;
+
+describe("RF-17 do M2.4 — o vocabulário do laboratório nas entradas laboratorio.*", () => {
+  it.each(["o pior", "Vencedor", "RANKING", "campeão", "os piores", "venceu"])(
+    "pega %j",
+    (texto) => {
+      expect(PROIBIDAS_LABORATORIO.test(texto)).toBe(true);
+    },
+  );
+
+  it.each(["superior", "convenceu", "rankings2"])("não pega %j", (texto) => {
+    expect(PROIBIDAS_LABORATORIO.test(texto)).toBe(false);
+  });
+
+  const registros: Array<[string, object, Exemplos]> = [
+    ["iniciante", TEXTOS, EXEMPLOS],
+    ["avançada", TEXTOS_AVANCADOS, EXEMPLOS_AVANCADOS],
+  ];
+
+  it.each(registros)("as entradas laboratorio.* da %s existem", (_rotulo, registro) => {
+    const chaves = Object.keys(registro).filter((k) => k.startsWith("laboratorio."));
+    expect(chaves.length).toBeGreaterThan(0);
+  });
+
+  it.each(registros)(
+    "nenhuma entrada laboratorio.* da %s usa o vocabulário do ranking",
+    (_rotulo, registro, exemplos) => {
+      const achados: string[] = [];
+      for (const [chave, valor] of Object.entries(registro) as Array<
+        [string, unknown]
+      >) {
+        if (!chave.startsWith("laboratorio.")) continue;
+        const saidas =
+          typeof valor === "string"
+            ? [valor]
+            : (exemplos[chave] ?? []).map((args) =>
+                (valor as (...a: unknown[]) => string)(...args),
+              );
+        expect(saidas.length, chave).toBeGreaterThan(0);
+        for (const saida of saidas) {
+          const m = PROIBIDAS_LABORATORIO.exec(saida);
+          if (m !== null) achados.push(`${chave}: ${m[1]}`);
+        }
+      }
+      expect(achados).toEqual([]);
+    },
+  );
+});

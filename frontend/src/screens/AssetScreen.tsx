@@ -15,6 +15,7 @@ import { BehaviorSection } from "../components/BehaviorSection";
 import { DisclosuresSection } from "../components/DisclosuresSection";
 import { EventsSection } from "../components/EventsSection";
 import { FundamentalsSection } from "../components/FundamentalsSection";
+import { LabSection } from "../components/LabSection";
 import { PriceSection } from "../components/PriceSection";
 import {
   RiskSection,
@@ -263,6 +264,10 @@ export function AssetScreen({ ticker }: { ticker: string }) {
           onInactive={onInactive}
         />
       </div>
+
+      {/* O laboratório (M2.4, RF-13): colado no risco, antes do retorno do M5.1 e dos
+          Fundamentos; fora do `data-ready`. */}
+      <LabSection load={data.lab} onRetry={data.reload.lab} />
 
       <FundamentalsSection
         load={data.fundamentals}

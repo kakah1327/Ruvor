@@ -146,6 +146,36 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "risco.estado.recalculando": [[12, 18]],
   "risco.estado.E4": [[3, 18]],
   "risco.pedido.erro": [["Erro interno. Tente de novo mais tarde."]],
+  // laboratorio.*: o registro EXEMPLOS do `laboratorio.html` aprovado (M2.4, T9), cobrindo os
+  // ramos — o último trecho curto e cheio; acima, abaixo e dentro do esperado; um e dois modelos.
+  "laboratorio.decada": [
+    ["22/09/2016", "22/09/2026", 9, 222],
+    ["22/09/2016", "22/09/2026", 9, 252],
+  ],
+  "laboratorio.diferenca": [["0.4.0", "22/09/2026"]],
+  "laboratorio.violacoesAno": [
+    ["12,6", 20],
+    ["2,5", 100],
+  ],
+  "laboratorio.vereditoAno": [[81]],
+  "laboratorio.anoNaoJulgado": [[110]],
+  "laboratorio.violacoesDecada": [
+    ["108", "111,9", 20, true],
+    ["50", "22,4", 100, false],
+    ["10", "22,4", 100, false],
+    ["1", "2,5", 100, false],
+  ],
+  "laboratorio.estado.falhou": [["05/10/2026"]],
+  "laboratorio.estado.semDecada": [["28/10/2016", "28/10/2026"]],
+  "laboratorio.estado.serieCurta": [["480", "503"]],
+  "laboratorio.nota.falha": [["05/10/2026"]],
+  "laboratorio.nota.motor": [["0.4.0", "0.5.0"]],
+  "laboratorio.nota.parcial": [[1], [2]],
+  "laboratorio.grade.ano": [[1]],
+  "laboratorio.grade.periodo": [["set/2017", "set/2018"]],
+  "laboratorio.grade.esperadas": [["12,6"]],
+  "laboratorio.grade.kDeN": [[4, 9]],
+  "laboratorio.trilha.retratos": [["72", "0"]],
   // fundamentos.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c), um por ramo.
   "fundamentos.proveniencia": [["30/06/2026", "ITR", "28/09/2026 às 08:02"]],
   "fundamentos.vezes": [["4,65"]],
@@ -373,4 +403,23 @@ export const EXEMPLOS_AVANCADOS: Readonly<
   ],
   "fundamentos.pares.abaixoDeTodas": [["3"]],
   "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
+  // laboratorio.*: o registro EXEMPLOS (as avançadas) do `laboratorio.html` aprovado (M2.4, T9), cobrindo os
+  // ramos — o último trecho curto e cheio; acima, abaixo e dentro do esperado; um e dois modelos.
+  "laboratorio.decada": [
+    ["22/09/2016", "22/09/2026", 9, 222],
+    ["22/09/2016", "22/09/2026", 9, 252],
+  ],
+  "laboratorio.diferenca": [["0.4.0", "22/09/2026"]],
+  "laboratorio.violacoesAno": [
+    ["12,6", 20],
+    ["2,5", 100],
+  ],
+  "laboratorio.vereditoAno": [[81]],
+  "laboratorio.anoNaoJulgado": [[110]],
+  "laboratorio.violacoesDecada": [
+    ["108", "111,9", 20, true],
+    ["50", "22,4", 100, false],
+    ["10", "22,4", 100, false],
+    ["1", "2,5", 100, false],
+  ],
 };
