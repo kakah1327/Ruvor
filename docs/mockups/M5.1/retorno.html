@@ -37,7 +37,7 @@
   /* --- A previsão do próximo pregão: menor que o veredito, sem seta nem cor -------------- */
   .m51-forecast { display: flex; flex-direction: column; gap: var(--ruvor-space-1); padding-top: var(--ruvor-space-3); border-top: 1px dashed var(--ruvor-table-rule); }
   .m51-forecast__line { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-1) var(--ruvor-space-3); font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); color: var(--ruvor-text-muted); }
-  .m51-forecast__line .ruvor-num { color: var(--ruvor-ink); }
+  .m51-forecast__line .ruvor-num { color: var(--ruvor-text-muted); }
 
   /* --- O aviso e a frase do veredito: o parágrafo do callout sem margem, ao lado do ícone -- */
   .m51-callout p { margin: 0; max-width: 92ch; }
@@ -189,6 +189,8 @@ const fInstantParts = (s) => {
   const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(s)).map((x) => [x.type, x.value]));
   return [`${p.day}/${p.month}/${p.year}`, `${p.hour}:${p.minute}`];
 };
+// O sinal de menos tipográfico (U+2212) em todo número; a T12 leva isso a frontend/src/format/numbers.ts.
+const minus = (s) => s.replace(/-/g, "−");
 const fPval = (v) => (Number(v) < 0.001 ? "< 0,001" : fDec3.format(Number(v))); // ModelTable.tsx
 
 // ---------------------------------------------------------------- os textos
@@ -254,13 +256,13 @@ const INICIANTE_NOVA = {
     return `${quem}, e o teste indica que a diferença dificilmente é acaso nesta série. A vantagem é pequena, e, entre muitos ativos e dois modelos, alguns casos assim aparecem por acaso.${outro}${falhaFrase(falhos)}`;
   },
   "retorno.r2_os": (valor, menos) =>
-    `${menos ? `Errou ${valor} menos` : `Errou ${valor} mais`} do que supor retorno zero, somando o erro de todos os dias de teste.`,
+    `${menos ? `Errou ${valor} menos` : `Errou ${valor} mais`} do que supor retorno zero nos pregões de teste, medindo o erro de cada dia ao quadrado.`,
   "retorno.acerto": (acerto, alta) =>
     `Acertou se o dia seria de alta ou de queda em ${acerto} dos dias; a ação subiu em ${alta} deles. Quem dissesse “alta” todo dia acertaria ${alta}.`,
   "retorno.dm": (p, bate) =>
     `O teste que decide o veredito: com p-valor abaixo de 0,05, a diferença para o retorno zero dificilmente é acaso. Aqui, ${p}: ${bate ? "bate a referência" : "não bate"}.`,
   "retorno.cw": (p) =>
-    `Outro teste do mesmo erro, que dá ao modelo o desconto de ele poder imitar o retorno zero. Aqui, ${p}. Não entra no veredito.`,
+    `Outro teste do mesmo erro, que desconta o ruído de estimar os parâmetros, já que o zero é um caso particular do modelo. Aqui, ${p}. Não entra no veredito.`,
   "retorno.pt": (p, todosAlta) => (p !== null
     ? `Confere se o acerto de alta ou queda é maior que o de um palpite ao acaso com as mesmas proporções. Aqui, ${p}. Não entra no veredito.`
     : `O modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias: o acerto dele é a parcela de dias de ${todosAlta ? "alta" : "queda"}, e não há o que testar.`),
@@ -272,7 +274,7 @@ const INICIANTE_NOVA = {
 // copia a de docs/mockups/M5.1/conferencia-retorno.md, onde está o caminho:linha que a confere.
 const AVANCADA_NOVA = {
   "retorno.veredito": (ticker, n, fim, batem, naoBatem, falhos) => {
-    const base = `Veredito por modelo: o teste de Diebold-Mariano com perda quadrática, unilateral (a alternativa é "o modelo erra menos que o zero"), contra a referência de retorno zero, nos ${n} dias de teste até ${fim}; bate quando o p-valor, arredondado a 10 casas, fica abaixo de 0,05.`;
+    const base = `Veredito por modelo: o teste de Diebold-Mariano com perda quadrática, unilateral (a alternativa é "o modelo erra menos que o zero"), contra a referência de retorno zero, nos ${n} pregões de teste até ${fim}; bate quando o p-valor, arredondado a 10 casas, fica abaixo de 0,05.`;
     const falha = falhos ? ` ${falhos === 1 ? "Um modelo ficou" : "Os dois ficaram"} sem veredito: o cálculo falhou.` : "";
     if (batem.length === 0) {
       return `${base} ${naoBatem.length === 2 ? "Nenhum dos dois ficou abaixo" : naoBatem.length === 1 ? `${naoBatem[0]} não ficou abaixo` : "Nenhum foi julgado"}${naoBatem.length ? ": as previsões não são mais informativas que supor retorno zero." : "."}${falha}`;
@@ -280,7 +282,7 @@ const AVANCADA_NOVA = {
     return `${base} ${nomes(batem.map(([nm]) => nm))} ${batem.length === 2 ? "ficaram" : "ficou"} abaixo. O DM só é positivo quando o erro quadrático médio do modelo é menor que o da referência, e bater implica erro relativo positivo. Com dois modelos e muitos ativos, alguns casos assim aparecem por acaso; o acerto de direção (PT) não entra no veredito.${falha}`;
   },
   "retorno.r2_os": (valor, menos) =>
-    `Erro relativo à referência: 1 − EQM do modelo / EQM de supor zero, com EQM a média do quadrado do erro sobre os dias de teste (o R² fora da amostra com referência zero). Aqui, ${menos ? "+" : "−"}${valor}: o modelo errou ${menos ? "menos" : "mais"} que o zero.`,
+    `Erro relativo à referência: 1 − EQM do modelo / EQM de supor zero, com EQM a média do quadrado do erro sobre os pregões de teste (o R² fora da amostra com referência zero). Aqui, ${valor === "0,00%" ? valor : `${menos ? "+" : "−"}${valor}`}: o modelo errou ${menos ? "menos" : "mais"} que o zero.`,
   "retorno.acerto": (acerto, alta) =>
     `Acerto de direção: a parcela dos dias em que o sinal da previsão foi o do retorno, contada só nos dias com retorno e previsão diferentes de zero; ${acerto}. A régua é a parcela de dias de alta nesses mesmos dias, ${alta}.`,
   "retorno.dm": (p, bate) =>
@@ -296,7 +298,7 @@ const AVANCADA_NOVA = {
 // (2) Os estados, a previsão ausente, os títulos, os rótulos e o aviso: uma leitura só, fora da lista fechada.
 const OUTROS_NOVOS = {
   "retorno.sobrancelha": "Retorno",
-  "retorno.titulo": "A previsão do retorno, posta à prova",
+  "retorno.titulo": "Os modelos de retorno, postos à prova",
   "retorno.intro": "Dois modelos estatísticos simples tentam prever o retorno de cada pregão desta ação, e a plataforma confere, no passado, se eles erraram menos do que supor retorno zero.",
   "retorno.aviso": "Esta seção mede se dois modelos estatísticos simples, no passado, teriam errado menos ao prever o retorno diário desta ação do que supor que ele é zero. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo, e nada aqui diz o que o preço vai fazer. A previsão de cada modelo para o próximo pregão é um número estatístico, não uma expectativa nem uma indicação; a de um modelo que não bate a referência não é mais informativa que supor zero. Não bater essa referência é o resultado mais comum — o retorno de um dia é quase imprevisível. Um modelo que bateu no passado pode deixar de bater, e a vantagem, quando aparece, é pequena.",
   "retorno.carregando": "Carregando a validação do retorno deste ativo.",
@@ -398,10 +400,10 @@ const modelName = (m) => T(`retorno.modelo.${m}`);
 const failed = (r) => r.error !== "";
 const verdictTag = (r) => (failed(r)
   ? `<span class="ruvor-tag ruvor-tag--review" data-verdict="error">${esc(T("retorno.tag.erro"))}</span>`
-  : r.beats_reference ? `<span class="ruvor-tag ruvor-tag--validated" data-verdict="beats">${esc(T("retorno.tag.bate"))}</span>`
+  : r.beats_reference ? `<span class="ruvor-tag ruvor-tag--evidence" data-verdict="beats">${esc(T("retorno.tag.bate"))}</span>`
   : `<span class="ruvor-tag ruvor-tag--neutral" data-verdict="not_beats">${esc(T("retorno.tag.naoBate"))}</span>`);
 const r2Abs = (r) => fPct2.format(Math.abs(Number(r.r2_os)));
-const fForecast = (v) => fPct2s.format(Number(v)); // log-retorno de 1 dia, em %, duas casas, com sinal
+const fForecast = (v) => minus(fPct2s.format(Number(v))); // log-retorno de 1 dia, em %, duas casas, com sinal
 
 function statePanel({ tone = "evidence", title, text, actions = "" }) {
   const icon = tone === "review" ? "i-warning-duo" : "i-info-duo";
@@ -457,8 +459,8 @@ function details(L) {
     if (failed(r)) return `<section class="m51-model">${head}${why(T("retorno.erroModelo", r.error))}</section>`;
     const todosAlta = r.pt_p_value === null ? Number(r.forecast_up_share) === 1 : null;
     return `<section class="m51-model" data-model="${r.model_name}">${head}<dl class="ruvor-tests">
-      ${testRow(T("retorno.rotulo.mse"), `<span class="ruvor-num">${esc(Number(r.mse).toExponential(3).replace(".", ","))}</span>`)}
-      ${testRow(T("retorno.rotulo.mseRef"), `<span class="ruvor-num">${esc(Number(r.mse_reference).toExponential(3).replace(".", ","))}</span>`)}
+      ${testRow(T("retorno.rotulo.mse"), `<span class="ruvor-num">${esc(minus(Number(r.mse).toExponential(3).replace(".", ",")))}</span>`)}
+      ${testRow(T("retorno.rotulo.mseRef"), `<span class="ruvor-num">${esc(minus(Number(r.mse_reference).toExponential(3).replace(".", ",")))}</span>`)}
       ${testRow(T("retorno.rotulo.cw"), `<span class="ruvor-num">${esc(fPval(r.cw_p_value))}</span>`, P("retorno.cw", fPval(r.cw_p_value)), "cw")}
       ${testRow(T("retorno.rotulo.pt"), `<span class="ruvor-num">${esc(r.pt_p_value === null ? T("retorno.semPt") : fPval(r.pt_p_value))}</span>`, P("retorno.pt", r.pt_p_value === null ? null : fPval(r.pt_p_value), todosAlta), "pt")}
     </dl></section>`;
@@ -583,7 +585,7 @@ function renderAtivo() {
   const t = view === "petr4" ? "PETR4" : "ITUB4";
   const data = FOTO[t];
   const L = data.latest;
-  $("#m51-ativo-note").innerHTML = `<p><b>Nota do mockup · não é tela.</b> ${t}, a foto real da fase A, sem mudança: motor <code>${esc(L.engine_version)}</code>, último pregão ${fDate(L.as_of_date)}, ${fInt.format(L.test_count)} dias de teste. Hoje fixo em ${fDate(HOJE)}: a previsão para ${fDate(L.results[0].next_forecast_date)} aparece.</p>
+  $("#m51-ativo-note").innerHTML = `<p><b>Nota do mockup · não é tela.</b> ${t}, a foto real da fase A, sem mudança: motor <code>${esc(L.engine_version)}</code>, último pregão ${fDate(L.as_of_date)}, ${fInt.format(L.test_count)} pregões de teste. Hoje fixo em ${fDate(HOJE)}: a previsão para ${fDate(L.results[0].next_forecast_date)} aparece.</p>
     <p><b>Ordem:</b> risco → laboratório (M2.4) → retorno → Fundamentos. <b>Iniciante:</b> o aviso aberto, a frase do veredito, os dois modelos com o veredito, o histórico (erro relativo, acerto ao lado da parcela de alta, p do DM) e, por último, a previsão; os erros quadráticos, o CW, o PT e a trilha recolhidos. <b>Avançada:</b> as frases avançadas e os recolhidos abertos.</p>
     <p><b>A previsão</b> vem só dentro da linha do modelo, depois do veredito e do histórico, no tamanho micro do kit, sem fundo nem peso (a tag do veredito tem o mesmo tamanho, com fundo e peso; o título do modelo é maior), sem seta, sem cor de alta ou queda, com a referência 0,00% ao lado. Os modelos seguem a ordem de <code>model_name</code>, sem mérito.</p>`;
   $("#m51-ativo-host").innerHTML = section(ATIVO, okReturns(data), PRECOS(L.price_count), t.toLowerCase());
@@ -612,7 +614,7 @@ const EXEMPLOS = {
   "retorno.dm": [["0,458", false], ["0,031", true]],
   "retorno.cw": [["0,049"]],
   "retorno.pt": [["0,445", null], [null, true], [null, false]],
-  "retorno.previsao": [["-0,05%", "05/10/2026", false], ["+0,09%", "05/10/2026", true]],
+  "retorno.previsao": [["−0,05%", "05/10/2026", false], ["+0,09%", "05/10/2026", true]],
   "retorno.estado.serieCurta": [["312", "503"]],
   "retorno.previsao.passada": [["28/09/2026"]],
   "retorno.previsao.rotulo": [["05/10/2026"]],
@@ -632,8 +634,8 @@ const ONDE = {
 };
 
 // A lista ampliada do RF-21, proposta para o portão fechar: palavra inteira, sem caixa, por raiz.
-const AMPLIADA = /(?<![\p{L}\p{N}])(compr\p{L}*|vend\p{L}*|mant(er|enha|enham|ém)|lucr\p{L}*|oportunidades?|garant\p{L}*|alvos?|apost\p{L}*|promissor(a|as|es)?)(?![\p{L}\p{N}])|vai (subir|cair|valorizar|desvalorizar|render)|vão (subir|cair)|deve (subir|cair|render)|tende a (subir|cair)/iu;
-const PEGA = ["vendeu", "comprado", "mantenha", "a ação vai subir", "deve cair", "tende a subir", "oportunidade", "garante", "lucro"];
+const AMPLIADA = /(?<![\p{L}\p{N}_])(compr\p{L}*|vend\p{L}*|mant(er|enha|enham|ém)|lucr\p{L}*|ganh\p{L}*|rentab\p{L}*|oportunidades?|garant\p{L}*|alvos?|apost\p{L}*|promissor(a|as|es)?)(?![\p{L}\p{N}_])|vai (subir|cair|valorizar|desvalorizar|render)|vai se (valorizar|desvalorizar)|vão (subir|cair)|deve (subir|cair|render)|tende a (subir|cair)/iu;
+const PEGA = ["vendeu", "comprado", "mantenha", "a ação vai subir", "deve cair", "tende a subir", "oportunidade", "garante", "lucro", "ganho", "rentabilidade", "vai se valorizar"];
 
 function amostras() {
   // toda saída de toda chave retorno.* (menos retorno.aviso), nas duas leituras, com os exemplos
