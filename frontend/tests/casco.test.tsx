@@ -10,6 +10,11 @@
  * troca feita em outro ponto da página — e o primeiro desenho no nível lembrado, provado por
  * `renderToString`, que não roda efeitos. `reading.ts` também guarda o nível em memória: o
  * `freshShell` o importa de novo junto com o casco.
+ *
+ * O lugar da conta (M2.1b, RF-09): por último na barra, depois da chave de tema. Sem o provedor
+ * da sessão, o anônimo do padrão; nos casos logados e no carregando, o `SessionProvider` vem do
+ * **mesmo grafo de módulos** que o casco, recarregado pelo `freshShell` — o de outro grafo teria
+ * outro contexto, e o casco ficaria no anônimo do padrão.
  */
 import {
   act,
@@ -81,6 +86,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("chave de tema", () => {
@@ -169,6 +175,11 @@ describe("o alternador do nível de leitura (V-03 do M2.3)", () => {
     ).not.toBe(0);
     expect(reading.parentElement).toBe(theme.parentElement);
     expect(reading.parentElement?.className).toBe("ruvor-topbar__prefs");
+    // M2.1b (T10): até 840 px, o kit endereça o alternador como a .ruvor-segmented seguida de
+    // outra e a chave de tema como a que segue outra — os dois vizinhos, nessa ordem.
+    expect(reading.nextElementSibling).toBe(theme);
+    expect(reading.classList.contains("ruvor-segmented")).toBe(true);
+    expect(theme.classList.contains("ruvor-segmented")).toBe(true);
     expect(reading.closest("[aria-live]")).toBeNull();
   });
 
@@ -337,5 +348,85 @@ describe("rodapé", () => {
     expect(footer().querySelector("[data-provenance]")).not.toBeNull();
     act(() => set?.(null));
     expect(footer().querySelector("[data-provenance]")).toBeNull();
+  });
+});
+
+describe("o lugar da conta na barra (M2.1b, RF-09)", () => {
+  const ME = {
+    email: "ana.souza@exemplo.com",
+    name: "Ana Beatriz Souza",
+    role: "admin",
+    must_change_password: false,
+    is_staff: false,
+    organization: { name: "Gestora Exemplo", slug: "gestora", is_personal: false },
+  };
+
+  const slot = () => document.querySelector(".ruvor-topbar__account") as HTMLElement;
+
+  /** O casco sob o provedor da sessão do mesmo grafo; `me` nulo deixa o `auth/me` pendente. */
+  async function renderWithSession(me: object | null, path = "/ativos/ITUB4") {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url !== "/api/v1/auth/me") return new Promise<Response>(() => {});
+        if (me === null) return new Promise<Response>(() => {});
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => me,
+        } as unknown as Response);
+      }),
+    );
+    const { Shell } = await freshShell();
+    const { SessionProvider } = await import("../src/session/SessionProvider");
+    const router = createMemoryRouter(
+      [
+        {
+          element: <SessionProvider />,
+          children: [{ element: <Shell />, children: [{ path: "*", element: null }] }],
+        },
+      ],
+      { initialEntries: [path] },
+    );
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      for (let i = 0; i < 20; i += 1) await Promise.resolve();
+    });
+  }
+
+  it("sem o provedor: o anônimo do padrão, por último, depois da chave de tema", async () => {
+    await renderShell("/ativos/ITUB4");
+    const prefs = document.querySelector(".ruvor-topbar__prefs") as HTMLElement;
+    const reading = readingGroup();
+    const theme = screen.getByRole("group", { name: TEXTOS["casco.tema.rotulo"] });
+    expect([...prefs.children]).toEqual([reading, theme, slot()]);
+    expect(slot().getAttribute("data-account")).toBe("anonymous");
+    expect(
+      within(slot())
+        .getByRole("link", { name: TEXTOS["conta.entrar"] })
+        .getAttribute("href"),
+    ).toBe("/entrar?next=%2Fativos%2FITUB4");
+  });
+
+  it("logado, com o provedor do mesmo grafo: o botão de conta, no mesmo lugar", async () => {
+    await renderWithSession(ME);
+    expect(slot().getAttribute("data-account")).toBe("authenticated");
+    expect(
+      within(slot()).getByRole("button", {
+        name: TEXTOS["conta.menu.rotulo"](ME.name),
+      }),
+    ).toBeDefined();
+    const prefs = document.querySelector(".ruvor-topbar__prefs") as HTMLElement;
+    expect(prefs.lastElementChild).toBe(slot());
+    // O alternador e a chave de tema seguem vizinhos, nessa ordem (o kit até 840 px).
+    expect(readingGroup().nextElementSibling).toBe(
+      screen.getByRole("group", { name: TEXTOS["casco.tema.rotulo"] }),
+    );
+  });
+
+  it("carregando, com o provedor do mesmo grafo: o lugar vazio", async () => {
+    await renderWithSession(null);
+    expect(slot().getAttribute("data-account")).toBe("loading");
+    expect(slot().childElementCount).toBe(0);
   });
 });

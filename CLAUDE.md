@@ -139,6 +139,9 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
 **estresse histórico**: o ativo e o Ibovespa lado a lado nos quatro episódios da D-147, em `gold.stress_episode`, pelo
 `/metrics` e no bloco "Em momentos de estresse" da tela. Desde o M1.4b, o **motor corrigido** (`0.4.0`): nenhum dos
 nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a cada 252 pregões, numa janela que cresce.
+Desde o M2.1b, as **telas de acesso**: entrar, criar conta, trocar a senha — inclusive a troca obrigatória da senha
+provisória —, o menu de conta no casco e a gestão de usuários da organização; e o pedido de cálculo **exige conta**
+([D-140](docs/decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)).
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.4.0**, 9
   modelos de VaR, 4 testes de backtesting, 177 testes — 25 deles a linha de base numérica, que só vale no Windows e se
@@ -165,7 +168,9 @@ nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a 
   `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
   pedido aberto por ativo em `core.compute_request`, teto global e expiração
   ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
-  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)); e as
+  [D-90](docs/decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md)) — desde o M2.1b, **só com conta
+  pronta**: `ReadOpenWriteAccountReady` (`apps/api/permissions.py`) deixa o `GET` aberto e passa a escrita ao
+  `AccountReady`, e o anônimo recebe 401 ([D-140](docs/decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)); e as
   rotas de conta, `auth/*` e `organization/users*`, com sessão do Django e CSRF — quem não entrou
   recebe 401 `not_authenticated`, e toda view que exige conta declara `AccountReady`
   ([D-100](docs/decisoes/D-100-a-api-autentica-por-sessao-do-django-com-csrf.md),
@@ -209,7 +214,7 @@ nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a 
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1747 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1753 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` — e a
@@ -282,7 +287,16 @@ nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a 
 - `frontend/` — React em TypeScript estrito, Vite, Vitest, `react-router` e o **uPlot** nos
   gráficos ([D-94](docs/decisoes/D-94-os-graficos-sao-do-uplot.md)). As rotas `/` (a busca) e
   `/ativos/{ticker}` (a tela do ativo, com o risco, o pedido de cálculo e o acompanhamento), dentro do
-  casco (`components/Shell.tsx`); a caixa de busca **de página** — a `/` e a tela "ativo não
+  casco (`components/Shell.tsx`); desde o M2.1b, `/conta/senha` (a troca voluntária) e `/organizacao/usuarios` (a
+  gestão, que o menu só oferece à `admin` de organização não pessoal) também no casco, e `/entrar` e `/cadastro` fora
+  dele, em tela cheia. Na raiz das rotas, o `SessionProvider` (`src/session/`) lê `auth/me` uma vez e dá a sessão a todas as telas;
+  com a senha provisória por trocar, mostra a **troca obrigatória** no lugar de qualquer rota, sem mudar a URL (menos
+  em `/entrar` e `/cadastro`); o `next` da entrada só aceita caminho interno (`safeNext`). O **menu de conta** fica por
+  último na barra (`components/AccountMenu.tsx`), os avisos de sessão terminada e de página só para quem entrou em
+  `components/SignInNotice.tsx`, e o anônimo vê, no lugar do botão de calcular, o convite a entrar. O cliente
+  (`src/api/client.ts`) tem `apiPost`, `apiPatch` e `apiDelete` com corpo JSON, pede `auth/csrf` antes de toda escrita
+  sem cookie e repete uma vez em `csrf_failed`; o proxy do Vite preserva o `Host` (`changeOrigin: false`), para a
+  checagem de origem do CSRF valer em desenvolvimento. A caixa de busca **de página** — a `/` e a tela "ativo não
   encontrado" — pede a sugestão à API (`has_risk=true&limit=8`) uma vez por montagem, e a da barra não
   pede; consome `brand/ruvor/tokens.css` e `components.css` pelo apelido
   `@brand`, e o proxy do Vite leva `/health` e `/api` à `web`. **Todo texto visível mora em
@@ -294,8 +308,9 @@ nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a 
   método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
   ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
   [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
-  entradas. 1265 testes.
-  `frontend/e2e/` é o roteiro da execução real, com o Playwright na imagem oficial, fora da CI.
+  entradas. 1621 testes.
+  `frontend/e2e/` são os roteiros da execução real — `capturas.mjs` e, desde o M2.1b, `acesso.mjs`, que confere as
+  telas de acesso no navegador e as compara com os mockups aprovados —, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
   os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por

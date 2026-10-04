@@ -32,7 +32,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -40,6 +40,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
+from apps.accounts.schema import ApiErrorSerializer
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
 from apps.api.errors import ApiError
 from apps.api.models import ComputeRequest
@@ -50,6 +51,7 @@ from apps.api.ondemand import (
     lock_on_demand,
     timeout,
 )
+from apps.api.permissions import ReadOpenWriteAccountReady
 from apps.api.serializers import (
     HAS_RISK_DESCRIPTION,
     AssetDetailSerializer,
@@ -577,10 +579,14 @@ class AssetRiskView(APIView):
       sai `expired` no corpo e continua aberto no banco (RF-18).
     - `POST`: o pedido de calculo sob demanda, so para ativo nunca calculado (RF-14), na
       ordem literal do RF-17 -- a trava global, a expiracao dos vencidos, as decisoes e o
-      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19).
+      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19). So com conta pronta
+      (M2.1b, RF-01; D-140): sem sessao, 401 `not_authenticated`; com a senha provisoria por
+      trocar, 403 `password_change_required`. O `GET` segue aberto.
     """
 
-    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    permission_classes = [  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+        ReadOpenWriteAccountReady
+    ]
     api_key_scope: ClassVar[str | None] = (
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
@@ -589,7 +595,22 @@ class AssetRiskView(APIView):
     def get(self, request: Request, ticker: str) -> Response:
         return Response(risk_body(_asset(ticker), timezone.now()))
 
-    @extend_schema(request=None, responses={202: AssetRiskOut})  # M4.2, RF-12
+    @extend_schema(  # M4.2, RF-12; o 401 e o 403, M2.1b, RF-01
+        request=None,
+        responses={
+            202: AssetRiskOut,
+            401: OpenApiResponse(
+                ApiErrorSerializer, description="Sem sessão: `not_authenticated`."
+            ),
+            403: OpenApiResponse(
+                ApiErrorSerializer,
+                description=(
+                    "Senha provisória por trocar: `password_change_required`; ou chave "
+                    "de leitura: `api_key_not_allowed`."
+                ),
+            ),
+        },
+    )
     def post(self, request: Request, ticker: str) -> Response:
         """Decide **dentro** do `atomic` e levanta o erro **depois** de sair dele: um
         `ApiError` de dentro desfaria o `expire_stale`, e os vencidos tem de ficar gravados
@@ -608,8 +629,8 @@ class AssetRiskView(APIView):
         with transaction.atomic():
             lock_on_demand()
             expire_stale(now)
-            # o `isinstance` faz o papel do `is_authenticated` -- o anonimo e
-            # `AnonymousUser`, nunca `User` -- e estreita o tipo para a FK
+            # a permissao so deixa chegar aqui quem tem conta pronta (D-140): o
+            # `isinstance` so estreita o tipo para a FK, e o ramo `None` nao acontece
             error = _decide(
                 asset, now, request.user if isinstance(request.user, User) else None
             )
@@ -621,8 +642,9 @@ class AssetRiskView(APIView):
 def _decide(asset: Asset, now: datetime, requested_by: User | None) -> ApiError | None:
     """Os passos 4 a 6 do RF-17, sob a trava e depois do `expire_stale`: devolve o 409 ou o
     429 -- para o `POST` levantar fora do `atomic` --, ou `None` para o 202, inserindo o
-    pedido novo quando e o caso. `requested_by` e quem pediu, nulo no anonimo (M2.1a,
-    RF-26): so o pedido novo o grava; os dois 202 sem pedido novo nao mudam nada."""
+    pedido novo quando e o caso. `requested_by` e quem pediu (M2.1a, RF-26), sempre um
+    usuario desde a D-140, que fecha o `POST` ao anonimo: so o pedido novo o grava; os dois
+    202 sem pedido novo nao mudam nada."""
     if ComputeRequest.objects.filter(asset=asset, status__in=OPEN_STATUSES).exists():
         return None  # 202: o pedido aberto do ativo
     last_closed = (

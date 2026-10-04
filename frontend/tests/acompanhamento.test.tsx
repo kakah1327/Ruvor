@@ -259,6 +259,12 @@ function bodyOf(route: Route, url: URL): unknown | null {
   }
 }
 
+/**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03): responde 401 (anônimo) na hora e
+ * fica fora de `calls`.
+ */
+const ME_URL = "/api/v1/auth/me";
+
 function stubFetch(): void {
   calls = [];
   vi.stubGlobal(
@@ -266,6 +272,16 @@ function stubFetch(): void {
     vi.fn(
       (url: string) =>
         new Promise<Response>((resolve) => {
+          if (url === ME_URL) {
+            resolve({
+              ok: false,
+              status: 401,
+              json: async () => ({
+                error: { code: "not_authenticated", message: "falhou", details: {} },
+              }),
+            } as unknown as Response);
+            return;
+          }
           const route = routeOf(url);
           const parsed = new URL(url, "http://localhost");
           // Como o `response.json()` de verdade, cada resposta é um objeto novo.

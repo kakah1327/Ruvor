@@ -17,7 +17,7 @@
   `worker`, conferido em subprocesso (molde de `tests/test_celery_registro.py`).
 
 Nenhum teste fala com o Redis: a fixture `fila` troca o `send_task` da aplicacao Celery em
-todos eles.
+todos eles. O `client` entra com a sessao de um usuario de conta pronta (M2.1b, RF-01).
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ from django.utils import timezone
 from pytest_django import Settings
 
 import apps.api
+from apps.accounts.models import Organization, User
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import (
     OPEN_STATUSES,
@@ -93,6 +94,22 @@ def broker_recusa(monkeypatch: pytest.MonkeyPatch) -> None:
         raise ConnectionRefusedError("redis fora do ar")
 
     monkeypatch.setattr(app, "send_task", send_task)
+
+
+@pytest.fixture
+def client(client: Client) -> Client:
+    """O `client` do pytest-django com a sessao de um usuario de conta pronta da `ruvor`: o
+    `POST` exige conta pronta desde a D-140 (M2.1b, RF-01). `force_login`, nunca
+    `force_authenticate`. Quem nao entrou e o `test_pedido_conta.py`."""
+    usuario = User.objects.create_user(
+        email="pede@ruvor.test",
+        name="Quem Pede",
+        organization=Organization.objects.get(slug="ruvor"),
+        password="senha-de-teste-longa",
+        must_change_password=False,
+    )
+    client.force_login(usuario)
+    return client
 
 
 # --- os dados ------------------------------------------------------------------------------

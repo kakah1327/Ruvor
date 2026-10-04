@@ -4,7 +4,9 @@ Todo teste aqui e `transaction=True` -- com `TRANSACIONAL` e `banco_limpo` de
 `tests/api/migracao.py`, como todo teste assim --, porque a corrida precisa de commit de
 verdade entre conexoes, e cada thread abre a sua (o Django da uma por thread). Cada thread
 chama a view pelo `APIRequestFactory`, sem o cliente de teste, que liga e desliga sinais
-globais a cada pedido.
+globais a cada pedido -- e por isso entra por `force_authenticate`, com o usuario de conta
+pronta da fixture `quem_pede`: o `POST` exige conta pronta desde a D-140 (M2.1b, RF-01; a
+excecao declarada no V-02 da spec, que fora daqui manda `force_login`).
 
 **A espera** e uma `threading.Barrier(2)` no ponto de desvio `_before_insert` de
 `apps/api/views.py` -- depois das decisoes do `POST` e antes do `insert` --, com
@@ -38,8 +40,9 @@ from django.db import connections
 from django.db.models import Count
 from django.utils import timezone
 from pytest_django import Settings
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
 
+from apps.accounts.models import Organization, User
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import OPEN_STATUSES
 from apps.api.views import AssetRiskView
@@ -88,6 +91,18 @@ def barreira(monkeypatch: pytest.MonkeyPatch) -> threading.Barrier:
     return barreira
 
 
+@pytest.fixture
+def quem_pede(transactional_db: None) -> User:
+    """Um usuario de conta pronta da `ruvor`, que faz os `POST` das threads."""
+    return User.objects.create_user(
+        email="pede@ruvor.test",
+        name="Quem Pede",
+        organization=Organization.objects.get(slug="ruvor"),
+        password="senha-de-teste-longa",
+        must_change_password=False,
+    )
+
+
 # --- os dados ------------------------------------------------------------------------------
 
 
@@ -114,17 +129,18 @@ def _pedido(asset: Asset, status: str, requested_at: datetime) -> ComputeRequest
 # --- as threads ----------------------------------------------------------------------------
 
 
-def _post(ticker: str) -> Resultado:
-    """O `POST` do `/risk` pela view, com o corpo renderizado."""
+def _post(ticker: str, user: User) -> Resultado:
+    """O `POST` do `/risk` pela view, autenticado como `user`, com o corpo renderizado."""
     pedido = APIRequestFactory().post(f"/api/v1/assets/{ticker}/risk")
+    force_authenticate(pedido, user=user)
     resposta = AssetRiskView.as_view()(pedido, ticker=ticker)
     resposta.render()
     corpo: dict[str, Any] = json.loads(resposta.content)
     return resposta.status_code, corpo
 
 
-def _alvo(ticker: str) -> Callable[[], Resultado]:
-    return lambda: _post(ticker)
+def _alvo(ticker: str, user: User) -> Callable[[], Resultado]:
+    return lambda: _post(ticker, user)
 
 
 def _parte(
@@ -145,12 +161,12 @@ def _parte(
     return thread
 
 
-def _corre(*tickers: str) -> list[Resultado]:
+def _corre(user: User, *tickers: str) -> list[Resultado]:
     """Um `POST` por ticker, cada um na sua thread, ao mesmo tempo; as respostas em ordem
     de status."""
     saida: list[tuple[str, object]] = []
     threads = [
-        _parte(f"post{i}-{ticker}", _alvo(ticker), saida)
+        _parte(f"post{i}-{ticker}", _alvo(ticker, user), saida)
         for i, ticker in enumerate(tickers)
     ]
     for thread in threads:
@@ -187,10 +203,12 @@ def _abertos() -> list[str]:
 # --- V-14: um pedido por ativo -------------------------------------------------------------
 
 
-def test_dois_posts_do_mesmo_ativo_abrem_um_pedido_so(fila: list[int]) -> None:
+def test_dois_posts_do_mesmo_ativo_abrem_um_pedido_so(
+    fila: list[int], quem_pede: User
+) -> None:
     _ativo("NOVO3")
 
-    resultados = _corre("NOVO3", "NOVO3")
+    resultados = _corre(quem_pede, "NOVO3", "NOVO3")
 
     assert [status for status, _ in resultados] == [202, 202], resultados
     ids = {corpo["request"]["id"] for _, corpo in resultados}
@@ -210,7 +228,11 @@ def test_dois_posts_do_mesmo_ativo_abrem_um_pedido_so(fila: list[int]) -> None:
     ids=["teto_2_com_um_aberto", "teto_1_com_zero_abertos"],
 )
 def test_dois_posts_de_ativos_diferentes_nao_passam_do_teto(
-    settings: Settings, fila: list[int], teto: int, abertos_antes: list[str]
+    settings: Settings,
+    fila: list[int],
+    quem_pede: User,
+    teto: int,
+    abertos_antes: list[str],
 ) -> None:
     settings.RUVOR_ON_DEMAND_MAX = teto
     for ticker in abertos_antes:
@@ -218,7 +240,7 @@ def test_dois_posts_de_ativos_diferentes_nao_passam_do_teto(
     _ativo("AAAA3")
     _ativo("BBBB3")
 
-    resultados = _corre("AAAA3", "BBBB3")
+    resultados = _corre(quem_pede, "AAAA3", "BBBB3")
 
     assert [status for status, _ in resultados] == [202, 429], resultados
     aceito, recusado = resultados
@@ -231,7 +253,7 @@ def test_dois_posts_de_ativos_diferentes_nao_passam_do_teto(
 
 
 def test_pedido_vencido_nao_conta_para_o_teto(
-    settings: Settings, fila: list[int]
+    settings: Settings, fila: list[int], quem_pede: User
 ) -> None:
     """Nao e a prova da trava global: sem ela, o `UPDATE` do `expire_stale` sobre a mesma
     linha vencida ja serializa as duas transacoes (medido na T12). Quem prova a trava sao os
@@ -243,7 +265,7 @@ def test_pedido_vencido_nao_conta_para_o_teto(
     _ativo("AAAA3")
     _ativo("BBBB3")
 
-    resultados = _corre("AAAA3", "BBBB3")
+    resultados = _corre(quem_pede, "AAAA3", "BBBB3")
 
     assert [status for status, _ in resultados] == [202, 429], resultados
     assert ComputeRequest.objects.get(pk=vencido.pk).status == Status.EXPIRED
