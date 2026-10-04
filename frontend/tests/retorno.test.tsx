@@ -555,6 +555,38 @@ describe("V-12 — as combinações do RF-17", () => {
 // ---------------------------------------------------------------- a previsão (RF-18)
 
 describe("V-12 — a previsão do próximo pregão", () => {
+  it("a identidade carregando, com latest: a linha sem a previsão e sem frase de estado", async () => {
+    assetReply = null;
+    stubFetch();
+    renderAsset();
+    await settled("R3");
+    expect(section().querySelector("[data-forecast]")).toBeNull();
+    expect(section().querySelector('[data-value="forecast"]')).toBeNull();
+    expect(model("ar_1").querySelector(".ruvor-tests")).not.toBeNull();
+  });
+
+  it("o p do DM nulo (variância nula) sai como '—', nunca como número", async () => {
+    returnsReply = ok(
+      returns([{ ...AR1, dm_statistic: null, dm_p_value: null }, MEAN]),
+    );
+    stubFetch();
+    renderAsset();
+    await settled("R3");
+    const dm = [...model("ar_1").querySelectorAll(".ruvor-test")][2] as HTMLElement;
+    expect(dm.querySelector(".ruvor-num")?.textContent).toBe("—");
+  });
+
+  it("nenhum bate: a nota 'não mais informativa' nos dois modelos", async () => {
+    renderAsset();
+    await settled("R3");
+    for (const name of ["ar_1", "historical_mean"]) {
+      expect(
+        (model(name).querySelector('[data-phrase="previsao"]') as HTMLElement)
+          .textContent,
+      ).toContain("não é mais informativo que supor retorno zero");
+    }
+  });
+
   it("dentro da linha do modelo, depois do veredito e do histórico, com a referência ao lado", async () => {
     renderAsset();
     await settled("R3");

@@ -114,7 +114,7 @@ pessoa escolhe ativos e pesos, e a plataforma não sugere.
 
 | | Bloco | Entrega |
 |---|---|---|
-| ⬜ | **M5.1 — Retorno** | estimativa de retorno/lucro |
+| ✅ | **M5.1 — Retorno** | **fechado em 2026-10-04**; dois modelos simples de retorno de um pregão (média histórica e AR(1)) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito e do histórico, na tela do ativo depois do laboratório — o motor `0.5.0`, a app `apps/returns` e a rota `/returns` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) |
 
 ---
 

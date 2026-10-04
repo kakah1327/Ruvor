@@ -34,6 +34,8 @@ conversas e entre agentes.
 | [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
 | [D-184](D-184-a-decada-e-a-do-ativo-e-o-teste-se-le-em-anos-de-252-pregoes.md) | A década do laboratório é a do ativo, do primeiro pregão a dez anos de calendário depois, e o teste se lê em trechos de 252 pregões; veredito por ano só a 95% |
 | [D-187](D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md) | A seção do laboratório fica na tela do ativo, logo depois do risco, para todos, pela rota `/lab`, sem eleger nem ordenar, com a diferença honesta nas duas leituras |
+| [D-188](D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) | A previsão de retorno é o log-retorno de um pregão, pontual, fora da amostra contra o retorno zero; cada modelo grava também a previsão do próximo pregão |
+| [D-192](D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md) | A tela mostra a validação e, junto dela, a previsão do próximo pregão, nunca sozinha, com o aviso obrigatório; sem comercialização, o parecer da CVM não segura o M5.1 — estende a D-160 |
 
 ## Arquitetura
 
@@ -114,6 +116,9 @@ conversas e entre agentes.
 | [D-183](D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) | O laboratório é o cálculo de produção recortado na década do ativo, calculado uma vez e guardado; restringe a D-04 e responde a D-74 |
 | [D-185](D-185-o-experimento-mora-em-tres-tabelas-de-gold-imutaveis-e-um-ok-por-identidade.md) | O experimento mora em `gold.lab_run`, `lab_result` e `lab_year`, nasce fechado e é imutável no Django e no banco; um `ok` por identidade, e motor novo é experimento novo |
 | [D-186](D-186-o-experimento-roda-pela-fila-depois-do-fecho-do-risco-de-producao.md) | O experimento roda pela fila depois do fecho do risco de produção, reaproveitando os retratos, uma tarefa por ativo, sem entrada no Beat; o operador tem `compute_lab` |
+| [D-189](D-189-o-motor-ganha-o-pacote-engine-returns-em-lista-fechada-e-vai-a-0-5-0-restringe-a-d-21-a-d-76-e-a-d-157.md) | O motor ganha o pacote `engine.returns`, em lista fechada de arquivos novos, e vai a `0.5.0`; restringe a D-21, a D-76 e a D-157 |
+| [D-190](D-190-a-validacao-do-retorno-e-o-diebold-mariano-contra-o-zero-e-nenhum-modelo-e-eleito.md) | A validação do retorno: `r2_os`, acerto ao lado da parcela de alta, Diebold-Mariano no veredito; Clark-West e Pesaran-Timmermann fora dele; nenhum modelo é eleito |
+| [D-191](D-191-o-retorno-mora-em-apps-returns-e-roda-no-quinto-elo-da-rotina-estende-a-d-91.md) | O retorno mora em `apps/returns`, em `gold.return_run` e `gold.return_result`, imutáveis; roda no quinto elo da `rotina_diaria` e na cadeia sob demanda; sai pelo `/returns` — estende a D-91 |
 | [D-120](D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) | Fundamento vem dos dados abertos da CVM (DFP e ITR), por HTTP direto |
 | [D-121](D-121-a-bronze-guarda-o-zip-inteiro-e-so-quando-o-conteudo-muda.md) | A `bronze` guarda o zip inteiro, e o conteúdo só de novo quando mudou |
 | [D-122](D-122-conta-se-localiza-pela-descricao-sob-mae-fixa.md) | Conta se localiza pela descrição sob mãe fixa definida, não pelo código; a companhia tem plano de contas |

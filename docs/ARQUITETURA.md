@@ -39,6 +39,7 @@ ruvor/
 │   │   └── engine/        ← pacote importável — ZERO Django aqui dentro
 │   │       ├── models/        algoritmos de VaR
 │   │       ├── backtesting/   testes estatísticos
+│   │       ├── returns/       previsão de retorno e a validação dela (M5.1)
 │   │       ├── data/
 │   │       ├── experiments/
 │   │       └── cli.py
@@ -52,6 +53,7 @@ ruvor/
 │       ├── assets/          ações, catálogo, preços
 │       ├── analytics/       camada 2 — comportamento
 │       ├── risk/            camada 3 — execução, manifesto
+│       ├── returns/         a validação do retorno e a previsão do próximo pregão (M5.1)
 │       ├── fundamentals/    balanços da CVM, indicadores fundamentalistas
 │       ├── api/             a API HTTP em /api/v1/ e o pedido de cálculo sob demanda — sem o motor
 │       ├── portfolios/      carteiras

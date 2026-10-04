@@ -1752,3 +1752,48 @@ que vale para o backend pelo banco e pela memória, e aqui pelo tempo.
 **Faça:** uma suíte inteira por vez na máquina, **frontend inclusive**: espere a do backend (ou a do outro worktree)
 terminar antes do `npm test`. Teste que estoura 5 s só com outra suíte rodando não é falha a corrigir — rode de novo
 sozinho e registre as duas rodadas.
+
+
+## Receber a `main` com dependência nova no frontend pede o build da imagem do `frontend`
+
+**Quando:** depois de receber a `main` (ou mudar de ramo) com dependência nova no `package.json`, e rodar o frontend por
+`docker compose run --rm --no-deps frontend …`.
+
+**Problema:** o `run --rm` monta um volume anônimo novo para o `node_modules`, populado **pela imagem**, não pelo
+`package.json` do checkout. Com a imagem de antes da dependência, 17 arquivos de teste reprovaram por
+`Failed to resolve import "react-router"` na retomada do M5.1 — parece defeito do merge, e não é. Um `npm ci` dentro do
+`run --rm` conserta só aquele contêiner, que some no fim.
+
+**Faça:** `docker compose build frontend` depois de receber a `main`, antes da primeira suíte. É o par do
+[volume anônimo que sobrevive à recriação](#volume-anônimo-de-node_modules-sobrevive-à-recriação-do-contêiner).
+
+
+## Teste de corrida que lê um evento marcado no `finally` depois do commit é instável
+
+**Quando:** ao provar com duas threads que a segunda só passa da trava depois de a primeira confirmar — o V-09 do
+laboratório (`tests/risk/test_lab_escrita.py`).
+
+**Problema:** a trava consultiva sai **no commit**; o evento que a primeira thread marca no `finally` vem depois,
+quando o `write_lab` já devolveu. A segunda thread pode pegar a trava nesse intervalo e ler o evento ainda falso. O
+teste reprovou 3 de 5 vezes isolado no ramo do M5.1 e 1 de 5 na `main` — passou na CI do M2.4 por sorte.
+
+**Faça:** sob a trava, confira o que a trava protege — a linha confirmada no banco
+(`LabRun.objects.filter(status="ok").exists()`) —, e não um sinal da outra thread. Sem a trava, a primeira ainda não
+confirmou e a leitura dá falso: o teste continua pegando a mutação que tira a trava. Rode o arquivo pelo menos oito
+vezes seguidas antes de dar o teste por estável.
+
+
+## A fase A noutra máquina começa por refazer a referência
+
+**Quando:** ao continuar, noutra máquina, um bloco cuja fase A rodou no banco de quem começou — o M5.1, retomado na
+máquina do Kauã.
+
+**Problema:** o banco local é outro: outros ativos cobertos (ABCB4 e ABEV3 no lugar de BBDC4 e AALR3), preços
+atrasados e o risco ainda no motor `0.3.0` — não havia referência `0.4.0` nenhuma para comparar os 108 pares. E o
+roteiro e a foto do mockup apontam para os números da máquina original.
+
+**Faça:** antes do build da versão nova, refaça a referência com o código da `main` — um worktree destacado em
+`origin/main`, montado num contêiner avulso do `worker` (`-v "$WT/backend:/repo/backend" -v "$WT/engine:/repo/engine"`),
+com `import_prices`, `compute_metrics` e `compute_risk --full`, síncronos, com o `worker` parado — e só então o build. O
+`--full` síncrono dos seis levou 22 min numa máquina de 16 GB; com o Docker limitado a 5,8 GB, um processo só por vez:
+o `worker` em concorrência 2 ao lado de outro cálculo deixou o Windows sem memória.

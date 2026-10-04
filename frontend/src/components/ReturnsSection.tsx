@@ -39,7 +39,11 @@ const TIME_ZONE = "America/Sao_Paulo";
 
 // ---------------------------------------------------------------- formatação
 
-function formatPValue(value: string): string {
+/** O nulo (o DM e o CW com variância nula, RF-08) sai como "—", nunca como número. */
+const NULO = "—";
+
+function formatPValue(value: string | null): string {
+  if (value === null) return NULO;
   const p = Number(value);
   return p < 0.001 ? "< 0,001" : formatDecimal(p, 3);
 }
@@ -271,9 +275,11 @@ function ModelBlock({
     );
   }
   const menos = Number(result.r2_os) > 0;
-  const acerto = formatPercent(Number(result.hit_rate), 1);
-  const alta = formatPercent(Number(result.up_share), 1);
-  const dm = formatPValue(result.dm_p_value ?? "1");
+  const acerto =
+    result.hit_rate === null ? NULO : formatPercent(Number(result.hit_rate), 1);
+  const alta =
+    result.up_share === null ? NULO : formatPercent(Number(result.up_share), 1);
+  const dm = formatPValue(result.dm_p_value);
   return (
     <section className="ruvor-returns-model" data-model={result.model_name}>
       {head}
@@ -324,7 +330,7 @@ function Details({ run, reading }: { run: ReturnRun; reading: Reading }) {
         }
         const pt = r.pt_p_value === null ? null : formatPValue(r.pt_p_value);
         const todosAlta = pt === null ? Number(r.forecast_up_share) === 1 : null;
-        const cw = formatPValue(r.cw_p_value ?? "1");
+        const cw = formatPValue(r.cw_p_value);
         return (
           <section
             className="ruvor-returns-model"
