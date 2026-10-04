@@ -6,11 +6,13 @@ nenhuma; o que se prova aqui e o que a escrita faz com o que recebeu.
 
 **A corrida** e `transaction=True` (`TRANSACIONAL` e `banco_limpo`), com duas threads chamando
 `write_lab` da mesma identidade -- cada uma na sua conexao. O ponto de desvio `_after_lab_lock`
-e trocado por um que, so na thread do `ok`, avisa que ela tem a trava e espera a outra partir
-(e mais meio segundo, para ela chegar a trava -- ou a uma conferencia feita antes dela). Com a
-conferencia sob a trava, a outra espera o commit do `ok` e nao grava; com a conferencia antes da
-trava, ou sem conferencia, grava depois do `ok`. Cada thread fecha a conexao no `finally`, e o
-teste reprova se alguma ficou viva.
+e trocado nas duas threads. Na do `ok`, ele avisa que ela tem a trava e espera a outra partir (e
+mais meio segundo, para ela chegar a trava -- ou a uma conferencia feita antes dela). Na outra,
+ele registra se o `ok` ja tinha terminado (gravado e confirmado) quando ela chegou ali, e espera
+por isso -- com a trava, chega sempre depois; e o que prova que a trava serializa as duas, e que
+a conferencia que vem depois do desvio ve o `ok`. Com a conferencia sob a trava, a outra nao
+grava; com a conferencia antes da trava, ou sem conferencia, grava depois do `ok`. Cada thread
+fecha a conexao no `finally`, e o teste reprova se alguma ficou viva.
 """
 
 from __future__ import annotations
@@ -24,17 +26,17 @@ from importlib.metadata import version
 from typing import Any
 
 import pytest
-from django.db import connections
+from django.db import IntegrityError, connections
 from django.utils import timezone
 from engine.backtesting import load_all_backtest_modules
 from engine.experiments.runner import ModelRunResult
 from engine.models import load_all_model_modules
 
-from apps.assets.models import CollectionRun
+from apps.assets.models import CollectionRun, Price
 from apps.risk import config
 from apps.risk.compute import MODELS
 from apps.risk.decade import decade_of, valid_bars
-from apps.risk.lab import LabOutcome, lab_due, run_lab, write_lab
+from apps.risk.lab import SERIES_CHANGED, LabOutcome, lab_due, run_lab, write_lab
 from apps.risk.models import LabResult, LabRun, LabYear
 from apps.risk.snapshots import price_fingerprint
 from tests.api.migracao import TRANSACIONAL, banco_limpo  # noqa: F401
@@ -308,6 +310,110 @@ def test_o_integrity_error_da_identidade_vira_ja_calculado(
     assert LabRun.objects.count() == 1
 
 
+# --- a serie conferida depois do calculo (revisao de implementacao, M1) ------------------
+
+
+@DB
+def test_a_serie_que_muda_durante_o_calculo_grava_failed_sem_resultados(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Entre a leitura (`_due`) e o fim do `run_models`, um pregao da decada muda."""
+    asset = ativo()
+    bars = serie_rala(asset)
+
+    def reajusta(runs: list[ModelRunResult]) -> None:
+        Price.objects.filter(pk=bars[100].pk).update(adj_close=Decimal("1.000000"))
+
+    motor_parcial(monkeypatch, ajuste=reajusta)
+    desfecho = run_lab(asset, origin=LabRun.Origin.COMMAND)
+    assert desfecho.run is not None
+    run = LabRun.objects.get(pk=desfecho.run.pk)
+    assert run.status == LabRun.Status.FAILED
+    assert run.error == SERIES_CHANGED == "s\u00e9rie mudou durante o c\u00e1lculo"
+    assert LabResult.objects.filter(run=run).count() == 0
+    # o `failed` nao tira o devido: o proximo fecho refaz, sobre a serie nova
+    assert lab_due(asset) is not None
+
+
+@DB
+def test_o_pregao_novo_depois_do_fim_da_decada_nao_e_mudanca(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    asset = ativo()
+    bars = serie_rala(asset)
+
+    def pregao_novo(runs: list[ModelRunResult]) -> None:
+        ultimo = bars[-1]
+        Price.objects.create(
+            asset=asset,
+            date=ultimo.date + timedelta(days=1),
+            open=ultimo.adj_close,
+            high=ultimo.adj_close,
+            low=ultimo.adj_close,
+            close=ultimo.adj_close,
+            adj_close=ultimo.adj_close,
+            volume=1000,
+            log_return=None,
+            run=ultimo.run,
+            updated_at=timezone.now(),
+        )
+
+    motor_parcial(monkeypatch, ajuste=pregao_novo)
+    desfecho = run_lab(asset, origin=LabRun.Origin.COMMAND)
+    assert desfecho.run is not None
+    assert desfecho.run.status == LabRun.Status.OK, desfecho.run.error
+
+
+# --- o ramo do `IntegrityError` em `run_lab` (revisao de implementacao) ------------------
+
+
+def _integrity_error(constraint: str) -> IntegrityError:
+    """Um `IntegrityError` como o do psycopg: a causa com `diag.constraint_name`."""
+
+    class Diag:
+        constraint_name = constraint
+
+    class Causa(Exception):
+        diag = Diag()
+
+    exc = IntegrityError("duplicate key value violates unique constraint")
+    exc.__cause__ = Causa()
+    return exc
+
+
+@DB
+def test_o_integrity_error_da_restricao_da_identidade_e_ja_calculado(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    motor_parcial(monkeypatch)
+    asset = ativo()
+    serie_rala(asset)
+
+    def recusa(*args: Any, **kwargs: Any) -> Any:
+        raise _integrity_error("lab_run_identity_ok")
+
+    monkeypatch.setattr("apps.risk.lab.write_lab", recusa)
+    desfecho = run_lab(asset, origin=LabRun.Origin.COMMAND)
+    assert desfecho.kind == LabOutcome.ALREADY
+    assert desfecho.run is None
+
+
+@DB
+def test_o_integrity_error_de_outra_restricao_sobe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    motor_parcial(monkeypatch)
+    asset = ativo()
+    serie_rala(asset)
+
+    def recusa(*args: Any, **kwargs: Any) -> Any:
+        raise _integrity_error("lab_result_run_model_alpha")
+
+    monkeypatch.setattr("apps.risk.lab.write_lab", recusa)
+    with pytest.raises(IntegrityError, match="duplicate key"):
+        run_lab(asset, origin=LabRun.Origin.COMMAND)
+
+
 # --- V-09: a corrida `ok` x `partial`, a metade da escrita ----------------------------------
 
 ESPERA = 5
@@ -325,14 +431,20 @@ def _corrida(
 
     ok_tem_trava = threading.Event()
     segundo_partiu = threading.Event()
+    ok_terminou = threading.Event()
     devolvidos: dict[str, Any] = {}
     erros: list[BaseException] = []
+    segundo_no_desvio: list[bool] = []
 
     def desvio() -> None:
         if threading.current_thread().name == "ok":
             ok_tem_trava.set()
             assert segundo_partiu.wait(ESPERA)
             time.sleep(0.5)  # a outra chega a trava, ou a uma conferencia antes dela
+        else:
+            # sob a trava: o `ok` ja gravou e confirmou quando a outra chega aqui
+            segundo_no_desvio.append(ok_terminou.is_set())
+            ok_terminou.wait(ESPERA)
 
     def grava(status: str) -> None:
         try:
@@ -352,6 +464,8 @@ def _corrida(
         except BaseException as exc:  # registrado e conferido depois do join
             erros.append(exc)
         finally:
+            if threading.current_thread().name == "ok":
+                ok_terminou.set()
             connections.close_all()
 
     monkeypatch.setattr("apps.risk.lab._after_lab_lock", desvio)
@@ -363,6 +477,7 @@ def _corrida(
     for thread in (primeira, segunda):
         thread.join(JOIN)
         assert not thread.is_alive()
+    assert segundo_no_desvio == [True]  # o desvio da outra rodou, e depois do `ok`
     return [devolvidos.get("ok"), devolvidos.get("segundo")], erros
 
 

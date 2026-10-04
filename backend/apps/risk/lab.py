@@ -76,6 +76,10 @@ from apps.risk.snapshots import (
 #: o nome da restricao unica parcial do RF-07; o `IntegrityError` dela e "ja calculado"
 IDENTITY_CONSTRAINT = "lab_run_identity_ok"
 
+#: o `error` do `failed` cuja serie mudou entre a leitura e o fim do calculo (revisao de
+#: implementacao, M1): o proximo fecho refaz, sobre a serie nova
+SERIES_CHANGED = "série mudou durante o cálculo"
+
 
 class LabSumMismatch(Exception):
     """A soma das violacoes dos trechos nao e a da decada num (modelo, nivel) (RF-03)."""
@@ -425,6 +429,21 @@ def write_lab(
 # --- o experimento (RF-10) -----------------------------------------------------------------
 
 
+def series_changed(asset: Asset, decade: Decade) -> bool:
+    """A serie da decada, relida agora, nao e a que o calculo usou.
+
+    `valid_bars` relido e cortado no mesmo `decade_end`; a impressao digital (as datas e os
+    `adj_close` de todos os pregoes) comparada com a de `decade.series`. Um pregao novo
+    **depois** do fim nao conta -- a decada completa nao muda com ele; um provento que reajusta
+    o historico (D-53), ou um pregao corrigido dentro da decada, conta.
+    """
+    now_series = [b for b in valid_bars(asset) if b.date <= decade.end_date]
+    if len(now_series) != len(decade.series):
+        return True
+    used = price_fingerprint(decade.series, len(decade.series) - 1)
+    return price_fingerprint(now_series, len(now_series) - 1) != used
+
+
 def _is_identity_violation(exc: IntegrityError) -> bool:
     diag = getattr(exc.__cause__, "diag", None)
     return getattr(diag, "constraint_name", None) == IDENTITY_CONSTRAINT
@@ -437,7 +456,8 @@ def run_lab(
 
     Pula sem gravar se nao e devido. O registry e carregado e conferido antes de calcular
     (D-66): faltando modelo, grava o `lab_run` `failed` sem calcular. Uma excecao no calculo,
-    no recorte ou na soma vira o `lab_run` `failed` com `error`, sem resultados. O
+    no recorte ou na soma vira o `lab_run` `failed` com `error`, sem resultados; a serie que
+    mudou durante o calculo (`series_changed`) tambem, com `SERIES_CHANGED`. O
     `IntegrityError` da restricao da identidade e "ja calculado". Outras excecoes da escrita
     sobem: quem chama -- a tarefa -- nunca levanta.
     """
@@ -476,11 +496,15 @@ def run_lab(
         except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
         else:
-            status = _status(result)
-            results = _results(result, counts)
-            years = {
-                _key(name, alpha): _year_rows(s) for (name, alpha), s in slices.items()
-            }
+            if series_changed(asset, decade):
+                error = SERIES_CHANGED
+            else:
+                status = _status(result)
+                results = _results(result, counts)
+                years = {
+                    _key(name, alpha): _year_rows(s)
+                    for (name, alpha), s in slices.items()
+                }
     finished_at = now()
     try:
         run = write_lab(
