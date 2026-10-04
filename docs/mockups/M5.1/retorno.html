@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — Retorno na tela do ativo (mockup, M5.1)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da seção do retorno (T9 do plano M5.1), na tela do ativo, depois do risco e do
+   * laboratório (M2.4) e antes dos Fundamentos. Abre por file://, sem servidor: os números das
+   * vistas ITUB4 e PETR4 são os da foto real da fase A (GET /api/v1/assets/{ITUB4,PETR4}/returns,
+   * gravados pelo motor 0.5.0), carregados por <script src> de returns-ITUB4.js e
+   * returns-PETR4.js, sem mudança. Os estados e as combinações que a foto não tem são montados à
+   * mão sobre cópias dela, e cada vista diz o que é fictício.
+   *
+   * As frases avançadas copiam as afirmações de docs/mockups/M5.1/conferencia-retorno.md.
+   *
+   * Só var(--ruvor-*) e valores estruturais: nenhuma cor literal. Estilo local só com m51-:
+   *   - m51-models, m51-model, m51-model__head: um bloco por modelo, por model_name;
+   *   - m51-forecast: a previsão do próximo pregão, na linha do modelo, depois do veredito e do
+   *     histórico, com destaque menor que o do veredito: o tamanho micro do kit, sem fundo, sem peso,
+   *     sem seta e sem cor de direção (a tag do veredito tem o mesmo tamanho, com fundo e peso);
+   *   - m51-callout: o parágrafo do aviso e da frase do veredito, sem margem, ao lado do ícone;
+   *   - m51-bar, m51-note, m51-view, m51-case, m51-stub, m51-textos: a moldura do mockup.
+   */
+
+  /* --- Um bloco por modelo ------------------------------------------------------------ */
+  .m51-models { display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .m51-model { display: flex; flex-direction: column; gap: var(--ruvor-space-3); padding-top: var(--ruvor-space-4); border-top: 1px solid var(--ruvor-table-rule); min-width: 0; }
+  .m51-model:first-child { border-top: 0; padding-top: 0; }
+  .m51-model__head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); }
+  .m51-model__head h3 { margin: 0; }
+  .m51-model .ruvor-tests { margin: 0; }
+
+  /* --- A previsão do próximo pregão: menor que o veredito, sem seta nem cor -------------- */
+  .m51-forecast { display: flex; flex-direction: column; gap: var(--ruvor-space-1); padding-top: var(--ruvor-space-3); border-top: 1px dashed var(--ruvor-table-rule); }
+  .m51-forecast__line { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-1) var(--ruvor-space-3); font-size: var(--ruvor-type-micro-size); line-height: var(--ruvor-type-micro-leading); color: var(--ruvor-text-muted); }
+  .m51-forecast__line .ruvor-num { color: var(--ruvor-ink); }
+
+  /* --- O aviso e a frase do veredito: o parágrafo do callout sem margem, ao lado do ícone -- */
+  .m51-callout p { margin: 0; max-width: 92ch; }
+
+  /* --- Moldura do mockup: não é tela --------------------------------------------------- */
+  .m51-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .m51-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m51-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); margin: 0; }
+  .m51-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .m51-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .m51-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .m51-view[hidden] { display: none; }
+  .m51-note, .m51-stub { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); background: var(--ruvor-surface-2); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); display: flex; flex-direction: column; gap: var(--ruvor-space-1); }
+  .m51-note b, .m51-stub b { color: var(--ruvor-ink); }
+  .m51-note p, .m51-stub p { margin: 0; }
+  .m51-note code { font-family: var(--ruvor-font-mono); overflow-wrap: anywhere; }
+  .m51-note q, .m51-stub q { color: var(--ruvor-text); }
+  .m51-case { display: flex; flex-direction: column; gap: var(--ruvor-space-3); padding-top: var(--ruvor-space-5); border-top: 1px dashed var(--ruvor-text-muted); }
+  .m51-case > h3 { margin: 0; }
+  .m51-textos { table-layout: fixed; }
+  .m51-textos td, .m51-textos th { vertical-align: top; overflow-wrap: anywhere; }
+  .m51-textos td { font-size: var(--ruvor-type-small-size); }
+  .m51-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 18%; }
+  .m51-textos td:nth-child(2) { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 14%; }
+  .m51-textos td p { margin: 0 0 var(--ruvor-space-2); }
+  .m51-textos td p:last-child { margin-bottom: 0; }
+  .m51-regex { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); overflow-wrap: anywhere; }
+  @media (max-width: 720px) {
+    .m51-bar { padding-inline: var(--ruvor-space-4); }
+    .m51-textos thead { display: none; }
+    .m51-textos tr { display: block; padding: var(--ruvor-space-2) 0; border-bottom: 1px solid var(--ruvor-table-rule); }
+    .m51-textos td { display: block; width: auto !important; border: 0; padding: 2px 0; }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), lidos dos arquivos do conjunto. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-scales" viewBox="0 0 256 256"><path d="M239.43,133l-32-80h0a8,8,0,0,0-9.16-4.84L136,62V40a8,8,0,0,0-16,0V65.58L54.26,80.19A8,8,0,0,0,48.57,85h0v.06L16.57,165a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32a7.92,7.92,0,0,0-.57-3L66.92,93.77,120,82V208H104a8,8,0,0,0,0,16h48a8,8,0,0,0,0-16H136V78.42L187,67.1,160.57,133a7.92,7.92,0,0,0-.57,3c0,23.31,24.54,32,40,32s40-8.69,40-32A7.92,7.92,0,0,0,239.43,133ZM56,184c-7.53,0-22.76-3.61-23.93-14.64L56,109.54l23.93,59.82C78.76,180.39,63.53,184,56,184Zm144-32c-7.53,0-22.76-3.61-23.93-14.64L200,77.54l23.93,59.82C222.76,148.39,207.53,152,200,152Z"/></symbol>
+  <symbol id="i-calendar-blank" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-info-duo" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+  <symbol id="i-warning-duo" viewBox="0 0 256 256"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+</svg>
+
+<!-- A foto real da fase A: GET /api/v1/assets/{ITUB4,PETR4}/returns, sem mudança. -->
+<script src="returns-ITUB4.js"></script>
+<script src="returns-PETR4.js"></script>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="m51-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M5.1 · retorno · fora da tela</p>
+  <div class="m51-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-m51="itub4">ITUB4 (foto real)</button>
+    <button class="ruvor-btn" type="button" data-m51="petr4">PETR4 (foto real)</button>
+    <button class="ruvor-btn" type="button" data-m51="estados">os estados R1 a R8</button>
+    <button class="ruvor-btn" type="button" data-m51="casos">as combinações e a previsão</button>
+    <button class="ruvor-btn" type="button" data-m51="textos">os textos</button>
+  </div>
+  <p class="m51-group"><span>O tema e a leitura mudam na barra escura, como na tela.</span></p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar">
+  <a class="ruvor-brand" href="#" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="ruvor-topbar__prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+    <a class="ruvor-topbar__signin" href="#" data-t="conta.entrar"></a>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div>
+    <!-- O ativo: a seção, com a foto real, na ordem risco → laboratório → retorno → Fundamentos -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m51-view" data-view="ativo" hidden>
+      <div class="m51-note" id="m51-ativo-note"></div>
+      <div class="m51-stub"><p><b>⋯ a seção de risco</b> — <q data-t="risco.titulo"></q>, como hoje (<code>RiskSection.tsx</code>), não desenhada aqui.</p></div>
+      <div class="m51-stub"><p><b>⋯ o laboratório do M2.4</b> — <q data-t="laboratorio.titulo"></q> (<code>docs/mockups/M2.4/laboratorio.html</code>, aprovado), logo depois do risco; não desenhado aqui.</p></div>
+      <div id="m51-ativo-host"></div>
+      <div class="m51-stub"><p><b>⋯ depois:</b> <q data-t="fundamentos.titulo"></q> e os comunicados, como hoje.</p></div>
+    </main>
+
+    <!-- Os estados do RF-16, na ordem -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m51-view" data-view="estados" hidden>
+      <div class="m51-note" id="m51-estados-note"></div>
+      <div id="m51-estados-host" class="ruvor-stack ruvor-stack--loose"></div>
+    </main>
+
+    <!-- As combinações do RF-17 e a previsão ausente do RF-18 -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose m51-view" data-view="casos" hidden>
+      <div class="m51-note" id="m51-casos-note"></div>
+      <div id="m51-casos-host" class="ruvor-stack ruvor-stack--loose"></div>
+    </main>
+
+    <!-- Os textos -->
+    <main class="ruvor-content ruvor-stack m51-view" data-view="textos" hidden>
+      <div class="m51-note" id="m51-textos-head"></div>
+      <section class="ruvor-panel"><table class="ruvor-table m51-textos"><thead><tr><th scope="col">chave</th><th scope="col">exemplo</th><th scope="col">iniciante</th><th scope="col">avançada</th></tr></thead><tbody id="m51-textos-fechada"></tbody></table></section>
+      <div class="m51-note" id="m51-textos-outros-head"></div>
+      <section class="ruvor-panel"><table class="ruvor-table m51-textos"><thead><tr><th scope="col">chave</th><th scope="col">exemplo</th><th scope="col">texto (uma leitura)</th><th scope="col">onde</th></tr></thead><tbody id="m51-textos-outros"></tbody></table></section>
+      <div class="m51-note" id="m51-textos-regex"></div>
+    </main>
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------- a foto real
+const FOTO = { ITUB4: window.M51_RETURNS_ITUB4, PETR4: window.M51_RETURNS_PETR4 };
+const clone = (o) => JSON.parse(JSON.stringify(o));
+// "Hoje" fixo, para o mockup ser determinístico (a tela usa today() de AssetScreen.tsx:117).
+const HOJE = "2026-10-04";
+
+// ---------------------------------------------------------------- formatação (pt-BR)
+const NF = (o) => new Intl.NumberFormat("pt-BR", o);
+const fInt = NF({ maximumFractionDigits: 0 });
+const fDec3 = NF({ minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const fPct1 = NF({ style: "percent", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fPct2 = NF({ style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fPct2s = NF({ style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
+const fDate = (s) => { const [y, m, d] = s.split("-"); return `${d}/${m}/${y}`; };
+const fInstantParts = (s) => {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(s)).map((x) => [x.type, x.value]));
+  return [`${p.day}/${p.month}/${p.year}`, `${p.hour}:${p.minute}`];
+};
+const fPval = (v) => (Number(v) < 0.001 ? "< 0,001" : fDec3.format(Number(v))); // ModelTable.tsx
+
+// ---------------------------------------------------------------- os textos
+// Reaproveitados, copiados de frontend/src/content/textos.ts como estão (não mudam neste portão).
+const TEXTOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "conta.entrar": "Entrar",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+  "ativo.erroSecao": "Não foi possível carregar esta parte da página.",
+  "ativo.tentarDeNovo": "Tentar de novo",
+  "risco.titulo": "Quanto se pode perder em 1 dia",
+  "fundamentos.titulo": "Fundamentos",
+  "laboratorio.titulo": "Como os modelos se saíram em dez anos",
+  "risco.trilha.asOf": "Último pregão usado",
+  "risco.trilha.firstPrice": "Primeiro pregão",
+  "risco.trilha.priceCount": "Pregões",
+  "risco.trilha.train": "Treino",
+  "risco.trilha.test": "Teste",
+  "risco.trilha.window": "Janela de treino",
+  "risco.trilha.calculatedAt": "Calculado em",
+  "risco.trilha.engine": "Versão do motor",
+  "risco.trilha.priceRun": "Coleta de preço",
+  "risco.trilha.pregoes": (n) => `${n} pregões`,
+  "risco.trilha.coleta": (fonte, quando) => `${fonte}, ${quando}`,
+  "risco.trilha.instante": (data, hora) => `${data} às ${hora}`,
+  "risco.trilha.fonte.yahoo-chart": "Yahoo Finance",
+};
+const REUSADAS = Object.keys(TEXTOS).filter((k) => k.startsWith("risco.trilha.") || k.startsWith("ativo."));
+
+// NOVOS neste portão.
+// (1) A LISTA FECHADA: as 7 chaves retorno.* com frase nas duas leituras (conferencia-retorno.md, N = 7).
+const FECHADA = ["retorno.veredito", "retorno.r2_os", "retorno.acerto", "retorno.dm", "retorno.cw", "retorno.pt", "retorno.previsao"];
+
+const nomes = (lista) => (lista.length === 1 ? lista[0] : `${lista.slice(0, -1).join(", ")} e ${lista.at(-1)}`);
+// O veredito da seção. batem: [[nome, quantoMenos]]; naoBatem: [nome]; falhos: quantos não deram para julgar.
+const falhaFrase = (falhos) => (falhos === 0 ? "" : falhos === 1
+  ? " O cálculo de um dos modelos falhou, e ele não foi julgado."
+  : " O cálculo dos dois modelos falhou, e nenhum foi julgado.");
+const INICIANTE_NOVA = {
+  "retorno.veredito": (ticker, n, fim, batem, naoBatem, falhos) => {
+    const periodo = `nos ${n} pregões de teste até ${fim}`;
+    if (batem.length === 0 && naoBatem.length === 0) return `Não deu para julgar os modelos de ${ticker}: o cálculo dos dois falhou.`;
+    if (batem.length === 0) {
+      const quem = naoBatem.length === 2 ? "Nenhum dos dois modelos errou" : `O modelo ${naoBatem[0]} não errou`;
+      const prev = naoBatem.length === 2 ? "as previsões abaixo não são mais informativas" : "a previsão dele não é mais informativa";
+      return `${quem} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}. Por isso, ${prev} que supor retorno zero.${falhaFrase(falhos)}`;
+    }
+    const quem = batem.length === 2
+      ? `Os dois modelos erraram menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo} (${batem.map(([nm, x]) => `${nm}, ${x} menos`).join("; ")})`
+      : `O modelo ${batem[0][0]} errou ${batem[0][1]} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}`;
+    const outro = naoBatem.length ? ` O modelo ${naoBatem[0]} não errou menos, e a previsão dele não é mais informativa que supor retorno zero.` : "";
+    return `${quem}, e o teste indica que a diferença dificilmente é acaso nesta série. A vantagem é pequena, e, entre muitos ativos e dois modelos, alguns casos assim aparecem por acaso.${outro}${falhaFrase(falhos)}`;
+  },
+  "retorno.r2_os": (valor, menos) =>
+    `${menos ? `Errou ${valor} menos` : `Errou ${valor} mais`} do que supor retorno zero, somando o erro de todos os dias de teste.`,
+  "retorno.acerto": (acerto, alta) =>
+    `Acertou se o dia seria de alta ou de queda em ${acerto} dos dias; a ação subiu em ${alta} deles. Quem dissesse “alta” todo dia acertaria ${alta}.`,
+  "retorno.dm": (p, bate) =>
+    `O teste que decide o veredito: com p-valor abaixo de 0,05, a diferença para o retorno zero dificilmente é acaso. Aqui, ${p}: ${bate ? "bate a referência" : "não bate"}.`,
+  "retorno.cw": (p) =>
+    `Outro teste do mesmo erro, que dá ao modelo o desconto de ele poder imitar o retorno zero. Aqui, ${p}. Não entra no veredito.`,
+  "retorno.pt": (p, todosAlta) => (p !== null
+    ? `Confere se o acerto de alta ou queda é maior que o de um palpite ao acaso com as mesmas proporções. Aqui, ${p}. Não entra no veredito.`
+    : `O modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias: o acerto dele é a parcela de dias de ${todosAlta ? "alta" : "queda"}, e não há o que testar.`),
+  "retorno.previsao": (valor, data, bate) => (bate
+    ? `O modelo calcula ${valor} para ${data}. É um número estatístico, não uma expectativa nem uma indicação: ter batido a referência no passado não diz que ele acerta o próximo pregão.`
+    : `O modelo calcula ${valor} para ${data}; como ele não bate a referência, esse número não é mais informativo que supor retorno zero.`),
+};
+// A leitura avançada: a mesma chave e os mesmos parâmetros, na mesma ordem (D-151). Cada afirmação
+// copia a de docs/mockups/M5.1/conferencia-retorno.md, onde está o caminho:linha que a confere.
+const AVANCADA_NOVA = {
+  "retorno.veredito": (ticker, n, fim, batem, naoBatem, falhos) => {
+    const base = `Veredito por modelo: o teste de Diebold-Mariano com perda quadrática, unilateral (a alternativa é "o modelo erra menos que o zero"), contra a referência de retorno zero, nos ${n} dias de teste até ${fim}; bate quando o p-valor, arredondado a 10 casas, fica abaixo de 0,05.`;
+    const falha = falhos ? ` ${falhos === 1 ? "Um modelo ficou" : "Os dois ficaram"} sem veredito: o cálculo falhou.` : "";
+    if (batem.length === 0) {
+      return `${base} ${naoBatem.length === 2 ? "Nenhum dos dois ficou abaixo" : naoBatem.length === 1 ? `${naoBatem[0]} não ficou abaixo` : "Nenhum foi julgado"}${naoBatem.length ? ": as previsões não são mais informativas que supor retorno zero." : "."}${falha}`;
+    }
+    return `${base} ${nomes(batem.map(([nm]) => nm))} ${batem.length === 2 ? "ficaram" : "ficou"} abaixo. O DM só é positivo quando o erro quadrático médio do modelo é menor que o da referência, e bater implica erro relativo positivo. Com dois modelos e muitos ativos, alguns casos assim aparecem por acaso; o acerto de direção (PT) não entra no veredito.${falha}`;
+  },
+  "retorno.r2_os": (valor, menos) =>
+    `Erro relativo à referência: 1 − EQM do modelo / EQM de supor zero, com EQM a média do quadrado do erro sobre os dias de teste (o R² fora da amostra com referência zero). Aqui, ${menos ? "+" : "−"}${valor}: o modelo errou ${menos ? "menos" : "mais"} que o zero.`,
+  "retorno.acerto": (acerto, alta) =>
+    `Acerto de direção: a parcela dos dias em que o sinal da previsão foi o do retorno, contada só nos dias com retorno e previsão diferentes de zero; ${acerto}. A régua é a parcela de dias de alta nesses mesmos dias, ${alta}.`,
+  "retorno.dm": (p, bate) =>
+    `Diebold-Mariano: a média da diferença diária entre o quadrado do retorno e o quadrado do erro do modelo, dividida pelo erro-padrão de longo prazo de Newey-West (núcleo de Bartlett, defasagem ⌊4·(n/100)^(2/9)⌋, série centrada, divisor n); p unilateral, 1 − Φ(DM). Aqui, ${p}: ${bate ? "abaixo de 0,05" : "não fica abaixo de 0,05"}.`,
+  "retorno.cw": (p) =>
+    `Clark-West: a diferença diária é o quadrado do retorno menos (o quadrado do erro do modelo menos o quadrado da previsão), porque o zero é um caso particular do modelo; o mesmo Newey-West e p unilateral. Aqui, ${p}. Não entra no veredito.`,
+  "retorno.pt": (p, todosAlta) => (p !== null
+    ? `Pesaran-Timmermann: compara o acerto de direção com P* = p_y·p_x + (1 − p_y)(1 − p_x), o de um palpite independente com as mesmas proporções de alta realizada e prevista, pela diferença das variâncias do artigo; p unilateral. Aqui, ${p}. Não entra no veredito.`
+    : `Pesaran-Timmermann sem p-valor: a parcela de alta prevista é ${todosAlta ? "1" : "0"} — o modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias —, e o teste não tem o que medir; o acerto é a parcela de dias de ${todosAlta ? "alta" : "queda"}.`),
+  "retorno.previsao": (valor, data, bate) =>
+    `A previsão do próximo pregão é o mesmo cálculo do teste aplicado ao dia seguinte ao último preço: os parâmetros do trecho corrente, reestimados com tudo até o último preço quando ele abre um trecho de 252; na média histórica, a média dos retornos conhecidos; no AR(1), c + φ vezes o retorno do último pregão. A data, ${data}, é o primeiro dia de semana depois do último preço, sem o calendário de feriados. Aqui, ${valor}${bate ? ", de um modelo que bateu a referência no período — um número estatístico, gravado com 10 casas" : ", de um modelo que não bate a referência: não é mais informativa que supor zero"}.`,
+};
+// (2) Os estados, a previsão ausente, os títulos, os rótulos e o aviso: uma leitura só, fora da lista fechada.
+const OUTROS_NOVOS = {
+  "retorno.sobrancelha": "Retorno",
+  "retorno.titulo": "A previsão do retorno, posta à prova",
+  "retorno.intro": "Dois modelos estatísticos simples tentam prever o retorno de cada pregão desta ação, e a plataforma confere, no passado, se eles erraram menos do que supor retorno zero.",
+  "retorno.aviso": "Esta seção mede se dois modelos estatísticos simples, no passado, teriam errado menos ao prever o retorno diário desta ação do que supor que ele é zero. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo, e nada aqui diz o que o preço vai fazer. A previsão de cada modelo para o próximo pregão é um número estatístico, não uma expectativa nem uma indicação; a de um modelo que não bate a referência não é mais informativa que supor zero. Não bater essa referência é o resultado mais comum — o retorno de um dia é quase imprevisível. Um modelo que bateu no passado pode deixar de bater, e a vantagem, quando aparece, é pequena.",
+  "retorno.carregando": "Carregando a validação do retorno deste ativo.",
+  "retorno.estado.inativo.titulo": "Ativo inativo na B3: a validação do retorno não é calculada.",
+  "retorno.estado.inativo": "O cálculo diário é feito só para ativos em negociação e com preço.",
+  "retorno.estado.semSerie.titulo": "Não foi possível saber se este ativo tem preço.",
+  "retorno.estado.semSerie": "A validação depende da série de preços, que não carregou.",
+  "retorno.estado.naoCoberto.titulo": "Este ativo ainda não tem preço.",
+  "retorno.estado.naoCoberto": "A validação do retorno chega junto com o cálculo do risco, que se pede na seção de risco acima.",
+  "retorno.estado.serieCurta.titulo": "Série curta demais para a validação",
+  "retorno.estado.serieCurta": (n, min) => `Este ativo tem ${n} pregões; a validação pede no mínimo ${min}.`,
+  "retorno.estado.naoCalculado.titulo": "A validação deste ativo ainda não foi calculada.",
+  "retorno.estado.naoCalculado": "Ela entra no próximo cálculo diário.",
+  "retorno.previsao.inativo": "Ativo inativo: a previsão gravada é de quando ele negociava e não é mostrada.",
+  "retorno.previsao.passada": (data) => `A previsão era para ${data}, que já passou. A próxima entra no próximo cálculo diário.`,
+  "retorno.previsao.rotulo": (data) => `Previsão do modelo para ${data}`,
+  "retorno.previsao.referencia": "referência: 0,00%",
+  "retorno.modelo.ar_1": "AR(1)",
+  "retorno.modelo.historical_mean": "Média histórica",
+  "retorno.tag.bate": "bate a referência",
+  "retorno.tag.naoBate": "não bate a referência",
+  "retorno.tag.erro": "não deu para calcular",
+  "retorno.rotulo.r2": "Erro relativo à referência",
+  "retorno.rotulo.acerto": "Acerto de alta ou queda",
+  "retorno.rotulo.dm": "Diebold-Mariano",
+  "retorno.rotulo.cw": "Clark-West",
+  "retorno.rotulo.pt": "Pesaran-Timmermann",
+  "retorno.rotulo.mse": "Erro quadrático médio do modelo",
+  "retorno.rotulo.mseRef": "Erro quadrático médio de supor zero",
+  "retorno.acerto.valor": (acerto, alta) => `${acerto} · subiu em ${alta}`,
+  "retorno.semPt": "sem teste",
+  "retorno.erroModelo": (msg) => `O cálculo deste modelo falhou (${msg}).`,
+  "retorno.detalhes.abrir": "Ver os erros e os outros dois testes",
+  "retorno.trilha.abrir": "Ver o que entrou no cálculo",
+  "retorno.trilha.titulo": "Trilha do cálculo",
+  "retorno.trilha": "O que entrou nesta validação — a série, a divisão entre treino e teste, a versão do método e os preços usados —, para que ela possa ser conferida.",
+  "retorno.trilha.refit": "Reestimação",
+  "retorno.trilha.refitValor": "a cada 252 pregões, em janela que cresce",
+  "retorno.trilha.referencia": "Referência",
+  "retorno.trilha.referenciaValor": "retorno zero",
+};
+Object.assign(TEXTOS, INICIANTE_NOVA, OUTROS_NOVOS);
+const TEXTOS_AVANCADOS = { ...AVANCADA_NOVA };
+
+// ---------------------------------------------------------------- o nível
+const root = document.documentElement;
+let reading = "beginner";
+const T = (k, ...a) => { const v = TEXTOS[k]; if (v === undefined) throw new Error(`texto sem chave: ${k}`); return typeof v === "function" ? v(...a) : v; };
+const P = (k, ...a) => {
+  const v = reading === "advanced" && k in TEXTOS_AVANCADOS ? TEXTOS_AVANCADOS[k] : TEXTOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, cls = "") => `<svg class="ruvor-glyph ${cls}" aria-hidden="true" focusable="false"><use href="#${id}"/></svg>`;
+const why = (text, phrase = "") => `<p class="ruvor-note"${phrase ? ` data-phrase="${phrase}"` : ""}>${esc(text)}</p>`;
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+const MIN_SESSIONS = 503; // frontend/src/risk/config.ts:8
+
+// ---------------------------------------------------------------- os estados (plano, "Os estados da seção", literal)
+function returnsState(asset, returns, prices) {
+  if (returns.state === "loading") return "R1";
+  if (returns.state === "error") return "R2";
+  if (returns.data.latest !== null) return "R3";
+  if (asset.state === "loading" || prices.state === "loading") return "R1";
+  if (asset.state === "ok" && asset.status === "inactive") return "R4";
+  if (prices.state === "error") return "R5";
+  if (prices.count === 0) return "R6";
+  if (prices.count <= MIN_SESSIONS - 1) return "R7";
+  return "R8";
+}
+function forecastView(asset, result, today) {
+  if (result.error !== "" || result.next_forecast === null || result.next_forecast_date === null) return { kind: "none" };
+  if (asset.state !== "ok") return { kind: "pending_identity" };
+  if (asset.status === "inactive") return { kind: "inactive" };
+  if (result.next_forecast_date < today) return { kind: "past", date: result.next_forecast_date };
+  return { kind: "show" };
+}
+
+// ---------------------------------------------------------------- o recolhimento (Collapsible.tsx)
+const openState = new Map();
+const isOpen = (id) => (openState.has(id) ? openState.get(id) : reading === "advanced");
+function collapsible(id, name, label, inner) {
+  const open = isOpen(id);
+  return `<div class="ruvor-collapsible" data-collapsible="${name}" data-open="${open}">
+    <button class="ruvor-collapsible__toggle" type="button" aria-expanded="${open}" aria-controls="${id}" data-toggle="${id}">${glyph("i-caret-right")}<span>${esc(label)}</span></button>
+    ${open ? `<div id="${id}">${inner}</div>` : ""}
+  </div>`;
+}
+
+// ---------------------------------------------------------------- os pedaços
+const modelName = (m) => T(`retorno.modelo.${m}`);
+const failed = (r) => r.error !== "";
+const verdictTag = (r) => (failed(r)
+  ? `<span class="ruvor-tag ruvor-tag--review" data-verdict="error">${esc(T("retorno.tag.erro"))}</span>`
+  : r.beats_reference ? `<span class="ruvor-tag ruvor-tag--validated" data-verdict="beats">${esc(T("retorno.tag.bate"))}</span>`
+  : `<span class="ruvor-tag ruvor-tag--neutral" data-verdict="not_beats">${esc(T("retorno.tag.naoBate"))}</span>`);
+const r2Abs = (r) => fPct2.format(Math.abs(Number(r.r2_os)));
+const fForecast = (v) => fPct2s.format(Number(v)); // log-retorno de 1 dia, em %, duas casas, com sinal
+
+function statePanel({ tone = "evidence", title, text, actions = "" }) {
+  const icon = tone === "review" ? "i-warning-duo" : "i-info-duo";
+  return `<div class="ruvor-panel"><div class="ruvor-panel__body ruvor-state">
+    <span class="ruvor-icon ruvor-icon--${tone}"><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#${icon}"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(title)}</p>
+      ${text ? `<p class="ruvor-state__text">${esc(text)}</p>` : ""}
+      ${actions ? `<div class="ruvor-state__actions">${actions}</div>` : ""}
+    </div></div></div>`;
+}
+const retryBtn = () => `<button class="ruvor-btn" type="button">${glyph("i-arrows-clockwise")}<span>${esc(T("ativo.tentarDeNovo"))}</span></button>`;
+// O aviso do RF-19: sempre aberto, nas duas leituras, em R3 a R8.
+const aviso = () => `<div class="ruvor-callout m51-callout" data-aviso="retorno">${glyph("i-info")}<p>${esc(T("retorno.aviso"))}</p></div>`;
+
+// A previsão do próximo pregão, na linha do modelo, depois do veredito e do histórico (RF-18).
+function forecast(r, asset) {
+  const fv = forecastView(asset, r, HOJE);
+  if (fv.kind === "none" || fv.kind === "pending_identity") return "";
+  if (fv.kind === "inactive") return `<div class="m51-forecast" data-forecast="inactive">${why(T("retorno.previsao.inativo"))}</div>`;
+  if (fv.kind === "past") return `<div class="m51-forecast" data-forecast="past">${why(T("retorno.previsao.passada", fDate(fv.date)))}</div>`;
+  const data = fDate(r.next_forecast_date);
+  const valor = fForecast(r.next_forecast);
+  return `<div class="m51-forecast" data-forecast="show">
+    <p class="m51-forecast__line"><span>${esc(T("retorno.previsao.rotulo", data))}</span><span class="ruvor-num">${esc(valor)}</span><span>${esc(T("retorno.previsao.referencia"))}</span></p>
+    ${why(P("retorno.previsao", valor, data, r.beats_reference === true), "previsao")}
+  </div>`;
+}
+
+function testRow(label, valueHtml, phrase, phraseKey) {
+  return `<div class="ruvor-test"><dt>${esc(label)}</dt><dd>${valueHtml}</dd>${phrase ? why(phrase, phraseKey) : ""}</div>`;
+}
+
+function modelBlock(r, asset) {
+  const head = `<div class="m51-model__head"><h3 class="ruvor-h3">${esc(modelName(r.model_name))}</h3>${verdictTag(r)}</div>`;
+  if (failed(r)) return `<section class="m51-model" data-model="${r.model_name}" data-error="true">${head}${why(T("retorno.erroModelo", r.error), "erroModelo")}</section>`;
+  const menos = Number(r.r2_os) > 0;
+  const r2txt = `${menos ? "+" : Number(r.r2_os) < 0 ? "−" : ""}${r2Abs(r)}`;
+  const acerto = fPct1.format(Number(r.hit_rate));
+  const alta = fPct1.format(Number(r.up_share));
+  const hist = `<dl class="ruvor-tests">
+    ${testRow(T("retorno.rotulo.r2"), `<span class="ruvor-num">${esc(r2txt)}</span>`, P("retorno.r2_os", r2Abs(r), menos), "r2_os")}
+    ${testRow(T("retorno.rotulo.acerto"), `<span class="ruvor-num">${esc(T("retorno.acerto.valor", acerto, alta))}</span>`, P("retorno.acerto", acerto, alta), "acerto")}
+    ${testRow(T("retorno.rotulo.dm"), `<span class="ruvor-num">${esc(fPval(r.dm_p_value))}</span>`, P("retorno.dm", fPval(r.dm_p_value), r.beats_reference === true), "dm")}
+  </dl>`;
+  return `<section class="m51-model" data-model="${r.model_name}">${head}${hist}${forecast(r, asset)}</section>`;
+}
+
+// Recolhido na iniciante (RF-17): os dois erros quadráticos, o CW e o PT de cada modelo.
+function details(L) {
+  return `<div class="m51-models">${L.results.map((r) => {
+    const head = `<h4 class="ruvor-h3">${esc(modelName(r.model_name))}</h4>`;
+    if (failed(r)) return `<section class="m51-model">${head}${why(T("retorno.erroModelo", r.error))}</section>`;
+    const todosAlta = r.pt_p_value === null ? Number(r.forecast_up_share) === 1 : null;
+    return `<section class="m51-model" data-model="${r.model_name}">${head}<dl class="ruvor-tests">
+      ${testRow(T("retorno.rotulo.mse"), `<span class="ruvor-num">${esc(Number(r.mse).toExponential(3).replace(".", ","))}</span>`)}
+      ${testRow(T("retorno.rotulo.mseRef"), `<span class="ruvor-num">${esc(Number(r.mse_reference).toExponential(3).replace(".", ","))}</span>`)}
+      ${testRow(T("retorno.rotulo.cw"), `<span class="ruvor-num">${esc(fPval(r.cw_p_value))}</span>`, P("retorno.cw", fPval(r.cw_p_value)), "cw")}
+      ${testRow(T("retorno.rotulo.pt"), `<span class="ruvor-num">${esc(r.pt_p_value === null ? T("retorno.semPt") : fPval(r.pt_p_value))}</span>`, P("retorno.pt", r.pt_p_value === null ? null : fPval(r.pt_p_value), todosAlta), "pt")}
+    </dl></section>`;
+  }).join("")}</div>`;
+}
+
+function trail(L) {
+  const instant = (s) => T("risco.trilha.instante", ...fInstantParts(s));
+  const item = (label, v) => `<div><dt>${esc(label)}</dt><dd>${esc(v)}</dd></div>`;
+  const pregoes = (n) => T("risco.trilha.pregoes", fInt.format(n));
+  return `${why(T("retorno.trilha"))}
+    <dl class="ruvor-trail">
+      ${item(T("risco.trilha.firstPrice"), fDate(L.first_price_date))}
+      ${item(T("risco.trilha.asOf"), fDate(L.as_of_date))}
+      ${item(T("risco.trilha.priceCount"), fInt.format(L.price_count))}
+      ${item(T("risco.trilha.train"), pregoes(L.train_count))}
+      ${item(T("risco.trilha.test"), pregoes(L.test_count))}
+      ${item(T("risco.trilha.window"), pregoes(L.train_window_days))}
+      ${item(T("retorno.trilha.refit"), T("retorno.trilha.refitValor"))}
+      ${item(T("retorno.trilha.referencia"), T("retorno.trilha.referenciaValor"))}
+      ${item(T("risco.trilha.engine"), L.engine_version)}
+      ${item(T("risco.trilha.calculatedAt"), instant(L.calculated_at))}
+      ${item(T("risco.trilha.priceRun"), T("risco.trilha.coleta", TEXTOS[`risco.trilha.fonte.${L.price_run.source}`] ?? L.price_run.source, instant(L.price_run.finished_at ?? L.price_run.started_at)))}
+    </dl>`;
+}
+
+function verdictPhrase(data) {
+  const L = data.latest;
+  const ok = L.results.filter((r) => !failed(r));
+  const batem = ok.filter((r) => r.beats_reference).map((r) => [modelName(r.model_name), r2Abs(r)]);
+  const naoBatem = ok.filter((r) => !r.beats_reference).map((r) => modelName(r.model_name));
+  const falhos = L.results.length - ok.length;
+  return P("retorno.veredito", data.ticker, fInt.format(L.test_count), fDate(L.as_of_date), batem, naoBatem, falhos);
+}
+
+function resultBody(data, asset, idp) {
+  const L = data.latest;
+  return `<div class="ruvor-stack">
+    ${aviso()}
+    <div class="ruvor-callout m51-callout" data-phrase="veredito">${glyph("i-scales")}<p>${esc(verdictPhrase(data))}</p></div>
+    <section class="ruvor-panel" aria-labelledby="${idp}-models"><div class="ruvor-panel__body">
+      <h3 class="ruvor-sr-only" id="${idp}-models">${esc(T("retorno.titulo"))}</h3>
+      <div class="m51-models">${L.results.map((r) => modelBlock(r, asset)).join("")}</div>
+    </div></section>
+    ${collapsible(`${idp}-det`, "details", T("retorno.detalhes.abrir"), details(L))}
+    ${collapsible(`${idp}-trail`, "trail", T("retorno.trilha.abrir"), `<p class="ruvor-eyebrow">${esc(T("retorno.trilha.titulo"))}</p>${trail(L)}`)}
+  </div>`;
+}
+
+function body(asset, returns, prices, idp) {
+  const st = returnsState(asset, returns, prices);
+  if (st === "R1") return { st, html: `<p class="ruvor-sr-only">${esc(T("retorno.carregando"))}</p><div aria-busy="true"><div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div></div>` };
+  if (st === "R2") return { st, html: `<div class="ruvor-callout ruvor-callout--critical ruvor-callout--row" role="alert"><span>${esc(T("ativo.erroSecao"))}</span>${retryBtn()}</div>` };
+  if (st === "R3") return { st, html: resultBody(returns.data, asset, idp) };
+  const wrap = (panel) => `<div class="ruvor-stack">${aviso()}${panel}</div>`;
+  if (st === "R4") return { st, html: wrap(statePanel({ title: T("retorno.estado.inativo.titulo"), text: T("retorno.estado.inativo") })) };
+  if (st === "R5") return { st, html: wrap(statePanel({ tone: "review", title: T("retorno.estado.semSerie.titulo"), text: T("retorno.estado.semSerie"), actions: retryBtn() })) };
+  if (st === "R6") return { st, html: wrap(statePanel({ title: T("retorno.estado.naoCoberto.titulo"), text: T("retorno.estado.naoCoberto") })) };
+  if (st === "R7") return { st, html: wrap(statePanel({ title: T("retorno.estado.serieCurta.titulo"), text: T("retorno.estado.serieCurta", fInt.format(prices.count), fInt.format(MIN_SESSIONS)) })) };
+  return { st, html: wrap(statePanel({ title: T("retorno.estado.naoCalculado.titulo"), text: T("retorno.estado.naoCalculado") })) };
+}
+
+function section(asset, returns, prices, idp) {
+  const b = body(asset, returns, prices, idp);
+  return `<section class="ruvor-stack" id="${idp}-sec" aria-labelledby="${idp}-h" data-returns-state="${b.st}">
+    <div class="ruvor-section-head"><div>
+      <p class="ruvor-eyebrow">${esc(T("retorno.sobrancelha"))}</p>
+      <h2 class="ruvor-h2" id="${idp}-h">${esc(T("retorno.titulo"))}</h2>
+    </div></div>
+    <p class="ruvor-sub">${esc(T("retorno.intro"))}</p>
+    <div data-body${b.st === "R1" ? ' aria-busy="true"' : ""}>${b.html}</div>
+  </section>`;
+}
+
+// ---------------------------------------------------------------- as cargas
+const ATIVO = { state: "ok", status: "active" };
+const ATIVO_INATIVO = { state: "ok", status: "inactive" };
+const PRECOS = (n) => ({ state: "ok", count: n });
+const okReturns = (data) => ({ state: "ok", data });
+const vazio = (ticker = "XXXX3") => okReturns({ ticker, latest: null });
+
+// ---------------------------------------------------------------- os casos montados à mão (fictícios)
+const ESTADOS = [
+  ["R1 · carregando", "o /returns ainda não voltou", ATIVO, { state: "loading" }, PRECOS(2499)],
+  ["R2 · erro", "o /returns falhou (rede, 5xx, 429)", ATIVO, { state: "error" }, PRECOS(2499)],
+  ["R3 · resultado", "ver as vistas ITUB4 e PETR4 (foto real) e “as combinações e a previsão”", null, null, null],
+  ["R1 · intermediário", "latest nulo e a identidade ainda carregando: o mesmo esqueleto, antes do R4", { state: "loading" }, vazio(), PRECOS(2499)],
+  ["R4 · inativo", "latest nulo, a identidade diz inactive", ATIVO_INATIVO, vazio(), PRECOS(2499)],
+  ["R5 · série indisponível", "latest nulo e o /prices falhou: sem afirmar o motivo", ATIVO, vazio(), { state: "error" }],
+  ["R6 · não coberto", "latest nulo e 0 pregões: o caso de ~470 ações do catálogo", ATIVO, vazio(), PRECOS(0)],
+  ["R7 · série curta", "latest nulo e 312 pregões (1 a 502)", ATIVO, vazio(), PRECOS(312)],
+  ["R8 · ainda não calculado", "latest nulo e 2.499 pregões (≥ 503): entra no próximo cálculo diário", ATIVO, vazio(), PRECOS(2499)],
+];
+
+function at(data, m) { return data.latest.results.find((r) => r.model_name === m); }
+function casos() {
+  const it = () => clone(FOTO.ITUB4);
+  const pe = () => clone(FOTO.PETR4);
+  // um bate: o AR(1) do PETR4 com p do DM 0,031 (fictício)
+  const umBate = pe(); Object.assign(at(umBate, "ar_1"), { dm_p_value: "0.0310000000", beats_reference: true });
+  // os dois batem (fictício)
+  const doisBatem = pe(); Object.assign(at(doisBatem, "ar_1"), { dm_p_value: "0.0310000000", beats_reference: true });
+  Object.assign(at(doisBatem, "historical_mean"), { dm_p_value: "0.0420000000", beats_reference: true });
+  // um com erro (fictício)
+  const comErro = it();
+  Object.assign(at(comErro, "ar_1"), { mse: null, mse_reference: null, r2_os: null, direction_days: null, hit_rate: null, up_share: null, forecast_up_share: null, dm_statistic: null, dm_p_value: null, cw_statistic: null, cw_p_value: null, pt_statistic: null, pt_p_value: null, beats_reference: null, direction_skill: null, next_forecast: null, next_forecast_date: null, error: "fictício: matriz singular no trecho 4" });
+  const passada = it(); for (const r of passada.latest.results) r.next_forecast_date = "2026-09-28";
+  return [
+    ["Nenhum bate — o caso real", "ITUB4, a foto sem mudança: os dois não batem. O historical_mean tem pt_p_value nulo com previsão de alta em todos os dias (forecast_up_share 1): a frase da direção constante, nos detalhes.", ATIVO, okReturns(it())],
+    ["Um bate", "PETR4 com o p do DM do AR(1) trocado para 0,031 (fictício): a frase de um modelo que bate, com a vantagem pequena e o acaso; a previsão dele sem a nota de “não mais informativa”.", ATIVO, okReturns(umBate)],
+    ["Os dois batem", "PETR4 com os dois p do DM abaixo de 0,05 (fictícios).", ATIVO, okReturns(doisBatem)],
+    ["Um resultado com error", "ITUB4 com o AR(1) em erro (fictício): “não deu para calcular”, diferente de “não bate”; sem números e sem previsão nele; a frase do veredito conta quantos não foram julgados.", ATIVO, okReturns(comErro)],
+    ["Previsão ausente · ativo inativo", "ITUB4 com a identidade inactive (fictício): R3 continua (a validação gravada vale para a data dela), e a linha da previsão vira a frase de inativo, sem o número.", ATIVO_INATIVO, okReturns(it())],
+    ["Previsão ausente · a data já passou", "ITUB4 com next_forecast_date 28/09/2026 (fictício), anterior a hoje (04/10/2026): a frase da data passada, sem o número.", ATIVO, okReturns(passada)],
+    ["A identidade carregando", "ITUB4 com a identidade ainda carregando: o resto da linha aparece, sem a previsão e sem frase de estado.", { state: "loading" }, okReturns(it())],
+  ];
+}
+
+// ---------------------------------------------------------------- as vistas
+let view = "itub4";
+function renderAtivo() {
+  const t = view === "petr4" ? "PETR4" : "ITUB4";
+  const data = FOTO[t];
+  const L = data.latest;
+  $("#m51-ativo-note").innerHTML = `<p><b>Nota do mockup · não é tela.</b> ${t}, a foto real da fase A, sem mudança: motor <code>${esc(L.engine_version)}</code>, último pregão ${fDate(L.as_of_date)}, ${fInt.format(L.test_count)} dias de teste. Hoje fixo em ${fDate(HOJE)}: a previsão para ${fDate(L.results[0].next_forecast_date)} aparece.</p>
+    <p><b>Ordem:</b> risco → laboratório (M2.4) → retorno → Fundamentos. <b>Iniciante:</b> o aviso aberto, a frase do veredito, os dois modelos com o veredito, o histórico (erro relativo, acerto ao lado da parcela de alta, p do DM) e, por último, a previsão; os erros quadráticos, o CW, o PT e a trilha recolhidos. <b>Avançada:</b> as frases avançadas e os recolhidos abertos.</p>
+    <p><b>A previsão</b> vem só dentro da linha do modelo, depois do veredito e do histórico, no tamanho micro do kit, sem fundo nem peso (a tag do veredito tem o mesmo tamanho, com fundo e peso; o título do modelo é maior), sem seta, sem cor de alta ou queda, com a referência 0,00% ao lado. Os modelos seguem a ordem de <code>model_name</code>, sem mérito.</p>`;
+  $("#m51-ativo-host").innerHTML = section(ATIVO, okReturns(data), PRECOS(L.price_count), t.toLowerCase());
+}
+function renderEstados() {
+  $("#m51-estados-note").innerHTML = `<p><b>Nota do mockup · não é tela · dado fictício.</b> Os estados do RF-16, na ordem em que <code>returnsState</code> os pergunta (a primeira que casa decide), cada um montado à mão. O aviso aparece aberto de R3 a R8, e nunca em R1 nem em R2.</p>`;
+  $("#m51-estados-host").innerHTML = ESTADOS.map(([t, d, asset, returns, prices], i) => `<div class="m51-case"><h3 class="ruvor-h3">Estado ${esc(t)}</h3><p class="m51-note">${esc(d)}</p>${returns ? section(asset, returns, prices, `st${i}`) : ""}</div>`).join("");
+}
+function renderCasos() {
+  $("#m51-casos-note").innerHTML = `<p><b>Nota do mockup · não é tela · dado fictício sobre a foto real.</b> As combinações do RF-17 e os casos de previsão ausente do RF-18 (<code>forecastView</code>), cada um dizendo o que foi trocado.</p>`;
+  $("#m51-casos-host").innerHTML = casos().map(([t, d, asset, returns], i) => `<div class="m51-case"><h3 class="ruvor-h3">${esc(t)}</h3><p class="m51-note">${esc(d)}</p>${section(asset, returns, PRECOS(2499), `cs${i}`)}</div>`).join("");
+}
+
+// Os exemplos de cada chave-função (o que a T12 leva a frontend/tests/exemplos.ts), cobrindo os ramos.
+const EXEMPLOS = {
+  "retorno.veredito": [
+    ["ITUB4", "2.246", "02/10/2026", [], ["AR(1)", "Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"]], ["Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"], ["Média histórica", "0,14%"]], [], 0],
+    ["ITUB4", "2.246", "02/10/2026", [], ["Média histórica"], 1],
+    ["ITUB4", "2.246", "02/10/2026", [["Média histórica", "0,01%"]], [], 1],
+    ["ITUB4", "2.246", "02/10/2026", [], [], 2],
+  ],
+  "retorno.r2_os": [["0,04%", true], ["0,95%", false]],
+  "retorno.acerto": [["50,6%", "51,1%"]],
+  "retorno.dm": [["0,458", false], ["0,031", true]],
+  "retorno.cw": [["0,049"]],
+  "retorno.pt": [["0,445", null], [null, true], [null, false]],
+  "retorno.previsao": [["-0,05%", "05/10/2026", false], ["+0,09%", "05/10/2026", true]],
+  "retorno.estado.serieCurta": [["312", "503"]],
+  "retorno.previsao.passada": [["28/09/2026"]],
+  "retorno.previsao.rotulo": [["05/10/2026"]],
+  "retorno.acerto.valor": [["50,6%", "51,1%"]],
+  "retorno.erroModelo": [["matriz singular no trecho 4"]],
+};
+const ONDE = {
+  "retorno.sobrancelha": "o cabeçalho da seção", "retorno.titulo": "o cabeçalho da seção", "retorno.intro": "abaixo do título",
+  "retorno.aviso": "R3 a R8, sempre aberto, nas duas leituras — isento da lista ampliada do RF-21",
+  "retorno.carregando": "R1, só para leitor de tela",
+  "retorno.estado.inativo.titulo": "R4", "retorno.estado.inativo": "R4", "retorno.estado.semSerie.titulo": "R5", "retorno.estado.semSerie": "R5",
+  "retorno.estado.naoCoberto.titulo": "R6", "retorno.estado.naoCoberto": "R6", "retorno.estado.serieCurta.titulo": "R7", "retorno.estado.serieCurta": "R7",
+  "retorno.estado.naoCalculado.titulo": "R8", "retorno.estado.naoCalculado": "R8",
+  "retorno.previsao.inativo": "R3, no lugar da previsão, com a identidade inactive", "retorno.previsao.passada": "R3, no lugar da previsão, com a data anterior a hoje",
+  "retorno.previsao.rotulo": "a linha da previsão", "retorno.previsao.referencia": "a linha da previsão, ao lado do número",
+  "retorno.erroModelo": "o modelo com error",
+};
+
+// A lista ampliada do RF-21, proposta para o portão fechar: palavra inteira, sem caixa, por raiz.
+const AMPLIADA = /(?<![\p{L}\p{N}])(compr\p{L}*|vend\p{L}*|mant(er|enha|enham|ém)|lucr\p{L}*|oportunidades?|garant\p{L}*|alvos?|apost\p{L}*|promissor(a|as|es)?)(?![\p{L}\p{N}])|vai (subir|cair|valorizar|desvalorizar|render)|vão (subir|cair)|deve (subir|cair|render)|tende a (subir|cair)/iu;
+const PEGA = ["vendeu", "comprado", "mantenha", "a ação vai subir", "deve cair", "tende a subir", "oportunidade", "garante", "lucro"];
+
+function amostras() {
+  // toda saída de toda chave retorno.* (menos retorno.aviso), nas duas leituras, com os exemplos
+  const out = [];
+  for (const [k, v] of Object.entries(TEXTOS)) {
+    if (!k.startsWith("retorno.") || k === "retorno.aviso") continue;
+    for (const tab of [TEXTOS, TEXTOS_AVANCADOS]) {
+      const f = tab[k];
+      if (f === undefined) continue;
+      const exs = typeof f === "function" ? EXEMPLOS[k] : [null];
+      if (!exs) throw new Error(`sem exemplo: ${k}`);
+      for (const ex of exs) out.push([k, ex ? f(...ex) : f]);
+    }
+  }
+  return out;
+}
+
+function renderTextos() {
+  $("#m51-textos-head").innerHTML = `<p><b>A lista fechada: N = 7 chaves <code>retorno.*</code> com frase nas duas leituras</b> — ${FECHADA.map((k) => `<code>${k}</code>`).join(", ")} (a de <code>docs/mockups/M5.1/conferencia-retorno.md</code>). A T12 as copia para a <code>AS_N</code> de <code>frontend/tests/duas-leituras.test.ts</code> e para a <code>LISTA_FECHADA</code> de <code>frontend/tests/textos.test.ts</code>, com os exemplos abaixo em <code>frontend/tests/exemplos.ts</code>.</p>
+    <p>Chave-função: uma linha por exemplo, cobrindo os ramos. A régua das frases é "errar menos", nunca "melhor"; nenhuma diz o que a ação fará.</p>`;
+  const rowsF = FECHADA.flatMap((k) => {
+    const ini = TEXTOS[k], av = TEXTOS_AVANCADOS[k];
+    const exs = typeof ini === "function" ? EXEMPLOS[k] : [null];
+    return exs.map((ex) => `<tr><td>${k}</td><td>${ex ? esc(JSON.stringify(ex)) : "— (texto)"}</td><td><p>${esc(ex ? ini(...ex) : ini)}</p></td><td><p>${esc(ex ? av(...ex) : av)}</p></td></tr>`);
+  });
+  $("#m51-textos-fechada").innerHTML = rowsF.join("");
+  $("#m51-textos-outros-head").innerHTML = `<p><b>Reaproveitadas, sem mudança:</b> ${REUSADAS.map((k) => `<code>${k}</code>`).join(", ")}.</p>
+    <p><b>Os estados, a previsão ausente, os títulos, os rótulos e o aviso</b> — uma leitura só, fora da lista fechada. As frases de estado da lista do portão: <code>retorno.estado.inativo</code>, <code>.semSerie</code>, <code>.naoCoberto</code>, <code>.serieCurta</code>, <code>.naoCalculado</code> (cada uma com o título), <code>retorno.previsao.inativo</code>, <code>retorno.previsao.passada</code> e <code>retorno.aviso</code>.</p>`;
+  $("#m51-textos-outros").innerHTML = Object.keys(OUTROS_NOVOS).flatMap((k) => {
+    const v = TEXTOS[k];
+    const exs = typeof v === "function" ? EXEMPLOS[k] : [null];
+    return exs.map((ex) => `<tr><td>${k}</td><td>${ex ? esc(JSON.stringify(ex)) : "— (texto)"}</td><td><p>${esc(ex ? v(...ex) : v)}</p></td><td>${esc(ONDE[k] ?? "rótulo da seção")}</td></tr>`);
+  }).join("");
+  const viol = amostras().filter(([, s]) => AMPLIADA.test(s));
+  const pega = PEGA.filter((s) => AMPLIADA.test(s));
+  $("#m51-textos-regex").innerHTML = `<p><b>A lista ampliada do RF-21, proposta para o portão fechar</b> (palavra inteira, sem caixa; vale só para as <code>retorno.*</code>, nas duas leituras, na forma (b), com os exemplos; <code>retorno.aviso</code> é a única isenta):</p>
+    <p class="m51-regex">${esc(AMPLIADA.source)}</p>
+    <p>Conferida nesta página: <b>${viol.length === 0 ? "nenhuma" : viol.length}</b> das ${amostras().length} saídas <code>retorno.*</code> (as duas leituras, todos os exemplos, sem o aviso) viola a lista${viol.length ? `: ${esc(viol.map(([k]) => k).join(", "))}` : ""}; ela pega ${pega.length} de ${PEGA.length} formas de controle (${esc(PEGA.map((s) => `“${s}”`).join(", "))})${pega.length === PEGA.length ? "" : ` — não pega: ${esc(PEGA.filter((s) => !AMPLIADA.test(s)).join(", "))}`}. O aviso tem "comprar, vender ou manter" e "vai fazer" de propósito, para negar.</p>`;
+}
+
+function render() {
+  for (const v of document.querySelectorAll(".m51-view")) v.hidden = true;
+  const show = view === "itub4" || view === "petr4" ? "ativo" : view;
+  $(`.m51-view[data-view="${show}"]`).hidden = false;
+  for (const b of document.querySelectorAll("[data-m51]")) b.setAttribute("aria-pressed", String(b.dataset.m51 === view));
+  if (show === "ativo") renderAtivo();
+  else if (view === "estados") renderEstados();
+  else if (view === "casos") renderCasos();
+  else renderTextos();
+}
+
+// ---------------------------------------------------------------- controles
+document.addEventListener("click", (ev) => {
+  const t = ev.target.closest("[data-toggle]");
+  if (t) { const id = t.dataset.toggle; openState.set(id, !isOpen(id)); render(); return; }
+  const v = ev.target.closest("[data-m51]");
+  if (v) { view = v.dataset.m51; history.replaceState(null, "", `${location.search}#${view}`); render(); return; }
+  const r = ev.target.closest("[data-set-reading]");
+  if (r) { setReading(r.dataset.setReading); return; }
+  const th = ev.target.closest("[data-set-theme]");
+  if (th) { setTheme(th.dataset.setTheme); }
+});
+function setReading(r) {
+  reading = r;
+  openState.clear(); // trocar o nível reaplica o padrão
+  root.setAttribute("data-reading", r);
+  for (const b of document.querySelectorAll("[data-set-reading]")) b.setAttribute("aria-pressed", String(b.dataset.setReading === r));
+  render();
+}
+function setTheme(theme) {
+  if (theme === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+  for (const b of document.querySelectorAll("[data-set-theme]")) b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme));
+}
+
+// O endereço escolhe a vista, o tema e a leitura (para as capturas): #petr4, ?tema=dark&leitura=advanced.
+const q = new URLSearchParams(location.search);
+if (["light", "dark", "system"].includes(q.get("tema"))) setTheme(q.get("tema"));
+if (q.get("leitura") === "advanced") reading = "advanced";
+for (const b of document.querySelectorAll("[data-set-reading]")) b.setAttribute("aria-pressed", String(b.dataset.setReading === reading));
+root.setAttribute("data-reading", reading);
+const h = location.hash.slice(1);
+if (["itub4", "petr4", "estados", "casos", "textos"].includes(h)) view = h;
+render();
+</script>
+</body>
+</html>
