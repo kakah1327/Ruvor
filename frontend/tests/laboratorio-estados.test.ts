@@ -317,6 +317,47 @@ describe("V-11 — useLabPolling: a releitura limitada (RF-18)", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  it("com o latest antigo de outra versão já presente, segue até chegar um latest de id novo (RF-18)", () => {
+    const old = lab({
+      latest: run({ id: 3, engine_version: "0.4.0" }),
+      risk_engine_version: "0.5.0",
+      pending: true,
+    });
+    const { reload, rerender } = mount({ data: old, token: 0 });
+    rerender({ data: old, token: 1 });
+    advance(POLL_INTERVAL_MS);
+    expect(reload).toHaveBeenCalledTimes(1);
+    // a resposta: o mesmo experimento antigo, ainda devido — a releitura segue
+    rerender({ data: { ...old }, token: 1 });
+    advance(POLL_INTERVAL_MS);
+    expect(reload).toHaveBeenCalledTimes(2);
+    // chega o experimento novo, de id novo: para
+    rerender({
+      data: lab({
+        latest: run({ id: 4, engine_version: "0.5.0" }),
+        risk_engine_version: "0.5.0",
+      }),
+      token: 1,
+    });
+    rerender({ data: { ...old }, token: 1 });
+    advance(LAB_POLL_WINDOW_MS);
+    expect(reload).toHaveBeenCalledTimes(2);
+  });
+
+  it("uma falha antiga já presente não fecha a janela; uma falha nova fecha", () => {
+    const old = lab({ last_failure: FAILURE, pending: true });
+    const { reload, rerender } = mount({ data: old, token: 0 });
+    rerender({ data: old, token: 1 });
+    advance(POLL_INTERVAL_MS);
+    expect(reload).toHaveBeenCalledTimes(1);
+    rerender({
+      data: lab({ last_failure: { ...FAILURE, id: 10 }, pending: true }),
+      token: 1,
+    });
+    advance(LAB_POLL_WINDOW_MS);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
   it("para no primeiro /lab com last_failure", () => {
     const { reload, rerender } = mount({ data: lab({ pending: true }), token: 0 });
     rerender({ data: lab({ pending: true }), token: 1 });

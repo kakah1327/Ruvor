@@ -3,8 +3,10 @@
  * `reloadToken` muda** — o `reloadAll` que o fim do acompanhamento do risco chama
  * (`risk/usePolling.ts`) —, e não na montagem. Dentro da janela, com o `/lab` recebido e
  * `pending` verdadeiro, o `/lab` é pedido de novo `POLL_INTERVAL_MS` depois de cada resposta.
- * Para no primeiro `/lab` com `latest` ou `last_failure` não nulos, ao fim dos 120 000 ms e ao
- * desmontar; a aba oculta suspende, e voltar a ficar visível pede na hora (o molde de
+ * Para no primeiro `latest` ou `last_failure` **novo** — de `id` diferente do que havia quando a
+ * janela abriu (RF-18 da spec; o plano dizia "não nulos", e vale a spec: com o `latest` de outra
+ * versão do motor já presente, a releitura segue até chegar o experimento novo) —, ao fim dos
+ * 120 000 ms e ao desmontar; a aba oculta suspende, e voltar a ficar visível pede na hora (o molde de
  * `usePolling`).
  */
 
@@ -16,6 +18,24 @@ import { POLL_INTERVAL_MS } from "../risk/usePolling";
 /** A duração da janela de releitura, a partir da mudança de `reloadToken`. */
 export const LAB_POLL_WINDOW_MS = 120_000;
 
+/** Os `id` do `latest` e do `last_failure` de um `/lab` (nulos sem eles, ou sem `/lab`). */
+type Seen = { latestId: number | null; failureId: number | null };
+
+function seen(lab: Lab | null): Seen {
+  return {
+    latestId: lab?.latest?.id ?? null,
+    failureId: lab?.last_failure?.id ?? null,
+  };
+}
+
+/** Há `latest` ou `last_failure` de `id` diferente do visto quando a janela abriu. */
+function isNew(lab: Lab, before: Seen): boolean {
+  return (
+    (lab.latest !== null && lab.latest.id !== before.latestId) ||
+    (lab.last_failure !== null && lab.last_failure.id !== before.failureId)
+  );
+}
+
 /**
  * `lab` é o último `/lab` recebido (nulo enquanto a primeira carga não chegou, ou com a rota em
  * erro); `reloadLab` pede o `/lab` de novo; `reloadToken` é o da tela (`useAssetData`).
@@ -25,22 +45,28 @@ export function useLabPolling(
   reloadLab: () => void,
   reloadToken: number,
 ): void {
-  const [windowOpen, setWindowOpen] = useState(false);
+  // A janela aberta guarda os `id` do `latest` e do `last_failure` de quando abriu; fechada, nula.
+  const [opened, setOpened] = useState<Seen | null>(null);
+  const windowOpen = opened !== null;
+
+  // O último `/lab` recebido, para a janela ler ao abrir sem depender dele.
+  const latestLab = useRef(lab);
+  latestLab.current = lab;
 
   // A janela: abre a cada mudança de `reloadToken` depois da montagem, e fecha em 2 minutos.
   const mountedToken = useRef(reloadToken);
   useEffect(() => {
     if (reloadToken === mountedToken.current) return;
-    setWindowOpen(true);
-    const timer = setTimeout(() => setWindowOpen(false), LAB_POLL_WINDOW_MS);
+    setOpened(seen(latestLab.current));
+    const timer = setTimeout(() => setOpened(null), LAB_POLL_WINDOW_MS);
     return () => clearTimeout(timer);
   }, [reloadToken]);
 
-  // O experimento chegou (ou a falha dele): a janela fecha.
-  const arrived = lab !== null && (lab.latest !== null || lab.last_failure !== null);
+  // O experimento novo chegou (ou uma falha nova): a janela fecha.
+  const arrived = opened !== null && lab !== null && isNew(lab, opened);
   useEffect(() => {
-    if (windowOpen && arrived) setWindowOpen(false);
-  }, [windowOpen, arrived]);
+    if (arrived) setOpened(null);
+  }, [arrived]);
 
   // O pedido seguinte, `POLL_INTERVAL_MS` depois de cada resposta, só com a aba visível.
   useEffect(() => {
