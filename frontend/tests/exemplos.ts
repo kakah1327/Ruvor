@@ -176,6 +176,51 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "laboratorio.grade.esperadas": [["12,6"]],
   "laboratorio.grade.kDeN": [[4, 9]],
   "laboratorio.trilha.retratos": [["72", "0"]],
+  // retorno.*: o registro EXEMPLOS do `retorno.html` aprovado (M5.1, T9), cobrindo os ramos —
+  // nenhum bate, um, os dois, um e dois sem veredito; menos e mais; o PT nulo nos dois lados.
+  "retorno.veredito": [
+    ["ITUB4", "2.246", "02/10/2026", [], ["AR(1)", "Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"]], ["Média histórica"], 0],
+    [
+      "PETR4",
+      "2.246",
+      "02/10/2026",
+      [
+        ["AR(1)", "0,40%"],
+        ["Média histórica", "0,14%"],
+      ],
+      [],
+      0,
+    ],
+    ["ITUB4", "2.246", "02/10/2026", [], ["Média histórica"], 1],
+    ["ITUB4", "2.246", "02/10/2026", [["Média histórica", "0,01%"]], [], 1],
+    ["ITUB4", "2.246", "02/10/2026", [], [], 2],
+  ],
+  "retorno.r2_os": [
+    ["0,04%", true],
+    ["0,95%", false],
+    ["0,00%", false],
+  ],
+  "retorno.acerto": [["50,6%", "51,1%"]],
+  "retorno.dm": [
+    ["0,458", false],
+    ["0,031", true],
+  ],
+  "retorno.cw": [["0,049"]],
+  "retorno.pt": [
+    ["0,445", null],
+    [null, true],
+    [null, false],
+  ],
+  "retorno.previsao": [
+    ["−0,05%", "05/10/2026", false],
+    ["+0,09%", "05/10/2026", true],
+  ],
+  "retorno.estado.serieCurta": [["312", "503"]],
+  "retorno.previsao.passada": [["28/09/2026"]],
+  "retorno.previsao.rotulo": [["05/10/2026"]],
+  "retorno.acerto.valor": [["50,6%", "51,1%"]],
+  "retorno.erroModelo": [["matriz singular no trecho 4"]],
   // fundamentos.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c), um por ramo.
   "fundamentos.proveniencia": [["30/06/2026", "ITR", "28/09/2026 às 08:02"]],
   "fundamentos.vezes": [["4,65"]],
@@ -421,5 +466,45 @@ export const EXEMPLOS_AVANCADOS: Readonly<
     ["50", "22,4", 100, false],
     ["10", "22,4", 100, false],
     ["1", "2,5", 100, false],
+  ],
+  // retorno.*: o registro EXEMPLOS do `retorno.html` aprovado (M5.1, T9), cobrindo os ramos —
+  // nenhum bate, um, os dois, um e dois sem veredito; menos e mais; o PT nulo nos dois lados.
+  "retorno.veredito": [
+    ["ITUB4", "2.246", "02/10/2026", [], ["AR(1)", "Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"]], ["Média histórica"], 0],
+    [
+      "PETR4",
+      "2.246",
+      "02/10/2026",
+      [
+        ["AR(1)", "0,40%"],
+        ["Média histórica", "0,14%"],
+      ],
+      [],
+      0,
+    ],
+    ["ITUB4", "2.246", "02/10/2026", [], ["Média histórica"], 1],
+    ["ITUB4", "2.246", "02/10/2026", [["Média histórica", "0,01%"]], [], 1],
+    ["ITUB4", "2.246", "02/10/2026", [], [], 2],
+  ],
+  "retorno.r2_os": [
+    ["0,04%", true],
+    ["0,95%", false],
+    ["0,00%", false],
+  ],
+  "retorno.acerto": [["50,6%", "51,1%"]],
+  "retorno.dm": [
+    ["0,458", false],
+    ["0,031", true],
+  ],
+  "retorno.cw": [["0,049"]],
+  "retorno.pt": [
+    ["0,445", null],
+    [null, true],
+    [null, false],
+  ],
+  "retorno.previsao": [
+    ["−0,05%", "05/10/2026", false],
+    ["+0,09%", "05/10/2026", true],
   ],
 };

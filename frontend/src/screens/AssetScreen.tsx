@@ -18,6 +18,7 @@ import { EventsSection } from "../components/EventsSection";
 import { FundamentalsSection } from "../components/FundamentalsSection";
 import { LabSection } from "../components/LabSection";
 import { PriceSection } from "../components/PriceSection";
+import { ReturnsSection } from "../components/ReturnsSection";
 import {
   RiskSection,
   sectionPending,
@@ -182,13 +183,14 @@ type Posted =
 
 /**
  * A tela do ativo (RF-06 a RF-20 do M1.6b, RF-15 do M1.6c): o cabeçalho, o preço, os
- * proventos, o comportamento, o risco e, depois dele, os fundamentos e os comunicados, com a
- * trilha na coluna lateral do casco e a proveniência no rodapé.
+ * proventos, o comportamento, o risco e, depois dele, o laboratório (M2.4), o retorno (M5.1),
+ * os fundamentos e os comunicados, com a trilha na coluna lateral do casco e a proveniência no
+ * rodapé.
  *
  * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
  * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
  * carregando: o do `/risk` e o da identidade e da série que o estado pede. As duas seções do
- * M1.6c e o `/lab` do laboratório (M2.4, RF-13) não entram nele.
+ * M1.6c, o `/lab` do laboratório (M2.4, RF-13) e o `/returns` do retorno (M5.1) não entram nele.
  */
 export function AssetScreen({ ticker }: { ticker: string }) {
   const data = useAssetData(ticker);
@@ -278,6 +280,17 @@ export function AssetScreen({ ticker }: { ticker: string }) {
       {/* O laboratório (M2.4, RF-13): colado no risco, antes do retorno do M5.1 e dos
           Fundamentos; fora do `data-ready`. */}
       <LabSection load={data.lab} onRetry={data.reload.lab} />
+
+      {/* O retorno (M5.1): depois do laboratório e antes dos Fundamentos; fora do
+          `data-ready`. */}
+      <ReturnsSection
+        load={data.returns}
+        asset={asset}
+        prices={prices}
+        today={today()}
+        onRetry={data.reload.returns}
+        onRetryPrices={data.reload.prices}
+      />
 
       <FundamentalsSection
         load={data.fundamentals}

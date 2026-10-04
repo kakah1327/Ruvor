@@ -19,8 +19,17 @@
  * Com eles, `LEITURA_KEYS` são as 55 do RF-04; o M3.3 acrescenta as seis medidas do estresse, do
  * `ativo-estresse.html` (T4): são 61. O M2.4 acrescenta as nove `laboratorio.*` da lista fechada
  * do `laboratorio.html` (T9), literais, com as afirmações de `conferencia-laboratorio.md`: são 70.
+ * O M5.1 acrescenta as sete `retorno.*` da lista fechada do `retorno.html` (T9), literais, com as
+ * afirmações de `conferencia-retorno.md`: são 77.
  */
-import { acimaDe, type TEXTOS, type TextoKey } from "./textos";
+import { acimaDe, type ModeloQueBate, type TEXTOS, type TextoKey } from "./textos";
+
+/** "A", "A e B": os nomes dos modelos na frase avançada do veredito (M5.1). */
+function nomes(lista: readonly string[]): string {
+  return lista.length === 1
+    ? (lista[0] ?? "")
+    : `${lista.slice(0, -1).join(", ")} e ${lista.at(-1)}`;
+}
 
 /** Texto vira `string`; função mantém a assinatura (mesma chave, mesmos argumentos: RF-05). */
 export type Leitura<T> = T extends string ? string : T;
@@ -107,6 +116,14 @@ export const LEITURA_KEYS = [
   "laboratorio.violacoesDecada",
   "laboratorio.vereditoDecada",
   "laboratorio.anosNaoRejeitados",
+  // O retorno (M5.1): a lista fechada do `retorno.html` aprovado, N = 7.
+  "retorno.veredito",
+  "retorno.r2_os",
+  "retorno.acerto",
+  "retorno.dm",
+  "retorno.cw",
+  "retorno.pt",
+  "retorno.previsao",
 ] as const satisfies readonly TextoKey[];
 
 export type LeituraKey = (typeof LEITURA_KEYS)[number];
@@ -313,6 +330,39 @@ export const TEXTOS_AVANCADOS: {
     "Veredito da década, nos dois níveis: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05, sobre a série de VaR do período de teste inteiro da década; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ é mostrado e fica fora; a zona de Basileia não é gravada no laboratório. Fala do passado do modelo, não do número de hoje.",
   "laboratorio.anosNaoRejeitados":
     "Para cada modelo, em quantos dos trechos julgados a 95% nem o Kupiec nem o Christoffersen rejeitaram; o total conta só os trechos julgados. Com perto de 7% de chance de rejeição por acaso em cada trecho, um modelo correto fica perto de 8 ou 9 de 9. A contagem descreve cada modelo e não ordena os nove: a grade segue a ordem fixa.",
+  // O retorno (M5.1): do `retorno.html` aprovado (T9), com os ajustes da revisão do mockup,
+  // literais; as afirmações são as de `conferencia-retorno.md`.
+  "retorno.veredito": (
+    _ticker: string,
+    n: string,
+    fim: string,
+    batem: readonly ModeloQueBate[],
+    naoBatem: readonly string[],
+    falhos: number,
+  ) => {
+    const base = `Veredito por modelo: o teste de Diebold-Mariano com perda quadrática, unilateral (a alternativa é "o modelo erra menos que o zero"), contra a referência de retorno zero, nos ${n} pregões de teste até ${fim}; bate quando o p-valor, arredondado a 10 casas, fica abaixo de 0,05.`;
+    const falha = falhos
+      ? ` ${falhos === 1 ? "Um modelo ficou" : "Os dois ficaram"} sem veredito: o cálculo falhou.`
+      : "";
+    if (batem.length === 0) {
+      return `${base} ${naoBatem.length === 2 ? "Nenhum dos dois ficou abaixo" : naoBatem.length === 1 ? `${naoBatem[0]} não ficou abaixo` : "Nenhum foi julgado"}${naoBatem.length ? ": as previsões não são mais informativas que supor retorno zero." : "."}${falha}`;
+    }
+    return `${base} ${nomes(batem.map(([nm]) => nm))} ${batem.length === 2 ? "ficaram" : "ficou"} abaixo. O DM só é positivo quando o erro quadrático médio do modelo é menor que o da referência, e bater implica erro relativo positivo. Com dois modelos e muitos ativos, alguns casos assim aparecem por acaso; o acerto de direção (PT) não entra no veredito.${falha}`;
+  },
+  "retorno.r2_os": (valor: string, menos: boolean) =>
+    `Erro relativo à referência: 1 − EQM do modelo / EQM de supor zero, com EQM a média do quadrado do erro sobre os pregões de teste (o R² fora da amostra com referência zero). Aqui, ${valor === "0,00%" ? valor : `${menos ? "+" : "−"}${valor}`}: o modelo errou ${menos ? "menos" : "mais"} que o zero.`,
+  "retorno.acerto": (acerto: string, alta: string) =>
+    `Acerto de direção: a parcela dos dias em que o sinal da previsão foi o do retorno, contada só nos dias com retorno e previsão diferentes de zero; ${acerto}. A régua é a parcela de dias de alta nesses mesmos dias, ${alta}.`,
+  "retorno.dm": (p: string, bate: boolean) =>
+    `Diebold-Mariano: a média da diferença diária entre o quadrado do retorno e o quadrado do erro do modelo, dividida pelo erro-padrão de longo prazo de Newey-West (núcleo de Bartlett, defasagem ⌊4·(n/100)^(2/9)⌋, série centrada, divisor n); p unilateral, 1 − Φ(DM). Aqui, ${p}: ${bate ? "abaixo de 0,05" : "não fica abaixo de 0,05"}.`,
+  "retorno.cw": (p: string) =>
+    `Clark-West: a diferença diária é o quadrado do retorno menos (o quadrado do erro do modelo menos o quadrado da previsão), porque o zero é um caso particular do modelo; o mesmo Newey-West e p unilateral. Aqui, ${p}. Não entra no veredito.`,
+  "retorno.pt": (p: string | null, todosAlta: boolean | null) =>
+    p !== null
+      ? `Pesaran-Timmermann: compara o acerto de direção com P* = p_y·p_x + (1 − p_y)(1 − p_x), o de um palpite independente com as mesmas proporções de alta realizada e prevista, pela diferença das variâncias do artigo; p unilateral. Aqui, ${p}. Não entra no veredito.`
+      : `Pesaran-Timmermann sem p-valor: a parcela de alta prevista é ${todosAlta ? "1" : "0"} — o modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias —, e o teste não tem o que medir; o acerto é a parcela de dias de ${todosAlta ? "alta" : "queda"}.`,
+  "retorno.previsao": (valor: string, data: string, bate: boolean) =>
+    `A previsão do próximo pregão é o mesmo cálculo do teste aplicado ao dia seguinte ao último preço: os parâmetros do trecho corrente, reestimados com tudo até o último preço quando ele abre um trecho de 252; na média histórica, a média dos retornos conhecidos; no AR(1), c + φ vezes o retorno do último pregão. A data, ${data}, é o primeiro dia de semana depois do último preço, sem o calendário de feriados. Aqui, ${valor}${bate ? ", de um modelo que bateu a referência no período — um número estatístico, gravado com 10 casas" : ", de um modelo que não bate a referência: não é mais informativa que supor zero"}.`,
 };
 
 /**

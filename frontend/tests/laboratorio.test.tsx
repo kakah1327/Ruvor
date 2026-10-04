@@ -262,6 +262,8 @@ function bodyOf(url: string): Reply {
       });
     case "lab":
       return labReply;
+    case "returns":
+      return ok({ ticker: "ITUB4", latest: null });
     default:
       throw new Error(`pedido inesperado: ${url}`);
   }
