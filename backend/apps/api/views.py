@@ -62,6 +62,7 @@ from apps.api.serializers import (
     AssetListOut,
     AssetMetricsOut,
     AssetPricesOut,
+    AssetReturnsOut,
     AssetRiskOut,
     BehaviorMetricSerializer,
     ComputeRequestSerializer,
@@ -76,9 +77,11 @@ from apps.api.serializers import (
     LatestRunSerializer,
     PeersOut,
     PriceSerializer,
+    ReturnLatestSerializer,
 )
 from apps.assets.models import Asset, CorporateEvent, Price
 from apps.fundamentals.models import Company, Disclosure, FundamentalIndicator
+from apps.returns.models import ReturnResult, ReturnRun
 from apps.risk import config as risk_config
 from apps.risk.decade import decade_of, valid_bars
 from apps.risk.models import LabResult, LabRun, LabYear, RiskResult, RiskRun
@@ -401,6 +404,39 @@ class AssetMetricsView(APIView):
                 "metric": None
                 if metric is None
                 else BehaviorMetricSerializer(metric).data,
+            }
+        )
+
+
+class AssetReturnsView(APIView):
+    """`GET /api/v1/assets/{ticker}/returns` (M5.1, RF-14): a `return_run` de maior
+    `calculated_at` do ativo, com os resultados por `model_name`; `latest` nulo sem nenhuma.
+    Sem `in_progress`: o calculo e sincrono. Ativo inativo le o que tem. So `GET`.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(responses={200: AssetReturnsOut})
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        run = (
+            ReturnRun.objects.filter(asset=asset)
+            .select_related("price_run")
+            .prefetch_related(
+                Prefetch(
+                    "results", queryset=ReturnResult.objects.order_by("model_name")
+                )
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "latest": None if run is None else ReturnLatestSerializer(run).data,
             }
         )
 

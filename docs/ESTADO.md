@@ -39,7 +39,7 @@ implementação a abrir pelo dono, revisada pela `identidade`, depois do ajuste 
 `test_requested_by.py` — e entrou na `main` pela PR #39; o **M2.4 fechou em 2026-10-04** — o regime de laboratório: o
 experimento fixo da década de cada ativo coberto, os nove modelos nos dois níveis pelo cálculo de produção, ano a ano, em
 `gold.lab_run`, `lab_result` e `lab_year`, pela rota `/lab` e numa seção da tela do ativo logo depois do risco
-([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) —, com a PR de implementação a abrir pelo dono; na
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) — e entrou na `main` pela PR #40; o **M5.1 fechou em 2026-10-04** — o retorno: a média histórica e o AR(1) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito, numa seção depois do laboratório; o motor `0.5.0` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) —, retomado pelo Kauã, com a PR #41 a sair do rascunho; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -48,7 +48,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅, com o darkside171 — o M5.1 terminado pelo Kauã) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -146,6 +146,14 @@ veredito de cada ano só a 95% — fica em `gold.lab_run`, `gold.lab_result` e `
 banco, um `ok` por identidade; o fecho do risco o enfileira quando ele é devido, e `manage.py compute_lab` o grava à mão;
 a tela do ativo o mostra logo depois do risco, para todos, sem eleger, pela rota `/lab` — quarenta e uma tabelas ao todo
 ([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)).
+**Desde o M5.1 há o retorno**, no motor `0.5.0`: para cada ativo coberto, a média histórica e o AR(1) preveem o
+log-retorno de cada pregão de teste, reestimando a cada 252 pregões, e o backend grava em `gold.return_run` e
+`gold.return_result` — imutáveis — o erro relativo à referência de retorno zero, o acerto de direção ao lado da parcela de
+alta, o Diebold-Mariano que decide o veredito, o Clark-West e o Pesaran-Timmermann, e a previsão do próximo pregão com a
+data; roda no quinto elo da `rotina_diaria` e na cadeia sob demanda, e `manage.py compute_returns` o grava à mão. A tela
+do ativo o mostra depois do laboratório, pela rota `/returns`, com o aviso sempre aberto e a previsão só na linha do
+modelo, depois do veredito e do histórico, sem seta nem cor — quarenta e três tabelas ao todo
+([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)).
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1912,17 +1920,64 @@ no meio gravaria o experimento sobre preços que o banco já não tem. A spec di
 conferência dão **192** e **perto de 7%**, e a D-184 nasceu corrigida. Os dois aprendizados em
 [aprendizados](aprendizados.md).
 
+### M5.1 — Retorno
+
+Spec em [`specs/M5.1-retorno.md`](specs/M5.1-retorno.md) e plano em [`planos/M5.1-retorno.md`](planos/M5.1-retorno.md),
+aprovados pelo dono em 2026-10-03. Frente `marco1`, ramo `marco1/M5.1-retorno`. T0 a T9 com o darkside171, no worktree
+dele — T1 (`fe2f0e9`), T2 (`81c4434`), T3 (`0be6194`, e `fb5d769`, a correção da revisão de implementação), T4 (`208b21a`),
+T5 (`472c912`), T6 (`4b7bd6c`), T7 — a fase A — (`19833d9`), T8 (`e725675`) e o mockup aprovado na T9 (`ef0f04e`) —; **a
+retomada, T10 a T14, com o Kauã, na máquina dele**: a `main` com o M2.4 recebida (`bc50562`), os ajustes da revisão do
+mockup e as duas escolhas do portão (`bcc5eaf`), T10 (`94ca818`), T11 (`13a813c`), T12 (`f123e02`), T13 (registrada em
+`74652b3`) e a T14 com o FECHA. Cinco decisões, com a spec: [D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) (o log-retorno de um pregão contra o retorno
+zero, e a previsão do próximo pregão), [D-189](decisoes/D-189-o-motor-ganha-o-pacote-engine-returns-em-lista-fechada-e-vai-a-0-5-0-restringe-a-d-21-a-d-76-e-a-d-157.md) (o pacote `engine.returns` em lista fechada, o motor `0.5.0`),
+[D-190](decisoes/D-190-a-validacao-do-retorno-e-o-diebold-mariano-contra-o-zero-e-nenhum-modelo-e-eleito.md) (o Diebold-Mariano no veredito; nenhum modelo eleito), [D-191](decisoes/D-191-o-retorno-mora-em-apps-returns-e-roda-no-quinto-elo-da-rotina-estende-a-d-91.md) (a app `apps/returns`, o quinto elo
+da rotina, a rota `/returns`) e [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md) (a previsão só junto da validação, o aviso, e o M5.1 segue a D-160).
+**Fechou em 2026-10-04**; a PR de implementação (#41) é do dono, e nenhuma revisão de outra frente é obrigatória.
+
+**O que passou a existir:** no motor, `engine/src/engine/returns/` — a média histórica e o AR(1) em walk-forward com
+reestimação a cada 252 pregões em janela que cresce, a validação (`r2_os`, acerto de direção, DM, CW e PT com Newey-West)
+e o orquestrador —, sem mudar nenhuma linha de arquivo existente, no `0.5.0`. No backend, `apps/returns` com
+`gold.return_run` e `gold.return_result` (imutáveis, a migration `returns.0001`), o cálculo com o veredito decidido sobre
+o *p* quantizado, `manage.py compute_returns`, a tarefa `calcular_retornos` como quinto elo da `rotina_diaria` (nunca
+levanta) e o passo na cadeia sob demanda, e a rota `GET /api/v1/assets/{ticker}/returns`. No frontend, a seção
+`ReturnsSection` depois do laboratório e antes dos Fundamentos, os estados R1 a R8 e a visibilidade da previsão em
+`src/returns/state.ts`, a lista fechada de sete chaves `retorno.*` nas duas leituras, a lista ampliada do vocabulário só
+nas `retorno.*`, e as classes `ruvor-returns-*` no kit. No roteiro, as conferências da seção do retorno.
+
+**A execução real.** A fase A do dono (T7) rodou na máquina dele; **a da retomada, de novo, na do Kauã**, porque o banco é
+outro — outros ativos cobertos (ABCB4 e ABEV3 no lugar de BBDC4 e AALR3), preços até 29 e 30/09 e o risco ainda no motor
+`0.3.0` —, com o Beat parado e o `.env` igual do começo ao fim (sha256 `92bf67a4…`):
+
+| Fase | O que aconteceu |
+|---|---|
+| A — a referência | com o código da `main` (worktree em `origin/main` montado num `worker` avulso, imagem `0.4.0`, o `worker` parado): `import_prices` (os seis até 2026-10-02), `compute_metrics` e `compute_risk --full`, síncrono: `risk_run` 11 a 16, `0.4.0`, `ok`, 18 resultados cada, 1314,6 s |
+| A — o `0.5.0` | `migrate` (a `returns.0001`), `docker compose build worker` (2 min 35 s), `version("ruvor-engine")` = `0.5.0`; `compute_risk --full`, síncrono: `risk_run` 17 a 22, `ok`, 1287,4 s; **os 108 pares iguais** (`serie_igual` nos seis; `pares 108, iguais 108`, todos os campos de `risk_result` menos os retratos) |
+| A — o retorno | `compute_returns`: 6 ativos, 6 `ok`, 0,2 s; **nenhum modelo bate a referência** nos 12; `next_forecast_date` = 2026-10-05 nos 12; o oráculo (`numpy`, sem `engine.returns`): **pior diferença 4,982e-11, nenhuma divergência**; `{'0.5.0'}` como única versão em `gold.return_run` |
+| B | o `worker` recriado na imagem `0.5.0`; um tique da `rotina_diaria`: `risk_run` 23 a 28 `ok` em 40 a 57 s (os retratos reaproveitados), `return_run` 7 a 12 `0.5.0`, e o laboratório `0.5.0` dos seis pelo fecho (`lab_run` 1 a 6, `risk_close`); o roteiro (`RUVOR_E2E_SO_RETORNO=1`, a taxa do anônimo subida só na `web` e devolvida): **558 conferências, 0 falhas**, 24 capturas — ITUB4, PETR4 e IBOV, dois temas, 1440 e 360 px, dois níveis |
+
+| Verificação | Resultado |
+|---|---|
+| Suíte do backend | ✅ **1972 passed** (eram 1909 na `main`); `mypy` e `ruff` limpos |
+| Frontend | ✅ **43 arquivos, 1822 testes** (eram 1724); lint, `typecheck` e build limpos |
+| O motor | ✅ **204 passed** no contêiner (152 + 52 do retorno), o `test_redes_trecho0.py` no `worker`, `mypy` e `ruff` limpos; a linha de base no hospedeiro, **25 passed**, sem recaptura (`valores.json` igual ao da `main`) |
+| `web` | `manage.py check` sem problema; `spectacular --validate --fail-on-warn` sem aviso |
+| Mutações | 1 a 33 (motor e backend) na T6; 34 a 58 (frontend) na T13: **todas reprovam** |
+
+**O que a retomada mostrou:** o V-09 do laboratório (M2.4) era instável — a trava sai no commit, antes de a outra thread
+marcar o evento no `finally` —, e reprovava 3 de 5 vezes; corrigido para conferir no banco (`ef59c7f`), 8 de 8 verdes.
+A imagem e o volume do `frontend` precisam ser refeitos depois de receber a `main` com o `react-router`. E a fase A noutra
+máquina começa por refazer a referência. Os três em [aprendizados](aprendizados.md).
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M2.4** (implementação, T0 a T14), que o dono abre e mescla com a CI verde; nenhuma revisão
-de outra frente é obrigatória. O M2.1b entrou pela PR #39. **Depois dela, o M5.1** (no worktree dele, parado à espera
-desta fase B) e o **M2.2b** seguem: quem mesclar por último aplica a tabela "A ordem das seções na tela, e o M5.1" do
-[plano do M2.4](planos/M2.4-regime-de-laboratorio.md#a-ordem-das-seções-na-tela-e-o-m51) — risco → laboratório → retorno
-→ Fundamentos → Comunicados, os `routeOf` e as listas de texto somados, e 43 tabelas com as duas do M5.1. **O motor
-`0.5.0` do M5.1 é identidade nova do experimento**: o primeiro fecho do recálculo `0.5.0` de cada ativo enfileira o
-laboratório de novo, reaproveitando os retratos recém-treinados; o `0.4.0` fica. Quem mesclar por último anota no ESTADO.
-**O AALR3 completa a década em 2026-10-28**: o primeiro fecho do risco depois disso grava o experimento dele. Ramos e a
-regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md).
+**Na frente `marco1`, a PR do M5.1** (#41, implementação, T0 a T14), que sai do rascunho e o dono mescla com a CI verde;
+nenhuma revisão de outra frente é obrigatória. O M2.4 entrou pela PR #40. **A imagem do `worker` é uma só e passa a
+dizer `0.5.0`**: um checkout noutro ramo sem o M5.1 não pode rodar o cálculo do risco com ela (a versão sairia errada em
+linhas imutáveis), e a primeira rotina de cada máquina depois da mesclagem retreina os quatro modelos caros (os retratos
+`0.4.0` não valem) e refaz o laboratório. **O M2.2b** recebe a `main` com o M5.1 antes da tela: a ordem das seções é
+risco → laboratório → retorno → Fundamentos → Comunicados. **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
+risco depois disso grava o experimento dele. **O parecer da CVM, quando vier antes de comercializar, precisa cobrir o M5.1
+nomeadamente** (D-192). Ramos e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md).
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem decide o cache e a compressão do `/prices` (341 KiB sem
 compressão). O recado da [D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md) — "limite por IP ou

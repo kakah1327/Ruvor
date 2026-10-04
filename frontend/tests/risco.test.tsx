@@ -22,6 +22,7 @@
  *   a troca obrigatória). Os testes do pedido entram logados (`SIGNED_IN`).
  * - M2.4 (T10): o duplo reconhece o `/lab` (a tela o pede desde a T10) e conta os pedidos que
  *   não reconhece — todo teste exige zero.
+ * - M5.1 (T10): o duplo reconhece o `/returns`, com um corpo padrão sem validação.
  *
  * O `fetch` é um duplo que responde pela rota e pelo método; o uPlot, um duplo mínimo.
  */
@@ -47,6 +48,7 @@ import {
   type ModelName,
   type PriceRow,
   type Prices,
+  type Returns,
   type Risk,
   type RiskResult,
   type RiskRun,
@@ -246,6 +248,7 @@ type Route =
   | "risk"
   | "fundamentals"
   | "lab"
+  | "returns"
   | "disclosures"
   | "post"
   | "csrf"
@@ -302,7 +305,7 @@ function routeOf(url: string, method: string): Route {
   if (url === "/api/v1/auth/csrf" && method === "GET") return "csrf";
   if (url === ME_URL && method === "GET") return "me";
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab|returns)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
   if (match === null) {
@@ -395,6 +398,7 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
       latest: null,
       last_failure: null,
     } satisfies Lab),
+    returns: ok({ ticker: "ITUB4", latest: null } satisfies Returns),
     disclosures: ok({
       ticker: "ITUB4",
       company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },

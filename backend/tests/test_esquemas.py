@@ -18,7 +18,8 @@ acrescentou a das chaves de API, no `core` (`api_key`), e o M4.1, a dos relatori
 `core` (`report`). O M2.2a acrescentou as cinco da carteira: tres no `core` (`portfolio`,
 `portfolio_version`, `portfolio_holding`) e duas na `gold` (`portfolio_risk_run`,
 `portfolio_risk_result`). O M2.4 acrescentou as tres do laboratorio, na `gold` (`lab_run`,
-`lab_result`, `lab_year`).
+`lab_result`, `lab_year`), e o M5.1, as duas do retorno, tambem na `gold` (`return_run`,
+`return_result`).
 
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
 `test_conexao_com_o_banco`: a marca conecta em `test_<nome>`, um banco que o proprio
@@ -66,6 +67,8 @@ TABELAS = {
     "gold.portfolio_risk_result",
     "gold.portfolio_risk_run",
     "gold.return_histogram_bin",
+    "gold.return_result",
+    "gold.return_run",
     "gold.risk_result",
     "gold.risk_run",
     "gold.stress_episode",

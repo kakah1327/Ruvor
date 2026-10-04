@@ -32,6 +32,17 @@ export function acimaDe(v: string, e: string): boolean {
   return numeroBR(v) > numeroBR(e);
 }
 
+/** Um modelo que bate a referência na frase do veredito (M5.1): o nome e quanto errou menos. */
+export type ModeloQueBate = readonly [nome: string, quantoMenos: string];
+
+/** A frase dos modelos sem veredito (M5.1, `retorno.veredito`): o cálculo falhou. */
+function falhaFrase(falhos: number): string {
+  if (falhos === 0) return "";
+  return falhos === 1
+    ? " O cálculo de um dos modelos falhou, e ele não foi julgado."
+    : " O cálculo dos dois modelos falhou, e nenhum foi julgado.";
+}
+
 export const TEXTOS = {
   // A barra superior.
   "casco.marca": "RUVOR",
@@ -596,6 +607,115 @@ export const TEXTOS = {
   "laboratorio.trilha.retratos": (r: string, t: string) =>
     `${r} reaproveitados, ${t} novos`,
   "laboratorio.trilha.fingerprint": "Impressão digital dos preços",
+
+  // retorno.* — a seção do retorno (M5.1): do `retorno.html` aprovado (T9), com os ajustes da
+  // revisão do mockup, literais. As sete com frase nas duas leituras (a lista fechada, N = 7) vêm
+  // primeiro; a avançada delas mora em `avancado.ts`, e as afirmações são as de
+  // `conferencia-retorno.md`. As funções recebem os valores já formatados.
+  "retorno.veredito": (
+    ticker: string,
+    n: string,
+    fim: string,
+    batem: readonly ModeloQueBate[],
+    naoBatem: readonly string[],
+    falhos: number,
+  ): string => {
+    const periodo = `nos ${n} pregões de teste até ${fim}`;
+    if (batem.length === 0 && naoBatem.length === 0)
+      return `Não deu para julgar os modelos de ${ticker}: o cálculo dos dois falhou.`;
+    if (batem.length === 0) {
+      const quem =
+        naoBatem.length === 2
+          ? "Nenhum dos dois modelos errou"
+          : `O modelo ${naoBatem[0]} não errou`;
+      const prev =
+        naoBatem.length === 2
+          ? "as previsões abaixo não são mais informativas"
+          : "a previsão dele não é mais informativa";
+      return `${quem} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}. Por isso, ${prev} que supor retorno zero.${falhaFrase(falhos)}`;
+    }
+    const quem =
+      batem.length === 2
+        ? `Os dois modelos erraram menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo} (${batem.map(([nm, x]) => `${nm}, ${x} menos`).join("; ")})`
+        : `O modelo ${batem[0]?.[0]} errou ${batem[0]?.[1]} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}`;
+    const outro = naoBatem.length
+      ? ` O modelo ${naoBatem[0]} não errou menos, e a previsão dele não é mais informativa que supor retorno zero.`
+      : "";
+    return `${quem}, e o teste indica que a diferença dificilmente é acaso nesta série. A vantagem é pequena, e, entre muitos ativos e dois modelos, alguns casos assim aparecem por acaso.${outro}${falhaFrase(falhos)}`;
+  },
+  "retorno.r2_os": (valor: string, menos: boolean): string =>
+    `${menos ? `Errou ${valor} menos` : `Errou ${valor} mais`} do que supor retorno zero nos pregões de teste, medindo o erro de cada dia ao quadrado.`,
+  "retorno.acerto": (acerto: string, alta: string): string =>
+    `Acertou se o dia seria de alta ou de queda em ${acerto} dos dias; a ação subiu em ${alta} deles. Quem dissesse “alta” todo dia acertaria ${alta}.`,
+  "retorno.dm": (p: string, bate: boolean): string =>
+    `O teste que decide o veredito: com p-valor abaixo de 0,05, a diferença para o retorno zero dificilmente é acaso. Aqui, ${p}: ${bate ? "bate a referência" : "não bate"}.`,
+  "retorno.cw": (p: string): string =>
+    `Outro teste do mesmo erro, que desconta o ruído de estimar os parâmetros, já que o zero é um caso particular do modelo. Aqui, ${p}. Não entra no veredito.`,
+  "retorno.pt": (p: string | null, todosAlta: boolean | null): string =>
+    p !== null
+      ? `Confere se o acerto de alta ou queda é maior que o de um palpite ao acaso com as mesmas proporções. Aqui, ${p}. Não entra no veredito.`
+      : `O modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias: o acerto dele é a parcela de dias de ${todosAlta ? "alta" : "queda"}, e não há o que testar.`,
+  "retorno.previsao": (valor: string, data: string, bate: boolean): string =>
+    bate
+      ? `O modelo calcula ${valor} para ${data}. É um número estatístico, não uma expectativa nem uma indicação: ter batido a referência no passado não diz que ele acerta o próximo pregão.`
+      : `O modelo calcula ${valor} para ${data}; como ele não bate a referência, esse número não é mais informativo que supor retorno zero.`,
+  // Os estados, a previsão ausente, os títulos, os rótulos e o aviso: uma leitura só, fora da
+  // lista fechada. O `retorno.aviso` é a única entrada `retorno.*` isenta da lista ampliada do
+  // RF-21: diz "comprar, vender ou manter" e "vai fazer" de propósito, para negar.
+  "retorno.sobrancelha": "Retorno",
+  "retorno.titulo": "Os modelos de retorno, postos à prova",
+  "retorno.intro":
+    "Dois modelos estatísticos simples tentam prever o retorno de cada pregão desta ação, e a plataforma confere, no passado, se eles erraram menos do que supor retorno zero.",
+  "retorno.aviso":
+    "Esta seção mede se dois modelos estatísticos simples, no passado, teriam errado menos ao prever o retorno diário desta ação do que supor que ele é zero. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo, e nada aqui diz o que o preço vai fazer. A previsão de cada modelo para o próximo pregão é um número estatístico, não uma expectativa nem uma indicação; a de um modelo que não bate a referência não é mais informativa que supor zero. Não bater essa referência é o resultado mais comum — o retorno de um dia é quase imprevisível. Um modelo que bateu no passado pode deixar de bater, e a vantagem, quando aparece, é pequena.",
+  "retorno.carregando": "Carregando a validação do retorno deste ativo.",
+  "retorno.estado.inativo.titulo":
+    "Ativo inativo na B3: a validação do retorno não é calculada.",
+  "retorno.estado.inativo":
+    "O cálculo diário é feito só para ativos em negociação e com preço.",
+  "retorno.estado.semSerie.titulo": "Não foi possível saber se este ativo tem preço.",
+  "retorno.estado.semSerie":
+    "A validação depende da série de preços, que não carregou.",
+  "retorno.estado.naoCoberto.titulo": "Este ativo ainda não tem preço.",
+  "retorno.estado.naoCoberto":
+    "A validação do retorno chega junto com o cálculo do risco, que se pede na seção de risco acima.",
+  "retorno.estado.serieCurta.titulo": "Série curta demais para a validação",
+  "retorno.estado.serieCurta": (n: string, min: string) =>
+    `Este ativo tem ${n} pregões; a validação pede no mínimo ${min}.`,
+  "retorno.estado.naoCalculado.titulo":
+    "A validação deste ativo ainda não foi calculada.",
+  "retorno.estado.naoCalculado": "Ela entra no próximo cálculo diário.",
+  "retorno.previsao.inativo":
+    "Ativo inativo: a previsão gravada é de quando ele negociava e não é mostrada.",
+  "retorno.previsao.passada": (data: string) =>
+    `A previsão era para ${data}, que já passou. A próxima entra no próximo cálculo diário.`,
+  "retorno.previsao.rotulo": (data: string) => `Previsão do modelo para ${data}`,
+  "retorno.previsao.referencia": "referência: 0,00%",
+  "retorno.modelo.ar_1": "AR(1)",
+  "retorno.modelo.historical_mean": "Média histórica",
+  "retorno.tag.bate": "bate a referência",
+  "retorno.tag.naoBate": "não bate a referência",
+  "retorno.tag.erro": "não deu para calcular",
+  "retorno.rotulo.r2": "Erro relativo à referência",
+  "retorno.rotulo.acerto": "Acerto de alta ou queda",
+  "retorno.rotulo.dm": "Diebold-Mariano",
+  "retorno.rotulo.cw": "Clark-West",
+  "retorno.rotulo.pt": "Pesaran-Timmermann",
+  "retorno.rotulo.mse": "Erro quadrático médio do modelo",
+  "retorno.rotulo.mseRef": "Erro quadrático médio de supor zero",
+  "retorno.acerto.valor": (acerto: string, alta: string) =>
+    `${acerto} · subiu em ${alta}`,
+  "retorno.semPt": "sem teste",
+  "retorno.erroModelo": (msg: string) => `O cálculo deste modelo falhou (${msg}).`,
+  "retorno.detalhes.abrir": "Ver os erros e os outros dois testes",
+  "retorno.trilha.abrir": "Ver o que entrou no cálculo",
+  "retorno.trilha.titulo": "Trilha do cálculo",
+  "retorno.trilha":
+    "O que entrou nesta validação — a série, a divisão entre treino e teste, a versão do método e os preços usados —, para que ela possa ser conferida.",
+  "retorno.trilha.refit": "Reestimação",
+  "retorno.trilha.refitValor": "a cada 252 pregões, em janela que cresce",
+  "retorno.trilha.referencia": "Referência",
+  "retorno.trilha.referenciaValor": "retorno zero",
 
   // motivos.* — a tradução de cada motivo de backend/apps/api/ondemand.py (RF-18), por
   // `traduzirMotivo` em `motivos.ts`.

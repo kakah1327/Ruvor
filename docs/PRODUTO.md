@@ -32,7 +32,10 @@ fluxo comparativo único. É o único território não saturado do produto — v
 
 - Não executa ordens nem intermedia investimento
 - Não importa carteira pronta de corretora ([D-03](decisoes/D-03-carteira-montada-pelo-usuario.md))
-- Não prevê lucro/retorno na versão inicial ([D-06](decisoes/D-06-perda-e-o-foco.md))
+- Não prevê lucro nem promete retorno ([D-06](decisoes/D-06-perda-e-o-foco.md)). Desde o M5.1, mostra se dois
+  modelos estatísticos simples erraram menos que supor retorno zero no passado e, junto disso, a previsão do próximo
+  pregão de cada um — um número estatístico, não uma expectativa nem uma indicação ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a
+  [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md))
 
 ---
 
@@ -152,7 +155,11 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
 
 ### Marco 5
 
-- Retorno / lucro
+- Retorno — o M5.1, desde 2026-10-04: a média histórica e o AR(1), validados fora da amostra contra o retorno zero,
+  com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre na linha do modelo, depois do
+  veredito e do histórico, numa seção da tela do ativo depois do laboratório. **Não bater a referência é o resultado
+  normal** — o retorno de um dia é quase imprevisível —, e nenhum modelo é eleito
+  ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md))
 
 ---
 
@@ -276,6 +283,13 @@ comercializar** — cobrar, ou abrir a plataforma a terceiros como serviço. Enq
 parecer não segura bloco nenhum, nem a carteira
 ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)).
 
+**O M5.1 mostra a previsão do próximo pregão** de cada modelo de retorno — o número mais perto da linha de
+recomendação que a plataforma mostra. O que a cerca: a previsão sai só na linha do modelo, depois do veredito e do
+histórico, ao lado da referência zero, sem seta nem cor de direção e com destaque menor que o veredito; no modelo que
+não bate, a nota "não é mais informativa que supor retorno zero"; o aviso sempre aberto; e a lista ampliada de
+vocabulário nas frases da seção. Sem comercialização, o parecer também não segura o M5.1
+([D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)).
+
 ---
 
 ## 7. Relação com o TCC
@@ -299,7 +313,7 @@ Ver [`docs/tcc/`](tcc/) e [`docs/prototipo/`](prototipo/).
 | Carteira: caminho barato ou caro | ✅ barato ([D-117](decisoes/D-117-a-carteira-e-uma-serie-unica-de-pesos-fixos-nos-nove-modelos.md)) |
 | Quais requisitos candidatos entram no Marco 1 | ✅ 5.1 e 5.2 ([D-96](decisoes/D-96-discordancia-e-aprovados-entram-no-marco-1.md)); a 5.3, do ativo, entrou depois, no M3.3 ([D-146](decisoes/D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md)) |
 | Política de cobertura e atualização de ativos | Quais ficam pré-calculados, com que frequência retreinar |
-| Parecer sobre fronteira CVM | Pendente, só antes de comercializar ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)) |
+| Parecer sobre fronteira CVM | Pendente, só antes de comercializar ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)); precisa cobrir o M5.1 nomeadamente — a previsão do próximo pregão ([D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) |
 | Verificação de marca e domínio "Ruvor" | Nunca feita; em paralelo, não bloqueia |
 
 **Resolvidos no M1.6a** (2026-09-28): o tema — o kit tem claro e escuro, pelos mesmos tokens

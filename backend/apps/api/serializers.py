@@ -26,6 +26,7 @@ from apps.fundamentals.models import (
     FundamentalIndicator,
     PeerComparison,
 )
+from apps.returns.models import ReturnResult, ReturnRun
 from apps.risk.config import ALPHAS
 from apps.risk.models import LabResult, LabRun, LabYear, RiskResult, RiskRun
 
@@ -512,6 +513,68 @@ class AssetEventsOut(serializers.Serializer[None]):
 class AssetMetricsOut(serializers.Serializer[None]):
     ticker = serializers.CharField()
     metric = BehaviorMetricSerializer(allow_null=True)
+
+
+# --- /returns (M5.1, RF-14) ----------------------------------------------------------------
+
+
+class ReturnResultSerializer(serializers.ModelSerializer[ReturnResult]):
+    """Um resultado por modelo -- inclusive o que falhou, com o `error`. A lista de campos e
+    a lista fechada do RF-14; `model_name` sai como `string` livre, sem enum (RF-15)."""
+
+    class Meta:
+        model = ReturnResult
+        fields = (
+            "model_name",
+            "hyperparameters",
+            "mse",
+            "mse_reference",
+            "r2_os",
+            "direction_days",
+            "hit_rate",
+            "up_share",
+            "forecast_up_share",
+            "dm_statistic",
+            "dm_p_value",
+            "cw_statistic",
+            "cw_p_value",
+            "pt_statistic",
+            "pt_p_value",
+            "beats_reference",
+            "direction_skill",
+            "next_forecast",
+            "next_forecast_date",
+            "error",
+        )
+
+
+class ReturnLatestSerializer(serializers.ModelSerializer[ReturnRun]):
+    """A `return_run` de maior `calculated_at`: o manifesto do RF-14, a coleta pelo mesmo
+    `PriceRunSerializer` do `/risk` e os resultados, que a view entrega por `model_name`.
+    `requested_by` nao sai, como no `/risk`."""
+
+    price_run = PriceRunSerializer(read_only=True)
+    results = ReturnResultSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ReturnRun
+        fields = (
+            "calculated_at",
+            "engine_version",
+            "as_of_date",
+            "first_price_date",
+            "price_count",
+            "train_count",
+            "test_count",
+            "train_window_days",
+            "price_run",
+            "results",
+        )
+
+
+class AssetReturnsOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    latest = ReturnLatestSerializer(allow_null=True)
 
 
 class AssetRiskOut(serializers.Serializer[None]):

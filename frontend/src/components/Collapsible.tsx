@@ -5,7 +5,14 @@ import { Glyph } from "./Glyph";
 
 type Props = {
   /** Vira `data-collapsible`: a marca que a execução real confere. */
-  name: "moments" | "models" | "trail" | "lab-tests" | "lab-trail";
+  name:
+    | "moments"
+    | "models"
+    | "trail"
+    | "lab-tests"
+    | "lab-trail"
+    | "returns-details"
+    | "returns-trail";
   /** O texto do botão, de `textos.ts` — um só, nos dois estados. */
   label: string;
   children: ReactNode;

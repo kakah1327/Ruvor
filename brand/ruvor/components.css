@@ -2163,6 +2163,86 @@
 }
 
 /* ==================================================================================
+ * M5.1 — o retorno na tela do ativo (T11). Vieram do estilo local do mockup aprovado,
+ * docs/mockups/M5.1/retorno.html (m51-): cada m51- de tela virou um nome ruvor-returns-, com
+ * os valores aprovados; os da moldura do mockup (barra, notas, vistas) ficaram lá. Um bloco
+ * por modelo, e a previsão do próximo pregão na linha dele, depois do veredito e do histórico,
+ * com destaque menor que o do veredito (portão da T9): o tamanho micro do kit, em texto suave,
+ * sem fundo, sem peso, sem seta e sem cor de direção — a tag do veredito tem o mesmo tamanho,
+ * com fundo e peso. O veredito que bate a referência é a tag --evidence, nunca a --validated
+ * (D-192: nenhum sinal de "bom" ao lado de um número de previsão).
+ * ================================================================================== */
+
+/* --- Um bloco por modelo ---------------------------------------------------------------- */
+
+.ruvor-returns-models {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-5);
+}
+
+.ruvor-returns-model {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+  padding-top: var(--ruvor-space-4);
+  border-top: 1px solid var(--ruvor-table-rule);
+  min-width: 0;
+}
+
+.ruvor-returns-model:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ruvor-returns-model__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-3);
+}
+
+.ruvor-returns-model__head .ruvor-h3 {
+  margin: 0;
+}
+
+.ruvor-returns-model .ruvor-tests {
+  margin: 0;
+}
+
+/* --- A previsão do próximo pregão: menor que o veredito, sem seta nem cor -------------- */
+
+.ruvor-returns-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  padding-top: var(--ruvor-space-3);
+  border-top: 1px dashed var(--ruvor-table-rule);
+}
+
+.ruvor-returns-forecast__line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruvor-space-1) var(--ruvor-space-3);
+  font-size: var(--ruvor-type-micro-size);
+  line-height: var(--ruvor-type-micro-leading);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-returns-forecast__line .ruvor-num {
+  color: var(--ruvor-text-muted);
+}
+
+/* --- O aviso e a frase do veredito: o parágrafo do callout sem margem, ao lado do ícone -- */
+
+.ruvor-returns-callout p {
+  margin: 0;
+  max-width: 92ch;
+}
+
+/* ==================================================================================
  * M2.1b — as telas de acesso (T10, RF-17). Vieram do estilo local dos cinco mockups
  * aprovados, docs/mockups/M2.1b/: entrada.html e cadastro.html (a cena, o formulário de
  * acesso, a dica e os erros), senha.html (o painel estreito), conta.html (o lugar da conta

@@ -52,6 +52,17 @@
 // seção do laboratório sair do carregando. Uma chave nova:
 //   RUVOR_E2E_SO_LAB       padrão 0; com 1, só a seção do laboratório (com a guarda do E1), gravando
 //                          capturas/resultado-lab.json, sem apagar as outras capturas.
+//
+// M5.1 (RF-16 a RF-22, docs/planos/M5.1-retorno.md, T14 — a fase B): a seção do retorno no ITUB4,
+// no PETR4 e no IBOV, nos dois temas, em 1440 e 360 px, nos dois níveis. Em cada carga: o estado R3
+// (`data-returns-state`), a seção depois do laboratório e antes dos Fundamentos, o aviso aberto e
+// fora de recolhido, um bloco por resultado do `GET /api/v1/assets/{ticker}/returns` com a tag do
+// veredito dele (`beats`, `not_beats` ou `error`) e nunca a `--validated`, a previsão dentro do
+// bloco, depois do veredito e do histórico, com a referência "0,00%" ao lado e sem ícone nem tag, o
+// recolhimento dos detalhes e da trilha pelo nível, a página sem rolagem horizontal e nenhum erro de
+// página. Uma chave nova:
+//   RUVOR_E2E_SO_RETORNO   padrão 0; com 1, só a seção do retorno (com a guarda do E1), gravando
+//                          capturas/resultado-retorno.json, sem apagar as outras capturas.
 
 import { randomBytes } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -67,6 +78,7 @@ const MEASURE_RATE = (process.env.RUVOR_E2E_MEDIR_TAXA ?? "0") === "1";
 const COMPANY = (process.env.RUVOR_E2E_EMPRESA ?? "").trim().toUpperCase() || null;
 const ONLY_ACCOUNT = (process.env.RUVOR_E2E_SO_CONTA ?? "0") === "1";
 const ONLY_LAB = (process.env.RUVOR_E2E_SO_LAB ?? "0") === "1";
+const ONLY_RETURNS = (process.env.RUVOR_E2E_SO_RETORNO ?? "0") === "1";
 
 // A medida da taxa: a janela da taxa do anônimo é de um minuto; 65 s sem pedido a esvaziam.
 const RATE_IDLE_MS = 65_000;
@@ -124,6 +136,10 @@ const LAB_STYLE_PARTS = {
   violacoes99: '[data-alpha="0.0100"] td[data-year="0"] .ruvor-num',
 };
 
+// M5.1: a seção do retorno.
+const RETURNS_TICKERS = ["ITUB4", "PETR4", "IBOV"];
+const RETURNS_REFERENCE = "referência: 0,00%";
+
 // As cinco capturas por página: 1440×900 e 360×800, com a chave em claro e em escuro, e
 // 1440×900 com a chave em sistema e o sistema escuro.
 const VARIANTS = [
@@ -137,7 +153,7 @@ const VARIANTS = [
 const result = {
   base: BASE,
   started_at: new Date().toISOString(),
-  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY, only_account: ONLY_ACCOUNT, only_lab: ONLY_LAB },
+  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY, only_account: ONLY_ACCOUNT, only_lab: ONLY_LAB, only_returns: ONLY_RETURNS },
   checks: [],
   sections: [],
   rate: null,
@@ -151,6 +167,7 @@ const result = {
   classification: null,
   account: null,
   lab: [],
+  returns: [],
   page_errors: [],
 };
 
@@ -834,6 +851,152 @@ async function labPages(browser, request) {
   }
 }
 
+/** M5.1: o que a seção do retorno mostra agora (`[data-section="returns"]`). */
+function returnsFacts(page) {
+  return page.evaluate(() => {
+    const root = document.querySelector('[data-section="returns"]');
+    if (root === null) return null;
+    const text = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
+    const after = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const lab = document.querySelector('[data-section="lab"]');
+    const fundamentals = document.querySelector('[data-section="fundamentals"]');
+    const aviso = root.querySelector('[data-aviso="retorno"]');
+    // Só os blocos do painel: os detalhes recolhidos repetem `[data-model]` na mesma classe.
+    const models = [...root.querySelectorAll(".ruvor-panel__body > .ruvor-returns-models > [data-model]")].map((block) => {
+      const tag = block.querySelector("[data-verdict]");
+      const tests = block.querySelector(".ruvor-tests");
+      const forecast = block.querySelector("[data-forecast]");
+      return {
+        model: block.getAttribute("data-model"),
+        verdict: tag?.getAttribute("data-verdict") ?? null,
+        tag_class: tag?.className ?? null,
+        tests: tests !== null,
+        forecast: forecast?.getAttribute("data-forecast") ?? null,
+        forecast_after_tag: tag !== null && forecast !== null ? after(tag, forecast) : null,
+        forecast_after_tests: tests !== null && forecast !== null ? after(tests, forecast) : null,
+        forecast_line: text(forecast?.querySelector(".ruvor-returns-forecast__line")),
+        forecast_value: text(forecast?.querySelector('[data-value="forecast"]')),
+        forecast_icons: forecast === null ? 0 : forecast.querySelectorAll("svg, .ruvor-tag").length,
+        forecast_note: text(forecast?.querySelector('[data-phrase="previsao"]')),
+      };
+    });
+    return {
+      state: root.getAttribute("data-returns-state"),
+      title: text(root.querySelector("h2")),
+      aviso: aviso === null ? null : { text: text(aviso), in_collapsible: aviso.closest(".ruvor-collapsible") !== null },
+      verdict: text(root.querySelector('[data-phrase="veredito"]')),
+      validated_tags: root.querySelectorAll(".ruvor-tag--validated").length,
+      models,
+      collapsibles: [...root.querySelectorAll("[data-collapsible]")].map(
+        (el) => `${el.getAttribute("data-collapsible")}=${el.getAttribute("data-open")}`,
+      ),
+      alerts: root.querySelectorAll('[role="alert"]').length,
+      order:
+        lab === null || fundamentals === null
+          ? null
+          : { returns_after_lab: after(lab, root), fundamentals_after_returns: after(root, fundamentals) },
+    };
+  });
+}
+
+/**
+ * M5.1 (RF-16 a RF-22, T14): a seção do retorno de `ticker`, no nível `reading`, na variação
+ * `variant` — as conferências da tela contra o `/returns` da API.
+ */
+async function returnsPage(browser, ticker, variant, reading, api) {
+  const label = `retorno ${ticker} ${variant.id} ${reading}`;
+  const entry = { ticker, variant: variant.id, reading };
+  result.returns.push(entry);
+
+  const context = await newContext(browser, variant, reading);
+  const page = await context.newPage();
+  watchErrors(page, label);
+  const response = await page.goto(`${BASE}/ativos/${ticker}`);
+  const ready = await page
+    .locator('[data-section="returns"][data-returns-state="R3"]')
+    .first()
+    .waitFor({ timeout: 60_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(`${label}: a seção chega ao estado R3`, ready && response?.ok(), { status: response?.status() });
+  await sectionsSettled(page);
+  await settle(page);
+  await capture(page, `retorno-${ticker}-${reading}`, variant);
+  const app = await returnsFacts(page);
+  entry.app = app;
+  if (app === null) {
+    check(`${label}: a seção presente`, false);
+    await context.close();
+    return;
+  }
+  check(`${label}: data-returns-state R3`, app.state === "R3", { state: app.state });
+  check(
+    `${label}: a seção depois do laboratório e antes dos Fundamentos`,
+    app.order?.returns_after_lab && app.order?.fundamentals_after_returns,
+    { order: app.order },
+  );
+  check(`${label}: nenhum [role="alert"] na seção`, app.alerts === 0, { alerts: app.alerts });
+  check(`${label}: o aviso aberto, fora de recolhido`, app.aviso !== null && !app.aviso.in_collapsible && app.aviso.text.length > 0, {
+    aviso: app.aviso,
+  });
+  check(`${label}: a frase do veredito presente`, app.verdict.length > 0, {});
+  check(`${label}: nenhuma tag --validated na seção`, app.validated_tags === 0, { validated: app.validated_tags });
+
+  const expected = api.latest.results.map((r) => ({
+    model: r.model_name,
+    verdict: r.error !== "" ? "error" : r.beats_reference === true ? "beats" : "not_beats",
+  }));
+  const shown = app.models.map((m) => ({ model: m.model, verdict: m.verdict }));
+  check(`${label}: um bloco por resultado do /returns, com o veredito dele`, JSON.stringify(shown) === JSON.stringify(expected), {
+    expected,
+    shown,
+  });
+  for (const m of app.models) {
+    if (m.verdict === "error") {
+      check(`${label}: ${m.model} com error, sem histórico nem previsão`, !m.tests && m.forecast === null, { model: m });
+      continue;
+    }
+    check(`${label}: ${m.model} com a previsão no bloco`, m.forecast === "show" || m.forecast === "past", { forecast: m.forecast });
+    check(`${label}: ${m.model} com a previsão depois do veredito e do histórico`, m.forecast_after_tag && m.forecast_after_tests, {
+      after_tag: m.forecast_after_tag,
+      after_tests: m.forecast_after_tests,
+    });
+    check(`${label}: ${m.model} sem ícone nem tag na previsão`, m.forecast_icons === 0, { icons: m.forecast_icons });
+    if (m.forecast === "show") {
+      check(`${label}: ${m.model} com a referência 0,00% ao lado do número`, m.forecast_line.includes(RETURNS_REFERENCE) && m.forecast_value.length > 0, {
+        line: m.forecast_line,
+      });
+      check(`${label}: ${m.model} com a nota da previsão`, m.forecast_note.length > 0, {});
+    }
+  }
+  const open = reading === "advanced" ? "true" : "false";
+  check(
+    `${label}: returns-details e returns-trail com data-open="${open}"`,
+    JSON.stringify(app.collapsibles) === JSON.stringify([`returns-details=${open}`, `returns-trail=${open}`]),
+    { collapsibles: app.collapsibles },
+  );
+
+  const errors = result.page_errors.filter((e) => e.where === label);
+  check(`${label}: nenhum erro de página`, errors.length === 0, { page_errors: errors });
+  await context.close();
+}
+
+/** M5.1: a seção do retorno no ITUB4, no PETR4 e no IBOV, nos dois temas, em 1440 e 360, nos dois níveis. */
+async function returnsPages(browser, request) {
+  for (const ticker of RETURNS_TICKERS) {
+    const response = await request.get(`${BASE}/api/v1/assets/${ticker}/returns`);
+    const api = response.ok() ? await response.json() : null;
+    if (!check(`retorno ${ticker}: o /returns da API com latest`, api?.latest != null, { status: response.status() })) {
+      continue;
+    }
+    for (const variant of VARIANTS.filter((v) => v.theme !== "system")) {
+      for (const reading of READINGS) {
+        await returnsPage(browser, ticker, variant, reading, api);
+      }
+    }
+  }
+}
+
 async function allAssets(request) {
   const all = [];
   let offset = 0;
@@ -1294,7 +1457,7 @@ async function measureRate(browser) {
 async function main() {
   // A medida da taxa e só a conta (M2.1b) não apagam as capturas das conferências: gravam o
   // próprio resultado ao lado.
-  if (!MEASURE_RATE && !ONLY_ACCOUNT && !ONLY_LAB) await rm(OUT, { recursive: true, force: true });
+  if (!MEASURE_RATE && !ONLY_ACCOUNT && !ONLY_LAB && !ONLY_RETURNS) await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
 
   // M2.3: a guarda do E1 antes de abrir o navegador; sem E1, aborta (a medida da taxa não pede a
@@ -1318,6 +1481,9 @@ async function main() {
     } else if (ONLY_LAB) {
       // M2.4: só a seção do laboratório.
       await labPages(browser, request);
+    } else if (ONLY_RETURNS) {
+      // M5.1: só a seção do retorno.
+      await returnsPages(browser, request);
     } else {
       // M2.3 (RF-12): o ITUB4 e o PETR4 nos dois níveis, nos dois temas, em 360 e 1440 px.
       for (const ticker of READING_TICKERS) {
@@ -1329,6 +1495,8 @@ async function main() {
       }
       // M2.4: a seção do laboratório no ITUB4 e no IBOV, nos dois temas, em 1440 e 360, nos dois níveis.
       await labPages(browser, request);
+      // M5.1: a seção do retorno no ITUB4, no PETR4 e no IBOV, nos dois temas, em 1440 e 360, nos dois níveis.
+      await returnsPages(browser, request);
       // 1 e 3: a busca.
       for (const variant of VARIANTS) {
         await searchPage(browser, variant);
@@ -1389,7 +1557,9 @@ async function finish() {
       ? "resultado-conta.json"
       : ONLY_LAB
         ? "resultado-lab.json"
-        : "resultado.json";
+        : ONLY_RETURNS
+          ? "resultado-retorno.json"
+          : "resultado.json";
   await writeFile(path.join(OUT, file), `${JSON.stringify(result, null, 2)}\n`);
   const failed = result.checks.filter((c) => !c.ok);
   console.log(`\n${result.checks.length} conferências, ${failed.length} falharam; ${result.captures.length} capturas em ${OUT}`);

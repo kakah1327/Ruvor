@@ -8,6 +8,7 @@ import type {
   Lab,
   Metrics,
   Prices,
+  Returns,
   Risk,
 } from "../api/types";
 import { AssetHeader } from "../components/AssetHeader";
@@ -17,6 +18,7 @@ import { EventsSection } from "../components/EventsSection";
 import { FundamentalsSection } from "../components/FundamentalsSection";
 import { LabSection } from "../components/LabSection";
 import { PriceSection } from "../components/PriceSection";
+import { ReturnsSection } from "../components/ReturnsSection";
 import {
   RiskSection,
   sectionPending,
@@ -30,9 +32,10 @@ import { useLabPolling } from "../lab/useLabPolling";
 import { usePolling } from "../risk/usePolling";
 
 /**
- * As sete rotas do ativo que a tela pede, cada uma com o seu estado e o seu "tentar de novo" —
- * a sétima, `/lab`, é a do laboratório (M2.4, RF-18). A oitava, `/disclosures`, a seção
- * Comunicados pede sozinha (M1.6c, "Quem carrega os comunicados").
+ * As oito rotas do ativo que a tela pede, cada uma com o seu estado e o seu "tentar de novo" —
+ * a sétima, `/lab`, é a do laboratório (M2.4, RF-18), e a oitava, `/returns`, a do retorno
+ * (M5.1). A nona, `/disclosures`, a seção Comunicados pede sozinha (M1.6c, "Quem carrega os
+ * comunicados").
  */
 export type AssetData = {
   asset: Load<AssetDetail>;
@@ -42,6 +45,7 @@ export type AssetData = {
   risk: Load<Risk>;
   fundamentals: Load<Fundamentals>;
   lab: Load<Lab>;
+  returns: Load<Returns>;
   reload: {
     asset: () => void;
     prices: () => void;
@@ -50,9 +54,10 @@ export type AssetData = {
     risk: () => void;
     fundamentals: () => void;
     lab: () => void;
+    returns: () => void;
   };
   /**
-   * Pede as sete de novo e incrementa `reloadToken` (RF-20 do M1.6b, RF-15 do M1.6c: o fim do
+   * Pede as oito de novo e incrementa `reloadToken` (RF-20 do M1.6b, RF-15 do M1.6c: o fim do
    * acompanhamento). Não apaga o que está na tela: cada seção mostra o dado anterior até o novo
    * chegar (`useResource`).
    */
@@ -62,8 +67,8 @@ export type AssetData = {
 };
 
 /**
- * As sete rotas do ativo em paralelo (RF-06 do M1.6b, RF-15 do M1.6c, RF-18 do M2.4): cada
- * seção carrega sozinha, e a lenta não segura a rápida.
+ * As oito rotas do ativo em paralelo (RF-06 do M1.6b, RF-15 do M1.6c, RF-18 do M2.4, M5.1):
+ * cada seção carrega sozinha, e a lenta não segura a rápida.
  */
 export function useAssetData(ticker: string): AssetData {
   const base = `/api/v1/assets/${encodeURIComponent(ticker)}`;
@@ -74,6 +79,7 @@ export function useAssetData(ticker: string): AssetData {
   const risk = useResource<Risk>(`${base}/risk`);
   const fundamentals = useResource<Fundamentals>(`${base}/fundamentals`);
   const lab = useResource<Lab>(`${base}/lab`);
+  const returns = useResource<Returns>(`${base}/returns`);
   const [reloadToken, setReloadToken] = useState(0);
 
   const reloadAsset = asset.reload;
@@ -83,6 +89,7 @@ export function useAssetData(ticker: string): AssetData {
   const reloadRisk = risk.reload;
   const reloadFundamentals = fundamentals.reload;
   const reloadLab = lab.reload;
+  const reloadReturns = returns.reload;
   const reloadAll = useCallback(() => {
     reloadAsset();
     reloadPrices();
@@ -91,6 +98,7 @@ export function useAssetData(ticker: string): AssetData {
     reloadRisk();
     reloadFundamentals();
     reloadLab();
+    reloadReturns();
     setReloadToken((n) => n + 1);
   }, [
     reloadAsset,
@@ -100,6 +108,7 @@ export function useAssetData(ticker: string): AssetData {
     reloadRisk,
     reloadFundamentals,
     reloadLab,
+    reloadReturns,
   ]);
 
   return {
@@ -110,6 +119,7 @@ export function useAssetData(ticker: string): AssetData {
     risk: risk.load,
     fundamentals: fundamentals.load,
     lab: lab.load,
+    returns: returns.load,
     reload: {
       asset: reloadAsset,
       prices: reloadPrices,
@@ -118,6 +128,7 @@ export function useAssetData(ticker: string): AssetData {
       risk: reloadRisk,
       fundamentals: reloadFundamentals,
       lab: reloadLab,
+      returns: reloadReturns,
     },
     reloadAll,
     reloadToken,
@@ -172,13 +183,14 @@ type Posted =
 
 /**
  * A tela do ativo (RF-06 a RF-20 do M1.6b, RF-15 do M1.6c): o cabeçalho, o preço, os
- * proventos, o comportamento, o risco e, depois dele, os fundamentos e os comunicados, com a
- * trilha na coluna lateral do casco e a proveniência no rodapé.
+ * proventos, o comportamento, o risco e, depois dele, o laboratório (M2.4), o retorno (M5.1),
+ * os fundamentos e os comunicados, com a trilha na coluna lateral do casco e a proveniência no
+ * rodapé.
  *
  * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
  * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
  * carregando: o do `/risk` e o da identidade e da série que o estado pede. As duas seções do
- * M1.6c e o `/lab` do laboratório (M2.4, RF-13) não entram nele.
+ * M1.6c, o `/lab` do laboratório (M2.4, RF-13) e o `/returns` do retorno (M5.1) não entram nele.
  */
 export function AssetScreen({ ticker }: { ticker: string }) {
   const data = useAssetData(ticker);
@@ -268,6 +280,17 @@ export function AssetScreen({ ticker }: { ticker: string }) {
       {/* O laboratório (M2.4, RF-13): colado no risco, antes do retorno do M5.1 e dos
           Fundamentos; fora do `data-ready`. */}
       <LabSection load={data.lab} onRetry={data.reload.lab} />
+
+      {/* O retorno (M5.1): depois do laboratório e antes dos Fundamentos; fora do
+          `data-ready`. */}
+      <ReturnsSection
+        load={data.returns}
+        asset={asset}
+        prices={prices}
+        today={today()}
+        onRetry={data.reload.returns}
+        onRetryPrices={data.reload.prices}
+      />
 
       <FundamentalsSection
         load={data.fundamentals}
