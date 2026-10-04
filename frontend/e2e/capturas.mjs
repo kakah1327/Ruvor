@@ -39,6 +39,19 @@
 //                          menu logado (`data-account="authenticated"`) e sai — sem a guarda do E1
 //                          e sem apagar as capturas: grava capturas/resultado-conta.json. Rodar 65 s
 //                          depois do `acesso.mjs`, para não somar à janela do limite `auth` dele.
+//
+// M2.4 (RF-13 a RF-19, docs/planos/M2.4-regime-de-laboratorio.md, T14 — a fase B): a seção do
+// laboratório no ITUB4 e no IBOV, nos dois temas, em 1440 e 360 px, nos dois níveis. Em cada carga:
+// o estado READY (`data-lab-state`), a seção entre o risco e os Fundamentos, a grade de 95% com um
+// rótulo de veredito em cada ano e a de 99% sem nenhum, as violações de cada ano iguais às do
+// `GET /api/v1/assets/{ticker}/lab`, a diferença honesta presente, o recolhimento da trilha e dos
+// testes pelo nível, a página sem rolagem horizontal; e a comparação com o mockup aprovado
+// (docs/mockups/M2.4/laboratorio.html, pelo Vite, em `?tema=…&leitura=…#itub4|#ibov`, na mesma
+// largura): o estado, o título, as frases (`data-phrase`, pelo texto), as células das duas grades,
+// a nota, o recolhimento e os estilos calculados de cinco partes. A medida da taxa espera também a
+// seção do laboratório sair do carregando. Uma chave nova:
+//   RUVOR_E2E_SO_LAB       padrão 0; com 1, só a seção do laboratório (com a guarda do E1), gravando
+//                          capturas/resultado-lab.json, sem apagar as outras capturas.
 
 import { randomBytes } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -53,11 +66,14 @@ const ON_DEMAND = (process.env.RUVOR_E2E_SOB_DEMANDA ?? "1") !== "0";
 const MEASURE_RATE = (process.env.RUVOR_E2E_MEDIR_TAXA ?? "0") === "1";
 const COMPANY = (process.env.RUVOR_E2E_EMPRESA ?? "").trim().toUpperCase() || null;
 const ONLY_ACCOUNT = (process.env.RUVOR_E2E_SO_CONTA ?? "0") === "1";
+const ONLY_LAB = (process.env.RUVOR_E2E_SO_LAB ?? "0") === "1";
 
 // A medida da taxa: a janela da taxa do anônimo é de um minuto; 65 s sem pedido a esvaziam.
 const RATE_IDLE_MS = 65_000;
 // Teto de cargas da medida: a 60/min e quinze pedidos por carga — os catorze das rotas e, desde o
-// M2.1b, o `auth/me` da sessão —, o 429 chega na quinta.
+// M2.1b, o `auth/me` da sessão —, o 429 chega na quinta. Desde o M2.4, com o `/lab`, a carga faz
+// dezoito pedidos (medido na fase B: dezesseis 200 e dois 401 do `auth/me`), e o 429 segue na sexta
+// carga, depois de cinco completas.
 const RATE_MAX_LOADS = 30;
 
 // M2.1b: a conta do passo sob demanda (e da chave RUVOR_E2E_SO_CONTA).
@@ -95,6 +111,19 @@ const FINAL_STATES = ["E1", "E3", "E6", "E7"];
 const MAX_CANDIDATES = 3;
 const RF24_LIMIT_MS = 2000;
 
+// M2.4: a seção do laboratório.
+const LAB_TICKERS = ["ITUB4", "IBOV"];
+const LAB_MOCKUP = `${BASE}/@fs/repo/docs/mockups/M2.4/laboratorio.html`;
+const LAB_ALPHAS = ["0.0500", "0.0100"];
+// As partes cujos estilos calculados a comparação confere (seletores dentro da seção).
+const LAB_STYLE_PARTS = {
+  titulo: "h2",
+  diferenca: '[data-phrase="diferenca"]',
+  cabecalho: '[data-alpha="0.0500"] thead th',
+  veredito95: '[data-alpha="0.0500"] td[data-year="0"] .ruvor-tag',
+  violacoes99: '[data-alpha="0.0100"] td[data-year="0"] .ruvor-num',
+};
+
 // As cinco capturas por página: 1440×900 e 360×800, com a chave em claro e em escuro, e
 // 1440×900 com a chave em sistema e o sistema escuro.
 const VARIANTS = [
@@ -108,7 +137,7 @@ const VARIANTS = [
 const result = {
   base: BASE,
   started_at: new Date().toISOString(),
-  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY, only_account: ONLY_ACCOUNT },
+  keys: { on_demand: ON_DEMAND, measure_rate: MEASURE_RATE, company: COMPANY, only_account: ONLY_ACCOUNT, only_lab: ONLY_LAB },
   checks: [],
   sections: [],
   rate: null,
@@ -121,6 +150,7 @@ const result = {
   reading: [],
   classification: null,
   account: null,
+  lab: [],
   page_errors: [],
 };
 
@@ -588,6 +618,222 @@ async function readingPage(browser, ticker, variant, start) {
   await context.close();
 }
 
+/**
+ * M2.4: o que a seção do laboratório mostra agora. Na tela, a raiz é `[data-section="lab"]`; no
+ * mockup, a `section` do primeiro `[data-lab-state]` visível. Os nomes do recolhimento saem sem o
+ * prefixo `lab-` (o mockup os chama `tests` e `trail`).
+ */
+function labFacts(page, parts) {
+  return page.evaluate((styleParts) => {
+    const visible = (el) => el !== null && el.offsetParent !== null;
+    let root = document.querySelector('[data-section="lab"]');
+    if (root === null) {
+      const marked = [...document.querySelectorAll("[data-lab-state]")].find(visible) ?? null;
+      root = marked?.closest("section") ?? null;
+    }
+    if (root === null) return null;
+    const state =
+      root.getAttribute("data-lab-state") ??
+      root.querySelector("[data-lab-state]")?.getAttribute("data-lab-state") ??
+      null;
+    const text = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
+    const grids = {};
+    for (const alpha of ["0.0500", "0.0100"]) {
+      const grid = root.querySelector(`[data-alpha="${alpha}"]`);
+      grids[alpha] =
+        grid === null
+          ? null
+          : [...grid.querySelectorAll("tr[data-model]")].map((tr) => ({
+              model: tr.getAttribute("data-model"),
+              error: tr.getAttribute("data-error") === "true",
+              cells: [...tr.querySelectorAll("td")].map(text),
+              years: [...tr.querySelectorAll("td[data-year]")].map((td) => ({
+                index: Number(td.getAttribute("data-year")),
+                violations: text(td.querySelector(".ruvor-num")),
+                tags: [...td.querySelectorAll(".ruvor-tag")].map(text),
+              })),
+            }));
+    }
+    const styles = {};
+    for (const [name, selector] of Object.entries(styleParts)) {
+      const el = root.querySelector(selector);
+      if (el === null) {
+        styles[name] = null;
+        continue;
+      }
+      const cs = getComputedStyle(el);
+      styles[name] = {
+        color: cs.color,
+        backgroundColor: cs.backgroundColor,
+        fontSize: cs.fontSize,
+        fontWeight: cs.fontWeight,
+      };
+    }
+    const order = (() => {
+      const risk = document.getElementById("risco");
+      const fundamentals = document.querySelector('[data-section="fundamentals"]');
+      if (risk === null || fundamentals === null) return null;
+      const after = (a, b) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return { lab_after_risk: after(risk, root), fundamentals_after_lab: after(root, fundamentals) };
+    })();
+    return {
+      state,
+      title: text(root.querySelector("h2")),
+      phrases: [...root.querySelectorAll("[data-phrase]")].map((el) => ({
+        phrase: el.getAttribute("data-phrase"),
+        text: text(el),
+      })),
+      note: root.querySelector("[data-note]")?.getAttribute("data-note") ?? null,
+      collapsibles: [...root.querySelectorAll("[data-collapsible]")].map(
+        (el) => `${el.getAttribute("data-collapsible").replace(/^lab-/, "")}=${el.getAttribute("data-open")}`,
+      ),
+      alerts: root.querySelectorAll('[role="alert"]').length,
+      grids,
+      styles,
+      order,
+    };
+  }, parts);
+}
+
+/** M2.4: as diferenças entre a tela e o mockup, campo a campo. */
+function labDifferences(app, mock) {
+  const differences = [];
+  if (mock === null) return [{ what: "mockup sem a seção" }];
+  for (const key of ["state", "title", "note"]) {
+    if (app[key] !== mock[key]) differences.push({ what: key, tela: app[key], mockup: mock[key] });
+  }
+  if (JSON.stringify(app.collapsibles) !== JSON.stringify(mock.collapsibles)) {
+    differences.push({ what: "collapsibles", tela: app.collapsibles, mockup: mock.collapsibles });
+  }
+  const phrasesApp = JSON.stringify(app.phrases);
+  if (phrasesApp !== JSON.stringify(mock.phrases)) {
+    differences.push({ what: "phrases", tela: app.phrases, mockup: mock.phrases });
+  }
+  for (const alpha of LAB_ALPHAS) {
+    const a = app.grids[alpha];
+    const m = mock.grids[alpha];
+    if (JSON.stringify(a?.map((r) => [r.model, r.cells])) !== JSON.stringify(m?.map((r) => [r.model, r.cells]))) {
+      differences.push({ what: `grade ${alpha}`, tela: a?.map((r) => [r.model, r.cells]), mockup: m?.map((r) => [r.model, r.cells]) });
+    }
+  }
+  for (const name of Object.keys(LAB_STYLE_PARTS)) {
+    if (JSON.stringify(app.styles[name]) !== JSON.stringify(mock.styles[name])) {
+      differences.push({ what: `estilo ${name}`, tela: app.styles[name], mockup: mock.styles[name] });
+    }
+  }
+  return differences;
+}
+
+/**
+ * M2.4 (RF-13 a RF-19, T14): a seção do laboratório de `ticker`, no nível `reading`, na variação
+ * `variant` — as conferências da tela, contra o `/lab` da API e contra o mockup aprovado.
+ */
+async function labPage(browser, ticker, variant, reading, api) {
+  const label = `laboratório ${ticker} ${variant.id} ${reading}`;
+  const entry = { ticker, variant: variant.id, reading };
+  result.lab.push(entry);
+
+  const context = await newContext(browser, variant, reading);
+  const page = await context.newPage();
+  watchErrors(page, label);
+  const response = await page.goto(`${BASE}/ativos/${ticker}`);
+  const ready = await page
+    .locator('[data-section="lab"][data-lab-state="READY"]')
+    .first()
+    .waitFor({ timeout: 60_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(`${label}: a seção chega ao estado READY`, ready && response?.ok(), { status: response?.status() });
+  await sectionsSettled(page);
+  await settle(page);
+  await capture(page, `lab-${ticker}-${reading}`, variant);
+  const app = await labFacts(page, LAB_STYLE_PARTS);
+  entry.app = app;
+  if (app === null) {
+    check(`${label}: a seção presente`, false);
+    await context.close();
+    return;
+  }
+  check(`${label}: data-lab-state READY`, app.state === "READY", { state: app.state });
+  check(`${label}: sem nota (o latest ok do mesmo motor)`, app.note === "none", { note: app.note });
+  check(`${label}: a seção depois do risco e antes dos Fundamentos`, app.order?.lab_after_risk && app.order?.fundamentals_after_lab, {
+    order: app.order,
+  });
+  check(`${label}: nenhum [role="alert"] na seção`, app.alerts === 0, { alerts: app.alerts });
+  const honest = app.phrases.find((p) => p.phrase === "diferenca");
+  check(`${label}: a diferença honesta presente`, honest !== undefined && honest.text.length > 0, {
+    text: honest?.text ?? null,
+  });
+  const open = reading === "advanced" ? "true" : "false";
+  check(
+    `${label}: lab-tests e lab-trail com data-open="${open}"`,
+    JSON.stringify(app.collapsibles) === JSON.stringify([`tests=${open}`, `trail=${open}`]),
+    { collapsibles: app.collapsibles },
+  );
+  const g95 = app.grids["0.0500"] ?? [];
+  const g99 = app.grids["0.0100"] ?? [];
+  check(`${label}: as duas grades com os nove modelos`, g95.length === MODEL_ROWS && g99.length === MODEL_ROWS, {
+    rows95: g95.length,
+    rows99: g99.length,
+  });
+  const years95 = g95.flatMap((r) => r.years);
+  const years99 = g99.flatMap((r) => r.years);
+  check(`${label}: a 95%, um rótulo de veredito em cada ano`, years95.length > 0 && years95.every((y) => y.tags.length === 1 && y.tags[0].length > 0), {
+    years: years95.length,
+    without: years95.filter((y) => y.tags.length !== 1).length,
+  });
+  check(`${label}: a 99%, nenhum veredito por ano`, years99.length > 0 && years99.every((y) => y.tags.length === 0), {
+    years: years99.length,
+    with_tag: years99.filter((y) => y.tags.length > 0).length,
+  });
+  // As violações de cada ano contra o /lab da API.
+  const mismatches = [];
+  for (const [alpha, rows] of [["0.0500", g95], ["0.0100", g99]]) {
+    for (const row of rows) {
+      const result_ = api.latest.results.find((r) => r.model_name === row.model && r.alpha === alpha);
+      const expected = (result_?.years ?? []).map((y) => String(y.violations));
+      const shown = row.years.map((y) => y.violations);
+      if (JSON.stringify(expected) !== JSON.stringify(shown)) mismatches.push({ alpha, model: row.model, expected, shown });
+    }
+  }
+  check(`${label}: as violações de cada ano iguais às do /lab`, mismatches.length === 0, mismatches.length ? { mismatches } : {});
+
+  // A comparação com o mockup aprovado, na mesma largura, tema e nível.
+  const mockPage = await context.newPage();
+  watchErrors(mockPage, `${label} (mockup)`);
+  const theme = variant.theme;
+  const url = `${LAB_MOCKUP}?tema=${theme}&leitura=${reading}#${ticker.toLowerCase()}`;
+  const mockResponse = await mockPage.goto(url);
+  await mockPage.waitForSelector("[data-lab-state]", { timeout: 15_000 }).catch(() => {});
+  await mockPage.waitForTimeout(500);
+  const mock = await labFacts(mockPage, LAB_STYLE_PARTS);
+  entry.mockup = { url, facts: mock };
+  check(`${label}: o mockup abre pelo Vite`, mockResponse?.ok(), { status: mockResponse?.status() });
+  const differences = labDifferences(app, mock);
+  entry.differences = differences;
+  check(`${label}: comparação com o mockup sem diferença`, differences.length === 0, differences.length ? { differences } : {});
+
+  const errors = result.page_errors.filter((e) => e.where === label);
+  check(`${label}: nenhum erro de página`, errors.length === 0, { page_errors: errors });
+  await context.close();
+}
+
+/** M2.4: a seção do laboratório no ITUB4 e no IBOV, nos dois temas, em 1440 e 360, nos dois níveis. */
+async function labPages(browser, request) {
+  for (const ticker of LAB_TICKERS) {
+    const response = await request.get(`${BASE}/api/v1/assets/${ticker}/lab`);
+    const api = response.ok() ? await response.json() : null;
+    if (!check(`laboratório ${ticker}: o /lab da API com latest`, api?.latest != null, { status: response.status() })) {
+      continue;
+    }
+    for (const variant of VARIANTS.filter((v) => v.theme !== "system")) {
+      for (const reading of READINGS) {
+        await labPage(browser, ticker, variant, reading, api);
+      }
+    }
+  }
+}
+
 async function allAssets(request) {
   const all = [];
   let offset = 0;
@@ -991,7 +1237,9 @@ async function measureRate(browser) {
           ["fundamentals", "disclosures"].every((name) => {
             const el = document.querySelector(`[data-section="${name}"]`);
             return el !== null && el.getAttribute("data-state") !== "loading";
-          }),
+          }) &&
+          // M2.4: a seção do laboratório fora do carregando
+          (document.querySelector('[data-section="lab"]')?.getAttribute("data-lab-state") ?? "LOADING") !== "LOADING",
         null,
         { timeout: 60_000, polling: 100 },
       )
@@ -1046,7 +1294,7 @@ async function measureRate(browser) {
 async function main() {
   // A medida da taxa e só a conta (M2.1b) não apagam as capturas das conferências: gravam o
   // próprio resultado ao lado.
-  if (!MEASURE_RATE && !ONLY_ACCOUNT) await rm(OUT, { recursive: true, force: true });
+  if (!MEASURE_RATE && !ONLY_ACCOUNT && !ONLY_LAB) await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
 
   // M2.3: a guarda do E1 antes de abrir o navegador; sem E1, aborta (a medida da taxa não pede a
@@ -1067,6 +1315,9 @@ async function main() {
     } else if (ONLY_ACCOUNT) {
       // M2.1b: só a conta e a tela do ITUB4 logada.
       await onlyAccount(browser);
+    } else if (ONLY_LAB) {
+      // M2.4: só a seção do laboratório.
+      await labPages(browser, request);
     } else {
       // M2.3 (RF-12): o ITUB4 e o PETR4 nos dois níveis, nos dois temas, em 360 e 1440 px.
       for (const ticker of READING_TICKERS) {
@@ -1076,6 +1327,8 @@ async function main() {
           }
         }
       }
+      // M2.4: a seção do laboratório no ITUB4 e no IBOV, nos dois temas, em 1440 e 360, nos dois níveis.
+      await labPages(browser, request);
       // 1 e 3: a busca.
       for (const variant of VARIANTS) {
         await searchPage(browser, variant);
@@ -1130,7 +1383,13 @@ async function finish() {
 
   result.finished_at = new Date().toISOString();
   result.ok = result.checks.every((c) => c.ok);
-  const file = MEASURE_RATE ? "resultado-taxa.json" : ONLY_ACCOUNT ? "resultado-conta.json" : "resultado.json";
+  const file = MEASURE_RATE
+    ? "resultado-taxa.json"
+    : ONLY_ACCOUNT
+      ? "resultado-conta.json"
+      : ONLY_LAB
+        ? "resultado-lab.json"
+        : "resultado.json";
   await writeFile(path.join(OUT, file), `${JSON.stringify(result, null, 2)}\n`);
   const failed = result.checks.filter((c) => !c.ok);
   console.log(`\n${result.checks.length} conferências, ${failed.length} falharam; ${result.captures.length} capturas em ${OUT}`);
