@@ -291,9 +291,34 @@ vezes.
 
 ### Regime de laboratório
 
-Os 20–60 minutos por experimento são deste regime: provar cientificamente que o modelo
-funciona ao longo de uma década. Simula o passado dia a dia, retreina a cada ano de teste, e
-faz busca de hiperparâmetros — 8 treinos completos por modelo. Roda algumas vezes na vida.
+Prova que o modelo funciona ao longo de uma década. **Desde o M2.4, ele é o cálculo de produção recortado na década do
+ativo**, calculado uma vez e guardado
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md)):
+o protocolo que esta seção atribuía ao laboratório — simular o passado dia a dia, retreinar a cada ano de teste, buscar
+hiperparâmetros — **é** o de produção desde o M1.5b e o M1.4b, e um protocolo à parte daria dois VaR para o mesmo dia.
+
+- **A década** é a do ativo, do primeiro pregão à mesma data dez anos depois; o teste se lê em trechos de 252 retornos,
+  os trechos entre dois retreinos, com veredito por trecho só a 95%
+  ([D-184](decisoes/D-184-a-decada-e-a-do-ativo-e-o-teste-se-le-em-anos-de-252-pregoes.md)). O módulo puro
+  `apps/risk/decade.py` a calcula, sem o motor; `compute._bars` delega a ele o filtro da série.
+- **O experimento** (`apps/risk/lab.py`) roda os nove modelos nos dois níveis pelo mesmo `run_models` da produção, que lê
+  e grava os retratos, recorta os anos, confere a soma das violações e grava `gold.lab_run`, `gold.lab_result` e
+  `gold.lab_year`, imutáveis no Django e no banco, um `ok` por identidade
+  ([D-185](decisoes/D-185-o-experimento-mora-em-tres-tabelas-de-gold-imutaveis-e-um-ok-por-identidade.md)).
+- **Quando roda**: depois do fecho `ok`/`partial` do risco, por um `on_commit` que pergunta se o experimento é devido e
+  enfileira `calcular_laboratorio`; e por `manage.py compute_lab`, no `worker`. Nada no Beat
+  ([D-186](decisoes/D-186-o-experimento-roda-pela-fila-depois-do-fecho-do-risco-de-producao.md)).
+- **Onde aparece**: `GET /api/v1/assets/{ticker}/lab` e a seção "Como os modelos se saíram em dez anos", logo depois do
+  risco na tela do ativo, sem eleger nem ordenar
+  ([D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)).
+
+| Quando | Custo medido |
+|---|---|
+| Com os retratos da produção (o caso normal: o fecho do risco vem antes) | ~4 s por ativo — 3,8 a 5,7 s na fase A do M2.4, 72 retratos reaproveitados e nenhum treinado |
+| Sem retratos (só se `compute_lab` rodar antes do recálculo de uma versão nova do motor) | ~173 s por ativo, com pico de 1,35 GiB num processo (Medidas da spec do M2.4) |
+
+A série de VaR da década é igual, ponto a ponto, ao começo da série de produção — medido nos 18 pares do ITUB4, diferença
+máxima 0,0.
 
 ### Regime de produção
 

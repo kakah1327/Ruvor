@@ -131,7 +131,12 @@ e coincide em grande parte com o conteúdo do TCC, então os dois avançam junto
   2026-10-02, sem esperar o parecer da CVM ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)); as telas são o M2.2b
 - Camada explicativa iniciante/avançado como sistema
 - Camada 3 no regime de laboratório ([D-04](decisoes/D-04-dois-regimes-de-operacao.md),
-  [D-74](decisoes/D-74-o-marco-1-e-so-producao.md))
+  [D-74](decisoes/D-74-o-marco-1-e-so-producao.md)) — o M2.4, desde 2026-10-04: a década de cada ativo coberto, os nove
+  modelos nos dois níveis pelo cálculo de produção, ano a ano, numa seção da tela do ativo para todos
+  ([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a
+  [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)). **O laboratório
+  não elege modelo**: a grade segue a ordem fixa dos modelos, sem ranking nem destaque
+  ([D-65](decisoes/D-65-a-plataforma-lista-os-aprovados-e-nao-elege-nenhum.md))
 
 ### Marco 3 — "tudo sobre a ação" completo
 
