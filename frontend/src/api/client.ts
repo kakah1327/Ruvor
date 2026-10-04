@@ -9,6 +9,12 @@
  *
  * A mensagem do ApiError é a da API, para diagnóstico; a tela mostra o texto dela pelo
  * `code`, do módulo de textos.
+ *
+ * 204 é sucesso sem corpo: devolve `undefined`. Todo método que não é `GET` manda o
+ * `X-CSRFToken`, lido do cookie na hora do pedido (o `login()` do Django troca o cookie,
+ * e o cliente não guarda cópia). Sem o cookie, pede `GET /api/v1/auth/csrf` antes — e, se
+ * esse pedido falha, o erro dele sobe e o pedido não sai. A resposta 403 `csrf_failed`
+ * leva a um `auth/csrf` e a **uma** repetição; na segunda falha, o erro sobe (RF-02).
  */
 
 export class ApiError extends Error {
@@ -66,18 +72,29 @@ function parseError(
   return { code, message, details: isRecord(details) ? details : {} };
 }
 
-async function request<T>(method: "GET" | "POST", path: string): Promise<T> {
+type Method = "GET" | "POST" | "PATCH" | "DELETE";
+
+/** A rota que garante o cookie `csrftoken` (M2.1a). */
+const CSRF_PATH = "/api/v1/auth/csrf";
+
+/** Um pedido só, sem CSRF prévio nem repetição: o `fetch` e a leitura da resposta. */
+async function exchange<T>(method: Method, path: string, body: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (method === "POST") {
+  const init: RequestInit = { method, headers };
+  if (method !== "GET") {
     const token = csrfToken();
     if (token !== null) {
       headers["X-CSRFToken"] = token;
     }
   }
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
 
   let response: Response;
   try {
-    response = await fetch(`${baseUrl()}${path}`, { method, headers });
+    response = await fetch(`${baseUrl()}${path}`, init);
   } catch (error) {
     throw new ApiError(
       0,
@@ -86,10 +103,14 @@ async function request<T>(method: "GET" | "POST", path: string): Promise<T> {
     );
   }
 
-  let body: unknown;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   let parsed = true;
+  let responseBody: unknown;
   try {
-    body = await response.json();
+    responseBody = await response.json();
   } catch {
     parsed = false;
   }
@@ -102,10 +123,10 @@ async function request<T>(method: "GET" | "POST", path: string): Promise<T> {
         `HTTP ${response.status} sem corpo JSON`,
       );
     }
-    return body as T;
+    return responseBody as T;
   }
 
-  const error = parsed ? parseError(body) : null;
+  const error = parsed ? parseError(responseBody) : null;
   if (error !== null) {
     throw new ApiError(response.status, error.code, error.message, error.details);
   }
@@ -116,10 +137,54 @@ async function request<T>(method: "GET" | "POST", path: string): Promise<T> {
   );
 }
 
-export function apiGet<T>(path: string): Promise<T> {
-  return request<T>("GET", path);
+/** Pede o cookie `csrftoken`; a falha sobe como o ApiError do `auth/csrf`. */
+async function refreshCsrf(): Promise<void> {
+  await exchange<undefined>("GET", CSRF_PATH, undefined);
 }
 
-export function apiPost<T>(path: string): Promise<T> {
-  return request<T>("POST", path);
+/**
+ * O pedido com o CSRF do RF-02. `retried` marca a repetição depois de um 403
+ * `csrf_failed`: ela não repete de novo — nunca um laço.
+ */
+async function request<T>(
+  method: Method,
+  path: string,
+  body: unknown,
+  retried = false,
+): Promise<T> {
+  if (method !== "GET" && !retried && csrfToken() === null) {
+    await refreshCsrf();
+  }
+  try {
+    return await exchange<T>(method, path, body);
+  } catch (error) {
+    if (
+      method !== "GET" &&
+      !retried &&
+      error instanceof ApiError &&
+      error.status === 403 &&
+      error.code === "csrf_failed"
+    ) {
+      await refreshCsrf();
+      return request<T>(method, path, body, true);
+    }
+    throw error;
+  }
+}
+
+export function apiGet<T>(path: string): Promise<T> {
+  return request<T>("GET", path, undefined);
+}
+
+/** `body` opcional: sem ele, o pedido sai sem corpo, como as chamadas de antes. */
+export function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>("POST", path, body);
+}
+
+export function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  return request<T>("PATCH", path, body);
+}
+
+export function apiDelete<T = undefined>(path: string): Promise<T> {
+  return request<T>("DELETE", path, undefined);
 }

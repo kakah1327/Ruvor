@@ -114,6 +114,8 @@ const CORRESPONDENCE: ReadonlyArray<readonly [string, Source]> = [
   ["decision-hover", NONE],
   ["focus", NONE],
   ["focus-on-dark", NONE],
+  // M2.1b (T10): o véu atrás do diálogo (usuarios.html), a barra a 55% sobre transparente.
+  ["scrim", NONE],
 ];
 
 // O único -text escurecido pelo RF-04: diferente da fonte, e com este valor.
@@ -269,6 +271,15 @@ const PAIRS: readonly Pair[] = [
   ...SIGNALS.map(([signal, soft]): Pair => [signal, soft, 3]),
   // O sinal dentro do callout crítico fica sobre surface (components.css).
   ...SIGNALS.map(([signal]): Pair => [signal, "surface", 3]),
+  // M2.1b (T10): o sobretítulo da cena de acesso; as iniciais no botão de conta; o link no
+  // meio do texto, sobre a página e o painel; o papel marcado na chave sobre a superfície; e
+  // a confirmação de cópia, no diálogo.
+  ["review", "topbar", 4.5],
+  ["topbar-text", "avatar", 4.5],
+  ["decision-text", "paper", 4.5],
+  ["decision-text", "surface", 4.5],
+  ["paper", "ink", 4.5],
+  ["validated-text", "surface", 4.5],
 ];
 
 describe("V-04 — contraste", () => {
@@ -432,6 +443,12 @@ const INTERACTIVE = [
   ".ruvor-doc__link",
   // M2.3 (T7): o controle de recolher.
   ".ruvor-collapsible__toggle",
+  // M2.1b (T10): o link no meio do texto, o "Entrar" da barra, o botão de conta e o item do
+  // menu.
+  ".ruvor-link",
+  ".ruvor-topbar__signin",
+  ".ruvor-account--button",
+  ".ruvor-menu__item",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -607,6 +624,72 @@ describe("M2.3 — o controle de recolher no kit", () => {
   it("o raiz separa o controle do que vem antes por uma régua de token", () => {
     expect(ruleValue(COMPONENTS_CSS, ".ruvor-collapsible", "border-top")).toBe(
       "1px solid var(--ruvor-table-rule)",
+    );
+  });
+});
+
+// M2.1b (T10): o que os mockups aprovados pediram ao kit e que a vista não confere sozinha —
+// o [hidden] do menu, o véu do diálogo em token, a chave sobre a superfície desabilitada e a
+// barra estreita até 840 px, sem os seletores por posição do M2.3.
+function mediaBodies(css: string, query: string): string[] {
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const bodies: string[] = [];
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(`@media ${query}`, from);
+    if (at === -1) return bodies;
+    const open = text.indexOf("{", at);
+    let depth = 1;
+    let close = open + 1;
+    while (depth > 0) {
+      if (text[close] === "{") depth += 1;
+      else if (text[close] === "}") depth -= 1;
+      close += 1;
+    }
+    bodies.push(text.slice(open + 1, close - 1));
+    from = close;
+  }
+}
+
+describe("M2.1b — os componentes das telas de acesso no kit", () => {
+  it("o menu fechado continua oculto pelo [hidden]", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-menu[hidden]", "display")).toBe("none");
+  });
+
+  it("o véu do diálogo é o token --ruvor-scrim, no próprio ::backdrop", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-dialog::backdrop", "background")).toBe(
+      "var(--ruvor-scrim)",
+    );
+  });
+
+  it("a chave sobre a superfície tem :disabled, e o hover não vale nele", () => {
+    const disabled = ".ruvor-segmented--surface .ruvor-segmented__btn:disabled";
+    expect(ruleValue(COMPONENTS_CSS, disabled, "opacity")).toBe("0.5");
+    expect(ruleValue(COMPONENTS_CSS, disabled, "cursor")).toBe("not-allowed");
+    const hovers = COMPONENT_RULES.flatMap((rule) =>
+      selectorParts(rule.selector),
+    ).filter((part) =>
+      part.startsWith(".ruvor-segmented--surface .ruvor-segmented__btn:hover"),
+    );
+    expect(hovers.length).toBeGreaterThan(0);
+    for (const part of hovers) expect(part).toContain(":not(:disabled");
+  });
+
+  it("a barra estreita vale até 840 px e endereça cada peça, não a posição", () => {
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 840px)").join("\n");
+    for (const selector of [
+      ".ruvor-topbar {",
+      ".ruvor-topbar__prefs {",
+      ".ruvor-topbar__prefs > .ruvor-segmented:has(+ .ruvor-segmented) {",
+      ".ruvor-topbar__prefs > .ruvor-segmented + .ruvor-segmented {",
+      ".ruvor-topbar__prefs > .ruvor-topbar__account {",
+    ]) {
+      expect(narrow, selector).toContain(selector);
+    }
+    const old = mediaBodies(COMPONENTS_CSS, "(max-width: 720px)").join("\n");
+    expect(old).not.toMatch(/\.ruvor-topbar(__prefs|__search|__spacer)?\s*\{/);
+    expect(COMPONENTS_TEXT).not.toMatch(
+      /\.ruvor-topbar__prefs\s*>\s*:(first|last)-child/,
     );
   });
 });

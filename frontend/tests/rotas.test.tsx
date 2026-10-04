@@ -17,8 +17,8 @@ vi.mock("uplot", () => ({ default: class {} }));
 
 /**
  * O duplo do `fetch` (M1.7): a página inicial pede a sugestão ao montar (RF-10), e ela responde
- * vazia; qualquer outro pedido — as rotas da tela do ativo — fica pendente: estes testes só
- * olham o endereço.
+ * vazia; o `auth/me` da rota de layout da sessão (M2.1b, RF-03) responde 401, anônimo; qualquer
+ * outro pedido — as rotas da tela do ativo — fica pendente: estes testes só olham o endereço.
  */
 const SUGGESTION: AssetPage = { count: 0, limit: 8, offset: 0, results: [] };
 
@@ -32,7 +32,15 @@ beforeEach(() => {
             status: 200,
             json: async () => SUGGESTION,
           } as unknown as Response)
-        : new Promise<Response>(() => {}),
+        : url === "/api/v1/auth/me"
+          ? Promise.resolve({
+              ok: false,
+              status: 401,
+              json: async () => ({
+                error: { code: "not_authenticated", message: "falhou", details: {} },
+              }),
+            } as unknown as Response)
+          : new Promise<Response>(() => {}),
     ),
   );
 });

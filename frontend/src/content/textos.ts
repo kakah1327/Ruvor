@@ -724,6 +724,244 @@ export const TEXTOS = {
   "comunicados.semCodigo":
     "O catálogo não tem o código desta companhia na CVM, e os comunicados dela não puderam ser ligados.",
   "comunicados.semLigacao": "Os comunicados desta companhia não puderam ser ligados.",
+
+  // acesso.* — a tela de entrada (M2.1b, RF-06): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/entrada.html` aprovado. Os sobretítulos ficam em caixa normal, como
+  // `busca.eyebrow`; a folha os põe em maiúsculas. A mensagem da API nunca entra aqui: a tela
+  // traduz pelo `code`.
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto":
+    "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.eyebrow": "Acesso à plataforma",
+  "acesso.titulo": "Que bom te ver de novo.",
+  "acesso.sub": "Entre com o e-mail e a senha da sua conta.",
+  "acesso.email.rotulo": "E-mail",
+  "acesso.email.placeholder": "nome@exemplo.com",
+  "acesso.senha.rotulo": "Senha",
+  "acesso.senha.nota":
+    "Não há recuperação de senha por e-mail. Numa organização, peça uma senha provisória a quem a administra; numa conta pessoal, a senha não pode ser recuperada.",
+  "acesso.entrar": "Entrar",
+  "acesso.entrando": "Entrando…",
+  "acesso.semConta": "Ainda não tem conta?",
+  "acesso.criarConta": "Criar conta",
+  "acesso.continuar": "Continuar sem entrar",
+  "acesso.erro.emailVazio": "Informe o e-mail.",
+  "acesso.erro.senhaVazia": "Informe a senha.",
+  "acesso.erro.credenciais": "E-mail ou senha incorretos.",
+  // tentativas(n) — n: `details.wait_seconds`, inteiro; ausente (null) → a frase sem o número;
+  // de 60 s em diante, em minutos arredondados para cima (o bloqueio por e-mail e IP dura 900 s).
+  "acesso.erro.tentativas": (n: number | null): string =>
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
+  // A dica da senha e a confirmação diferente, compartilhadas pelo cadastro e pelas duas trocas
+  // de senha (os portões da T6 e da T7): do registro `COMPARTILHADOS` do `senha.html` aprovado,
+  // o mesmo texto do `cadastro.html`. Cada requisito é um validador de `AUTH_PASSWORD_VALIDATORS`.
+  "acesso.senha.dica": "A senha precisa:",
+  "acesso.senha.requisito.tamanho": "ter no mínimo 10 caracteres;",
+  "acesso.senha.requisito.numeros": "não ser só números;",
+  "acesso.senha.requisito.parecida": "não ser parecida com o seu e-mail ou o seu nome;",
+  "acesso.senha.requisito.comum": "não ser uma senha comum.",
+  "acesso.erro.confirmacaoDiferente": "As duas senhas não são iguais.",
+
+  // cadastro.* — criar conta (M2.1b, RF-07): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/cadastro.html` aprovado, as chaves novas; as da entrada são reaproveitadas.
+  // As mensagens da API por campo (`details.fields`) não entram aqui: são dado.
+  "cadastro.titulo": "Crie a sua conta.",
+  "cadastro.sub": "Informe o seu nome, o e-mail e uma senha.",
+  "cadastro.nome.rotulo": "Nome",
+  "cadastro.confirmacao.rotulo": "Repita a senha",
+  "cadastro.pessoal": "A conta é pessoal: você é a única pessoa da organização dela.",
+  "cadastro.pessoal.organizacao":
+    "Se você vai usar o Ruvor numa organização, peça a conta a quem a administra.",
+  "cadastro.criar": "Criar conta",
+  "cadastro.criando": "Criando a conta…",
+  "cadastro.temConta": "Já tem conta?",
+  "cadastro.erro.nomeVazio": "Informe o nome.",
+  "cadastro.erro.confirmacaoVazia": "Repita a senha.",
+  "cadastro.erro.emailTaken": "Este e-mail já tem conta.",
+  "cadastro.erro.emailTakenLink": "Entrar",
+  "cadastro.erro.outro": "Não foi possível criar a conta agora. Tente de novo.",
+
+  // senha.* — trocar a senha, voluntária e obrigatória (M2.1b, RF-08): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/senha.html` aprovado.
+  "senha.eyebrow": "Sua conta",
+  "senha.titulo": "Trocar a senha",
+  "senha.sub": "Confirme a senha atual e escolha uma nova.",
+  "senha.obrigatoria.eyebrow": "Senha provisória",
+  "senha.obrigatoria.titulo": "Troque a senha para continuar.",
+  "senha.obrigatoria.sub":
+    "A sua senha é provisória e precisa ser trocada antes de usar o Ruvor.",
+  // conta(email) — o e-mail de quem entrou (`me.email`).
+  "senha.obrigatoria.conta": (email: string): string => `Você entrou como ${email}.`,
+  "senha.obrigatoria.sair": "Sair",
+  "senha.atual.rotulo": "Senha atual",
+  "senha.nova.rotulo": "Senha nova",
+  "senha.confirmacao.rotulo": "Repita a senha nova",
+  "senha.trocar": "Trocar a senha",
+  "senha.trocando": "Trocando…",
+  "senha.erro.atualVazia": "Informe a senha atual.",
+  "senha.erro.novaVazia": "Informe a senha nova.",
+  "senha.erro.confirmacaoVazia": "Repita a senha nova.",
+  "senha.erro.atualIncorreta": "Senha atual incorreta.",
+  "senha.erro.outro": "Não foi possível trocar a senha agora. Tente de novo.",
+  "senha.sucesso.titulo": "Senha trocada.",
+  "senha.sucesso.texto":
+    "As outras sessões desta conta foram encerradas. Esta continua aberta.",
+  "senha.sucesso.continuar": "Continuar",
+
+  // conta.* — o menu de conta (RF-09, RF-10), o convite a entrar para calcular (RF-15) e os dois
+  // avisos do RF-16: do registro `TEXTOS` do `docs/mockups/M2.1b/conta.html` aprovado. Nenhuma é
+  // número com frase: não têm leitura avançada.
+  "conta.entrar": "Entrar",
+  // rotulo(nome) — o `aria-label` do botão de conta, com o nome de quem entrou (`me.name`).
+  "conta.menu.rotulo": (nome: string): string => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.pessoal": "Conta pessoal",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
+  "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
+  "conta.convite.entrar": "Entrar para calcular",
+  "conta.convite.frase": "Pedir um cálculo exige entrar na conta.",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
+
+  // usuarios.* — a gestão de usuários (M2.1b, RF-11 a RF-14): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/usuarios.html` aprovado, com o papel `admin` mostrado como
+  // "Administração" (o portão da T9). Os avisos do RF-16 são os `conta.aviso.*`. As mensagens
+  // da API por campo (`details.fields`) não entram aqui: são dado. Nenhuma é número com frase:
+  // não têm leitura avançada.
+  // A página.
+  "usuarios.eyebrow": "Organização",
+  "usuarios.titulo": "Usuários da organização",
+  // sub(org) — o nome da organização (`me.organization.name`).
+  "usuarios.sub": (org: string): string =>
+    `Quem entra no Ruvor pela ${org}. Aqui você cria contas, muda o papel de cada pessoa, desativa quem não deve mais entrar e gera senhas provisórias.`,
+  // A criação (RF-13).
+  "usuarios.criar.titulo": "Novo usuário",
+  "usuarios.criar.texto":
+    "A conta nasce com uma senha provisória, que a pessoa troca no primeiro acesso. O Ruvor não envia e-mail: a senha aparece para você entregar.",
+  "usuarios.campo.nome": "Nome",
+  "usuarios.campo.email": "E-mail",
+  "usuarios.campo.email.exemplo": "nome@exemplo.com",
+  "usuarios.campo.papel": "Papel",
+  "usuarios.campo.papel.dica":
+    "Membro usa o Ruvor. Administração usa e também gere os usuários desta página.",
+  "usuarios.papel.member": "Membro",
+  "usuarios.papel.admin": "Administração",
+  "usuarios.criar.botao": "Criar usuário",
+  "usuarios.criar.enviando": "Criando…",
+  // Os erros.
+  "usuarios.erro.nomeVazio": "Informe o nome.",
+  "usuarios.erro.emailVazio": "Informe o e-mail.",
+  "usuarios.erro.emailTaken": "Este e-mail já tem conta no Ruvor.",
+  // muitos(n) — n: `details.wait_seconds`; sem ele, `usuarios.erro.muitosSemTempo`.
+  "usuarios.erro.muitos": (n: number): string =>
+    `Muitos pedidos seguidos. Tente de novo em ${n} s.`,
+  "usuarios.erro.muitosSemTempo":
+    "Muitos pedidos seguidos. Aguarde um pouco e tente de novo.",
+  "usuarios.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "usuarios.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "usuarios.erro.outro": "Não foi possível concluir agora. Tente de novo.",
+  "usuarios.erro.lastAdmin":
+    "A organização precisa de ao menos uma pessoa ativa na administração. Mude outra pessoa para administração antes.",
+  "usuarios.erro.naoEncontrado":
+    "Esta pessoa não está mais na organização. A lista foi atualizada.",
+  // A lista (RF-11).
+  "usuarios.lista.titulo": "Usuários",
+  // contagem(n) — o `count` da API.
+  "usuarios.lista.contagem": (n: number): string =>
+    n === 1 ? "1 usuário" : `${n} usuários`,
+  "usuarios.col.nome": "Nome",
+  "usuarios.col.email": "E-mail",
+  "usuarios.col.papel": "Papel",
+  "usuarios.col.situacao": "Situação",
+  "usuarios.col.ultimoAcesso": "Último acesso",
+  "usuarios.col.acoes": "Ações",
+  "usuarios.voce": "você",
+  "usuarios.situacao.ativa": "ativa",
+  "usuarios.situacao.desativada": "desativada",
+  "usuarios.provisoria": "senha provisória por trocar",
+  "usuarios.nuncaEntrou": "nunca entrou",
+  // ultimoAcesso(data, hora) — o `last_login` no fuso da B3, já formatado.
+  "usuarios.ultimoAcesso": (data: string, hora: string): string => `${data} às ${hora}`,
+  // mostrando(n, total) — as linhas na tela e o `count` da API.
+  "usuarios.mostrando": (n: number, total: number): string =>
+    `Mostrando ${n} de ${total}.`,
+  "usuarios.mostrarMais": "Mostrar mais",
+  "usuarios.erroLista": "Não foi possível carregar a lista de usuários.",
+  "usuarios.erroMais": "Não foi possível carregar mais usuários.",
+  "usuarios.tentarDeNovo": "Tentar de novo",
+  // As ações da linha (RF-14). acoes.rotulo(nome) — o `aria-label` do grupo de botões.
+  "usuarios.acoes.rotulo": (nome: string): string => `Ações para ${nome}`,
+  "usuarios.acao.admin": "Mudar para administração",
+  "usuarios.acao.member": "Mudar para membro",
+  "usuarios.acao.desativar": "Desativar",
+  "usuarios.acao.reativar": "Reativar",
+  "usuarios.acao.senha": "Nova senha provisória",
+  // As confirmações (RF-14); os títulos com o nome da pessoa da linha.
+  "usuarios.confirmar.admin.titulo": (nome: string): string =>
+    `Mudar ${nome} para administração?`,
+  "usuarios.confirmar.admin.texto":
+    "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização, e a gerar senhas provisórias para eles.",
+  "usuarios.confirmar.member.titulo": (nome: string): string =>
+    `Mudar ${nome} para membro?`,
+  "usuarios.confirmar.member.texto":
+    "A pessoa deixa de gerir os usuários da organização. O resto do Ruvor continua igual para ela.",
+  "usuarios.confirmar.rebaixarSi.titulo": "Deixar de administrar a organização?",
+  "usuarios.confirmar.rebaixarSi.texto":
+    "Você passa a membro e perde a gestão dos usuários: esta página deixa de abrir para você. Para voltar à administração, outra pessoa da administração precisa mudar o seu papel.",
+  "usuarios.confirmar.desativar.titulo": (nome: string): string => `Desativar ${nome}?`,
+  "usuarios.confirmar.desativar.texto":
+    "A pessoa deixa de conseguir entrar. As sessões abertas e as chaves de API dela são encerradas agora. A conta continua na lista e pode ser reativada.",
+  "usuarios.confirmar.reativar.titulo": (nome: string): string => `Reativar ${nome}?`,
+  "usuarios.confirmar.reativar.texto":
+    "A pessoa volta a entrar com a senha que já tinha. As chaves de API encerradas na desativação não voltam.",
+  "usuarios.confirmar.senha.titulo": (nome: string): string =>
+    `Gerar uma senha provisória nova para ${nome}?`,
+  "usuarios.confirmar.senha.texto":
+    "A senha atual da pessoa deixa de valer, e as sessões abertas e as chaves de API dela são encerradas agora. A senha nova aparece uma vez, para você entregar.",
+  "usuarios.confirmar.desativada":
+    "A conta está desativada: a mudança vale quando ela for reativada.",
+  "usuarios.confirmar.cancelar": "Cancelar",
+  "usuarios.confirmar.fechar": "Fechar",
+  "usuarios.confirmar.enviando": "Enviando…",
+  // O diálogo da senha provisória (RF-13, RF-14); os textos com o nome e o e-mail da pessoa.
+  "usuarios.senha.criado.titulo": "Usuário criado",
+  "usuarios.senha.criado.texto": (nome: string, email: string): string =>
+    `${nome} (${email}) já pode entrar, com a senha provisória abaixo.`,
+  "usuarios.senha.nova.titulo": "Senha provisória nova",
+  "usuarios.senha.nova.texto": (nome: string, email: string): string =>
+    `A senha de ${nome} (${email}) foi trocada por esta. As sessões e as chaves de API da pessoa foram encerradas.`,
+  "usuarios.senha.campo": "Senha provisória",
+  "usuarios.senha.umaVez":
+    "Ela aparece só agora. Depois de fechar esta janela, não será mostrada de novo.",
+  "usuarios.senha.trocar":
+    "No primeiro acesso, a pessoa entra com ela e precisa trocá-la antes de usar o Ruvor.",
+  "usuarios.senha.entrega":
+    "O Ruvor não envia e-mail: entregue a senha à pessoa por outro meio, de forma reservada.",
+  "usuarios.senha.copiar": "Copiar",
+  "usuarios.senha.copiada": "Copiada",
+  "usuarios.senha.copiadaAviso": "Senha copiada para a área de transferência.",
+  "usuarios.senha.copiaFalhou":
+    "Não foi possível copiar. Selecione a senha e copie com o teclado.",
+  "usuarios.senha.fechar": "Fechar",
+  // Quem não pode gerir (RF-12). membro.texto(org) — o nome da organização.
+  "usuarios.membro.titulo": "Só quem administra a organização gere os usuários.",
+  "usuarios.membro.texto": (org: string): string =>
+    `Você é membro da ${org}. Para criar uma conta, mudar um papel ou gerar uma senha provisória, fale com quem administra a organização.`,
+  "usuarios.pessoal.titulo": "A conta pessoal não tem outros usuários.",
+  "usuarios.pessoal.texto":
+    "Ela é só sua. Uma organização com várias pessoas é criada pela equipe que opera o Ruvor.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;
