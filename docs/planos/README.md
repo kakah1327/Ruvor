@@ -56,6 +56,7 @@ terminado.
 | [M4.1 — Relatórios](M4.1-relatorios.md) | [M4.1](../specs/M4.1-relatorios.md) | ✅ executado (T0 a T6) em 2026-09-30 |
 | [M2.2a — Carteira](M2.2a-carteira.md) | [M2.2a](../specs/M2.2a-carteira.md) | ✅ executado no ramo (2026-10-02), T0 a T8; o merge espera o parecer da CVM |
 | [M1.4b — Correção do motor](M1.4b-correcao-do-motor.md) | [M1.4b](../specs/M1.4b-correcao-do-motor.md) | ✅ executado e fechado (2026-10-03), T0 a T7 com a T6b |
+| [M2.4 — Regime de laboratório](M2.4-regime-de-laboratorio.md) | [M2.4](../specs/M2.4-regime-de-laboratorio.md) | ✅ executado e fechado (2026-10-04), T0 a T14 |
 
 
 **O plano do F2a é o modelo vivo**, e o do F2b mostra como fica um plano de projeto novo, em que quase todo arquivo de configuração entra literal. O F2a é o primeiro exemplar completo e executado: 12 tarefas, mapa

@@ -141,7 +141,12 @@ a **busca ignora acento**, pela extensão `unaccent` do PostgreSQL, a sugestão 
 nove modelos usa o retorno do próprio dia, e os três tradicionais reestimam a cada 252 pregões, numa janela que cresce.
 Desde o M2.1b, as **telas de acesso**: entrar, criar conta, trocar a senha — inclusive a troca obrigatória da senha
 provisória —, o menu de conta no casco e a gestão de usuários da organização; e o pedido de cálculo **exige conta**
-([D-140](docs/decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)).
+([D-140](docs/decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)). Desde o M2.4, o **regime de
+laboratório**: o experimento fixo da década de cada ativo coberto — os nove modelos nos dois níveis pelo mesmo
+`run_models` da produção, recortados em anos de 252 pregões — em `gold.lab_run`, `gold.lab_result` e `gold.lab_year`,
+disparado depois do fecho do risco e por `manage.py compute_lab`, pela rota `/lab` e numa seção da tela do ativo logo
+depois do risco, sem eleger ([D-183](docs/decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md)
+a [D-187](docs/decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)).
 
 - `engine/` — motor numérico: pacote Python isolado (`ruvor-engine`) na versão **0.4.0**, 9
   modelos de VaR, 4 testes de backtesting, 177 testes — 25 deles a linha de base numérica, que só vale no Windows e se
@@ -161,10 +166,11 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   e o `py.typed` deixa o `mypy` do backend enxergar os tipos dele.
 - `backend/` — projeto Django com sete apps, `apps/accounts`, `apps/assets`,
   `apps/analytics`, `apps/risk`, `apps/fundamentals`, `apps/api` e `apps/portfolios`. `GET /health` e a API em
-  `/api/v1/`, no formato da [D-86](docs/decisoes/D-86-convencoes-da-api-http.md): seis rotas de
+  `/api/v1/`, no formato da [D-86](docs/decisoes/D-86-convencoes-da-api-http.md): sete rotas de
   leitura — a busca no catálogo, sem diferença de caixa nem de acento no nome e no nome de pregão,
   pelo lookup `unaccent` ([D-143](docs/decisoes/D-143-a-busca-ignora-acento-pelo-unaccent.md)), com
-  o campo e o filtro `has_risk` (a execução fechada mais recente `ok` ou `partial`), e, por ativo, identidade, preços, eventos, métricas e risco — e o
+  o campo e o filtro `has_risk` (a execução fechada mais recente `ok` ou `partial`), e, por ativo, identidade, preços, eventos, métricas, risco e, desde o M2.4, o laboratório (`/lab`, que lê os modelos e o
+  módulo puro `apps/risk/decade.py`, nunca o motor) — e o
   `POST /api/v1/assets/{ticker}/risk`, que pede o cálculo de um ativo nunca calculado, com um
   pedido aberto por ativo em `core.compute_request`, teto global e expiração
   ([D-89](docs/decisoes/D-89-a-web-enfileira-pelo-nome-da-tarefa.md),
@@ -197,10 +203,11 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   (`RUVOR_PORTFOLIO_*`) ([D-116](docs/decisoes/D-116-o-parecer-da-cvm-nao-bloqueia-a-spec-da-carteira-e-segura-a-implementacao.md) a
   [D-119](docs/decisoes/D-119-o-risco-da-carteira-e-sob-demanda-em-gold-na-app-da-frente.md)); a
   `apps/api` e o lado da web de `apps/portfolios` não importam o motor, e a `web` enfileira pelo nome da tarefa. Conecta no PostgreSQL e tem fila Celery sobre
-  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as dezessete tarefas de
+  Redis: a tarefa de fumaça `config.tasks.ping`, por import explícito, e as dezoito tarefas de
   app, por descoberta automática — `apps/risk/tasks.py` (a abertura, que pula o ativo já em
-  cálculo, uma por (ativo, modelo), o fecho, o leque `recalcular_cobertos` e a varredura
-  `fechar_presas`, que fecha pela regra a execução presa em `running`, em `apps/risk/stale.py`),
+  cálculo, uma por (ativo, modelo), o fecho — que, desde o M2.4, enfileira o laboratório devido por um `on_commit` —, o
+  leque `recalcular_cobertos`, a varredura `fechar_presas`, que fecha pela regra a execução presa em `running`, em
+  `apps/risk/stale.py`, e `calcular_laboratorio`, o experimento de um ativo, que nunca levanta),
   `apps/assets/tasks.py` (catálogo, preços, a `rotina_diaria`, que encadeia presas → preços →
   métricas → risco, e a cadeia sob demanda `calcular_sob_demanda`), `apps/analytics/tasks.py` (as métricas
   da rotina) e `apps/fundamentals/tasks.py` (a coleta da
@@ -214,7 +221,7 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   [D-92](docs/decisoes/D-92-nunca-duas-execucoes-do-mesmo-ativo-ao-mesmo-tempo.md)).
   Configuração por variáveis `RUVOR_*`; mypy estrito, com as tarefas Celery tipadas por
   `celery-types` ([D-134](docs/decisoes/D-134-tarefas-celery-tipadas-por-celery-types.md)) e o
-  DRF pelos `djangorestframework-stubs`; 1753 testes com pytest-django, que
+  DRF pelos `djangorestframework-stubs`; 1909 testes com pytest-django, que
   **rodam no contêiner `worker`** — é o único que tem o motor
   ([D-33](docs/decisoes/D-33-dia-a-dia-dentro-do-conteiner.md) segue valendo para o resto).
   `migrate` num banco vazio cria os quatro esquemas — `core`, `bronze`, `silver` e `gold` — e a
@@ -223,11 +230,12 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   `core.portfolio`, `core.portfolio_version` e `core.portfolio_holding`, a organização fixa do Marco 1 (`slug`
   `ruvor`), as cinco tabelas da `bronze`, e `silver.asset`, `silver.price`,
   `silver.corporate_event`, `silver.company`, `silver.financial_statement` e
-  `silver.disclosure`, e as dez tabelas da `gold`, `gold.behavior_metric`,
+  `silver.disclosure`, e as treze tabelas da `gold`, `gold.behavior_metric`,
   `gold.return_histogram_bin`, `gold.stress_episode`, `gold.risk_run`, `gold.risk_result`, `gold.model_snapshot`,
   `gold.fundamental_indicator`, `gold.peer_comparison`, `gold.portfolio_risk_run` e
-  `gold.portfolio_risk_result`, mais `core.compute_request`,
-  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — trinta e oito ao todo. O `AUTH_USER_MODEL`
+  `gold.portfolio_risk_result` e, desde o M2.4, `gold.lab_run`, `gold.lab_result` e `gold.lab_year` — imutáveis no Django e
+  no banco, pelo gatilho `lab_so_cresce`, da migration `risk.0004` —, mais `core.compute_request`,
+  `core.access_event`, `core.api_key`, `core.report` e `public.django_session` — quarenta e uma ao todo. O `AUTH_USER_MODEL`
   é próprio e autentica por e-mail, **sem diferença de caixa**
   ([D-39](docs/decisoes/D-39-usuario-proprio-autentica-por-email.md),
   [D-106](docs/decisoes/D-106-limite-de-tentativas-no-redis-e-email-sem-caixa.md)); o usuário tem
@@ -269,7 +277,12 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   `gold.model_snapshot`, e o cálculo reaproveita os válidos, treina só o que falta e reconstitui
   a série inteira por previsão — igual ao do zero, que `--full` faz
   ([D-77](docs/decisoes/D-77-os-retratos-moram-em-gold-com-impressao-digital-estrita.md) a
-  [D-81](docs/decisoes/D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md)). `manage.py
+  [D-81](docs/decisoes/D-81-imagem-do-worker-travada-pelo-lock-e-versoes-na-identidade.md)). `manage.py compute_lab
+  [TICKER ...]`, síncrono, no `worker`, grava o experimento da década dos ativos devidos (`apps/risk/lab.py`, que confere
+  a série de novo depois do cálculo e grava sob a trava do ativo, só se não houver `ok` da identidade), com uma linha por
+  ativo — `gravado`, `já calculado`, `década incompleta`, `série curta`, `inativo` ou `FALHOU` —; sem `--full` nem
+  `--force`, e nada no Beat ([D-185](docs/decisoes/D-185-o-experimento-mora-em-tres-tabelas-de-gold-imutaveis-e-um-ok-por-identidade.md),
+  [D-186](docs/decisoes/D-186-o-experimento-roda-pela-fila-depois-do-fecho-do-risco-de-producao.md)). `manage.py
   import_fundamentals` guarda na `bronze` os zips de ITR e DFP da CVM desde 2016 e conforma
   companhias e balanços trimestrais em `silver`, com `--reconform` para refazê-la sem rede;
   `manage.py compute_fundamentals` grava em `gold` os indicadores e a capitalização, uma linha
@@ -308,7 +321,9 @@ provisória —, o menu de conta no casco e a gestão de usuários da organizaç
   método ou estatística recolhido na iniciante pelo `components/Collapsible.tsx`
   ([D-151](docs/decisoes/D-151-o-texto-das-duas-leituras-mora-no-frontend-restringe-a-d-97.md),
   [D-152](docs/decisoes/D-152-o-nivel-de-leitura-e-escolha-do-visitante.md)) — número novo com frase nasce com as duas
-  entradas. 1621 testes.
+  entradas. Desde o M2.4, a seção do laboratório (`components/LabSection.tsx`, os estados em `src/lab/state.ts` e a
+  releitura limitada a 2 minutos em `src/lab/useLabPolling.ts`), logo depois do risco, com o `/lab` fora do `data-ready`.
+  1724 testes.
   `frontend/e2e/` são os roteiros da execução real — `capturas.mjs` e, desde o M2.1b, `acesso.mjs`, que confere as
   telas de acesso no navegador e as compara com os mockups aprovados —, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`

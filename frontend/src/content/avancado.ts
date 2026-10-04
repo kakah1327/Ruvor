@@ -17,14 +17,18 @@
  * da vista `d64`); as afirmações são as de `conferencia-risco.md`. `fundamentos.*`: do
  * `fundamentos.html` (T12), literais; as afirmações são as de `conferencia-fundamentos.md`.
  * Com eles, `LEITURA_KEYS` são as 55 do RF-04; o M3.3 acrescenta as seis medidas do estresse, do
- * `ativo-estresse.html` (T4): são 61.
+ * `ativo-estresse.html` (T4): são 61. O M2.4 acrescenta as nove `laboratorio.*` da lista fechada
+ * do `laboratorio.html` (T9), literais, com as afirmações de `conferencia-laboratorio.md`: são 70.
  */
-import type { TEXTOS, TextoKey } from "./textos";
+import { acimaDe, type TEXTOS, type TextoKey } from "./textos";
 
 /** Texto vira `string`; função mantém a assinatura (mesma chave, mesmos argumentos: RF-05). */
 export type Leitura<T> = T extends string ? string : T;
 
-/** As chaves já com frase avançada: as 55 do RF-04 do M2.3 e as seis do estresse (M3.3). */
+/**
+ * As chaves já com frase avançada: as 55 do RF-04 do M2.3, as seis do estresse (M3.3) e as nove
+ * do laboratório (M2.4).
+ */
 export const LEITURA_KEYS = [
   // O cabeçalho e o preço (T4).
   "ativo.ultimoFechamento",
@@ -93,6 +97,16 @@ export const LEITURA_KEYS = [
   "fundamentos.pares.posicao",
   "fundamentos.pares.abaixoDeTodas",
   "fundamentos.pares.mediana",
+  // O laboratório (M2.4): a lista fechada do `laboratorio.html` aprovado, N = 9.
+  "laboratorio.decada",
+  "laboratorio.diferenca",
+  "laboratorio.violacoesAno",
+  "laboratorio.vereditoAno",
+  "laboratorio.anoNaoJulgado",
+  "laboratorio.semVereditoAno99",
+  "laboratorio.violacoesDecada",
+  "laboratorio.vereditoDecada",
+  "laboratorio.anosNaoRejeitados",
 ] as const satisfies readonly TextoKey[];
 
 export type LeituraKey = (typeof LEITURA_KEYS)[number];
@@ -274,6 +288,31 @@ export const TEXTOS_AVANCADOS: {
     `Percentil zero: nenhuma das outras ${outras} companhias do grupo com o indicador calculado tem valor estritamente menor; a que tiver o mesmo valor está empatada, não acima.`,
   "fundamentos.pares.mediana": (m: string) =>
     `Mediana do grupo, esta companhia inclusa, um valor por companhia (com número par, a média dos dois do meio): ${m}.`,
+  // O laboratório (M2.4): do `laboratorio.html` aprovado (T9), literais; as afirmações são as de
+  // `conferencia-laboratorio.md` (com o 192 e os ~7% da revisão do mockup).
+  "laboratorio.decada": (inicio: string, fim: string, anos: number, ultimo: number) =>
+    `A década do ativo: do primeiro pregão válido, ${inicio}, ao último pregão até dez anos de calendário depois, ${fim}. Os primeiros 252 retornos são o treino; o resto, o período de teste, se corta em ${anos} trechos de 252 retornos a partir do primeiro — os intervalos entre dois reajustes dos nove modelos, que reestimam todos a cada 252 pregões.${ultimo < 252 ? ` O último trecho tem ${ultimo}.` : ""}`,
+  "laboratorio.diferenca": (versao: string, asOf: string) =>
+    `O laboratório é o cálculo da seção acima — os mesmos nove modelos, níveis, janela de treino, semente e testes, pela mesma rotina — recortado na década do ativo, até ${asOf}, e gravado uma vez por versão do motor (esta, ${versao}), semente, janela e versões das bibliotecas. Nenhum modelo usa o retorno do próprio dia, e por isso a série de VaR da década é o começo exato da série da seção acima; os vereditos podem diferir porque a seção acima testa também os pregões depois de ${asOf} e é refeita a cada dia útil. Enquanto o motor for o mesmo, este experimento não muda; com um motor novo, ele é refeito e a trilha mostra a versão. Um reajuste de preço por provento depois do experimento não o refaz: a trilha guarda a impressão digital dos preços usados. Um veredito do passado não garante o comportamento do modelo daqui para a frente.`,
+  "laboratorio.violacoesAno": (e: string, cadaN: number) =>
+    `Cada célula conta as violações do trecho — dias em que o retorno logarítmico ficou abaixo de −VaR do dia. O esperado é a contagem do trecho vezes α: ${e} num trecho cheio de 252, 1 dia a cada ${cadaN}. A soma dos trechos é a violação da década, conferida antes de gravar.`,
+  "laboratorio.vereditoAno": (celulas: number) =>
+    `Veredito do trecho, só a 95%: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05, sobre os retornos e o VaR daquele trecho; não adequado quando ao menos um rejeita. São ${celulas} células julgadas, e, num modelo correto, cada trecho tem perto de 7% de chance de sair não adequado só por acaso — o Kupiec rejeita ~6% dos trechos de 252 e o Christoffersen, com tão poucas violações, quase nunca —, cerca de um trecho a cada 14. O veredito que resume o modelo é o da década.`,
+  "laboratorio.anoNaoJulgado": (n: number) =>
+    `Trecho de ${n} retornos, abaixo do piso de 126 (meio ano de teste): as violações e as esperadas são gravadas; o Kupiec, o Christoffersen e o veredito ficam nulos.`,
+  "laboratorio.semVereditoAno99":
+    "Sem veredito por trecho a 99%: num trecho de 252 esperam-se 2,52 violações, e o Kupiec rejeita até o trecho sem nenhuma — com zero violações, a estatística é −2·n·ln(0,99), acima do valor crítico de 3,84 a partir de 192 retornos (p ≈ 0,024 em 252). O teste por trecho quase não distingue nada neste nível; os testes e o veredito a 99% ficam só na década.",
+  "laboratorio.violacoesDecada": (
+    v: string,
+    e: string,
+    cadaN: number,
+    kupiecOk: boolean,
+  ) =>
+    `${v === "1" ? "1 violação" : `${v} violações`} em todo o período de teste da década — a soma dos trechos — para ${e} esperadas, os dias de teste divididos por ${cadaN}; são as do Kupiec da década, sobre a série de VaR inteira.${kupiecOk ? "" : acimaDe(v, e) ? " Acima do esperado o bastante para o Kupiec rejeitar: o VaR subestimou a cauda." : " Abaixo do esperado o bastante para o Kupiec rejeitar: o VaR superestimou a cauda."}`,
+  "laboratorio.vereditoDecada":
+    "Veredito da década, nos dois níveis: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05, sobre a série de VaR do período de teste inteiro da década; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ é mostrado e fica fora; a zona de Basileia não é gravada no laboratório. Fala do passado do modelo, não do número de hoje.",
+  "laboratorio.anosNaoRejeitados":
+    "Para cada modelo, em quantos dos trechos julgados a 95% nem o Kupiec nem o Christoffersen rejeitaram; o total conta só os trechos julgados. Com perto de 7% de chance de rejeição por acaso em cada trecho, um modelo correto fica perto de 8 ou 9 de 9. A contagem descreve cada modelo e não ordena os nove: a grade segue a ordem fixa.",
 };
 
 /**

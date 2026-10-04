@@ -247,6 +247,7 @@
   .ruvor-link.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
   .ruvor-segmented--surface .ruvor-segmented__btn.is-hover { color: var(--ruvor-ink); background: var(--ruvor-control-hover); }
   .ruvor-segmented--surface .ruvor-segmented__btn.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-lab-scroll.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
   .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
@@ -278,6 +279,7 @@
     <a class="ruvor-nav__link" href="#telas-m17"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M1.7</a>
     <a class="ruvor-nav__link" href="#telas-m33"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M3.3</a>
     <a class="ruvor-nav__link" href="#telas-m21b"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.1b</a>
+    <a class="ruvor-nav__link" href="#telas-m24"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.4</a>
   </nav>
   <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
 </header>
@@ -1190,6 +1192,38 @@ garch      -3,61%    adequado</div>
     </div>
   </section>
 
+  <section class="kit-section" id="telas-m24">
+    <h2 class="ruvor-h2 kit-h">Telas do M2.4</h2>
+    <p class="kit-note">O que o mockup aprovado do M2.4 desenhou como estilo local (<code class="kit-token">docs/mockups/M2.4/laboratorio.html</code>, <code class="kit-token">.m24-*</code>), com o nome do kit, nos dois temas: a grade modelo × ano, que rola dentro do contêiner com a coluna dos modelos presa; as duas cópias das colunas da década e dos anos não rejeitados — no fim nas larguras largas, logo depois do nome até 720 px (estreite a janela para ver); os vereditos com rótulo, nunca só cor (as tags do kit); o modelo com erro; o detalhe dos testes; a diferença honesta e a impressão digital da trilha. O único interativo novo é o contêiner rolável, que recebe o foco pelo teclado (* o foco desenhado por classe de vitrine).</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m24>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A grade <code class="kit-token">.ruvor-lab-scroll</code> <code class="kit-token">.ruvor-lab-grid</code> <code class="kit-token">__sub</code> <code class="kit-token">__year</code> <code class="kit-token">__decade</code> <code class="kit-token">__narrow</code> <code class="kit-token">__wide</code> <code class="kit-token">__lead-end</code></h3>
+          <section class="ruvor-panel"><div class="ruvor-panel__head"><div><p class="ruvor-eyebrow">A 95%</p><h3 class="ruvor-h3" id="kit-m24-cap">Os dias acima do limite e o veredito de cada ano</h3></div></div><div class="ruvor-panel__body"><div class="ruvor-legend"><span class="ruvor-tag ruvor-tag--validated">adequado</span><span class="ruvor-tag ruvor-tag--review">não adequado</span><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span><span class="ruvor-tag ruvor-tag--neutral">não julgado</span></div></div><div class="ruvor-lab-scroll" role="region" tabindex="0" aria-labelledby="kit-m24-cap"><table class="ruvor-table ruvor-lab-grid"><thead><tr><th scope="col">Modelo</th><th scope="col" class="ruvor-lab-grid__decade ruvor-lab-grid__narrow">Década<span class="ruvor-lab-grid__sub">111,9 esperados</span></th><th scope="col" class="ruvor-lab-grid__narrow ruvor-lab-grid__lead-end">Anos não rejeitados</th><th scope="col">Ano 1<span class="ruvor-lab-grid__sub">set/2017 a set/2018</span><span class="ruvor-lab-grid__sub">12,6 esperados</span></th><th scope="col">Ano 2<span class="ruvor-lab-grid__sub">set/2018 a out/2019</span><span class="ruvor-lab-grid__sub">12,6 esperados</span></th><th scope="col">Ano 3<span class="ruvor-lab-grid__sub">out/2019 a abr/2020</span><span class="ruvor-lab-grid__sub">5,5 esperados</span></th><th scope="col" class="ruvor-lab-grid__decade ruvor-lab-grid__wide">Década<span class="ruvor-lab-grid__sub">111,9 esperados</span></th><th scope="col" class="ruvor-lab-grid__wide">Anos não rejeitados</th></tr></thead><tbody><tr><th scope="row">LSTM<span class="ruvor-table__sub">Aprendizado de máquina</span></th><td class="ruvor-lab-grid__decade ruvor-lab-grid__narrow"><div class="ruvor-cell-stack"><span class="ruvor-num">108 × 111,9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__narrow ruvor-lab-grid__lead-end"><span class="ruvor-num">1 de 2</span></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">34</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">4</span><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span></div></td><td class="ruvor-lab-grid__decade ruvor-lab-grid__wide"><div class="ruvor-cell-stack"><span class="ruvor-num">108 × 111,9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__wide"><span class="ruvor-num">1 de 2</span></td></tr><tr><th scope="row">GRU<span class="ruvor-table__sub">Aprendizado de máquina</span></th><td colspan="5"><p class="ruvor-note">O cálculo deste modelo falhou neste nível (um erro de exemplo).</p></td></tr></tbody></table></div></section>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O contêiner rolável: os estados <code class="kit-token">.ruvor-lab-scroll</code></h3>
+          <div class="kit-row"><div class="kit-cell"><span class="kit-state">repouso</span><div class="ruvor-lab-scroll" role="region" tabindex="0" aria-label="Exemplo rolável"><table class="ruvor-table ruvor-lab-grid"><tbody><tr><th scope="row">Histórico</th><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">27</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">13</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">33</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td></tr></tbody></table></div></div><div class="kit-cell"><span class="kit-state">foco*</span><div class="ruvor-lab-scroll is-focus" role="region" tabindex="0" aria-label="Exemplo rolável, com foco"><table class="ruvor-table ruvor-lab-grid"><tbody><tr><th scope="row">Histórico</th><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">27</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">13</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">33</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td></tr></tbody></table></div></div></div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O detalhe dos testes <code class="kit-token">.ruvor-lab-models</code> <code class="kit-token">.ruvor-lab-model</code> <code class="kit-token">.ruvor-lab-levels</code> <code class="kit-token">.ruvor-lab-years</code></h3>
+          <div class="ruvor-lab-models"><section class="ruvor-lab-model" aria-label="LSTM"><h4 class="ruvor-h3">LSTM</h4><div class="ruvor-lab-levels"><div><p class="ruvor-eyebrow">A 95%</p><dl class="ruvor-tests"><div class="ruvor-test"><dt>Kupiec</dt><dd><span class="ruvor-num">0,704</span><span class="ruvor-tag ruvor-tag--validated">passou</span></dd></div></dl><div class="ruvor-lab-years ruvor-lab-scroll" role="region" tabindex="0" aria-label="Os testes de cada ano, a 95%"><table class="ruvor-table"><caption>Os testes de cada ano, a 95%</caption><thead><tr><th scope="col">Ano</th><th scope="col">Kupiec</th><th scope="col">Veredito</th></tr></thead><tbody><tr><th scope="row">Ano 1</th><td><span class="ruvor-num">&lt; 0,001</span> <span class="ruvor-tag ruvor-tag--review">não passou</span></td><td><span class="ruvor-tag ruvor-tag--review">não adequado</span></td></tr><tr><th scope="row">Ano 3</th><td>—</td><td><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span></td></tr></tbody></table></div></div><div><p class="ruvor-eyebrow">A 99%</p><p class="ruvor-note">O cálculo deste modelo falhou neste nível (um erro de exemplo).</p></div></div></section></div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A diferença honesta e a impressão digital <code class="kit-token">.ruvor-lab-honest</code> <code class="kit-token">.ruvor-lab-hash</code></h3>
+          <div class="ruvor-callout ruvor-lab-honest"><p>A diferença honesta, num destaque do kit: o texto até 78 caracteres por linha, para não virar uma faixa longa demais de ler nas larguras grandes.</p></div>
+          <dl class="ruvor-trail"><div><dt>Impressão digital dos preços</dt><dd class="ruvor-num ruvor-lab-hash">d2a0cec292f30a823ef94e74ce31da3d72a992fb349b48ccd54e8f4fb9710a44</dd></div></dl>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m24-copy></div>
+    </div>
+  </section>
+
 </main>
 
 <aside class="ruvor-rail">
@@ -1245,6 +1279,12 @@ garch      -3,61%    adequado</div>
   var m21b = document.querySelector("[data-m21b]");
   document.querySelector("[data-m21b-copy]").innerHTML = m21b.innerHTML
     .replace(/(id|for)="(kit-m21b-[\w-]+)"/g, '$1="$2-escuro"');
+
+  // M2.4: o painel escuro das telas é a mesma marcação do claro (o id da legenda da grade
+  // ganha o sufixo -escuro, para não se repetir na página).
+  var m24 = document.querySelector("[data-m24]");
+  document.querySelector("[data-m24-copy]").innerHTML = m24.innerHTML
+    .replace(/(id|aria-labelledby)="(kit-m24-[\w-]+)"/g, '$1="$2-escuro"');
 
   // M2.1b: o diálogo de verdade, um por tema. Ao fechar, o foco volta a quem o abriu.
   document.querySelectorAll("[data-kit-dialog-open]").forEach(function (opener) {

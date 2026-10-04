@@ -1715,3 +1715,40 @@ segunda, com a taxa subida, passou com 644 conferências. O recado já existia n
 **Faça:** antes da rodada completa, suba `RUVOR_THROTTLE_ANON` (por exemplo, `100000/min`) só durante ela, guardando o
 sha256 do `.env`, e devolva-o igual no fim, conferindo o sha256. A medida da taxa (`RUVOR_E2E_MEDIR_TAXA=1`) é o caso
 oposto: roda com a taxa padrão.
+**O `.env` nem precisa mudar** (fase B do M2.4): a variável do shell vence a do `.env` na interpolação do `compose`, então
+`RUVOR_THROTTLE_ANON=100000/min docker compose up -d --force-recreate --no-deps web` sobe a taxa só na `web`, e o mesmo
+comando sem a variável a devolve — confira com `docker compose exec -T web sh -c 'echo $RUVOR_THROTTLE_ANON'`.
+
+
+## Migration nova que depende da `assets.0004_unaccent` some do banco de teste depois do `test_unaccent`
+
+**Quando:** ao criar com `makemigrations` uma migration de outra app que tenha chave estrangeira para `silver.asset` ou
+`bronze.collection_run` (ou para qualquer modelo de uma app cuja migration um teste desfaz e refaz).
+
+**Problema:** o `makemigrations` põe como dependência a **última** migration da app referida — hoje a
+`assets.0004_unaccent`. O `tests/assets/test_unaccent.py` faz `migrate assets 0003` e depois `migrate assets`: a volta
+desfaz também a migration nova (que depende da `0004`), e a ida, só da `assets`, **não a reaplica**. As tabelas dela somem
+do banco de teste para o resto da suíte, e os testes que rodam depois reprovam por tabela inexistente — de longe, sem
+relação aparente com o `test_unaccent`. Rodando o arquivo da tabela sozinho, tudo passa. Na T2 do M2.4, a primeira suíte
+inteira saiu `2 failed, 1807 passed` (o V-07 e o `test_esquemas.py`, sem as três tabelas do laboratório).
+
+**Faça:** depois do `makemigrations`, troque a dependência pela **mínima** que as chaves pedem — para `silver.asset` e
+`bronze.collection_run`, a `assets.0003_yahoo_chart_price_corporate_event`, a mesma da `risk.0003` — e fixe-a num teste
+(`test_a_0004_depende_da_assets_0003_e_nao_da_0004`, em `backend/tests/risk/test_lab_tabelas.py`). Para reproduzir:
+`python -m pytest tests/assets/test_unaccent.py tests/<o arquivo da tabela nova>`.
+
+
+## Duas suítes ao mesmo tempo estouram o tempo dos testes também no frontend
+
+**Quando:** ao rodar `npm test` (o Vitest do frontend) enquanto outra suíte roda na máquina — a de outro worktree, a do
+backend, um build de imagem.
+
+**Problema:** os testes do frontend têm o tempo-limite padrão de 5 s, e com a CPU dividida vários deles o estouram —
+na T12 do M2.4, com outro worktree rodando uma suíte ao mesmo tempo, reprovaram testes de arquivos sem relação entre si
+(usuários, busca, conta, risco…), e a mesma rodada, sozinha, saiu verde. Parece defeito intermitente do código, e não é.
+É o mesmo recado de [Duas suítes ao mesmo tempo](#duas-suítes-ao-mesmo-tempo-banco-de-teste-próprio-pelo-ruvor_db_name),
+que vale para o backend pelo banco e pela memória, e aqui pelo tempo.
+
+**Faça:** uma suíte inteira por vez na máquina, **frontend inclusive**: espere a do backend (ou a do outro worktree)
+terminar antes do `npm test`. Teste que estoura 5 s só com outra suíte rodando não é falha a corrigir — rode de novo
+sozinho e registre as duas rodadas.

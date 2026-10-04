@@ -20,3 +20,10 @@ MIN_SESSIONS = 503
 ALPHAS = (0.05, 0.01)
 
 BACKTESTS = ("kupiec", "christoffersen", "dq", "basileia")
+
+# O laboratorio (M2.4, RF-03): o periodo de teste da decada se corta em trechos de
+# `LAB_YEAR_DAYS` retornos a partir da posicao 0; trecho com menos de `LAB_YEAR_MIN_JUDGED`
+# nao e julgado, e so os niveis de `LAB_JUDGED_ALPHAS` tem veredito por trecho.
+LAB_YEAR_DAYS = 252  # = REFIT_FREQUENCY_DAYS dos nove modelos (spec, Problema)
+LAB_YEAR_MIN_JUDGED = 126  # meio ano de teste
+LAB_JUDGED_ALPHAS = (0.05,)  # veredito por ano so a 95% (portao, 2026-10-03)
