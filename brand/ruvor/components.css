@@ -2002,6 +2002,167 @@
 }
 
 /* ==================================================================================
+ * M2.4 — o laboratório na tela do ativo (T11). Vieram do estilo local do mockup aprovado,
+ * docs/mockups/M2.4/laboratorio.html (m24-): cada m24- virou um nome ruvor-lab-, com os
+ * valores aprovados. A grade modelo × ano rola dentro do próprio contêiner (o único
+ * interativo novo: o contêiner rolável recebe o foco pelo teclado), com a coluna dos modelos
+ * presa à esquerda; as colunas da década e dos anos não rejeitados vêm em duas cópias, uma
+ * no fim (larguras largas) e uma logo depois do nome (até 720 px, a @media do fim da folha).
+ * Os vereditos são as tags do kit (.ruvor-tag--validated, --review, --neutral), com texto.
+ * ================================================================================== */
+
+/* --- A grade: o contêiner rolável e a tabela ------------------------------------------- */
+
+.ruvor-lab-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  border-top: 1px solid var(--ruvor-border);
+}
+
+.ruvor-lab-scroll:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-lab-grid {
+  width: auto;
+  min-width: 100%;
+}
+
+.ruvor-lab-grid th,
+.ruvor-lab-grid td {
+  padding: 9px 8px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.ruvor-lab-grid thead th {
+  min-width: 72px;
+  white-space: normal;
+  vertical-align: bottom;
+}
+
+/* O período e as esperadas de cada ano, embaixo do rótulo do cabeçalho. */
+.ruvor-lab-grid__sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--ruvor-font-sans);
+  font-weight: var(--ruvor-type-micro-weight);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* A coluna dos modelos, presa à esquerda quando a grade rola. */
+.ruvor-lab-grid th[scope="row"] {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: 11px 12px;
+  border-right: 1px solid var(--ruvor-table-rule);
+  border-bottom: 1px solid var(--ruvor-table-rule);
+  background: var(--ruvor-surface);
+  color: var(--ruvor-ink);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+
+.ruvor-lab-grid thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  border-right: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-lab-grid tr:last-child th[scope="row"] {
+  border-bottom: 0;
+}
+
+.ruvor-lab-grid .ruvor-table__sub {
+  display: block;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.ruvor-lab-grid td[colspan] {
+  white-space: normal;
+}
+
+/* As violações de um ano, no tamanho do número de tabela. */
+.ruvor-lab-grid__year .ruvor-num {
+  font-size: var(--ruvor-type-h3-size);
+}
+
+/* A década no fim, separada dos anos; e a última das duas logo depois do nome, até 720 px. */
+.ruvor-lab-grid__decade {
+  border-left: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-lab-grid .ruvor-lab-grid__narrow {
+  display: none;
+}
+
+/* --- O detalhe dos testes de cada modelo ----------------------------------------------- */
+
+.ruvor-lab-models {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-5);
+}
+
+.ruvor-lab-model {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+  padding-top: var(--ruvor-space-4);
+  border-top: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-lab-model:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ruvor-lab-levels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ruvor-space-5);
+}
+
+.ruvor-lab-years {
+  margin-top: var(--ruvor-space-3);
+}
+
+.ruvor-lab-years .ruvor-table th,
+.ruvor-lab-years .ruvor-table td {
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.ruvor-lab-years caption {
+  padding-bottom: var(--ruvor-space-2);
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+  text-align: left;
+}
+
+/* --- A diferença honesta e a impressão digital da trilha ------------------------------- */
+
+.ruvor-lab-honest p {
+  margin: 0;
+  max-width: 78ch;
+}
+
+.ruvor-lab-hash {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/* ==================================================================================
  * M2.1b — as telas de acesso (T10, RF-17). Vieram do estilo local dos cinco mockups
  * aprovados, docs/mockups/M2.1b/: entrada.html e cadastro.html (a cena, o formulário de
  * acesso, a dica e os erros), senha.html (o painel estreito), conta.html (o lugar da conta
@@ -2963,5 +3124,33 @@
 
   .ruvor-dialog__actions .ruvor-btn {
     width: 100%;
+  }
+
+  /* M2.4: a década e os anos não rejeitados logo depois do nome do modelo (portão,
+     2026-10-04); o nome quebra em duas linhas; os testes de um modelo em uma coluna. */
+  .ruvor-lab-grid .ruvor-lab-grid__narrow {
+    display: table-cell;
+  }
+
+  .ruvor-lab-grid .ruvor-lab-grid__wide {
+    display: none;
+  }
+
+  .ruvor-lab-grid .ruvor-lab-grid__decade.ruvor-lab-grid__narrow {
+    border-left: 0;
+  }
+
+  .ruvor-lab-grid .ruvor-lab-grid__lead-end {
+    border-right: 1px solid var(--ruvor-table-rule);
+  }
+
+  .ruvor-lab-grid th[scope="row"] {
+    min-width: 104px;
+    max-width: 128px;
+    white-space: normal;
+  }
+
+  .ruvor-lab-levels {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

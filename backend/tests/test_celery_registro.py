@@ -42,6 +42,7 @@ _RISK_TASKS = {
     "apps.risk.tasks.fechar_execucao",
     "apps.risk.tasks.recalcular_cobertos",
     "apps.risk.tasks.fechar_presas",
+    "apps.risk.tasks.calcular_laboratorio",
 }
 
 _ASSETS_TASKS = {

@@ -31,6 +31,7 @@ MODULOS_PROIBIDOS = frozenset(
         "apps.risk.tasks",
         "apps.risk.compute",
         "apps.risk.snapshots",
+        "apps.risk.lab",  # M2.4, RF-12: o `/lab` le os modelos e `decade.py`, nunca o calculo
         "apps.assets.tasks",
     }
 )

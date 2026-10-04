@@ -449,6 +449,8 @@ const INTERACTIVE = [
   ".ruvor-topbar__signin",
   ".ruvor-account--button",
   ".ruvor-menu__item",
+  // M2.4 (T11): o contêiner rolável da grade do laboratório, que recebe o foco pelo teclado.
+  ".ruvor-lab-scroll",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -690,6 +692,46 @@ describe("M2.1b — os componentes das telas de acesso no kit", () => {
     expect(old).not.toMatch(/\.ruvor-topbar(__prefs|__search|__spacer)?\s*\{/);
     expect(COMPONENTS_TEXT).not.toMatch(
       /\.ruvor-topbar__prefs\s*>\s*:(first|last)-child/,
+    );
+  });
+});
+
+// M2.4 (T11): o que o laboratorio.html aprovado pediu ao kit e que a vista não confere sozinha —
+// a grade que rola dentro do contêiner com a coluna dos modelos presa, e as duas cópias das
+// colunas da década e dos anos não rejeitados, trocadas em 720 px (ajuste do portão). O foco do
+// contêiner está no V-05 (INTERACTIVE); as cores são tokens já medidos no V-04 (texto e texto
+// suave sobre surface e table-head, as tags sobre o -soft delas): nenhum par novo.
+describe("M2.4 — a grade do laboratório no kit", () => {
+  it("o contêiner rola na horizontal, e a página não", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-lab-scroll", "overflow-x")).toBe("auto");
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-lab-scroll", "max-width")).toBe("100%");
+  });
+
+  it("a coluna dos modelos fica presa, sobre a superfície", () => {
+    // o seletor tem dois blocos (o de sempre e o estreito, que só quebra o nome): lê os dois
+    const row = COMPONENT_RULES.filter(
+      (rule) => rule.selector === '.ruvor-lab-grid th[scope="row"]',
+    )
+      .map((rule) => rule.body)
+      .join(";");
+    expect(row).toMatch(/(?<![\w-])position:\s*sticky\s*;/);
+    expect(row).toMatch(/(?<![\w-])left:\s*0\s*;/);
+    expect(row).toMatch(/(?<![\w-])background:\s*var\(--ruvor-surface\)\s*;/);
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-lab-grid thead th:first-child", "position"),
+    ).toBe("sticky");
+  });
+
+  it("até 720 px, a cópia junto do nome aparece e a do fim some; fora, o contrário", () => {
+    expect(COMPONENTS_TEXT).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__narrow \{\s*display: none;\s*\}/,
+    );
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 720px)").join("\n");
+    expect(narrow).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__narrow \{\s*display: table-cell;\s*\}/,
+    );
+    expect(narrow).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__wide \{\s*display: none;\s*\}/,
     );
   });
 });

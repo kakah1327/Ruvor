@@ -15,14 +15,21 @@ varredura das execucoes presas (M1.5c, D-149) --, mais a abertura que nao conseg
 Nenhum caminho do codigo faz `delete`. Os resultados pendem da execucao que os originou, e por
 isso — e so por isso — a FK deles e `CASCADE`, nao `PROTECT`: o resultado nao tem vida
 propria fora da execucao que o gerou.
+
+O laboratorio (M2.4, RF-05 a RF-07) mora nas tres ultimas tabelas, `lab_run`, `lab_result` e
+`lab_year`, que **so crescem**: no Django, o molde de `core.report`; no banco, os gatilhos da
+migration `0004`.
 """
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar, TypeVar
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
+
+_M = TypeVar("_M", bound=models.Model)
 
 
 class RiskRun(models.Model):
@@ -222,3 +229,219 @@ class ModelSnapshot(models.Model):
 
     def __str__(self) -> str:
         return f"{self.asset_id} {self.model_name} {self.alpha} {self.position}"
+
+
+# --- o laboratorio (M2.4) -----------------------------------------------------------------
+
+
+class LabQuerySet(models.QuerySet[_M]):
+    """Recusa as escritas em massa: o laboratorio so cresce (M2.4, RF-06)."""
+
+    def update(self, **kwargs: Any) -> int:
+        raise TypeError("lab so cresce")
+
+    def delete(self) -> tuple[int, dict[str, int]]:
+        raise TypeError("lab so cresce")
+
+
+class LabManager(models.Manager[_M]):
+    """O gerente das tres tabelas do laboratorio, com o queryset que recusa escrita em massa.
+
+    E o gerente padrao e o base (`base_manager_name`), e o acessor reverso o subclassa: nenhum
+    caminho do Django chega a um queryset que aceite `update` ou `delete`.
+    """
+
+    _queryset_class = LabQuerySet
+
+
+class _GrowOnly(models.Model):
+    """`save` de linha existente e `delete` da instancia levantam (o molde de `Report`)."""
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self._state.adding:
+            raise TypeError("lab so cresce")
+        super().save(*args, **kwargs)
+
+    def delete(
+        self, using: Any = None, keep_parents: bool = False
+    ) -> tuple[int, dict[str, int]]:
+        raise TypeError("lab so cresce")
+
+
+class LabRun(_GrowOnly):
+    """O experimento fixo da decada de um ativo: o manifesto (D-15), uma linha por tentativa.
+
+    **Nasce fechada** (RF-06): o calculo inteiro acontece antes da escrita, e a execucao, os
+    resultados e os anos entram numa transacao so, com `status` e `finished_at` ja finais.
+    `status` e `origin` **nao tem `default`**, como em `risk_run`: quem grava escreve o valor.
+
+    A identidade (RF-07) e (`asset`, `engine_version`, `seed`, `train_window_days`,
+    `first_price_date`, `decade_end`, `library_versions_hash`); a restricao unica
+    `lab_run_identity_ok` vale **so sobre `ok`** -- `partial` e `failed` ficam registrados e
+    nao impedem a tentativa seguinte. `price_fingerprint` diz de que precos o experimento saiu
+    e nao entra na identidade.
+    """
+
+    class Status(models.TextChoices):
+        OK = "ok"
+        PARTIAL = "partial"
+        FAILED = "failed"
+
+    class Origin(models.TextChoices):
+        RISK_CLOSE = "risk_close"
+        COMMAND = "command"
+
+    asset = models.ForeignKey(
+        "assets.Asset",
+        on_delete=models.PROTECT,
+        related_name="lab_runs",
+    )
+    calculated_at = models.DateTimeField()
+    finished_at = models.DateTimeField()
+    status = models.CharField(max_length=10, choices=Status)
+    origin = models.CharField(max_length=16, choices=Origin)
+    engine_version = models.CharField(max_length=32)
+    seed = models.IntegerField()
+    train_window_days = models.IntegerField()
+    library_versions = models.JSONField()
+    library_versions_hash = models.CharField(max_length=64)
+    first_price_date = models.DateField()
+    decade_end = models.DateField()
+    as_of_date = models.DateField()
+    price_count = models.IntegerField()
+    train_count = models.IntegerField()
+    test_count = models.IntegerField()
+    year_count = models.IntegerField()
+    price_run = models.ForeignKey(
+        "assets.CollectionRun",
+        on_delete=models.PROTECT,
+        related_name="lab_runs",
+    )
+    price_fingerprint = models.CharField(max_length=64)
+    requested_models = models.JSONField()
+    error = models.TextField(default="")
+
+    objects = LabManager["LabRun"]()
+
+    class Meta:
+        db_table = 'gold"."lab_run'
+        base_manager_name = "objects"
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=[
+                    "asset",
+                    "engine_version",
+                    "seed",
+                    "train_window_days",
+                    "first_price_date",
+                    "decade_end",
+                    "library_versions_hash",
+                ],
+                condition=Q(status="ok"),
+                name="lab_run_identity_ok",
+            )
+        ]
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["asset", "-calculated_at"], name="lab_run_asset_recent"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.asset_id} {self.calculated_at:%Y-%m-%d %H:%M:%S} {self.status}"
+
+
+class LabResult(_GrowOnly):
+    """Um resultado por (`run`, `model_name`, `alpha`), sobre a decada inteira (RF-04).
+
+    O que `risk_result` guarda, menos `var_latest`, `var_mean` e `basel_zone` (RF-08), mais
+    `test_count`. Com `error` nao vazio, os numeros e o `adequate` sao nulos: "falhou" se
+    distingue de "reprovado" pelo `adequate` nulo.
+    """
+
+    run = models.ForeignKey(
+        LabRun,
+        on_delete=models.PROTECT,
+        related_name="results",
+    )
+    model_name = models.CharField(max_length=32)
+    model_category = models.CharField(max_length=16)
+    alpha = models.DecimalField(max_digits=6, decimal_places=4)
+    hyperparameters = models.JSONField()
+    test_count = models.IntegerField(null=True)
+    violations = models.IntegerField(null=True)
+    expected_violations = models.DecimalField(
+        max_digits=18, decimal_places=6, null=True
+    )
+    kupiec_passed = models.BooleanField(null=True)
+    kupiec_p_value = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    christoffersen_passed = models.BooleanField(null=True)
+    christoffersen_p_value = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    dq_passed = models.BooleanField(null=True)
+    dq_p_value = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    adequate = models.BooleanField(null=True)
+    error = models.TextField(default="")
+    reused_snapshots = models.IntegerField(null=True)
+    trained_snapshots = models.IntegerField(null=True)
+
+    objects = LabManager["LabResult"]()
+
+    class Meta:
+        db_table = 'gold"."lab_result'
+        base_manager_name = "objects"
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["run", "model_name", "alpha"],
+                name="lab_result_run_model_alpha",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.run_id} {self.model_name} {self.alpha}"
+
+
+class LabYear(_GrowOnly):
+    """Um trecho de teste por (`result`, `index`): 252 retornos a partir da posicao 0 (RF-03).
+
+    Os testes e o veredito sao nulos a 99% e no trecho com menos de 126 retornos. So existe
+    para resultado sem erro. FK `PROTECT`, e nao `CASCADE`: o gatilho recusa o `DELETE` do pai.
+    """
+
+    result = models.ForeignKey(
+        LabResult,
+        on_delete=models.PROTECT,
+        related_name="years",
+    )
+    index = models.IntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    test_count = models.IntegerField()
+    violations = models.IntegerField()
+    expected_violations = models.DecimalField(max_digits=18, decimal_places=6)
+    kupiec_passed = models.BooleanField(null=True)
+    kupiec_p_value = models.DecimalField(max_digits=18, decimal_places=10, null=True)
+    christoffersen_passed = models.BooleanField(null=True)
+    christoffersen_p_value = models.DecimalField(
+        max_digits=18, decimal_places=10, null=True
+    )
+    adequate = models.BooleanField(null=True)
+
+    objects = LabManager["LabYear"]()
+
+    class Meta:
+        db_table = 'gold"."lab_year'
+        base_manager_name = "objects"
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["result", "index"],
+                name="lab_year_result_index",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.result_id} {self.index}"

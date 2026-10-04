@@ -248,6 +248,98 @@ export type Risk = {
   request: ComputeRequest | null;
 };
 
+/**
+ * Um trecho de teste do laboratório (M2.4, RF-12): os dois testes e o veredito são nulos a 99%
+ * e no trecho não julgado (menos de 126 retornos).
+ */
+export type LabYear = {
+  index: number;
+  start_date: string;
+  end_date: string;
+  test_count: number;
+  violations: number;
+  expected_violations: Dec;
+  kupiec_passed: boolean | null;
+  kupiec_p_value: Dec | null;
+  christoffersen_passed: boolean | null;
+  christoffersen_p_value: Dec | null;
+  adequate: boolean | null;
+};
+
+/** Um resultado do experimento por (modelo, nível); com `error`, números nulos e sem anos. */
+export type LabResult = {
+  model_name: ModelName;
+  model_category: "traditional" | "garch" | "ml";
+  alpha: "0.0500" | "0.0100";
+  test_count: number | null;
+  violations: number | null;
+  expected_violations: Dec | null;
+  kupiec_passed: boolean | null;
+  kupiec_p_value: Dec | null;
+  christoffersen_passed: boolean | null;
+  christoffersen_p_value: Dec | null;
+  dq_passed: boolean | null;
+  dq_p_value: Dec | null;
+  adequate: boolean | null;
+  error: string;
+  reused_snapshots: number | null;
+  trained_snapshots: number | null;
+  years: LabYear[];
+};
+
+/** O `latest` do `/lab`: o experimento `ok` ou `partial` mais recente, de qualquer motor. */
+export type LabRun = {
+  id: number;
+  calculated_at: string;
+  finished_at: string;
+  status: "ok" | "partial";
+  origin: "risk_close" | "command";
+  engine_version: string;
+  seed: number;
+  train_window_days: number;
+  first_price_date: string;
+  decade_end: string;
+  as_of_date: string;
+  price_count: number;
+  train_count: number;
+  test_count: number;
+  year_count: number;
+  // `gold.lab_run.price_run` é chave estrangeira sem `null=True`, como em `risk_run`.
+  price_run: {
+    id: number;
+    source: string;
+    started_at: string;
+    finished_at: string | null;
+  };
+  price_fingerprint: string;
+  results: LabResult[];
+};
+
+/** O `failed` mais recente posterior ao `latest` (ou o mais recente, sem `latest`). */
+export type LabFailure = {
+  id: number;
+  calculated_at: string;
+  engine_version: string;
+  error: string;
+};
+
+/** `GET /api/v1/assets/{ticker}/lab` (M2.4, RF-12). */
+export type Lab = {
+  ticker: string;
+  active: boolean;
+  decade: {
+    first_price_date: string | null;
+    end_date: string | null;
+    last_price_date: string | null;
+    complete: boolean;
+    sessions: number;
+  };
+  risk_engine_version: string | null;
+  pending: boolean;
+  latest: LabRun | null;
+  last_failure: LabFailure | null;
+};
+
 /** O plano de contas do balanço (`AccountPlan` em `backend/apps/fundamentals/models.py`). */
 export type AccountPlan = "general" | "bank" | "insurance" | "unknown";
 

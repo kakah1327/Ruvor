@@ -6,7 +6,8 @@ Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao d
 
 Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `engine`,
 `pandas`, `apps.risk.tasks`, `apps.risk.compute`, `apps.risk.snapshots` ou
-`apps.assets.tasks`. O V-10 (`tests/api/test_sem_motor.py`) confere.
+`apps.assets.tasks`. O V-10 (`tests/api/test_sem_motor.py`) confere. O `/lab` (M2.4) le
+`apps/risk/models.py` e o modulo puro `apps/risk/decade.py` -- nunca `apps.risk.lab`.
 """
 
 from __future__ import annotations
@@ -57,6 +58,7 @@ from apps.api.serializers import (
     AssetDetailSerializer,
     AssetEventsOut,
     AssetItemSerializer,
+    AssetLabOut,
     AssetListOut,
     AssetMetricsOut,
     AssetPricesOut,
@@ -70,6 +72,8 @@ from apps.api.serializers import (
     FundamentalsOut,
     IndicatorOut,
     InProgressRunSerializer,
+    LabFailureOut,
+    LabRunOut,
     LatestRunSerializer,
     PeersOut,
     PriceSerializer,
@@ -78,7 +82,9 @@ from apps.api.serializers import (
 from apps.assets.models import Asset, CorporateEvent, Price
 from apps.fundamentals.models import Company, Disclosure, FundamentalIndicator
 from apps.returns.models import ReturnResult, ReturnRun
-from apps.risk.models import RiskResult, RiskRun
+from apps.risk import config as risk_config
+from apps.risk.decade import decade_of, valid_bars
+from apps.risk.models import LabResult, LabRun, LabYear, RiskResult, RiskRun
 
 # A paginacao da busca (RF-12).
 DEFAULT_LIMIT = 20
@@ -723,3 +729,112 @@ def _decide(asset: Asset, now: datetime, requested_by: User | None) -> ApiError 
     # o nome global, que os testes substituem em `apps.api.views.enqueue_chain`
     transaction.on_commit(lambda: enqueue_chain(request_id))
     return None
+
+
+# --- /lab (M2.4, RF-12) --------------------------------------------------------------------
+
+LAB_SHOWN_STATUSES = (LabRun.Status.OK, LabRun.Status.PARTIAL)
+RISK_SHOWN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL)
+
+
+def lab_pending(
+    *,
+    active: bool,
+    complete: bool,
+    sessions: int,
+    risk_engine_version: str | None,
+    latest_engine_version: str | None,
+    latest_status: str | None,
+) -> bool:
+    """O experimento devido ainda nao esta gravado (RF-12), literal.
+
+    `active` **e** a decada completa **e** suficiente **e** ha versao do risco **e** (sem
+    `latest`, **ou** o `latest` de outra versao do motor, **ou** o `latest` `partial`).
+    `latest_engine_version` e `latest_status` sao nulos sem `latest`.
+    """
+    return (
+        active
+        and complete
+        and sessions >= risk_config.MIN_SESSIONS
+        and risk_engine_version is not None
+        and (
+            latest_engine_version is None
+            or latest_engine_version != risk_engine_version
+            or latest_status == LabRun.Status.PARTIAL
+        )
+    )
+
+
+def lab_body(asset: Asset) -> dict[str, Any]:
+    """O corpo do `/lab` (RF-12).
+
+    - `decade`: a regra do RF-02 sobre `silver.price`, na leitura; tudo nulo sem preco
+    - `latest`: o `lab_run` `ok` ou `partial` de maior `calculated_at`, de qualquer versao do
+      motor; resultados por `model_name` e `alpha` decrescente, anos por `index`
+    - `last_failure`: o `failed` mais recente **posterior** ao `latest` (ou o mais recente)
+    - `risk_engine_version`: a versao da execucao de producao `ok`/`partial` mais recente
+    """
+    decade = decade_of(valid_bars(asset))
+    latest = (
+        LabRun.objects.filter(asset=asset, status__in=LAB_SHOWN_STATUSES)
+        .select_related("price_run")
+        .prefetch_related(
+            Prefetch(
+                "results",
+                queryset=LabResult.objects.order_by("model_name", "-alpha"),
+            ),
+            Prefetch("results__years", queryset=LabYear.objects.order_by("index")),
+        )
+        .order_by("-calculated_at")
+        .first()
+    )
+    failures = LabRun.objects.filter(asset=asset, status=LabRun.Status.FAILED)
+    if latest is not None:
+        failures = failures.filter(calculated_at__gt=latest.calculated_at)
+    last_failure = failures.order_by("-calculated_at").first()
+    risk_engine_version = (
+        RiskRun.objects.filter(asset=asset, status__in=RISK_SHOWN_STATUSES)
+        .order_by("-calculated_at")
+        .values_list("engine_version", flat=True)
+        .first()
+    )
+    active = asset.status == Asset.Status.ACTIVE
+    complete = decade is not None and decade.complete
+    sessions = 0 if decade is None else decade.sessions
+    return {
+        "ticker": asset.ticker,
+        "active": active,
+        "decade": {
+            "first_price_date": None if decade is None else decade.first_price_date,
+            "end_date": None if decade is None else decade.end_date,
+            "last_price_date": None if decade is None else decade.last_price_date,
+            "complete": complete,
+            "sessions": sessions,
+        },
+        "risk_engine_version": risk_engine_version,
+        "pending": lab_pending(
+            active=active,
+            complete=complete,
+            sessions=sessions,
+            risk_engine_version=risk_engine_version,
+            latest_engine_version=None if latest is None else latest.engine_version,
+            latest_status=None if latest is None else latest.status,
+        ),
+        "latest": None if latest is None else LabRunOut(latest).data,
+        "last_failure": None
+        if last_failure is None
+        else LabFailureOut(last_failure).data,
+    }
+
+
+class AssetLabView(APIView):
+    """`GET /api/v1/assets/{ticker}/lab`: o experimento fixo da decada (M2.4, RF-12). So `GET`."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M2.4, RF-12: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(responses={200: AssetLabOut})
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(lab_body(_asset(ticker)))

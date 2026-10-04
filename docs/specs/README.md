@@ -57,3 +57,4 @@ novo ou atravessa mais de um bloco, vai para revisão por agente.
 | [M1.7 — Busca e catálogo](M1.7-busca-e-catalogo.md) | Marco 1 · M1.7 | ✅ implementada e fechada |
 | [M2.2a — Carteira](M2.2a-carteira.md) | Marco 2 · M2.2a · frente `identidade` | ✅ aprovada (2026-10-01); implementada no ramo (2026-10-02); a PR de implementação só entra com o parecer da CVM (D-116) |
 | [M1.4b — Correção do motor](M1.4b-correcao-do-motor.md) | Marco 1 · M1.4b · frente `marco1` | ✅ implementada e fechada (2026-10-03) |
+| [M2.4 — Regime de laboratório](M2.4-regime-de-laboratorio.md) | Marco 2 · M2.4 · frente `marco1` | ✅ implementada e fechada (2026-10-04) |

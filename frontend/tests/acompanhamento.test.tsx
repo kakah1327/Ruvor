@@ -9,6 +9,10 @@
  * V-10 do M1.6c (RF-15): o fim do acompanhamento recarrega também as duas seções novas — os
  * fundamentos, e os comunicados de volta à primeira página, com o filtro.
  *
+ * M2.4 (T10, RF-18): o `/lab` entra na carga e no `reloadAll()`; no fim do acompanhamento ele é
+ * relido, e, com `pending`, de novo a cada `POLL_INTERVAL_MS` até chegar o `latest` — e nunca na
+ * montagem. O duplo conta os pedidos que não reconhece, e todo teste exige zero.
+ *
  * M2.3 (T10): a tabela dos nove nasce recolhida na iniciante; o teste que confere a tabela à
  * vista durante o `reloadAll()` declara a leitura avançada, em que ela nasce aberta.
  */
@@ -25,6 +29,8 @@ import {
   type Fundamentals,
   type Indicator,
   type InProgress,
+  type Lab,
+  type LabRun,
   MODEL_ORDER,
   type Risk,
   type RiskResult,
@@ -32,6 +38,7 @@ import {
 } from "../src/api/types";
 import { TEXTOS } from "../src/content/textos";
 import { formatCurrency } from "../src/format/numbers";
+import { POLL_INTERVAL_MS } from "../src/risk/usePolling";
 import { comNivel, limparNivel } from "./nivel";
 
 vi.mock("uplot", () => {
@@ -156,6 +163,54 @@ const E3_RECALC = risk({ latest: run("failed"), in_progress: inProgress(2) });
 const E1 = risk({ covered: true, latest: run("ok") });
 const E7 = risk({ request: request({ status: "failed", reason: "falhou na coleta" }) });
 
+/** O `/lab` (M2.4): antes do risco, devido (pending) e já gravado. */
+function lab(over: Partial<Lab> = {}): Lab {
+  return {
+    ticker: "AALR3",
+    active: true,
+    decade: {
+      first_price_date: "2016-09-22",
+      end_date: "2026-09-22",
+      last_price_date: "2026-10-02",
+      complete: true,
+      sessions: 2491,
+    },
+    risk_engine_version: "0.4.0",
+    pending: false,
+    latest: null,
+    last_failure: null,
+    ...over,
+  };
+}
+const LAB_RUN: LabRun = {
+  id: 1,
+  calculated_at: "2026-10-04T04:41:41-03:00",
+  finished_at: "2026-10-04T04:41:45-03:00",
+  status: "ok",
+  origin: "risk_close",
+  engine_version: "0.4.0",
+  seed: 42,
+  train_window_days: 252,
+  first_price_date: "2016-09-22",
+  decade_end: "2026-09-22",
+  as_of_date: "2026-09-22",
+  price_count: 2491,
+  train_count: 252,
+  test_count: 2238,
+  year_count: 9,
+  price_run: {
+    id: 6,
+    source: "yahoo-chart",
+    started_at: "2026-09-25T19:30:00-03:00",
+    finished_at: null,
+  },
+  price_fingerprint: "ac1d93ec7b42b24cc4cb777ff58df44d16543ba1530ddb11e969c2ef723d52ef",
+  results: [],
+};
+const LAB_NO_RISK = lab({ risk_engine_version: null });
+const LAB_PENDING = lab({ pending: true });
+const LAB_READY = lab({ latest: LAB_RUN });
+
 /** Um indicador calculado, só com o que a seção precisa para sair do vazio. */
 const INDICATOR: Indicator = {
   calculated_at: "2026-09-29T20:00:00-03:00",
@@ -221,6 +276,7 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
+  | "lab"
   | "disclosures";
 type Call = { route: Route; url: URL; resolve: (body: unknown) => void };
 
@@ -229,14 +285,21 @@ let calls: Call[] = [];
 let riskQueue: (Risk | null)[] = [];
 let assetBody: AssetDetail = NO_PRICE;
 let fundamentalsBody: Fundamentals = { ticker: "AALR3", indicator: null, peers: null };
+/** As respostas do `/lab`, em ordem; a última se repete (M2.4). */
+let labQueue: Lab[] = [];
+/** Os pedidos que o duplo não reconhece: `routeOf` lança dentro da promessa, que rejeita em silêncio. */
+let unexpected: string[] = [];
 
 /** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
 function routeOf(url: string): Route {
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
-  if (match === null) throw new Error(`pedido inesperado: ${url}`);
+  if (match === null) {
+    unexpected.push(url);
+    throw new Error(`pedido inesperado: ${url}`);
+  }
   return (match[1] ?? match[2] ?? "asset") as Route;
 }
 
@@ -254,6 +317,8 @@ function bodyOf(route: Route, url: URL): unknown | null {
       return riskQueue.length > 1 ? riskQueue.shift() : riskQueue[0];
     case "fundamentals":
       return fundamentalsBody;
+    case "lab":
+      return labQueue.length > 1 ? labQueue.shift() : labQueue[0];
     case "disclosures":
       return disclosuresPage(url);
   }
@@ -337,6 +402,8 @@ beforeEach(() => {
   vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility);
   assetBody = NO_PRICE;
   fundamentalsBody = { ticker: "AALR3", indicator: null, peers: null };
+  labQueue = [LAB_NO_RISK];
+  unexpected = [];
   stubFetch();
 });
 
@@ -346,6 +413,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   limparNivel();
+  expect(unexpected).toEqual([]);
 });
 
 // ---------------------------------------------------------------- V-12
@@ -498,6 +566,71 @@ describe("V-10 do M1.6c — o acompanhamento recarrega as duas seções", () => 
       expect(count("disclosures")).toBe(before + 1);
     },
   );
+});
+
+describe("RF-18 do M2.4 — o /lab relido no fim do acompanhamento, por até 2 minutos", () => {
+  it("na montagem, com pending, não relê", async () => {
+    riskQueue = [E1];
+    labQueue = [LAB_PENDING];
+    renderAsset();
+    await advance(0);
+    expect(count("lab")).toBe(1);
+    await advance(60_000);
+    expect(count("lab")).toBe(1);
+  });
+
+  it("no fim do acompanhamento: o /lab de novo e, com pending, a cada POLL_INTERVAL_MS até o latest", async () => {
+    riskQueue = [E4_NO_REQUEST, E1];
+    // o da carga (antes do risco), o do reloadAll e o da primeira releitura devidos, e então o experimento
+    labQueue = [LAB_NO_RISK, LAB_PENDING, LAB_PENDING, LAB_READY];
+    renderAsset();
+    await advance(0);
+    expect(riskState()).toBe("E4");
+    expect(count("lab")).toBe(1);
+
+    await advance(POLL_INTERVAL_MS); // o /risk chega em E1: o reloadAll
+    expect(riskState()).toBe("E1");
+    expect(count("lab")).toBe(2);
+
+    await advance(POLL_INTERVAL_MS - 1);
+    expect(count("lab")).toBe(2);
+    await advance(1);
+    expect(count("lab")).toBe(3);
+    await advance(POLL_INTERVAL_MS);
+    expect(count("lab")).toBe(4); // este traz o latest
+
+    // chegou: não relê mais
+    await advance(120_000);
+    expect(count("lab")).toBe(4);
+    expect(count("risk")).toBe(3);
+  });
+
+  it("sem pending depois do reloadAll, relê uma vez só (a do reloadAll)", async () => {
+    riskQueue = [E4_NO_REQUEST, E1];
+    labQueue = [LAB_NO_RISK, LAB_READY];
+    renderAsset();
+    await advance(0);
+    await advance(POLL_INTERVAL_MS);
+    expect(count("lab")).toBe(2);
+    await advance(120_000);
+    expect(count("lab")).toBe(2);
+  });
+
+  it("com pending para sempre, para em 2 minutos", async () => {
+    riskQueue = [E4_NO_REQUEST, E1];
+    labQueue = [LAB_NO_RISK, LAB_PENDING];
+    renderAsset();
+    await advance(0);
+    await advance(POLL_INTERVAL_MS);
+    const opened = count("lab");
+    // de 5 em 5 s: cada resposta agenda o próximo quando o `act` do passo termina
+    for (let t = 0; t < 120_000; t += POLL_INTERVAL_MS) await advance(POLL_INTERVAL_MS);
+    const atEnd = count("lab");
+    expect(atEnd - opened).toBeGreaterThanOrEqual(120_000 / POLL_INTERVAL_MS - 1);
+    expect(atEnd - opened).toBeLessThanOrEqual(120_000 / POLL_INTERVAL_MS);
+    for (let t = 0; t < 60_000; t += POLL_INTERVAL_MS) await advance(POLL_INTERVAL_MS);
+    expect(count("lab")).toBe(atEnd);
+  });
 });
 
 describe("V-12 — para ao sair, e respeita a aba oculta", () => {

@@ -60,6 +60,16 @@ const LISTA_FECHADA = [
   "comportamento.estresse.benchmark_drawdown",
   "comportamento.estresse.recovery_sessions",
   "comportamento.estresse.benchmark_recovery_sessions",
+  // A lista fechada do laboratório (M2.4, D-97): as nove do portão do `laboratorio.html`.
+  "laboratorio.decada",
+  "laboratorio.diferenca",
+  "laboratorio.violacoesAno",
+  "laboratorio.vereditoAno",
+  "laboratorio.anoNaoJulgado",
+  "laboratorio.semVereditoAno99",
+  "laboratorio.violacoesDecada",
+  "laboratorio.vereditoDecada",
+  "laboratorio.anosNaoRejeitados",
 ];
 
 // Os campos do RF-10 que não têm frase própria: entram na frase ou na nota do bloco.
@@ -72,8 +82,8 @@ const SEM_FRASE = [
 ];
 
 describe("V-14 — a lista fechada do RF-21 no módulo de textos", () => {
-  it("a lista tem as 39 chaves", () => {
-    expect(new Set(LISTA_FECHADA).size).toBe(39);
+  it("a lista tem as 48 chaves", () => {
+    expect(new Set(LISTA_FECHADA).size).toBe(48);
   });
 
   it.each(LISTA_FECHADA)("%s existe e não é vazia", (chave) => {

@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-10-03
+**Última atualização:** 2026-10-04
 
 ---
 
@@ -36,7 +36,10 @@ aprovação do dono na conversa, em 2026-10-02); o **M2.1b fechou em 2026-10-03*
 troca de senha (inclusive a obrigatória), menu de conta e gestão de usuários, cada uma com mockup aprovado, e o pedido de
 cálculo só com conta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)) —, com a PR de
 implementação a abrir pelo dono, revisada pela `identidade`, depois do ajuste dela no caso anônimo do
-`test_requested_by.py`; na
+`test_requested_by.py` — e entrou na `main` pela PR #39; o **M2.4 fechou em 2026-10-04** — o regime de laboratório: o
+experimento fixo da década de cada ativo coberto, os nove modelos nos dois níveis pelo cálculo de produção, ano a ano, em
+`gold.lab_run`, `lab_result` e `lab_year`, pela rota `/lab` e numa seção da tela do ativo logo depois do risco
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) —, com a PR de implementação a abrir pelo dono; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -45,7 +48,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅, com o darkside171) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -136,7 +139,13 @@ dois níveis, e a troca não pede nada à API. **Desde o M2.1b há telas de aces
 fora do casco; `/conta/senha` e `/organizacao/usuarios`, no casco; a troca obrigatória da senha provisória no lugar de
 qualquer rota, sem mudar a URL; o menu de conta por último na barra, com o Sair; os avisos de sessão terminada e de página
 só para quem entrou; e, para o anônimo, o convite a entrar no lugar do botão de calcular — porque o `POST /risk` passou a
-exigir conta pronta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)).
+exigir conta pronta ([D-140](decisoes/D-140-o-pedido-de-calculo-exige-conta-restringe-a-d-90.md)). **Desde o M2.4 há o
+laboratório:** para cada ativo coberto com a década completa (dez anos de preço desde o primeiro pregão), o experimento
+fixo — os nove modelos nos dois níveis pelo mesmo `run_models` da produção, recortados em anos de 252 pregões, com o
+veredito de cada ano só a 95% — fica em `gold.lab_run`, `gold.lab_result` e `gold.lab_year`, imutáveis no Django e no
+banco, um `ok` por identidade; o fecho do risco o enfileira quando ele é devido, e `manage.py compute_lab` o grava à mão;
+a tela do ativo o mostra logo depois do risco, para todos, sem eleger, pela rota `/lab` — quarenta e uma tabelas ao todo
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)).
 
 **Existe CI.** Cada pull request e cada push na `main` disparam quatro trabalhos em máquina
 limpa — `estilo`, `backend`, `frontend` e `motor` —, e a primeira execução ficou verde nos
@@ -1854,14 +1863,66 @@ subida, agora com um pedido a mais por carga. Os dois em [aprendizados](aprendiz
 **Pendência para a `identidade`:** `verbose_name` em `User.name` e `User.email`. A mensagem de semelhança da senha, que o
 cadastro e a troca mostram como a API a manda, cita o campo em inglês ("…parecida com name", "…parecida com email").
 
+### M2.4 — Regime de laboratório
+
+Spec em [`specs/M2.4-regime-de-laboratorio.md`](specs/M2.4-regime-de-laboratorio.md) e plano em
+[`planos/M2.4-regime-de-laboratorio.md`](planos/M2.4-regime-de-laboratorio.md), aprovados pelo dono em 2026-10-03. Frente
+`marco1`, ramo `marco1/M2.4-regime-de-laboratorio`, no worktree `E:/Temp/Trilobit/varlab-wt/M2.4-regime-de-laboratorio`.
+Quinze tarefas, T0 a T14: T1 (`f617a50`), T2 (`d58c1b2`), T3 (`48eca48`, e `696e859`, a correção da revisão de
+implementação), T4 (`b885ef2`), T5 (`064a0a2`), T6 (`65e42a6`), T7 — a fase A — (`fbd9cb4`), T8 (`e7a04f5`, `e263c16`),
+o mockup aprovado na T9 (`5008161`), T10 (`c73b397`, `2175cc9`), T11 (`6ea0633`), T12 (`6e0a24c`), T13 (`ff51702`) e a
+T14 — a fase B — (`dd4efc7`) e o FECHA. Cinco decisões, com a spec:
+[D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) (o laboratório é o cálculo de produção recortado na década do ativo),
+[D-184](decisoes/D-184-a-decada-e-a-do-ativo-e-o-teste-se-le-em-anos-de-252-pregoes.md) (a década e os anos de 252, o
+veredito por ano só a 95%), [D-185](decisoes/D-185-o-experimento-mora-em-tres-tabelas-de-gold-imutaveis-e-um-ok-por-identidade.md)
+(as três tabelas, imutáveis, um `ok` por identidade), [D-186](decisoes/D-186-o-experimento-roda-pela-fila-depois-do-fecho-do-risco-de-producao.md)
+(pela fila depois do fecho, e `compute_lab`) e [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md) (a seção na tela do ativo, sem eleger). **Fechou em
+2026-10-04**; a PR de implementação é do dono, e nenhuma revisão de outra frente é obrigatória.
+
+**O que passou a existir:** no backend, `apps/risk/decade.py` (a década, pura, sem o motor; `compute._bars` delega a ele
+o filtro), `apps/risk/lab.py` (os anos, a soma conferida, a identidade, `lab_due`, `run_lab` — o registry conferido antes
+de calcular, o mesmo `run_models` com `full=False`, a série relida depois do cálculo — e `write_lab` sob a trava do ativo,
+que só grava sem `ok` da identidade), as três tabelas da migration `risk.0004` com o gatilho `lab_so_cresce`, a tarefa
+`calcular_laboratorio`, o `on_commit` no fecho do risco, `manage.py compute_lab` e a rota `GET /api/v1/assets/{ticker}/lab`.
+No frontend, a seção `LabSection` logo depois do risco, os nove estados e as três notas (`src/lab/state.ts`), a releitura
+de no máximo 2 minutos depois do acompanhamento (`src/lab/useLabPolling.ts`), o `/lab` fora do `data-ready`, a lista
+fechada de nove chaves `laboratorio.*` nas duas leituras e as classes `ruvor-lab-*` no kit. No roteiro, a seção do
+laboratório e a comparação com o mockup.
+
+**A execução real**, em duas fases, com o checkout principal no HEAD do ramo e o Beat parado:
+
+| Fase | O que aconteceu |
+|---|---|
+| A (T7, `696e859`) | a `risk.0004` aplicada; o IBOV pelo fecho do risco (`lab_run` 1, `risk_close`, 4,18 s) e, pelo `compute_lab`, BBDC4, ITUB4, PETR4 e VALE3 (`lab_run` 2 a 5, 3,8 a 5,7 s cada, **72 retratos reaproveitados e nenhum treinado**); o **AALR3** saiu "década incompleta (completa em 2026-10-28)"; a segunda rodada, toda "já calculado", sem mudar contagem; **o prefixo**: a década do ITUB4 igual ao começo da série de produção nos 18 pares, `n = 2238`, **diferença máxima 0,0**; as conferências por SQL (nenhum retrato treinado, a soma dos anos igual às violações, os testes nulos a 99%) e os seis `UPDATE`/`DELETE` crus recusados com `lab so cresce`; a foto do `/lab` do ITUB4 e do IBOV para o mockup |
+| B (T14, `ff51702`) | o `/lab` igual byte a byte à foto da fase A; o roteiro com **918 conferências, 0 falhas**, 226 da seção do laboratório (ITUB4 e IBOV, dois temas, 1440 e 360 px, dois níveis) e **16 comparações com o mockup aprovado sem diferença**; a taxa do anônimo subida só na `web`, pela variável do shell, sem tocar o `.env`; **a taxa**, com a padrão: 18 pedidos por carga, 5 cargas completas por minuto, o 429 no 108.º pedido |
+| O fim | o checkout principal de volta à `main`, o `worker` recriado nela, o Beat religado, o `.env` igual (sha256 conferido) nas duas fases |
+
+| Verificação | Resultado |
+|---|---|
+| Suíte do backend | ✅ **1909 passed** (eram 1753); `mypy` e `ruff` limpos |
+| Frontend | ✅ **41 arquivos, 1724 testes** (eram 1621); lint, `typecheck` e build limpos (o aviso de pedaço acima de 500 kB, de sempre) |
+| O motor | ✅ `git diff --stat origin/main...HEAD -- engine/` vazio: nenhuma linha de `engine/` |
+| Mutações | as 32 do backend (com a 17 em duas variantes) e a 48, de novo na T6, e as do frontend na T13: **todas reprovam**; mais as da correção da revisão (a série relida, o ramo do `IntegrityError`, a escrita sem a trava) |
+
+**O que a execução mostrou:** a dependência que o `makemigrations` gera para uma migration com chave para `silver.asset`
+é a última da `assets` — a `0004_unaccent` —, e o `test_unaccent` a desfaz sem refazer: a primeira suíte da T2 perdeu as
+três tabelas (`2 failed`); a `risk.0004` depende da `assets.0003`. Duas suítes ao mesmo tempo estouram o tempo de 5 s dos
+testes também no frontend (T12). A revisão de implementação pediu que a série seja relida depois do cálculo — um provento
+no meio gravaria o experimento sobre preços que o banco já não tem. A spec dizia "~190" e "perto de 10%"; as contas da
+conferência dão **192** e **perto de 7%**, e a D-184 nasceu corrigida. Os dois aprendizados em
+[aprendizados](aprendizados.md).
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M2.1b** (implementação, T1 a T16), que o dono abre e mescla com a CI verde, **revisada
-pela `identidade`** — ela muda o contrato do `POST /risk` (D-140). **A PR espera o ajuste da `identidade`** no caso
-anônimo de `backend/tests/accounts/test_requested_by.py`, que passa a esperar 401: sem ele, o job `backend` fica vermelho
-por esse teste só. O M1.4b entrou pela PR #38. Depois, o próximo bloco da frente é escolha do dono — o M2.2b, as telas da
-carteira, é o candidato do ROADMAP. Ramos e a regra de onde cada comando roda estão em
-[frentes/marco1.md](frentes/marco1.md).
+**Na frente `marco1`, a PR do M2.4** (implementação, T0 a T14), que o dono abre e mescla com a CI verde; nenhuma revisão
+de outra frente é obrigatória. O M2.1b entrou pela PR #39. **Depois dela, o M5.1** (no worktree dele, parado à espera
+desta fase B) e o **M2.2b** seguem: quem mesclar por último aplica a tabela "A ordem das seções na tela, e o M5.1" do
+[plano do M2.4](planos/M2.4-regime-de-laboratorio.md#a-ordem-das-seções-na-tela-e-o-m51) — risco → laboratório → retorno
+→ Fundamentos → Comunicados, os `routeOf` e as listas de texto somados, e 43 tabelas com as duas do M5.1. **O motor
+`0.5.0` do M5.1 é identidade nova do experimento**: o primeiro fecho do recálculo `0.5.0` de cada ativo enfileira o
+laboratório de novo, reaproveitando os retratos recém-treinados; o `0.4.0` fica. Quem mesclar por último anota no ESTADO.
+**O AALR3 completa a década em 2026-10-28**: o primeiro fecho do risco depois disso grava o experimento dele. Ramos e a
+regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md).
 
 **Antes de expor a aplicação fora da máquina**, a hospedagem decide o cache e a compressão do `/prices` (341 KiB sem
 compressão). O recado da [D-90](decisoes/D-90-calculo-sob-demanda-so-para-ativo-nunca-calculado.md) — "limite por IP ou

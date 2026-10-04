@@ -2,18 +2,19 @@
 
 **Dono:** darkside171
 **Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ →
-M2.1b ✅; nenhum bloco com spec e plano aprovados à espera. O M1.6b fechou o Marco 1: digita ITUB4, recebe o
+M2.1b ✅ → M2.4 ✅; o M5.1 e o M2.2b nos ramos deles. O M1.6b fechou o Marco 1: digita ITUB4, recebe o
 comportamento e o risco; o M1.6c completou a tela com as camadas 4 e 5; o M2.3 deu a ela as duas leituras, iniciante e
 avançada; o M3.3, o estresse histórico na seção Comportamento; o M1.4b corrigiu o motor (`0.4.0`): o GARCH e o EGARCH
 sem olhar à frente, e os tradicionais em janela expansiva; o M2.1b, as telas de acesso — entrar, cadastro, troca de senha,
-menu de conta e gestão de usuários — e o pedido de cálculo só com conta (D-140).
+menu de conta e gestão de usuários — e o pedido de cálculo só com conta (D-140); o M2.4, o regime de laboratório — o
+experimento fixo da década de cada ativo, ano a ano, numa seção logo depois do risco (D-183 a D-187).
 **Cerca:** ver [FRENTES.md](../FRENTES.md#cercas).
 **Faixa de decisões:** D-75 a D-81 (todas usadas pelo M1.5b), depois D-85 a D-99 (todas usadas; a D-99 é do M1.6c) e
 D-140 a D-159, reservadas pela spec do M1.6c e divididas entre os seis blocos abertos em 2026-09-29 — usadas D-140,
 D-143 e D-144, D-146 a D-153 — a D-140 com o M2.1b, fechado (a D-141 e a D-142 ficam sem uso); a D-146 a D-148 com o M3.3, fechado; a D-143 e a D-144 com o M1.7, fechado (a D-145 fica sem uso); a D-149 e a D-150 com o
 M1.5c, fechado; a D-151 a D-153 com o M2.3, fechado, e a D-154 sem uso; e a D-157 a D-159, tomadas pela spec do M1.4b,
-fechado (ver
-[FRENTES.md](../FRENTES.md#numeração-de-decisão)).
+fechado; e a D-180 a D-199, reservada pela spec do M2.2b (D-180 a D-182) e dividida com o M2.4, que usou a D-183 a
+D-187 (ver [FRENTES.md](../FRENTES.md#numeração-de-decisão)).
 
 ---
 
@@ -34,6 +35,7 @@ os planos passaram por revisão contra a spec, alguns em duas ou três rodadas.
 | [M2.3 — Camada explicativa](../specs/M2.3-camada-explicativa.md) ✅ | `marco1/M2.3-camada-explicativa` | #22 | 16 | 4 | — (estende a cerca de mockups da `marco1`) |
 | [M2.1b — Telas de acesso](../specs/M2.1b-telas-de-acesso.md) ✅ | `marco1/M2.1b-telas-de-acesso` | #24 | 16 | 5 | `identidade` (o `POST /risk` exige conta, D-140) |
 | [M1.4b — Correção do motor](../specs/M1.4b-correcao-do-motor.md) ✅ | `marco1/M1.4b-correcao-do-motor` | #38 (spec, plano e implementação) | 9 (T0 a T7, com a T6b) | — (D-158) | — (aviso à `identidade`: a imagem `0.4.0`) |
+| [M2.4 — Regime de laboratório](../specs/M2.4-regime-de-laboratorio.md) ✅ | `marco1/M2.4-regime-de-laboratorio` | a abrir (implementação) | 15 (T0 a T14) | 1 | — |
 
 **Ordem de merge das PRs de spec e plano (cumprida):** #19 → #23 → #21 → #20 → #22 → #24. A implementação segue M1.7 → M2.3 → M3.3 → M2.1b. O M2.3 depende do M1.6d mesclado; o M2.1b espera
 combinar com a `identidade` a ordem com a T14 do M2.1a, cujo teste de pedido anônimo passa a esperar 401.
@@ -45,17 +47,13 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 
 ## Próximo passo
 
-1. **Abrir a PR do M2.1b** (implementação, T1 a T16) e mesclá-la com a CI verde, revisada pela `identidade` — a PR muda
-   o contrato do `POST /risk` (D-140). **Ela espera o ajuste da `identidade`** no caso anônimo de
-   `backend/tests/accounts/test_requested_by.py` (`test_v19_o_pedido_anonimo_grava_nulo_no_pedido_e_na_execucao`, que
-   ainda espera 202 e passa a esperar 401): sem ele, o job `backend` da CI fica vermelho por esse teste só. O M1.4b
-   entrou pela PR #38.
-2. Pedir à `identidade` o `verbose_name` em `User.name` e `User.email`: a mensagem de semelhança da senha, que o cadastro
-   e a troca mostram como chega, cita o campo em inglês ("…parecida com name").
-3. **Escolher o próximo bloco** da frente — o M2.2b (as telas da carteira, sobre as rotas do M2.2a) é o candidato do
-   ROADMAP; a escolha é do dono.
-4. Os achados da revisão da PR #37 (M3.3), registrados como dívida no [ESTADO](../ESTADO.md#dívida-registrada): a prova
-   por seção do estresse no avançado (2 das 6 chaves), dois ramos do índice sem teste e os menores.
+1. **Abrir a PR do M2.4** (implementação, T0 a T14) e mesclá-la com a CI verde. O M2.1b entrou pela PR #39.
+2. **O M5.1 e o M2.2b**, nos ramos deles: quem mesclar por último recebe a `main` e aplica a tabela "A ordem das seções na
+   tela, e o M5.1" do [plano do M2.4](../planos/M2.4-regime-de-laboratorio.md#a-ordem-das-seções-na-tela-e-o-m51) — e o
+   motor `0.5.0` do M5.1 dispara o laboratório de novo, no primeiro fecho do recálculo de cada ativo.
+3. Pedir à `identidade` o `verbose_name` em `User.name` e `User.email` (a mensagem de semelhança da senha cita o campo em
+   inglês).
+4. Os achados da revisão da PR #37 (M3.3), registrados como dívida no [ESTADO](../ESTADO.md#dívida-registrada).
 
 ## Depois
 

@@ -28,7 +28,13 @@ Quem chama quem:
 - `fechar_presas` e o primeiro elo da `rotina_diaria` (RF-05, RF-06 do M1.5c): fecha pela
   regra as execucoes `running` alem de `RUVOR_RISK_STALE_AFTER`, pela varredura de
   `apps.risk.stale`, e **nunca levanta** -- varredura falhando, registra e a corrente segue
-  para a coleta. Nao tem entrada propria no Beat (D-149).
+  para a coleta. Nao tem entrada propria no Beat (D-149);
+- `calcular_laboratorio` roda o experimento fixo da decada do ativo (M2.4, RF-10) por
+  `apps.risk.lab.run_lab` e **nunca levanta**. Quem a enfileira e o fecho: quando `close_run`
+  escreve `ok` ou `partial`, um `transaction.on_commit` registrado no fim do `atomic` de
+  `_fechar_execucao` chama `_after_close_lab`, que -- **depois do commit**, sem a trava --
+  pergunta `lab_due` e entrega a tarefa ao `_enqueue`, num `try` que nunca deixa o fecho
+  falhar. Nao tem entrada no Beat.
 
 **Quem enfileira nao cria `risk_run`** (RF-03): `enqueue_compute` confere o registry,
 resolve os ativos e produz o `calculated_at` **uma vez**, que viaja em ISO a todas as
@@ -52,6 +58,7 @@ reaproveitados e treinados por nivel e a duracao.
 
 from __future__ import annotations
 
+import functools
 import logging
 import time
 from collections.abc import Callable
@@ -91,6 +98,7 @@ from apps.risk.compute import (
     write_failed,
     write_results,
 )
+from apps.risk.lab import lab_due, run_lab
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.snapshots import SnapshotKey, library_versions
 from apps.risk.stale import close_stale_runs
@@ -525,6 +533,46 @@ def _fechar_execucao(_resultados: object, run_id: int) -> None:
             logger.info("execucao %d ja fechada (%s)", run.id, run.status)
             return
         close_linked(run, now)
+        if run.status in (RiskRun.Status.OK, RiskRun.Status.PARTIAL):
+            transaction.on_commit(functools.partial(_after_close_lab, run.asset_id))
+
+
+def _after_close_lab(asset_id: int) -> None:
+    """Depois do commit do fecho: a consulta "e devido?" e o enfileiramento, juntos (RF-09 do
+    M2.4). Nunca levanta: o risco de producao fechado vale mais que o experimento.
+
+    Roda **fora** do `atomic` do fecho e sem a trava do ativo -- o `on_commit` so chama depois
+    do commit. O `try` cobre a consulta e o broker no mesmo lugar: no Django 6, a excecao de um
+    callback de `on_commit` subiria para quem fechou o `atomic`, a tarefa do fecho.
+    """
+    try:
+        asset = Asset.objects.get(pk=asset_id)
+        if lab_due(asset) is not None:
+            _enqueue(calcular_laboratorio.si(asset_id, "risk_close"))
+    except Exception:
+        logger.exception(
+            "laboratorio do ativo %d nao enfileirado; o fecho segue", asset_id
+        )
+
+
+def _calcular_laboratorio(asset_id: int, origin: str) -> None:
+    """O experimento do ativo (RF-10 do M2.4), por `run_lab`. **Nunca levanta**: registra e
+    devolve. `run_lab` rele o ativo, a decada e a identidade, e pula sem gravar o que nao e
+    mais devido."""
+    try:
+        asset = Asset.objects.get(pk=asset_id)
+        outcome = run_lab(asset, origin=origin)
+    except Exception:
+        logger.exception("laboratorio do ativo %d falhou", asset_id)
+        return
+    run = outcome.run
+    logger.info(
+        "laboratorio %s %s%s %.2fs",
+        asset.ticker,
+        outcome.kind,
+        "" if run is None else f" run={run.pk} status={run.status}",
+        outcome.elapsed,
+    )
 
 
 def _recalcular_cobertos(calculated_at_iso: str | None = None) -> None:
@@ -562,3 +610,6 @@ recalcular_cobertos = app.task(name="apps.risk.tasks.recalcular_cobertos")(
     _recalcular_cobertos
 )
 fechar_presas = app.task(name="apps.risk.tasks.fechar_presas")(_fechar_presas)
+calcular_laboratorio = app.task(name="apps.risk.tasks.calcular_laboratorio")(
+    _calcular_laboratorio
+)

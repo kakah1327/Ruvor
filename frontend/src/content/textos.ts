@@ -19,6 +19,19 @@
 import { formatInteger } from "../format/numbers";
 import { RESSALVA } from "./ressalva";
 
+/** Um número já formatado em pt-BR ("1.234,5") de volta a número. */
+function numeroBR(texto: string): number {
+  return Number(texto.replace(/\./g, "").replace(",", "."));
+}
+
+/**
+ * O lado da rejeição do Kupiec da década (M2.4, portão do `laboratorio.html`): as violações
+ * (`v`) acima das esperadas (`e`), os dois já formatados. A rejeição sozinha não diz o lado.
+ */
+export function acimaDe(v: string, e: string): boolean {
+  return numeroBR(v) > numeroBR(e);
+}
+
 export const TEXTOS = {
   // A barra superior.
   "casco.marca": "RUVOR",
@@ -489,6 +502,100 @@ export const TEXTOS = {
   "risco.pedido.erro": (msg: string) => `O pedido de cálculo não foi aceito. ${msg}`,
   "risco.pedido.semResposta":
     "O pedido de cálculo não teve resposta do servidor. Tente de novo em instantes.",
+
+  // laboratorio.* — a seção do laboratório (M2.4): do `laboratorio.html` aprovado (T9), literais.
+  // As nove com frase nas duas leituras (a lista fechada, N = 9) vêm primeiro; a avançada delas
+  // mora em `avancado.ts`, e as afirmações são as de `conferencia-laboratorio.md`.
+  "laboratorio.decada": (
+    inicio: string,
+    fim: string,
+    anos: number,
+    ultimo: number,
+  ): string =>
+    `De ${inicio} a ${fim}, os dez primeiros anos de preço deste ativo. O primeiro ano serve para os modelos aprenderem; os ${anos} seguintes, para testá-los, um de cada vez${ultimo < 252 ? ` — o último, mais curto, com ${ultimo} pregões` : ""}.`,
+  "laboratorio.diferenca": (versao: string, asOf: string): string =>
+    `Por que o veredito daqui pode ser diferente do da seção acima: aqui estão os mesmos nove métodos, mas só nos dez primeiros anos de preço deste ativo, até ${asOf}, calculados uma vez e guardados. A seção acima é refeita a cada dia útil e inclui os dias depois de ${asOf}. Este resultado, do motor de cálculo ${versao}, não muda enquanto o motor for o mesmo; com um motor novo, o experimento é refeito. E um veredito do passado não garante como o modelo vai se comportar daqui para a frente.`,
+  "laboratorio.violacoesAno": (e: string, cadaN: number): string =>
+    `Cada número é a quantidade de pregões daquele ano de teste em que a perda passou do limite do modelo. Num ano inteiro, de 252 pregões, espera-se cerca de ${e} (1 dia a cada ${cadaN}); o cabeçalho de cada ano diz quantos eram esperados nele.`,
+  "laboratorio.vereditoAno": (celulas: number): string =>
+    `A 95%, cada ano de teste tem o próprio veredito: os mesmos dois testes da seção acima, aplicados só aos dias daquele ano. Nesta grade são ${celulas} anos julgados, e mesmo um modelo sem defeito sai não adequado em cerca de 1 ano a cada 14, só por acaso. O veredito que resume cada modelo é o da década.`,
+  "laboratorio.anoNaoJulgado": (n: number): string =>
+    `O último ano de teste tem só ${n} pregões, menos de meio ano: é pouco para julgar. Ele mostra quantas vezes a perda passou do limite, sem veredito.`,
+  "laboratorio.semVereditoAno99":
+    "A 99%, espera-se que a perda passe do limite só 2 ou 3 vezes num ano: é pouco para um teste dizer algo de um ano sozinho — até um ano sem nenhuma vez seria reprovado. Por isso esta grade mostra, ano a ano, só quantas vezes a perda passou do limite, e o veredito fica na década.",
+  "laboratorio.violacoesDecada": (
+    v: string,
+    e: string,
+    cadaN: number,
+    kupiecOk: boolean,
+  ): string =>
+    `Na década, ${v === "1" ? "em 1 pregão" : `em ${v} pregões`} de teste a perda passou do limite, para cerca de ${e} esperados (1 dia a cada ${cadaN}): a soma dos anos.${kupiecOk ? "" : acimaDe(v, e) ? " Bem acima do esperado: o modelo subestimou o risco." : " Bem abaixo do esperado: o modelo superestimou o risco."}`,
+  "laboratorio.vereditoDecada":
+    "O veredito da década junta os mesmos dois testes sobre todos os anos de teste juntos: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou nesses anos, não do número de hoje.",
+  "laboratorio.anosNaoRejeitados":
+    "Em quantos dos anos de teste julgados o modelo não foi rejeitado, a 95%. É um fato de cada modelo, não uma comparação entre eles: a tabela segue sempre a mesma ordem, e um ano ruim de vez em quando — cerca de 1 ano a cada 14 — é esperado mesmo num modelo sem defeito.",
+  // Os estados, as notas, os títulos e os rótulos: uma leitura só, fora da lista fechada.
+  "laboratorio.sobrancelha": "Laboratório",
+  "laboratorio.titulo": "Como os modelos se saíram em dez anos",
+  "laboratorio.intro":
+    "Os mesmos nove métodos da seção acima, testados ano a ano nos dez primeiros anos de preço deste ativo. O experimento é calculado uma vez e guardado, e a plataforma não escolhe nenhum método.",
+  "laboratorio.carregando": "Carregando o laboratório deste ativo.",
+  "laboratorio.estado.falhou.titulo": "O experimento deste ativo falhou.",
+  "laboratorio.estado.falhou": (data: string) =>
+    `A tentativa de ${data} não chegou a nenhum resultado.`,
+  "laboratorio.estado.tentaDeNovo":
+    "O experimento é tentado de novo depois do próximo cálculo do risco deste ativo.",
+  "laboratorio.estado.aCalcular.titulo":
+    "O experimento deste ativo ainda não foi calculado.",
+  "laboratorio.estado.aCalcular":
+    "Este ativo já tem dez anos de preço e o risco calculado. O experimento roda depois do próximo cálculo do risco deste ativo e aparece aqui ao recarregar a página.",
+  "laboratorio.estado.inativo.titulo": "Ativo inativo na B3: o laboratório não roda.",
+  "laboratorio.estado.inativo": "O experimento é feito só para ativos em negociação.",
+  "laboratorio.estado.semDecada.titulo": "Ainda não há dez anos de preço.",
+  "laboratorio.estado.semDecada": (inicio: string, fim: string) =>
+    `A série deste ativo começa em ${inicio}, e a década se completa em ${fim}. O experimento roda depois do primeiro cálculo do risco a partir dessa data.`,
+  "laboratorio.estado.serieCurta.titulo": "Série curta demais para o laboratório",
+  "laboratorio.estado.serieCurta": (n: string, min: string) =>
+    `A década deste ativo tem ${n} pregões; o experimento pede no mínimo ${min}.`,
+  "laboratorio.estado.semRisco.titulo": "O laboratório vem depois do risco.",
+  "laboratorio.estado.semRisco":
+    "O experimento roda depois do primeiro cálculo do risco deste ativo. O pedido de cálculo fica na seção acima.",
+  "laboratorio.nota.falha": (data: string) =>
+    `A tentativa de refazer o experimento em ${data} falhou. Os números abaixo são os do experimento anterior.`,
+  "laboratorio.nota.motor": (antigo: string, novo: string) =>
+    `Este experimento é do motor ${antigo}; o do motor ${novo} roda depois do próximo cálculo do risco.`,
+  "laboratorio.nota.parcial": (n: number): string =>
+    n === 1
+      ? "1 dos 9 modelos ficou sem resultado em ao menos um nível neste experimento."
+      : `${n} dos 9 modelos ficaram sem resultado em ao menos um nível neste experimento.`,
+  "laboratorio.nota.refeito":
+    "O experimento é refeito depois do próximo cálculo do risco deste ativo.",
+  "laboratorio.grade.titulo.0.0500": "Os dias acima do limite e o veredito de cada ano",
+  "laboratorio.grade.titulo.0.0100": "Os dias acima do limite em cada ano",
+  "laboratorio.grade.ano": (n: number) => `Ano ${n}`,
+  "laboratorio.grade.periodo": (inicio: string, fim: string) => `${inicio} a ${fim}`,
+  "laboratorio.grade.esperadas": (e: string) => `${e} esperados`,
+  "laboratorio.grade.col.decada": "Década",
+  "laboratorio.grade.col.anos": "Anos não rejeitados",
+  "laboratorio.grade.kDeN": (k: number, n: number) => `${k} de ${n}`,
+  "laboratorio.tag.anoCurto": "curto, sem veredito",
+  "laboratorio.testes.abrir": "Ver os testes de cada modelo",
+  "laboratorio.testes.porAno": "Os testes de cada ano, a 95%",
+  "laboratorio.testes.col.ano": "Ano",
+  "laboratorio.testes.col.veredito": "Veredito",
+  "laboratorio.trilha.titulo": "Trilha do experimento",
+  "laboratorio.trilha":
+    "O que entrou neste experimento — a década, a divisão entre treino e teste, a versão do método e os preços usados —, para que ele possa ser conferido.",
+  "laboratorio.trilha.abrir": "Ver o que entrou no experimento",
+  "laboratorio.trilha.decadeEnd": "Fim da década",
+  "laboratorio.trilha.years": "Anos de teste",
+  "laboratorio.trilha.origin": "Disparado",
+  "laboratorio.trilha.origin.risk_close": "depois do cálculo do risco",
+  "laboratorio.trilha.origin.command": "pelo operador",
+  "laboratorio.trilha.snapshots": "Treinos dos modelos de aprendizado",
+  "laboratorio.trilha.retratos": (r: string, t: string) =>
+    `${r} reaproveitados, ${t} novos`,
+  "laboratorio.trilha.fingerprint": "Impressão digital dos preços",
 
   // motivos.* — a tradução de cada motivo de backend/apps/api/ondemand.py (RF-18), por
   // `traduzirMotivo` em `motivos.ts`.

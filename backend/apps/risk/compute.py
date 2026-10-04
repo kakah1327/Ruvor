@@ -70,6 +70,7 @@ from engine.snapshots import Snapshot
 
 from apps.assets.models import Asset, Price
 from apps.risk import config
+from apps.risk.decade import valid_bars
 from apps.risk.models import RiskResult, RiskRun
 from apps.risk.provider import SilverPriceProvider
 from apps.risk.snapshots import SnapshotKey, library_versions, load_valid, save
@@ -294,13 +295,10 @@ def _bars(asset: Asset) -> list[Price]:
     O filtro e o criterio do `clean_prices` do motor -- nao nulo e maior que zero --
     aplicado sobre a coluna que o provedor entrega como `close`, que e o **`adj_close`**.
     Medir o piso, as datas e o `price_count` sobre esta lista elimina por construcao a
-    divergencia entre o que o banco tem e o que o motor calculou.
+    divergencia entre o que o banco tem e o que o motor calculou. O filtro mora em
+    `apps.risk.decade.valid_bars` (RF-02 do M2.4), que o laboratorio tambem usa.
     """
-    return [
-        p
-        for p in Price.objects.filter(asset=asset).order_by("date")
-        if p.adj_close is not None and p.adj_close > 0
-    ]
+    return valid_bars(asset)
 
 
 def _compute_asset(
