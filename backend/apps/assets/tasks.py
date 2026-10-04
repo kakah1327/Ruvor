@@ -11,21 +11,23 @@ sao contrato: sao eles que vao no `CELERY_BEAT_SCHEDULE`.
   ticker ruim cancelaria o recalculo diario inteiro. Qualquer outra excecao propaga -- a
   corrente so nao segue se a ingestao nao chegou a rodar;
 - `rotina_diaria` e o elo: o `beat_schedule` nao aceita `chain`, so nome de tarefa, entao
-  a corrente presas -> preco -> metricas -> risco e montada aqui (D-69, RF-21 do M1.6a; o
-  primeiro elo, `fechar_presas`, e do M1.5c, D-149). Todo elo depois do primeiro e
+  a corrente presas -> preco -> metricas -> risco -> retorno e montada aqui (D-69, RF-21 do
+  M1.6a; o primeiro elo, `fechar_presas`, e do M1.5c, D-149; o ultimo, `calcular_retornos`,
+  do M5.1, D-191). O retorno fica **depois** do risco porque e o elo que pode faltar, e roda
+  junto dele: o `recalcular_cobertos` so enfileira as aberturas e devolve. Todo elo depois do primeiro e
   **imutavel** (`.si()`): com `.s()`, o que o elo anterior devolveu chegaria como argumento
   posicional -- o `None` do `fechar_presas` no `importar_precos`, que nao recebe nenhum; o
   texto dele no `calcular_metricas`, idem; e no recalculo viraria `calculated_at_iso`, que o
   `datetime.fromisoformat` estouraria.
 
 - `calcular_sob_demanda` e a cadeia de um pedido (RF-20 do M1.6a): o prazo, a coleta, as
-  metricas e a abertura do risco, **chamadas como funcao, na mesma tarefa**, para que a
+  metricas, o retorno (M5.1) e a abertura do risco, **chamadas como funcao, na mesma tarefa**, para que a
   falha de cada etapa feche o pedido `failed` com o motivo dela. O pedido so fecha `done`
   quando a `risk_run` fecha -- no fecho do M1.5, nao aqui --, salvo a serie curta, que a
   abertura fecha.
 
-`call_command`, `_enqueue`, `run_import_prices`, `run_compute_metrics`, `_missing_models` e
-`_abrir_execucao` sao chamados pelo nome global **deste** modulo -- e onde os testes os
+`call_command`, `_enqueue`, `run_import_prices`, `run_compute_metrics`, `run_compute_returns`,
+`_missing_models` e `_abrir_execucao` sao chamados pelo nome global **deste** modulo -- e onde os testes os
 substituem. O `_enqueue` e proprio, nao o de `apps.risk.tasks`.
 """
 
@@ -58,6 +60,8 @@ from apps.api.ondemand import REASON_METRICS_FAILED as REASON_METRICS_FAILED
 from apps.api.ondemand import REASON_OPENING_FAILED as REASON_OPENING_FAILED
 from apps.assets.prices import run_import_prices
 from apps.assets.yahoo import YahooClient
+from apps.returns.compute import run_compute_returns
+from apps.returns.tasks import calcular_retornos
 from apps.risk.compute import MODELS, ModelsMissing
 from apps.risk.config import DEFAULT_SEED
 from apps.risk.tasks import (
@@ -94,13 +98,15 @@ def _importar_precos() -> str:
 
 
 def _rotina_diaria() -> None:
-    """Enfileira a corrente: as presas, os precos, as metricas e o recalculo dos cobertos."""
+    """Enfileira a corrente: as presas, os precos, as metricas, o recalculo dos cobertos e o
+    retorno."""
     _enqueue(
         chain(
             fechar_presas.si(),
             importar_precos.si(),
             calcular_metricas.si(),
             recalcular_cobertos.si(),
+            calcular_retornos.si(),
         )
     )
 
@@ -118,15 +124,17 @@ def _fail(req: ComputeRequest, reason: str, exc: Exception) -> None:
 
 
 def _calcular_sob_demanda(request_id: int) -> None:
-    """A cadeia de um pedido (RF-20), literal na ordem: o prazo, a coleta, as metricas e a
-    abertura do risco.
+    """A cadeia de um pedido (RF-20), literal na ordem: o prazo, a coleta, as metricas, o
+    retorno e a abertura do risco.
 
     O prazo e conferido **antes de coletar**: o pedido ja vencido e gravado `expired` e a
     cadeia para -- senao ela correria em paralelo com a de um pedido novo do mesmo ativo. A
     passagem a `running` e filtrada por `status=queued`: se o `POST` expirou o pedido no
     meio, nada muda e a cadeia para.
 
-    Cada etapa que falha fecha o pedido `failed` com o motivo dela e o erro. A abertura e
+    Cada etapa que falha fecha o pedido `failed` com o motivo dela e o erro -- **menos o
+    retorno** (M5.1, RF-12): o pedido e de risco, a falha do retorno so e registrada, e a
+    cadeia segue para a abertura. O retorno recebe o `requested_by` do pedido. A abertura e
     chamada **fora** de transacao propria, com o registry conferido antes (`ModelsMissing`
     fecha o pedido `failed`), o instante de agora, a semente padrao e os nove modelos. Com
     `opened` ou `already_running`, quem fecha o pedido e o fecho da execucao; com
@@ -159,6 +167,11 @@ def _calcular_sob_demanda(request_id: int) -> None:
     except Exception as exc:
         _fail(req, REASON_METRICS_FAILED, exc)
         return
+    try:
+        run_compute_returns([ticker], requested_by=req.requested_by)
+    except Exception:
+        # o pedido e de risco: a falha do retorno nao o fecha (RF-12)
+        logger.exception("pedido %d %s: o retorno falhou", request_id, ticker)
     try:
         missing = _missing_models(list(MODELS))  # o mesmo que o `enqueue_compute`
         if missing:

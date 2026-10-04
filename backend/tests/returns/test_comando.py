@@ -3,7 +3,6 @@ o codigo 1 (`CommandError`) numa falha, num ticker invalido e no registry incomp
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from io import StringIO
 from typing import Any
 
@@ -16,8 +15,6 @@ from apps.risk import config as risk_config
 from tests.returns.test_compute import com_serie, cria_ativo, cria_serie
 
 pytestmark = pytest.mark.django_db
-
-INICIO = datetime(2026, 10, 3, 12, 0, tzinfo=UTC)
 
 
 def _roda(*args: str) -> str:
@@ -85,4 +82,3 @@ def test_o_codigo_de_saida_do_processo_e_1(monkeypatch: pytest.MonkeyPatch) -> N
     with pytest.raises(SystemExit) as exc:
         ManagementUtility(["manage.py", "compute_returns"]).execute()
     assert exc.value.code == 1
-    assert INICIO.tzinfo is UTC
