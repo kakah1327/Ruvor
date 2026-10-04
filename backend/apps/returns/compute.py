@@ -251,9 +251,12 @@ def _compute_asset(
 
 
 def _q(x: float | None) -> Decimal | None:
-    return (
-        None if x is None else Decimal(repr(x)).quantize(Q10, rounding=ROUND_HALF_EVEN)
-    )
+    """O `float` do motor em `Decimal` de 10 casas. `str(float(x))`, como o `_decimal` do
+    risco: um `np.float64` passa por `float` primeiro -- o `repr` dele, no numpy 2, e
+    `np.float64(...)`, que o `Decimal` recusa (revisao de implementacao da T3)."""
+    if x is None:
+        return None
+    return Decimal(str(float(x))).quantize(Q10, rounding=ROUND_HALF_EVEN)
 
 
 def _fields(run: ReturnModelResult, as_of_date: date) -> dict[str, object]:

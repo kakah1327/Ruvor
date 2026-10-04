@@ -534,3 +534,13 @@ def test_v13_a_previsao_vai_a_coluna_ja_quantizada() -> None:
     assert campos["next_forecast_date"] == SEGUNDA
     falho = compute_module._fields(replace(run, error="x"), SEXTA)
     assert (falho["next_forecast"], falho["next_forecast_date"]) == (None, None)
+
+
+def test_o_q_aceita_np_float64_e_quantiza_como_o_float() -> None:
+    """O motor pode devolver `np.float64` (revisao de implementacao da T3): quantiza sem
+    levantar, igual ao `float` do mesmo valor."""
+    assert compute_module._q(np.float64(0.000123456789012345)) == Decimal(
+        "0.0001234568"
+    )
+    assert compute_module._q(np.float64(0.05)) == q(0.05) == Decimal("0.0500000000")
+    assert compute_module._q(None) is None
