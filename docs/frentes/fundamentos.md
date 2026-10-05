@@ -12,16 +12,12 @@
 ## Agora
 
 **Bloco:** M3.2 — Contexto (camada 5: comunicados da companhia à CVM e comparação com os pares)
-**Etapa:** **fechado** em 2026-09-27 — implementação, revisão final (aprovou) e FECHA; falta a PR de implementação
-**Ramo:** `fundamentos/M3.2-contexto`, criado em 2026-09-27 a partir da `main` com o M3.1 mesclado (PR #5)
+**Etapa:** **fechado** em 2026-09-27 e mesclado na `main` pela PR #9, no mesmo dia. A frente está parada
+**Ramo:** nenhum
 
 ## Próximo passo
 
-1. A PR de implementação do M3.2, que passa pela `marco1` (o serviço `beat`,
-   `tests/risk/test_beat.py`, os comentários das tarefas e o override do `pyproject.toml`); o
-   merge é do dono da frente, com a CI verde (D-85).
-2. Depois do merge, o próximo bloco da frente, que não está definido: o Marco 3 não tem outro. A
-   escolha é do dono.
+1. O próximo bloco da frente, que não está definido: o Marco 3 não tem outro. A escolha é do dono.
 
 ## O que a spec do M3.1 encontra pronta, e precisa ler
 
@@ -48,7 +44,8 @@
 
 ## O que esta frente espera de outras
 
-Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é de outro bloco.
+Nada. As telas dos fundamentos e do contexto já existem: entraram pela `marco1` no M1.6c (PR #17), hoje nas abas
+`/fundamentos` e `/comunicados` da tela do ativo (D-193).
 
 ## Registro
 
@@ -70,3 +67,4 @@ Nada para começar. A tela dos fundamentos virá depois do casco do M1.6, e é d
 | 2026-09-27 | PR #6 (spec) mesclada pelo dono da frente, sem revisão da `marco1` registrada na PR. PR do plano aberta |
 | 2026-09-27 | M3.2: spec e plano mesclados (PRs #6 e #7). Implementação T1 a T12, um commit por tarefa. As 26 mutações da T11 reprovam, todas com código 1. V-05 a V-10 conferem. A carga real do IPE levou 118 s, com pico de ~152 MiB, e gravou 80.900 comunicados de 339 companhias. Os 80.842 da spec contavam pares (protocolo, versão) distintos; a conta por link soma os 58 pares repetidos. Na comparação, 471 ações: 390 por segmento, 64 por subsetor e 17 sem grupo (12 companhias, como medido). Suíte com 622 testes |
 | 2026-09-27 | M3.2: revisão final **aprovou** numa rodada (0 graves, 0 médios, 3 leves, registrados no ESTADO). FECHA: ESTADO, ROADMAP, índices, `CLAUDE.md`, `aprendizados.md` e D-130 a D-134. **Bloco fechado** |
+| 2026-10-05 | Página posta no estado atual: o M3.2 está na `main` desde a PR #9 (2026-09-27); as telas dos fundamentos e dos comunicados entraram pela `marco1` (M1.6c). Frente parada, sem próximo bloco |

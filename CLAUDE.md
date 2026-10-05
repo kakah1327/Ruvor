@@ -337,7 +337,7 @@ aviso sempre aberto ([D-188](docs/decisoes/D-188-a-previsao-de-retorno-e-o-log-r
   Desde o M5.1, a seção do retorno (`components/ReturnsSection.tsx`, os estados e a visibilidade da previsão em
   `src/returns/state.ts`), depois do laboratório, com o `/returns` fora do `data-ready` e a lista ampliada do vocabulário
   só nas `retorno.*` (`tests/vocabulario.test.ts`).
-  Desde os ajustes de tela (ramo `marco1/ajustes-de-tela`), a **tela do ativo em seis abas**, cada uma com o seu
+  Desde os ajustes de tela (fora de bloco, PR #42), a **tela do ativo em seis abas**, cada uma com o seu
   endereço — `/ativos/{ticker}` (visão geral: preço, proventos e comportamento), `/risco`, `/laboratorio`, `/retorno`,
   `/fundamentos` e `/comunicados` —, pela rota `ativos/:ticker/:aba?` e `components/AssetTabs.tsx`, com a trilha só na aba
   do risco ([D-193](docs/decisoes/D-193-a-tela-do-ativo-em-seis-abas-com-endereco-restringe-a-d-99-a-d-187-e-a-d-192.md)); o botão **Explicações** no fim da barra de abas, desligado por padrão e lembrado em
