@@ -1159,7 +1159,38 @@
   display: flex;
   flex-direction: column;
   gap: var(--ruvor-space-7);
+  width: 100%;
   max-width: 1040px;
+  margin-inline: auto;
+}
+
+/* O topo centrado: a pergunta, o campo e os atalhos. O resultado da busca volta à esquerda. */
+.ruvor-home-page .ruvor-home {
+  width: 100%;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.ruvor-home-page .ruvor-home .ruvor-sub {
+  margin-inline: auto;
+}
+
+.ruvor-home-page .ruvor-home .ruvor-chips {
+  justify-content: center;
+}
+
+.ruvor-home-page .ruvor-search__popover,
+.ruvor-home-page .ruvor-search__results {
+  text-align: left;
+}
+
+.ruvor-home-facts > .ruvor-eyebrow,
+.ruvor-home-tour > .ruvor-eyebrow {
+  text-align: center;
+}
+
+.ruvor-home-facts__item {
+  text-align: center;
 }
 
 .ruvor-home-facts__list {
@@ -1171,11 +1202,10 @@
 }
 
 .ruvor-home-facts__item {
-  padding: var(--ruvor-space-4) var(--ruvor-space-4) var(--ruvor-space-4) 0;
+  padding: var(--ruvor-space-4);
 }
 
 .ruvor-home-facts__item + .ruvor-home-facts__item {
-  padding-left: var(--ruvor-space-4);
   border-left: 1px solid var(--ruvor-border);
 }
 
@@ -1227,7 +1257,6 @@
   }
 
   .ruvor-home-facts__item:nth-child(3) {
-    padding-left: 0;
     border-left: 0;
   }
 
