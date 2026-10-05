@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/ajustes-de-tela` — ajustes de tela do Kauã (D-193 a D-195), a PR a revisar; o M5.1 entrou pela PR #41 |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M2.2b-telas-da-carteira` — o M2.2b, com os portões das T2 a T4 aprovados; o M5.1 entrou pela PR #41 e os ajustes de tela (D-193 a D-195) pela PR #42 |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a ✅ (PR #34, 2026-10-02) | [frentes/identidade.md](frentes/identidade.md) | — |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 

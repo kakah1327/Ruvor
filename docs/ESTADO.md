@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-10-04
+**Última atualização:** 2026-10-05
 
 ---
 
@@ -39,7 +39,7 @@ implementação a abrir pelo dono, revisada pela `identidade`, depois do ajuste 
 `test_requested_by.py` — e entrou na `main` pela PR #39; o **M2.4 fechou em 2026-10-04** — o regime de laboratório: o
 experimento fixo da década de cada ativo coberto, os nove modelos nos dois níveis pelo cálculo de produção, ano a ano, em
 `gold.lab_run`, `lab_result` e `lab_year`, pela rota `/lab` e numa seção da tela do ativo logo depois do risco
-([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) — e entrou na `main` pela PR #40; o **M5.1 fechou em 2026-10-04** — o retorno: a média histórica e o AR(1) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito, numa seção depois do laboratório; o motor `0.5.0` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) —, retomado pelo Kauã, com a PR #41 a sair do rascunho; na
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) — e entrou na `main` pela PR #40; o **M5.1 fechou em 2026-10-04** — o retorno: a média histórica e o AR(1) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito, numa seção depois do laboratório; o motor `0.5.0` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) —, retomado pelo Kauã, e entrou na `main` pela PR #41; os **ajustes de tela** (D-193 a D-195), fora de bloco, entraram pela PR #42, em 2026-10-05; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -1968,7 +1968,7 @@ marcar o evento no `finally` —, e reprovava 3 de 5 vezes; corrigido para confe
 A imagem e o volume do `frontend` precisam ser refeitos depois de receber a `main` com o `react-router`. E a fase A noutra
 máquina começa por refazer a referência. Os três em [aprendizados](aprendizados.md).
 
-### Ajustes de tela (fora de bloco, ramo `marco1/ajustes-de-tela`)
+### Ajustes de tela (fora de bloco, ramo `marco1/ajustes-de-tela`, PR #42, mesclada em 2026-10-05)
 
 Em 2026-10-04, o Kauã fez ajustes de tela na hora, vistos no navegador, com a aprovação dele na conversa no lugar
 do portão de mockup. O `frontend/` e o `brand/` são da `marco1`, e a PR passa pela revisão dela. Os ajustes:
@@ -1988,10 +1988,12 @@ do portão de mockup. O `frontend/` e o `brand/` são da `marco1`, e a PR passa 
 
 ## Próximo passo
 
-**Na frente `marco1`, a PR dos ajustes de tela** (`marco1/ajustes-de-tela`, D-193 a D-195), revisada pela `marco1`. A
-do M5.1 entrou na `main` pela PR #41 (2026-10-04). **A imagem do `worker` diz `0.5.0`**: um checkout noutro ramo sem o
+**Na frente `marco1`, nenhuma PR aberta:** o M5.1 entrou na `main` pela PR #41 (2026-10-04) e os ajustes de tela
+(D-193 a D-195) pela PR #42 (2026-10-05). **Antes da próxima execução real, rever o `frontend/e2e/capturas.mjs`**, escrito
+para a página em rolagem, e ver as abas e o carvão quente no celular. **A imagem do `worker` diz `0.5.0`**: um checkout noutro ramo sem o
 M5.1 não pode rodar o cálculo do risco com ela (a versão sairia errada em linhas imutáveis), e a primeira rotina de cada
-máquina retreina os quatro modelos caros (os retratos `0.4.0` não valem) e refaz o laboratório. **O M2.2b** recebe a
+máquina retreina os quatro modelos caros (os retratos `0.4.0` não valem) e refaz o laboratório. **O M2.2b** (ramo
+`marco1/M2.2b-telas-da-carteira`, com os portões das T2 a T4 aprovados e 96 commits atrás da `main` em 2026-10-05) recebe a
 `main` com o M5.1 e os ajustes de tela antes da tela: a ordem das seções, risco → laboratório → retorno → Fundamentos →
 Comunicados, é a ordem das abas (D-193). **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
 risco depois disso grava o experimento dele. **O parecer da CVM, quando vier antes de comercializar, precisa cobrir o M5.1
@@ -2015,7 +2017,7 @@ data de 2026-10-02 retreinou a linhagem inteira dele (72 retratos novos), e os o
 apagaria essa história junto — e, desde o M1.5b, os retratos. Ela ainda se reconstrói — o preço
 está em `silver`, e um `--full` dos quatro ativos do M1.5b levava ~5,5 min —, mas só para a série de hoje, não para a de cada dia passado.
 
-**Na frente `identidade`, o M2.2a está na `main`** (PR #34), sem o parecer da CVM
+**Na frente `identidade`, os quatro blocos estão na `main`** — o último, o M2.2a, pela PR #34 —, sem o parecer da CVM
 ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md)). O M2.2b, as telas da carteira, é da `marco1` e não espera o parecer. O
 próximo bloco da frente é escolha do dono ([frentes/identidade.md](frentes/identidade.md)). **O recado do M4.2 para a `marco1` e o M2.2:** toda view nova declara
 `api_key_scope` e `extend_schema`; tabela privada nova usa o gerente de `tenancy.py`; teste usa

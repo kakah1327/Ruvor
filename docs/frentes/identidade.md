@@ -22,10 +22,11 @@ M2.2b, da `marco1`. Sem comercialização, o parecer da CVM não segura a cartei
 
 ## Próximo passo
 
-1. Quando o M2.1b (D-140) entrar, ajustar o caso anônimo de `tests/accounts/test_requested_by.py`
-   para 401, na mesma rodada de revisão da PR dele.
-2. Definir o próximo bloco da frente com o dono ([ROADMAP](../ROADMAP.md)).
-3. Antes de comercializar a plataforma, pedir o parecer da CVM e registrá-lo numa decisão nova (D-160).
+1. Definir o próximo bloco da frente com o dono ([ROADMAP](../ROADMAP.md)).
+2. O pedido da `marco1`: `verbose_name` em `User.name` e `User.email` (a mensagem de semelhança da senha cita o campo
+   em inglês).
+3. Antes de comercializar a plataforma, pedir o parecer da CVM e registrá-lo numa decisão nova (D-160), cobrindo também
+   o M5.1 (D-192).
 
 ## O que esta frente espera de outras
 
@@ -59,3 +60,4 @@ M2.2b, da `marco1`. Sem comercialização, o parecer da CVM não segura a cartei
 | 2026-10-01 | PR #30 (M1.5c) e PR #31 (spec e plano do M2.2a) na `main`. **T0 do M2.2a executada:** ramo avançado à `main` `804cda4` sem conflito; a `main` não trouxe migration nova de `accounts` (`0006_report`) nem de `assets` (`0003_yahoo_chart_price_corporate_event`); imagem do `worker` reconstruída; banco `ruvor_m22` já existia, `migrate` sem nada a aplicar, `makemigrations --check` limpo, `spectacular --validate --fail-on-warn` com 0; o teste de mentira em `tests/portfolios` apareceu na coleta do avulso. Linha de base: `1397 passed` em 14 min 45 s, `mypy` sem erros em 225 arquivos, `ruff check` e `ruff format --check` limpos |
 | 2026-10-02 | M2.2a: **T1 a T6 executadas**, um commit cada — as cinco tabelas e os gatilhos (`1c25905`), a série e o provedor (`5cc26da`), os serviços da composição (`69a403a`), as rotas, a chave e o esquema (`c88495b`), pedir e ler o risco (`06830fe`), as três tarefas e a conversão (`0127446`); suíte inteira verde depois de cada uma (1466, 1484, 1521, 1572, 1620 e 1652 testes), `mypy` e `ruff` limpos. A pré-condição da mutação 5 do plano não bastava — a diferença de um ulp some no `1 + R` —, e os preços do teste foram trocados (verbete novo em aprendizados). **T7:** as 25 mutações reprovaram. **T8:** principal em `git switch --detach 0127446`, `web` e `worker` nele, Beat parado; V-25 pelo proxy do Vite — `PETR4 40` / `VALE3 30` / `ITUB4 30`, `ok` em 143 s, 18 resultados, `series_sha256` igual ao reconstruído do `psql`, 409 ao pedir de novo, versão 2 em 148 s, a chave lê e recebe 403 no `POST`, o gatilho recusa o `UPDATE`. Principal de volta ao ramo de antes. FECHA escrito; a `main` (M1.7 e M2.3) entrou no ramo, 1711 testes; PR #34 aberta, CI verde nos quatro trabalhos, segurada até o parecer |
 | 2026-10-02 | PR #34 (implementação do M2.2a) na `main`. Decidido com o dono: a plataforma não vai ser comercializada por enquanto, e o parecer da CVM deixa de segurar a carteira — só vale antes de comercializar ([D-160](../decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md), que substitui a D-116, item 2, e a D-153, item 2; o lado seguro, item 3 da D-116, continua). **M2.2a fechado na `main`.** ESTADO, ROADMAP, FRENTES, PRODUTO e `CLAUDE.md` sem a trava |
+| 2026-10-05 | O caso anônimo de `tests/accounts/test_requested_by.py` passou a esperar 401 (`f312552`) e entrou com o M2.1b (PR #39). Frente sem bloco aberto e sem pendência própria; o próximo bloco é escolha do dono |

@@ -50,11 +50,10 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 
 ## Próximo passo
 
-1. **Revisar a PR dos ajustes de tela** (`marco1/ajustes-de-tela`, do Kauã): as seis abas (D-193), o botão
-   Explicações e o detalhe recolhido (D-194), a página inicial centrada e o tema escuro em carvão quente (D-195). Antes
-   da próxima execução real, rever o `frontend/e2e/capturas.mjs`, escrito para a página em rolagem. O M5.1 entrou pela
-   PR #41: a imagem do `worker` diz `0.5.0`.
-2. **O M2.2b**, no ramo dele: recebe a `main` com o M5.1 e os ajustes de tela antes da tela; a ordem das seções —
+1. **Rever o `frontend/e2e/capturas.mjs`** antes da próxima execução real: foi escrito para a página em rolagem, e a
+   tela do ativo agora tem seis abas (D-193). Ver as abas e o carvão quente no celular. Os ajustes de tela entraram pela
+   PR #42 (2026-10-05) e o M5.1 pela PR #41: a imagem do `worker` diz `0.5.0`.
+2. **O M2.2b**, no ramo dele (96 commits atrás da `main` em 2026-10-05): recebe a `main` com o M5.1 e os ajustes de tela antes da tela; a ordem das seções —
    risco → laboratório → retorno → Fundamentos → Comunicados — é a ordem das abas.
 3. Pedir à `identidade` o `verbose_name` em `User.name` e `User.email` (a mensagem de semelhança da senha cita o campo em
    inglês).
@@ -105,3 +104,4 @@ gravaram nenhum (ver o fecho do M1.4b no ESTADO).
 | 2026-10-03 | M1.4b mesclado (PR #38). M2.1b fechado: dezesseis tarefas, os cinco portões de mockup aprovados pelo dono (o menu de conta por último na barra, a barra estreita até 840 px, "Administração"); o `POST /risk` exige conta (D-140); 1621 testes no frontend e 1753 no backend — 1 falha, o caso anônimo do `test_requested_by.py`, que a `identidade` ajusta; na execução real, o `acesso.mjs` com 133 conferências e 36 comparações com os mockups sem diferença, na segunda rodada (a primeira achou o diálogo que reabria antes do `close` do navegador, corrigido em `45a06c5`), e o `capturas.mjs` com 644; a PR de implementação fica para o dono abrir, depois do ajuste da `identidade` |
 | 2026-10-04 | M5.1 retomado pelo Kauã, na máquina dele: a `main` com o M2.4 recebida, os ajustes do mockup, T10 a T13, a correção do V-09 instável do laboratório, a fase A refeita (os 108 pares iguais, o oráculo a 4,98e-11), a fase B (558 conferências, 0 falhas) e o FECHA |
 | 2026-10-04 | PR #41 (M5.1) mesclada. Ajustes de tela pelo Kauã, no ramo `marco1/ajustes-de-tela`, vistos no navegador e aprovados na conversa: as seis abas com endereço (D-193), o botão Explicações e o detalhe recolhido (D-194), a página inicial centrada, o tema escuro em carvão quente (D-195); 1830 testes no frontend; o `capturas.mjs` não rodado, a rever |
+| 2026-10-05 | PR #42 (ajustes de tela) mesclada. Documentos postos no estado atual: nenhuma PR aberta na frente; o M2.2b segue no ramo dele |
