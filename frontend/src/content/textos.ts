@@ -392,6 +392,9 @@ export const TEXTOS = {
   // O controle de recolher da assimetria e da curtose (RF-06, RF-07 do M2.3): do
   // `comportamento.html` aprovado — um rótulo só, nos dois estados e nos dois níveis.
   "comportamento.momentos.abrir": "Ver a assimetria e a curtose",
+  "comportamento.verMais":
+    "Ver mais: estresse, Ibovespa, proventos, distribuição e volume",
+  "comportamento.verMenos": "Ver menos",
 
   // risco.* — a camada 3.
   "risco.sobrancelha": "O que pode acontecer",
@@ -632,6 +635,7 @@ export const TEXTOS = {
   "laboratorio.grade.kDeN": (k: number, n: number) => `${k} de ${n}`,
   "laboratorio.tag.anoCurto": "curto, sem veredito",
   "laboratorio.testes.abrir": "Ver os testes de cada modelo",
+  "laboratorio.grade.anoAAno": "Ano a ano",
   "laboratorio.testes.porAno": "Os testes de cada ano, a 95%",
   "laboratorio.testes.col.ano": "Ano",
   "laboratorio.testes.col.veredito": "Veredito",

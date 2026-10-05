@@ -1,4 +1,4 @@
-import { type ReactNode, useId } from "react";
+import { type ReactNode, useId, useState } from "react";
 
 import type { Load } from "../api/resource";
 import {
@@ -198,6 +198,8 @@ function Grid({
   reading: Reading;
 }) {
   const captionId = useId();
+  // Os anos recolhidos por padrão: a grade abre com a década; o botão mostra ano a ano.
+  const [showYears, setShowYears] = useState(false);
   const is95 = alpha === "0.0500";
   const ref = MODEL_ORDER.map((m) => resultOf(run, m, alpha)).find(
     (r): r is LabResult => !failed(r),
@@ -314,7 +316,12 @@ function Grid({
   );
 
   return (
-    <section className="ruvor-panel" data-alpha={alpha} aria-labelledby={captionId}>
+    <section
+      className="ruvor-panel"
+      data-alpha={alpha}
+      data-years={showYears ? "on" : "off"}
+      aria-labelledby={captionId}
+    >
       <div className="ruvor-panel__head">
         <Glyph name="calendar-blank" />
         <div>
@@ -323,6 +330,14 @@ function Grid({
             {TEXTOS[`laboratorio.grade.titulo.${alpha}`]}
           </h3>
         </div>
+        <button
+          className="ruvor-btn ruvor-btn--ghost ruvor-panel__action"
+          type="button"
+          aria-pressed={showYears}
+          onClick={() => setShowYears((on) => !on)}
+        >
+          {TEXTOS["laboratorio.grade.anoAAno"]}
+        </button>
       </div>
       {/* Na avançada, as notas antes da tabela; na iniciante, a grade primeiro (portão). */}
       {reading === "advanced" ? (
@@ -349,7 +364,7 @@ function Grid({
               <th scope="col">{TEXTOS["risco.tabela.col.modelo"]}</th>
               {decadeHead("narrow")}
               {years.map((y) => (
-                <th scope="col" key={y.index}>
+                <th scope="col" className="ruvor-lab-grid__year" key={y.index}>
                   {TEXTOS["laboratorio.grade.ano"](y.index + 1)}
                   <span className="ruvor-lab-grid__sub">
                     {TEXTOS["laboratorio.grade.periodo"](

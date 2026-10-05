@@ -1256,6 +1256,34 @@ describe("RF-09 — proventos e desdobramentos", () => {
     expect(rows()).toHaveLength(3);
   });
 
+  it("mais de cinco na janela: só os cinco mais novos, e ver todos com a série inteira", async () => {
+    const monthly = Array.from({ length: 8 }, (_, i) => ({
+      date: `2026-0${i + 1}-01`,
+      kind: "dividend" as const,
+      amount: "0.010000",
+      numerator: null,
+      denominator: null,
+    }));
+    allOk({ events: ok({ ticker: "ITUB4", results: monthly }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    await waitFor(() => expect(within(eventsPanel()).getByRole("table")).toBeDefined());
+    expect(rows().map((r) => r[0])).toEqual([
+      "01/08/2026",
+      "01/07/2026",
+      "01/06/2026",
+      "01/05/2026",
+      "01/04/2026",
+    ]);
+    fireEvent.click(
+      within(eventsPanel()).getByRole("button", {
+        name: TEXTOS["ativo.eventos.verTodos"]("8"),
+      }),
+    );
+    expect(rows()).toHaveLength(8);
+  });
+
   it("sem eventos no período: a frase, e ver todos se houver antigos", async () => {
     allOk({ events: ok({ ticker: "ITUB4", results: EVENTS.results.slice(0, 2) }) });
     stubFetch();
@@ -1718,7 +1746,13 @@ describe("M2.3 — a assimetria e a curtose recolhidas na iniciante (V-05)", () 
       renderAsset();
       await loaded();
       expect(behavior().querySelectorAll("[data-collapsible]")).toHaveLength(1);
-      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(1);
+      // Os dois controles: o da assimetria e da curtose, e o "ver mais" dos blocos recolhidos.
+      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(2);
+      expect(
+        within(behavior()).getByRole("button", {
+          name: TEXTOS["comportamento.verMais"],
+        }),
+      ).toBeDefined();
       for (const field of [
         "return_12m",
         "volatility_12m",

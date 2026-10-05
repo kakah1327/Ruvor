@@ -1433,7 +1433,8 @@
    texto continua na página, para o botão o trazer de volta. Estado, erro e convite ficam
    (.ruvor-state, .ruvor-keep). */
 [data-explain="off"] .ruvor-sub,
-[data-explain="off"] .ruvor-note {
+[data-explain="off"] .ruvor-note,
+[data-explain="off"] .ruvor-lab-honest {
   display: none;
 }
 
@@ -2283,6 +2284,24 @@
 }
 
 /* As violações de um ano, no tamanho do número de tabela. */
+/* A grade do laboratório abre com a década; os anos aparecem pelo botão "Ano a ano". */
+[data-years="off"] .ruvor-lab-grid__year {
+  display: none;
+}
+
+.ruvor-panel__action {
+  margin-left: auto;
+}
+
+/* Os blocos recolhidos do comportamento: fora do desenho, ou de volta à grade, sem invólucro. */
+.ruvor-blocks__more {
+  display: none;
+}
+
+.ruvor-blocks__more[data-open="true"] {
+  display: contents;
+}
+
 .ruvor-lab-grid__year .ruvor-num {
   font-size: var(--ruvor-type-h3-size);
 }

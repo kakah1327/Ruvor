@@ -329,6 +329,21 @@ function readingButton(key: "casco.leitura.iniciante" | "casco.leitura.avancada"
 // ---------------------------------------------------------------- a ordem
 
 describe("RF-13 — a ordem das seções", () => {
+  it("as grades abrem com a década, e o Ano a ano mostra os anos de uma grade só", async () => {
+    renderAsset();
+    await settled("READY");
+    const grids = [...section().querySelectorAll<HTMLElement>("[data-years]")];
+    expect(grids.map((g) => g.getAttribute("data-years"))).toEqual(["off", "off"]);
+    const [first] = grids as [HTMLElement];
+    const toggle = within(first).getByRole("button", {
+      name: TEXTOS["laboratorio.grade.anoAAno"],
+    });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(toggle);
+    expect(grids.map((g) => g.getAttribute("data-years"))).toEqual(["on", "off"]);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("a aba do laboratório: só a seção dele, sem o risco nem os Fundamentos", async () => {
     renderAsset();
     await settled("READY");
