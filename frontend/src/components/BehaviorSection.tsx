@@ -1,4 +1,5 @@
 import { type ReactNode, useId } from "react";
+import { Link } from "react-router";
 
 import type { Load } from "../api/resource";
 import type { Metric, Metrics } from "../api/types";
@@ -14,6 +15,7 @@ import {
   typographicMinus,
 } from "../format/numbers";
 import { textFor, useReading } from "../reading";
+import { assetTabPath } from "./AssetTabs";
 import { Collapsible } from "./Collapsible";
 import { Glyph } from "./Glyph";
 import { ReturnsHistogram } from "./ReturnsHistogram";
@@ -409,10 +411,10 @@ export function BehaviorSection({ load, ticker, onRetry }: Props) {
               {TEXTOS["comportamento.naoCalculado.nota"]}
             </p>
             <div className="ruvor-state__actions">
-              <a className="ruvor-btn" href="#risco">
+              <Link className="ruvor-btn" to={assetTabPath(ticker, "risco")}>
                 <Glyph name="chart-line" />
                 <span>{TEXTOS["comportamento.irParaRisco"]}</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

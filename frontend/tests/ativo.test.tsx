@@ -415,8 +415,9 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
   };
 }
 
-function renderAsset(ticker = "ITUB4") {
-  const router = createMemoryRouter(routes, { initialEntries: [`/ativos/${ticker}`] });
+function renderAsset(ticker = "ITUB4", tab = "") {
+  const path = tab === "" ? `/ativos/${ticker}` : `/ativos/${ticker}/${tab}`;
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -463,12 +464,18 @@ const statValue = (field: string) =>
 const statPhrase = (field: string) =>
   stat(field).querySelector(".ruvor-note")?.textContent;
 
-async function loaded(): Promise<void> {
+/** O `data-ready`: o cabeçalho e o risco terminados, em qualquer aba. */
+async function ready(): Promise<void> {
   await waitFor(() =>
     expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
       "true",
     ),
   );
+}
+
+/** A visão geral pronta: o `data-ready` e o comportamento fora do carregando. */
+async function loaded(): Promise<void> {
+  await ready();
   await waitFor(() => expect(behavior().querySelector("[aria-busy]")).toBeNull());
 }
 
@@ -488,7 +495,7 @@ function openMoments(): void {
 // ---------------------------------------------------------------- RF-06
 
 describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () => {
-  it("pede as nove juntas, antes de qualquer resposta — com o /lab do M2.4 e o /returns do M5.1", () => {
+  it("pede as oito juntas, antes de qualquer resposta — com o /lab do M2.4 e o /returns do M5.1; os comunicados, só na aba deles", () => {
     replies = {};
     renderAsset();
     expect(count("suggestion")).toBe(0);
@@ -502,25 +509,105 @@ describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () =>
         "/api/v1/assets/ITUB4/fundamentals",
         "/api/v1/assets/ITUB4/lab",
         "/api/v1/assets/ITUB4/returns",
-        "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
       ].sort(),
     );
   });
 
-  it("as duas seções do M1.6c vêm depois do risco: Fundamentos, depois Comunicados", async () => {
+  it("na aba dos comunicados, as oito e o /disclosures", () => {
+    replies = {};
+    renderAsset("ITUB4", "comunicados");
+    expect(calls.map((c) => c.url)).toContain(
+      "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
+    );
+    expect(calls).toHaveLength(9);
+  });
+
+  it("as abas, na ordem: visão geral, risco, laboratório, retorno, fundamentos e comunicados", async () => {
     renderAsset();
     await loaded();
-    const risco = document.getElementById("risco") as HTMLElement;
-    const follows = (a: Node, b: Node) =>
-      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-    expect(follows(risco, fundamentalsSection())).toBe(true);
-    expect(follows(fundamentalsSection(), disclosuresSection())).toBe(true);
-    expect(risco.contains(fundamentalsSection())).toBe(false);
+    const nav = screen.getByRole("navigation", { name: TEXTOS["ativo.abas.rotulo"] });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((a) => a.textContent),
+    ).toEqual([
+      TEXTOS["ativo.aba.visaoGeral"],
+      TEXTOS["ativo.aba.risco"],
+      TEXTOS["ativo.aba.laboratorio"],
+      TEXTOS["ativo.aba.retorno"],
+      TEXTOS["ativo.aba.fundamentos"],
+      TEXTOS["ativo.aba.comunicados"],
+    ]);
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((a) => a.getAttribute("href")),
+    ).toEqual([
+      "/ativos/ITUB4",
+      "/ativos/ITUB4/risco",
+      "/ativos/ITUB4/laboratorio",
+      "/ativos/ITUB4/retorno",
+      "/ativos/ITUB4/fundamentos",
+      "/ativos/ITUB4/comunicados",
+    ]);
+    const current = within(nav).getByRole("link", { current: "page" });
+    expect(current.textContent).toBe(TEXTOS["ativo.aba.visaoGeral"]);
+  });
+
+  it("a visão geral: o preço, os proventos e o comportamento, sem as outras seções", async () => {
+    renderAsset();
+    await loaded();
+    expect(within(pricePanel()).getByRole("img")).toBeDefined();
+    expect(behavior()).not.toBeNull();
+    expect(main().querySelector("[data-risk-state]")).toBeNull();
+    expect(main().querySelector('[data-section="fundamentals"]')).toBeNull();
+    expect(main().querySelector('[data-section="disclosures"]')).toBeNull();
+  });
+
+  it("trocar de aba mostra a seção dela e não pede as rotas de novo", async () => {
+    renderAsset();
+    await loaded();
+    const before = calls.length;
+    const nav = screen.getByRole("navigation", { name: TEXTOS["ativo.abas.rotulo"] });
+    fireEvent.click(
+      within(nav).getByRole("link", { name: TEXTOS["ativo.aba.fundamentos"] }),
+    );
+    await waitFor(() =>
+      expect(fundamentalsSection().getAttribute("data-state")).toBe("empty"),
+    );
+    expect(main().querySelector("[data-risk-state]")).toBeNull();
+    expect(calls.length).toBe(before);
+  });
+
+  it("a aba dos comunicados: a seção da companhia", async () => {
+    renderAsset("ITUB4", "comunicados");
+    await ready();
     await waitFor(() =>
       expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
     );
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
     expect(disclosuresSection().getAttribute("data-company")).toBe("19348");
+  });
+
+  it("as explicações: escondidas por padrão; o botão as mostra, e a escolha é lembrada", async () => {
+    window.localStorage.removeItem("ruvor-explain");
+    renderAsset();
+    await loaded();
+    const root = () => main().querySelector("[data-explain]") as HTMLElement;
+    const button = () =>
+      screen.getByRole("button", { name: TEXTOS["ativo.explicacoes"] });
+    expect(root().getAttribute("data-explain")).toBe("off");
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(button());
+    expect(root().getAttribute("data-explain")).toBe("on");
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    expect(window.localStorage.getItem("ruvor-explain")).toBe("on");
+    window.localStorage.removeItem("ruvor-explain");
+  });
+
+  it("a aba desconhecida vira a visão geral, sem entrada nova no histórico", async () => {
+    const router = renderAsset("ITUB4", "xpto");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/ativos/ITUB4"));
+    expect(router.state.historyAction).toBe("REPLACE");
   });
 
   it("a lenta não segura a rápida: o comportamento chega com a identidade pendente", async () => {
@@ -602,8 +689,6 @@ describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () =>
     ["prices", () => pricePanel()],
     ["events", () => eventsPanel()],
     ["metrics", () => behavior()],
-    ["fundamentals", () => fundamentalsSection()],
-    ["disclosures", () => disclosuresSection()],
   ] as const)(
     "%s com 500: o erro só na seção dela, e as outras renderizam",
     async (route, section) => {
@@ -630,18 +715,38 @@ describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () =>
       if (route !== "metrics") {
         await waitFor(() => expect(statValue("return_12m")).toBe("+25,8%"));
       }
-      if (route !== "fundamentals") {
-        await waitFor(() =>
-          expect(fundamentalsSection().getAttribute("data-state")).toBe("empty"),
-        );
-      }
-      if (route !== "disclosures") {
-        await waitFor(() =>
-          expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
-        );
-      }
 
       // tentar de novo pede só a rota da seção
+      replies[route] = allOkReply(route);
+      const before = calls.length;
+      fireEvent.click(
+        within(section()).getByRole("button", { name: TEXTOS["ativo.tentarDeNovo"] }),
+      );
+      await waitFor(() => expect(within(section()).queryByRole("alert")).toBeNull());
+      expect(calls.slice(before).map((c) => c.route)).toEqual([route]);
+    },
+  );
+
+  it.each([
+    ["fundamentals", "fundamentos", () => fundamentalsSection()],
+    ["disclosures", "comunicados", () => disclosuresSection()],
+  ] as const)(
+    "%s com 500, na aba dela: o erro só na seção, e tentar de novo pede só a rota dela",
+    async (route, tab, section) => {
+      allOk({ [route]: fail(500) });
+      stubFetch();
+      renderAsset("ITUB4", tab);
+      await waitFor(() => expect(within(section()).getByRole("alert")).toBeDefined());
+      await waitFor(() =>
+        expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
+          "true",
+        ),
+      );
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+      expect(within(header()).getByRole("heading", { level: 1 }).textContent).toBe(
+        "ITUB4",
+      );
+
       replies[route] = allOkReply(route);
       const before = calls.length;
       fireEvent.click(
@@ -700,19 +805,17 @@ describe("data-ready e reloadAll()", () => {
     // o /lab (M2.4) e o /returns (M5.1) foram pedidos e seguem sem resposta: o data-ready não os espera
     expect(calls.filter((c) => c.route === "lab")).toHaveLength(1);
     expect(calls.filter((c) => c.route === "returns")).toHaveLength(1);
-    // as duas seções do M1.6c seguem carregando: o data-ready não as espera
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("loading");
-    expect(disclosuresSection().getAttribute("data-state")).toBe("loading");
+    // o /fundamentals segue sem resposta: o data-ready não o espera
+    expect(calls.filter((c) => c.route === "fundamentals")).toHaveLength(1);
   });
 
-  it("as duas seções do M1.6c terminadas não bastam: o risco pendente segura", async () => {
+  it("os comunicados terminados não bastam: o risco pendente segura", async () => {
     allOk({ risk: undefined });
     stubFetch();
-    renderAsset();
+    renderAsset("ITUB4", "comunicados");
     await waitFor(() =>
       expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
     );
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
     expect(main().querySelector("[data-ready]")).toBeNull();
   });
 
@@ -1075,15 +1178,9 @@ describe("M2.3 — V-08: trocar o nível não pede nada à API", () => {
   it("com o risco em E1, a troca pelo alternador não chama o fetch, nos dois sentidos", async () => {
     allOk({ risk: ok(RISK_E1) });
     stubFetch();
+    // Na visão geral: o /risk em E1 não abre acompanhamento, em aba nenhuma.
     renderAsset();
     await loaded();
-    // E1: a seção de risco mostra o resultado pronto, sem acompanhamento.
-    expect(
-      main().querySelector("[data-risk-state]")?.getAttribute("data-risk-state"),
-    ).toBe("E1");
-    await waitFor(() =>
-      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
-    );
     const fetchSpy = vi.mocked(fetch);
     const antes = fetchSpy.mock.calls.length;
     // Um respiro depois da troca, para qualquer efeito disparado por ela chegar ao fetch.
@@ -1400,8 +1497,7 @@ describe("V-06 — nulo não é zero", () => {
     const link = within(section).getByRole("link", {
       name: TEXTOS["comportamento.irParaRisco"],
     });
-    expect(link.getAttribute("href")).toBe("#risco");
-    expect(document.getElementById("risco")).not.toBeNull();
+    expect(link.getAttribute("href")).toBe("/ativos/ITUB4/risco");
     expect(section.querySelector("[data-field]")).toBeNull();
     expect(within(section).queryByText(/^até /)).toBeNull();
   });

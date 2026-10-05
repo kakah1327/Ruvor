@@ -131,7 +131,7 @@ export function PriceChart({ rows }: { rows: PriceRow[] }) {
       <div className="ruvor-chart__empty">
         <div>
           <p>{TEXTOS["ativo.preco.vazio"]}</p>
-          <p className="ruvor-note">{TEXTOS["ativo.preco.vazio.nota"]}</p>
+          <p className="ruvor-note ruvor-keep">{TEXTOS["ativo.preco.vazio.nota"]}</p>
         </div>
       </div>
     );

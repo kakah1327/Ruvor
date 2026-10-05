@@ -207,7 +207,9 @@ function PeerSlot({ field, peers }: { field: PeerIndicatorName; peers: Peers }) 
     return (
       <div className="ruvor-peer">
         {label}
-        <p className="ruvor-note">{TEXTOS["fundamentos.pares.semComparacao"]}</p>
+        <p className="ruvor-note ruvor-keep">
+          {TEXTOS["fundamentos.pares.semComparacao"]}
+        </p>
       </div>
     );
   }

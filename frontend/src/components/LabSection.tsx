@@ -383,7 +383,7 @@ function Grid({
                   <tr key={m} data-model={m} data-error="true">
                     {head}
                     <td colSpan={cols - 1}>
-                      <p className="ruvor-note" data-phrase="erroModelo">
+                      <p className="ruvor-note ruvor-keep" data-phrase="erroModelo">
                         {TEXTOS["risco.erroModelo"](r?.error || "—")}
                       </p>
                     </td>
@@ -473,7 +473,7 @@ function LevelTests({
     return (
       <div data-alpha={alpha}>
         {title}
-        <p className="ruvor-note" data-phrase="erroModelo">
+        <p className="ruvor-note ruvor-keep" data-phrase="erroModelo">
           {TEXTOS["risco.erroModelo"](result?.error || "—")}
         </p>
       </div>

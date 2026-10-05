@@ -98,7 +98,7 @@ export function AssetHeader({ load, onRetry }: Props) {
             <p className="ruvor-asset-head__value" data-value="last-close">
               —
             </p>
-            <p className="ruvor-note">{TEXTOS["ativo.semPreco"]}</p>
+            <p className="ruvor-note ruvor-keep">{TEXTOS["ativo.semPreco"]}</p>
           </>
         )}
       </div>

@@ -414,7 +414,9 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
 }
 
 function renderAsset(ticker = "ITUB4") {
-  const router = createMemoryRouter(routes, { initialEntries: [`/ativos/${ticker}`] });
+  const router = createMemoryRouter(routes, {
+    initialEntries: [`/ativos/${ticker}/risco`],
+  });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -1398,7 +1400,7 @@ describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () =
   const invite = () => section().querySelector("[data-risk-invite]");
 
   it.each(STATES)(
-    "%s anônimo: o convite com next=/ativos/{ticker} e a frase, sem o botão; o título e a nota ficam",
+    "%s anônimo: o convite com next=/ativos/{ticker}/risco e a frase, sem o botão; o título e a nota ficam",
     async (state, body, title, note) => {
       allOk({ risk: ok(body), prices: ok(prices(0)), me: ANON });
       stubFetch();
@@ -1410,7 +1412,7 @@ describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () =
       const link = within(section()).getByRole("link", {
         name: TEXTOS["conta.convite.entrar"],
       });
-      expect(link.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4");
+      expect(link.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4%2Frisco");
       expect(invite()?.contains(link)).toBe(true);
       expect(
         within(invite() as HTMLElement).getByText(TEXTOS["conta.convite.frase"]),
@@ -1482,10 +1484,10 @@ describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () =
     expect(invite()).toBeNull();
     expect(section().textContent).not.toContain("As credenciais não foram fornecidas.");
     const enter = within(notice).getByRole("link", { name: TEXTOS["conta.entrar"] });
-    expect(enter.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4");
+    expect(enter.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4%2Frisco");
     expect(document.activeElement).toBe(enter);
     // A página fica onde estava; a sessão virou anônima (a barra mostra "Entrar").
-    expect(router.state.location.pathname).toBe("/ativos/ITUB4");
+    expect(router.state.location.pathname).toBe("/ativos/ITUB4/risco");
     expect(riskState()).toBe("E8");
     expect(
       document.querySelector(".ruvor-topbar__account")?.getAttribute("data-account"),
@@ -1509,7 +1511,7 @@ describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () =
     await waitFor(() =>
       expect(section().querySelector('[data-signin-notice="ended"]')).not.toBeNull(),
     );
-    await act(() => router.navigate("/ativos/PETR4"));
+    await act(() => router.navigate("/ativos/PETR4/risco"));
     await settled("E8");
     await waitFor(() =>
       expect(invite()?.getAttribute("data-risk-invite")).toBe("signin"),
@@ -1540,7 +1542,7 @@ describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () =
       ).not.toBeNull(),
     );
     expect(meRequests()).toBe(2);
-    expect(router.state.location.pathname).toBe("/ativos/ITUB4");
+    expect(router.state.location.pathname).toBe("/ativos/ITUB4/risco");
     expect(document.querySelector("[data-risk-state]")).toBeNull();
   });
 });

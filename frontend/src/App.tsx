@@ -7,6 +7,7 @@ import {
   useParams,
 } from "react-router";
 
+import { assetTabPath, tabFromSlug } from "./components/AssetTabs";
 import { Shell } from "./components/Shell";
 import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
@@ -18,22 +19,28 @@ import { UsersScreen } from "./screens/UsersScreen";
 import { SessionProvider } from "./session/SessionProvider";
 
 /**
- * A rota do ativo (RF-01): o ticker em minúsculas é aceito, e o endereço passa a mostrar
+ * A rota do ativo (RF-01), com a aba opcional depois do código: o ticker em minúsculas é aceito, e o endereço passa a mostrar
  * maiúsculas **sem entrada nova no histórico** — `replace`, não `push`. A tela só monta com
  * o código já em maiúsculas, e a chave pelo código a remonta do zero ao trocar de ativo.
  */
 function AssetRoute() {
-  const { ticker = "" } = useParams();
+  const { ticker = "", aba } = useParams();
   const navigate = useNavigate();
   const upper = ticker.toUpperCase();
+  const tab = tabFromSlug(aba);
 
+  // O código em minúsculas vira maiúsculas, e a aba desconhecida vira a visão geral: os dois
+  // com `replace`, sem entrada nova no histórico.
   useEffect(() => {
-    if (ticker !== upper) {
-      void navigate(`/ativos/${encodeURIComponent(upper)}`, { replace: true });
+    if (ticker !== upper || tab === null) {
+      void navigate(assetTabPath(upper, tab ?? ""), { replace: true });
     }
-  }, [navigate, ticker, upper]);
+  }, [navigate, ticker, upper, tab]);
 
-  return ticker === upper ? <AssetScreen key={upper} ticker={upper} /> : null;
+  // A chave é só o código: trocar de aba não remonta a tela nem pede as rotas de novo.
+  return ticker === upper && tab !== null ? (
+    <AssetScreen key={upper} ticker={upper} tab={tab} />
+  ) : null;
 }
 
 /**
@@ -53,7 +60,7 @@ export const routes: RouteObject[] = [
         element: <Shell />,
         children: [
           { index: true, element: <SearchScreen /> },
-          { path: "ativos/:ticker", element: <AssetRoute /> },
+          { path: "ativos/:ticker/:aba?", element: <AssetRoute /> },
           { path: "conta/senha", element: <PasswordScreen mode="voluntary" /> },
           { path: "organizacao/usuarios", element: <UsersScreen /> },
           { path: "*", element: <NotFoundScreen /> },

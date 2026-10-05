@@ -142,7 +142,7 @@ function LevelTests({ result, alpha }: { result: RiskResult | null; alpha: Alpha
     return (
       <div data-alpha={alpha}>
         {title}
-        <p className="ruvor-note" data-phrase="erroModelo">
+        <p className="ruvor-note ruvor-keep" data-phrase="erroModelo">
           {TEXTOS["risco.erroModelo"](result?.error || "—")}
         </p>
       </div>

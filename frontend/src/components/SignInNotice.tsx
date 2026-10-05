@@ -43,7 +43,7 @@ export function SignInNotice({
             ? TEXTOS["conta.aviso.terminou"]
             : TEXTOS["conta.aviso.paraQuemEntrou"]}
         </p>
-        <p className="ruvor-note">{TEXTOS["conta.aviso.volta"]}</p>
+        <p className="ruvor-note ruvor-keep">{TEXTOS["conta.aviso.volta"]}</p>
         <Link
           ref={linkRef}
           className="ruvor-btn ruvor-btn--primary"

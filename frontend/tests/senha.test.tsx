@@ -193,7 +193,8 @@ function fieldErrors(field: HTMLInputElement): string[] {
 }
 
 const required = () => document.querySelector('[data-screen="senha-obrigatoria"]');
-const assetScreen = () => document.getElementById("risco");
+// A tela do ativo: a barra de abas dela.
+const assetScreen = () => document.querySelector(".ruvor-tabs");
 
 beforeEach(() => {
   replies = {};

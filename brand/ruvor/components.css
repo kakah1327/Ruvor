@@ -1154,6 +1154,94 @@
   margin-bottom: var(--ruvor-space-5);
 }
 
+/* A página inicial abaixo do campo: os números do método e o que a página do ativo mostra. */
+.ruvor-home-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-7);
+  max-width: 1040px;
+}
+
+.ruvor-home-facts__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--ruvor-border);
+  border-bottom: 1px solid var(--ruvor-border);
+}
+
+.ruvor-home-facts__item {
+  padding: var(--ruvor-space-4) var(--ruvor-space-4) var(--ruvor-space-4) 0;
+}
+
+.ruvor-home-facts__item + .ruvor-home-facts__item {
+  padding-left: var(--ruvor-space-4);
+  border-left: 1px solid var(--ruvor-border);
+}
+
+.ruvor-home-facts__value {
+  font-size: var(--ruvor-type-h2-size);
+  font-weight: var(--ruvor-type-h2-weight);
+  line-height: var(--ruvor-type-h2-leading);
+  letter-spacing: var(--ruvor-type-h2-tracking);
+  color: var(--ruvor-ink);
+}
+
+.ruvor-home-facts__label {
+  margin: var(--ruvor-space-2) 0 0;
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-home-tour__list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ruvor-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ruvor-home-tour__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-2);
+  padding: var(--ruvor-space-5) 18px;
+}
+
+.ruvor-home-tour__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: var(--ruvor-space-2);
+  border-radius: var(--ruvor-radius-sm);
+  background: var(--ruvor-evidence-soft);
+  color: var(--ruvor-evidence-text);
+}
+
+@media (max-width: 1000px) {
+  .ruvor-home-facts__list,
+  .ruvor-home-tour__list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ruvor-home-facts__item:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .ruvor-home-facts__item:nth-child(n + 3) {
+    border-top: 1px solid var(--ruvor-border);
+  }
+}
+
+@media (max-width: 720px) {
+  .ruvor-home-tour__list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ruvor-notfound {
   max-width: 620px;
 }
@@ -1249,6 +1337,109 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* --- A tela do ativo: as abas ---------------------------------------------------------- */
+
+/* A barra de abas debaixo do cabeçalho: um link por seção, sublinhado na corrente. Rola na
+   horizontal quando não cabe, sem rolar a página. */
+.ruvor-tabs {
+  /* A linha de base é sombra interna, não borda: o overflow cortaria o sublinhado da aba
+     corrente, que se desenha por cima dela. */
+  box-shadow: inset 0 -1px 0 var(--ruvor-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ruvor-tabs__list {
+  display: flex;
+  gap: var(--ruvor-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ruvor-tabs__link {
+  display: block;
+  padding: var(--ruvor-space-3) var(--ruvor-space-3);
+  border-bottom: 2px solid transparent;
+  color: var(--ruvor-text-muted);
+  font-weight: var(--ruvor-type-small-weight);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ruvor-tabs__link:hover {
+  color: var(--ruvor-ink);
+}
+
+.ruvor-tabs__link:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: -2px;
+  border-radius: var(--ruvor-radius-sm);
+}
+
+.ruvor-tabs__link[aria-current="page"] {
+  color: var(--ruvor-ink);
+  border-bottom-color: var(--ruvor-decision);
+}
+
+/* A barra inteira: as abas, que rolam, e o botão das explicações, fixo no fim. */
+.ruvor-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ruvor-space-3);
+  box-shadow: inset 0 -1px 0 var(--ruvor-border);
+}
+
+.ruvor-tabs-bar .ruvor-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.ruvor-tabs__explain {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--ruvor-space-2);
+  padding: 6px 10px;
+  border: 1px solid var(--ruvor-border);
+  border-radius: var(--ruvor-radius-sm);
+  background: transparent;
+  color: var(--ruvor-text-muted);
+  font: inherit;
+  font-size: var(--ruvor-type-micro-size);
+  font-weight: var(--ruvor-type-micro-weight);
+  cursor: pointer;
+}
+
+.ruvor-tabs__explain:hover {
+  color: var(--ruvor-ink);
+}
+
+.ruvor-tabs__explain:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+.ruvor-tabs__explain[aria-pressed="true"] {
+  background: var(--ruvor-evidence-soft);
+  border-color: var(--ruvor-evidence-soft);
+  color: var(--ruvor-evidence-text);
+}
+
+/* Com as explicações escondidas, saem a introdução de cada seção e a frase de cada número; o
+   texto continua na página, para o botão o trazer de volta. Estado, erro e convite ficam
+   (.ruvor-state, .ruvor-keep). */
+[data-explain="off"] .ruvor-sub,
+[data-explain="off"] .ruvor-note {
+  display: none;
+}
+
+[data-explain="off"] .ruvor-state .ruvor-note,
+[data-explain="off"] .ruvor-note.ruvor-keep {
+  display: block;
 }
 
 /* --- A tela do ativo: o cabeçalho (camada 1) ------------------------------------------ */
