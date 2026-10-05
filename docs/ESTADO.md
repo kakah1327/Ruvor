@@ -1968,14 +1968,32 @@ marcar o evento no `finally` —, e reprovava 3 de 5 vezes; corrigido para confe
 A imagem e o volume do `frontend` precisam ser refeitos depois de receber a `main` com o `react-router`. E a fase A noutra
 máquina começa por refazer a referência. Os três em [aprendizados](aprendizados.md).
 
+### Ajustes de tela (fora de bloco, ramo `marco1/ajustes-de-tela`)
+
+Em 2026-10-04, o Kauã fez ajustes de tela na hora, vistos no navegador, com a aprovação dele na conversa no lugar
+do portão de mockup. O `frontend/` e o `brand/` são da `marco1`, e a PR passa pela revisão dela. Os ajustes:
+
+- **A tela do ativo em seis abas**, cada uma com o seu endereço (`/ativos/{ticker}/{aba}`), com a trilha só na aba
+  do risco ([D-193](decisoes/D-193-a-tela-do-ativo-em-seis-abas-com-endereco-restringe-a-d-99-a-d-187-e-a-d-192.md)).
+- **O botão Explicações**, desligado por padrão, que esconde a introdução e a frase de cada número, sem tirá-las da
+  página. Proventos, comportamento e as grades do laboratório abrem recolhidos ([D-194](decisoes/D-194-as-explicacoes-ficam-atras-de-um-botao-e-o-detalhe-recolhido-restringe-a-d-97-e-a-d-187.md)).
+- **A página inicial centrada**, com os números do método e o que a página do ativo mostra.
+- **O tema escuro em carvão quente** ([D-195](decisoes/D-195-o-tema-escuro-e-carvao-quente.md)).
+
+| Verificação | Resultado |
+|---|---|
+| Frontend | ✅ **43 arquivos, 1830 testes** (eram 1822); lint e `typecheck` limpos |
+| Navegador | conferido a cada ajuste em `localhost:5273`, no tema escuro, na largura do computador; a página inicial também em 375 e 820 px e no tema claro. As abas e o carvão quente **não** foram vistos no celular nem no claro (o claro não mudou) |
+| `frontend/e2e/capturas.mjs` | ⚠️ **não rodado**: foi escrito para a página em rolagem e precisa ser revisto antes da próxima execução real |
+
 ## Próximo passo
 
-**Na frente `marco1`, a PR do M5.1** (#41, implementação, T0 a T14), que sai do rascunho e o dono mescla com a CI verde;
-nenhuma revisão de outra frente é obrigatória. O M2.4 entrou pela PR #40. **A imagem do `worker` é uma só e passa a
-dizer `0.5.0`**: um checkout noutro ramo sem o M5.1 não pode rodar o cálculo do risco com ela (a versão sairia errada em
-linhas imutáveis), e a primeira rotina de cada máquina depois da mesclagem retreina os quatro modelos caros (os retratos
-`0.4.0` não valem) e refaz o laboratório. **O M2.2b** recebe a `main` com o M5.1 antes da tela: a ordem das seções é
-risco → laboratório → retorno → Fundamentos → Comunicados. **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
+**Na frente `marco1`, a PR dos ajustes de tela** (`marco1/ajustes-de-tela`, D-193 a D-195), revisada pela `marco1`. A
+do M5.1 entrou na `main` pela PR #41 (2026-10-04). **A imagem do `worker` diz `0.5.0`**: um checkout noutro ramo sem o
+M5.1 não pode rodar o cálculo do risco com ela (a versão sairia errada em linhas imutáveis), e a primeira rotina de cada
+máquina retreina os quatro modelos caros (os retratos `0.4.0` não valem) e refaz o laboratório. **O M2.2b** recebe a
+`main` com o M5.1 e os ajustes de tela antes da tela: a ordem das seções, risco → laboratório → retorno → Fundamentos →
+Comunicados, é a ordem das abas (D-193). **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
 risco depois disso grava o experimento dele. **O parecer da CVM, quando vier antes de comercializar, precisa cobrir o M5.1
 nomeadamente** (D-192). Ramos e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md).
 

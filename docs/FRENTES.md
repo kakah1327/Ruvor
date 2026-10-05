@@ -28,14 +28,14 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M5.1-retorno` — M5.1 fechado, continuado pelo Kauã na máquina dele; a PR #41 sai do rascunho (o M2.1b entrou pela PR #39, o M2.4 pela #40) |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/ajustes-de-tela` — ajustes de tela do Kauã (D-193 a D-195), a PR a revisar; o M5.1 entrou pela PR #41 |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a ✅ (PR #34, 2026-10-02) | [frentes/identidade.md](frentes/identidade.md) | — |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
 **Hoje são duas frentes ativas**, `marco1` e `identidade` — esta com a carteira (M2.2a, só o backend; as telas, M2.2b, são da `marco1`). A `fundamentos` fechou o M3.2 e está
 parada, sem próximo bloco definido; o Kauã, dono dela, assumiu a `identidade` em 2026-09-27.
 
-**Aviso à `identidade` (M5.1, 2026-10-04): a imagem do `worker` passa a dizer `0.5.0` quando a PR #41 for mesclada.** Um ramo sem o M5.1 não roda o cálculo do risco com ela (a versão sairia errada em linhas imutáveis): receba a `main` antes. A primeira rotina depois da mesclagem retreina os quatro modelos caros e refaz o laboratório; a carteira calcula com os mesmos números do `0.4.0` (o VaR não muda), rotulados `0.5.0`.
+**Aviso à `identidade` (M5.1, 2026-10-04): a imagem do `worker` diz `0.5.0` desde que a PR #41 foi mesclada (2026-10-04).** Um ramo sem o M5.1 não roda o cálculo do risco com ela (a versão sairia errada em linhas imutáveis): receba a `main` antes. A primeira rotina depois da mesclagem retreina os quatro modelos caros e refaz o laboratório; a carteira calcula com os mesmos números do `0.4.0` (o VaR não muda), rotulados `0.5.0`.
 
 **Aviso à `identidade` (M1.4b, 2026-10-03): a imagem do `worker` é uma só e já diz `0.4.0`.** Um ramo que não recebeu a `main` com o M1.4b tem, em `backend/tests/risk/test_compute.py`, a versão `"0.3.0"` literal em duas asserções, que reprovam no contêiner avulso dessa imagem: receba a `main` antes de rodar a suíte de backend. E, até a PR do M1.4b ser mesclada, o stack não serve outro ramo — o checkout principal fica no HEAD do M1.4b, porque um cálculo com o motor `0.3.0` montado gravaria números velhos com o rótulo `0.4.0`, para sempre (D-16). A carteira do M2.2a, quando calcular, já sai com os números do `0.4.0`.
 
