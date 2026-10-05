@@ -104,6 +104,47 @@ export const TEXTOS = {
   "busca.tagIndice": "índice",
   "busca.tagInativo": "inativo",
   "busca.tagSemDados": "sem dados ainda",
+  // A página inicial abaixo do campo: os números do método e o que a página do ativo mostra.
+  "busca.metodoTitulo": "O método, em números",
+  "busca.metodo": [
+    { valor: "9", rotulo: "métodos de estimar a perda em um dia" },
+    { valor: "4", rotulo: "testes que conferem cada método no passado" },
+    { valor: "2", rotulo: "níveis de confiança: 95% e 99%" },
+    { valor: "10 anos", rotulo: "de preço diário por ativo" },
+  ],
+  "busca.paginaTitulo": "O que a página do ativo mostra",
+  "busca.pagina": [
+    {
+      titulo: "Comportamento",
+      texto:
+        "O preço, os proventos, a volatilidade, as maiores quedas e como o ativo se saiu nos momentos de estresse do mercado.",
+    },
+    {
+      titulo: "Risco",
+      texto:
+        "Quanto o ativo pode perder em um dia, segundo nove métodos, e quais deles passaram nos testes sobre o histórico do próprio ativo.",
+    },
+    {
+      titulo: "Laboratório",
+      texto:
+        "Os mesmos nove métodos ano a ano, ao longo de uma década, para ver em que anos cada um acertou e errou.",
+    },
+    {
+      titulo: "Fundamentos e comunicados",
+      texto:
+        "Os indicadores do último balanço, a posição entre as empresas do mesmo segmento e o que a companhia divulgou à CVM.",
+    },
+  ],
+
+  // As abas da tela do ativo: cada uma com o seu endereço debaixo de /ativos/{ticker}.
+  "ativo.abas.rotulo": "Seções do ativo",
+  "ativo.aba.visaoGeral": "Visão geral",
+  "ativo.aba.risco": "Risco",
+  "ativo.aba.laboratorio": "Laboratório",
+  "ativo.aba.retorno": "Retorno",
+  "ativo.aba.fundamentos": "Fundamentos",
+  "ativo.aba.comunicados": "Comunicados",
+  "ativo.explicacoes": "Explicações",
 
   // O rodapé (RF-04).
   "rodape.ressalva": RESSALVA,
@@ -351,6 +392,9 @@ export const TEXTOS = {
   // O controle de recolher da assimetria e da curtose (RF-06, RF-07 do M2.3): do
   // `comportamento.html` aprovado — um rótulo só, nos dois estados e nos dois níveis.
   "comportamento.momentos.abrir": "Ver a assimetria e a curtose",
+  "comportamento.verMais":
+    "Ver mais: estresse, Ibovespa, proventos, distribuição e volume",
+  "comportamento.verMenos": "Ver menos",
 
   // risco.* — a camada 3.
   "risco.sobrancelha": "O que pode acontecer",
@@ -525,11 +569,11 @@ export const TEXTOS = {
   ): string =>
     `De ${inicio} a ${fim}, os dez primeiros anos de preço deste ativo. O primeiro ano serve para os modelos aprenderem; os ${anos} seguintes, para testá-los, um de cada vez${ultimo < 252 ? ` — o último, mais curto, com ${ultimo} pregões` : ""}.`,
   "laboratorio.diferenca": (versao: string, asOf: string): string =>
-    `Por que o veredito daqui pode ser diferente do da seção acima: aqui estão os mesmos nove métodos, mas só nos dez primeiros anos de preço deste ativo, até ${asOf}, calculados uma vez e guardados. A seção acima é refeita a cada dia útil e inclui os dias depois de ${asOf}. Este resultado, do motor de cálculo ${versao}, não muda enquanto o motor for o mesmo; com um motor novo, o experimento é refeito. E um veredito do passado não garante como o modelo vai se comportar daqui para a frente.`,
+    `Por que o veredito daqui pode ser diferente do da aba Risco: aqui estão os mesmos nove métodos, mas só nos dez primeiros anos de preço deste ativo, até ${asOf}, calculados uma vez e guardados. A aba Risco é refeita a cada dia útil e inclui os dias depois de ${asOf}. Este resultado, do motor de cálculo ${versao}, não muda enquanto o motor for o mesmo; com um motor novo, o experimento é refeito. E um veredito do passado não garante como o modelo vai se comportar daqui para a frente.`,
   "laboratorio.violacoesAno": (e: string, cadaN: number): string =>
     `Cada número é a quantidade de pregões daquele ano de teste em que a perda passou do limite do modelo. Num ano inteiro, de 252 pregões, espera-se cerca de ${e} (1 dia a cada ${cadaN}); o cabeçalho de cada ano diz quantos eram esperados nele.`,
   "laboratorio.vereditoAno": (celulas: number): string =>
-    `A 95%, cada ano de teste tem o próprio veredito: os mesmos dois testes da seção acima, aplicados só aos dias daquele ano. Nesta grade são ${celulas} anos julgados, e mesmo um modelo sem defeito sai não adequado em cerca de 1 ano a cada 14, só por acaso. O veredito que resume cada modelo é o da década.`,
+    `A 95%, cada ano de teste tem o próprio veredito: os mesmos dois testes da aba Risco, aplicados só aos dias daquele ano. Nesta grade são ${celulas} anos julgados, e mesmo um modelo sem defeito sai não adequado em cerca de 1 ano a cada 14, só por acaso. O veredito que resume cada modelo é o da década.`,
   "laboratorio.anoNaoJulgado": (n: number): string =>
     `O último ano de teste tem só ${n} pregões, menos de meio ano: é pouco para julgar. Ele mostra quantas vezes a perda passou do limite, sem veredito.`,
   "laboratorio.semVereditoAno99":
@@ -549,7 +593,7 @@ export const TEXTOS = {
   "laboratorio.sobrancelha": "Laboratório",
   "laboratorio.titulo": "Como os modelos se saíram em dez anos",
   "laboratorio.intro":
-    "Os mesmos nove métodos da seção acima, testados ano a ano nos dez primeiros anos de preço deste ativo. O experimento é calculado uma vez e guardado, e a plataforma não escolhe nenhum método.",
+    "Os mesmos nove métodos da aba Risco, testados ano a ano nos dez primeiros anos de preço deste ativo. O experimento é calculado uma vez e guardado, e a plataforma não escolhe nenhum método.",
   "laboratorio.carregando": "Carregando o laboratório deste ativo.",
   "laboratorio.estado.falhou.titulo": "O experimento deste ativo falhou.",
   "laboratorio.estado.falhou": (data: string) =>
@@ -570,7 +614,7 @@ export const TEXTOS = {
     `A década deste ativo tem ${n} pregões; o experimento pede no mínimo ${min}.`,
   "laboratorio.estado.semRisco.titulo": "O laboratório vem depois do risco.",
   "laboratorio.estado.semRisco":
-    "O experimento roda depois do primeiro cálculo do risco deste ativo. O pedido de cálculo fica na seção acima.",
+    "O experimento roda depois do primeiro cálculo do risco deste ativo. O pedido de cálculo fica na aba Risco.",
   "laboratorio.nota.falha": (data: string) =>
     `A tentativa de refazer o experimento em ${data} falhou. Os números abaixo são os do experimento anterior.`,
   "laboratorio.nota.motor": (antigo: string, novo: string) =>
@@ -591,6 +635,7 @@ export const TEXTOS = {
   "laboratorio.grade.kDeN": (k: number, n: number) => `${k} de ${n}`,
   "laboratorio.tag.anoCurto": "curto, sem veredito",
   "laboratorio.testes.abrir": "Ver os testes de cada modelo",
+  "laboratorio.grade.anoAAno": "Ano a ano",
   "laboratorio.testes.porAno": "Os testes de cada ano, a 95%",
   "laboratorio.testes.col.ano": "Ano",
   "laboratorio.testes.col.veredito": "Veredito",
@@ -678,7 +723,7 @@ export const TEXTOS = {
     "A validação depende da série de preços, que não carregou.",
   "retorno.estado.naoCoberto.titulo": "Este ativo ainda não tem preço.",
   "retorno.estado.naoCoberto":
-    "A validação do retorno chega junto com o cálculo do risco, que se pede na seção de risco acima.",
+    "A validação do retorno chega junto com o cálculo do risco, que se pede na aba Risco.",
   "retorno.estado.serieCurta.titulo": "Série curta demais para a validação",
   "retorno.estado.serieCurta": (n: string, min: string) =>
     `Este ativo tem ${n} pregões; a validação pede no mínimo ${min}.`,

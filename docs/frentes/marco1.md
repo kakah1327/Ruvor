@@ -50,10 +50,12 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 
 ## Próximo passo
 
-1. **Tirar a PR #41 (M5.1) do rascunho** e mesclá-la com a CI verde. O M2.4 entrou pela PR #40. Depois dela, a imagem do
-   `worker` diz `0.5.0`, e a primeira rotina de cada máquina retreina os quatro modelos caros e refaz o laboratório.
-2. **O M2.2b**, no ramo dele: recebe a `main` com o M5.1 antes da tela; a ordem das seções é risco → laboratório →
-   retorno → Fundamentos → Comunicados.
+1. **Revisar a PR dos ajustes de tela** (`marco1/ajustes-de-tela`, do Kauã): as seis abas (D-193), o botão
+   Explicações e o detalhe recolhido (D-194), a página inicial centrada e o tema escuro em carvão quente (D-195). Antes
+   da próxima execução real, rever o `frontend/e2e/capturas.mjs`, escrito para a página em rolagem. O M5.1 entrou pela
+   PR #41: a imagem do `worker` diz `0.5.0`.
+2. **O M2.2b**, no ramo dele: recebe a `main` com o M5.1 e os ajustes de tela antes da tela; a ordem das seções —
+   risco → laboratório → retorno → Fundamentos → Comunicados — é a ordem das abas.
 3. Pedir à `identidade` o `verbose_name` em `User.name` e `User.email` (a mensagem de semelhança da senha cita o campo em
    inglês).
 4. Os achados da revisão da PR #37 (M3.3), registrados como dívida no [ESTADO](../ESTADO.md#dívida-registrada).
@@ -102,3 +104,4 @@ gravaram nenhum (ver o fecho do M1.4b no ESTADO).
 | 2026-10-03 | M1.4b fechado: T0 a T7, com a revisão da implementação (T6b) antes da execução real; D-157 a D-159; o motor `0.4.0`; na execução real, na ordem do RF-13 — a referência `0.3.0` (execuções 89 a 94), a imagem nova, o trecho 0 recapturado (só o `garchnet` mudou), o recálculo `0.4.0` (95 a 100) —, o `lstm`, o `gru` e o `caviar` iguais campo a campo, os outros seis com o VaR mudado, e a zona de Basileia sem defeito no ITUB4; o primeiro build morreu por falta de memória e o checkout voltou à `main` até a imagem existir. O ramo recebeu a `main` com o M2.2a, o M3.3 (PR #37) e a D-160 antes da execução real. 1747 testes no backend, 152 no motor, 25 na linha de base, 1265 no frontend; a PR, com spec, plano e implementação, a abrir |
 | 2026-10-03 | M1.4b mesclado (PR #38). M2.1b fechado: dezesseis tarefas, os cinco portões de mockup aprovados pelo dono (o menu de conta por último na barra, a barra estreita até 840 px, "Administração"); o `POST /risk` exige conta (D-140); 1621 testes no frontend e 1753 no backend — 1 falha, o caso anônimo do `test_requested_by.py`, que a `identidade` ajusta; na execução real, o `acesso.mjs` com 133 conferências e 36 comparações com os mockups sem diferença, na segunda rodada (a primeira achou o diálogo que reabria antes do `close` do navegador, corrigido em `45a06c5`), e o `capturas.mjs` com 644; a PR de implementação fica para o dono abrir, depois do ajuste da `identidade` |
 | 2026-10-04 | M5.1 retomado pelo Kauã, na máquina dele: a `main` com o M2.4 recebida, os ajustes do mockup, T10 a T13, a correção do V-09 instável do laboratório, a fase A refeita (os 108 pares iguais, o oráculo a 4,98e-11), a fase B (558 conferências, 0 falhas) e o FECHA |
+| 2026-10-04 | PR #41 (M5.1) mesclada. Ajustes de tela pelo Kauã, no ramo `marco1/ajustes-de-tela`, vistos no navegador e aprovados na conversa: as seis abas com endereço (D-193), o botão Explicações e o detalhe recolhido (D-194), a página inicial centrada, o tema escuro em carvão quente (D-195); 1830 testes no frontend; o `capturas.mjs` não rodado, a rever |

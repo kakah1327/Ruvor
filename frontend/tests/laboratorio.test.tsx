@@ -290,7 +290,9 @@ function stubFetch(): void {
 }
 
 function renderAsset() {
-  const router = createMemoryRouter(routes, { initialEntries: ["/ativos/ITUB4"] });
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/ativos/ITUB4/laboratorio"],
+  });
   render(<RouterProvider router={router} />);
 }
 
@@ -327,18 +329,29 @@ function readingButton(key: "casco.leitura.iniciante" | "casco.leitura.avancada"
 // ---------------------------------------------------------------- a ordem
 
 describe("RF-13 — a ordem das seções", () => {
-  it("o risco, o laboratório e os Fundamentos, nessa ordem", async () => {
+  it("as grades abrem com a década, e o Ano a ano mostra os anos de uma grade só", async () => {
     renderAsset();
     await settled("READY");
-    const risk = document.querySelector("[data-risk-state]") as HTMLElement;
-    const fundamentals = document.querySelector(
-      '[data-section="fundamentals"]',
-    ) as HTMLElement;
-    const follows = (a: Node, b: Node) =>
-      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(follows(risk, section())).toBe(true);
-    expect(follows(section(), fundamentals)).toBe(true);
-    expect(risk.contains(section())).toBe(false);
+    const grids = [...section().querySelectorAll<HTMLElement>("[data-years]")];
+    expect(grids.map((g) => g.getAttribute("data-years"))).toEqual(["off", "off"]);
+    const [first] = grids as [HTMLElement];
+    const toggle = within(first).getByRole("button", {
+      name: TEXTOS["laboratorio.grade.anoAAno"],
+    });
+    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(toggle);
+    expect(grids.map((g) => g.getAttribute("data-years"))).toEqual(["on", "off"]);
+    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("a aba do laboratório: só a seção dele, sem o risco nem os Fundamentos", async () => {
+    renderAsset();
+    await settled("READY");
+    expect(section()).not.toBeNull();
+    expect(document.querySelector("[data-risk-state]")).toBeNull();
+    expect(document.querySelector('[data-section="fundamentals"]')).toBeNull();
+    const current = document.querySelector('.ruvor-tabs [aria-current="page"]');
+    expect(current?.textContent).toBe(TEXTOS["ativo.aba.laboratorio"]);
   });
 });
 

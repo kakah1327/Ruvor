@@ -285,7 +285,9 @@ function stubFetch(): void {
 }
 
 function renderAsset() {
-  const router = createMemoryRouter(routes, { initialEntries: ["/ativos/ITUB4"] });
+  const router = createMemoryRouter(routes, {
+    initialEntries: ["/ativos/ITUB4/retorno"],
+  });
   render(<RouterProvider router={router} />);
 }
 
@@ -340,18 +342,15 @@ function readingButton(key: "casco.leitura.iniciante" | "casco.leitura.avancada"
 // ---------------------------------------------------------------- a ordem
 
 describe("a ordem das seções", () => {
-  it("o risco, o laboratório, o retorno e os Fundamentos, nessa ordem", async () => {
+  it("a aba do retorno: só a seção dele, sem o risco, o laboratório nem os Fundamentos", async () => {
     renderAsset();
     await settled("R3");
-    const risk = document.getElementById("risco") as HTMLElement;
-    const lab = document.querySelector('[data-section="lab"]') as HTMLElement;
-    const fundamentals = document.querySelector(
-      '[data-section="fundamentals"]',
-    ) as HTMLElement;
-    expect(follows(risk, lab)).toBe(true);
-    expect(follows(lab, section())).toBe(true);
-    expect(follows(section(), fundamentals)).toBe(true);
-    expect(risk.contains(section())).toBe(false);
+    expect(section()).not.toBeNull();
+    expect(document.querySelector("[data-risk-state]")).toBeNull();
+    expect(document.querySelector('[data-section="lab"]')).toBeNull();
+    expect(document.querySelector('[data-section="fundamentals"]')).toBeNull();
+    const current = document.querySelector('.ruvor-tabs [aria-current="page"]');
+    expect(current?.textContent).toBe(TEXTOS["ativo.aba.retorno"]);
   });
 });
 

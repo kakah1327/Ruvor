@@ -337,7 +337,15 @@ aviso sempre aberto ([D-188](docs/decisoes/D-188-a-previsao-de-retorno-e-o-log-r
   Desde o M5.1, a seção do retorno (`components/ReturnsSection.tsx`, os estados e a visibilidade da previsão em
   `src/returns/state.ts`), depois do laboratório, com o `/returns` fora do `data-ready` e a lista ampliada do vocabulário
   só nas `retorno.*` (`tests/vocabulario.test.ts`).
-  1822 testes.
+  Desde os ajustes de tela (ramo `marco1/ajustes-de-tela`), a **tela do ativo em seis abas**, cada uma com o seu
+  endereço — `/ativos/{ticker}` (visão geral: preço, proventos e comportamento), `/risco`, `/laboratorio`, `/retorno`,
+  `/fundamentos` e `/comunicados` —, pela rota `ativos/:ticker/:aba?` e `components/AssetTabs.tsx`, com a trilha só na aba
+  do risco ([D-193](docs/decisoes/D-193-a-tela-do-ativo-em-seis-abas-com-endereco-restringe-a-d-99-a-d-187-e-a-d-192.md)); o botão **Explicações** no fim da barra de abas, desligado por padrão e lembrado em
+  `ruvor-explain` (`src/explain.ts`), esconde pela folha a introdução e a frase de cada número, sem tirá-las da página, e
+  estado, erro e convite (`ruvor-keep`) ficam; proventos, comportamento e as grades do laboratório abrem recolhidos
+  ([D-194](docs/decisoes/D-194-as-explicacoes-ficam-atras-de-um-botao-e-o-detalhe-recolhido-restringe-a-d-97-e-a-d-187.md)); a página inicial centrada, com os números do método e o que a página do ativo mostra; e o tema
+  escuro em carvão quente ([D-195](docs/decisoes/D-195-o-tema-escuro-e-carvao-quente.md)).
+  1830 testes.
   `frontend/e2e/` são os roteiros da execução real — `capturas.mjs` e, desde o M2.1b, `acesso.mjs`, que confere as
   telas de acesso no navegador e as compara com os mockups aprovados —, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`

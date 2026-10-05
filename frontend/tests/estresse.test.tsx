@@ -512,9 +512,12 @@ describe("V-10 — os estados do RF-12", () => {
 // ---------------------------------------------------------------- V-12: a posição e as datas
 
 describe("V-12 — a posição e as datas", () => {
-  it("o bloco é o irmão seguinte de Maior queda", () => {
+  it("o bloco abre os recolhidos, logo depois de Maior queda", () => {
     const block = montar(PETR4);
-    const anterior = block.previousElementSibling as HTMLElement;
+    const more = block.parentElement as HTMLElement;
+    expect(more.classList.contains("ruvor-blocks__more")).toBe(true);
+    expect(more.firstElementChild).toBe(block);
+    const anterior = more.previousElementSibling as HTMLElement;
     expect(anterior.querySelector("h3")?.textContent).toBe(
       TEXTOS["comportamento.bloco.queda"],
     );

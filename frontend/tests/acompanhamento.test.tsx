@@ -384,8 +384,6 @@ const count = (route: Route) => calls.filter((c) => c.route === route).length;
 const riskState = () =>
   document.querySelector("[data-risk-state]")?.getAttribute("data-risk-state");
 const header = () => document.querySelector(".ruvor-asset-head") as HTMLElement;
-const fundamentals = () =>
-  document.querySelector('[data-section="fundamentals"]') as HTMLElement;
 const disclosures = () =>
   document.querySelector('[data-section="disclosures"]') as HTMLElement;
 
@@ -396,8 +394,8 @@ async function advance(ms: number): Promise<void> {
   });
 }
 
-function renderAsset() {
-  const router = createMemoryRouter(routes, { initialEntries: ["/ativos/AALR3"] });
+function renderAsset(path = "/ativos/AALR3/risco") {
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
   return render(<RouterProvider router={router} />);
 }
 
@@ -478,7 +476,6 @@ describe("V-12 — ao terminar, recarrega as rotas", () => {
         "metrics",
         "fundamentals",
         "returns",
-        "disclosures",
       ] as const) {
         expect(count(route)).toBe(2);
       }
@@ -520,13 +517,13 @@ describe("V-10 do M1.6c — o acompanhamento recarrega as duas seções", () => 
     ["E1", E1],
     ["E7", E7],
   ])(
-    "chegando em %s: os fundamentos de novo, e os comunicados na primeira página com o filtro",
-    async (state, end) => {
+    "chegando em %s na aba dos comunicados: os fundamentos de novo, e os comunicados na primeira página com o filtro",
+    async (_state, end) => {
+      // O acompanhamento corre em qualquer aba: aqui, a dos comunicados, sem a seção do risco.
       riskQueue = [E4_NO_REQUEST, end];
-      renderAsset();
+      renderAsset("/ativos/AALR3/comunicados");
       await advance(0);
-      expect(riskState()).toBe("E4");
-      expect(fundamentals().getAttribute("data-state")).toBe("empty");
+      expect(count("risk")).toBe(1);
       expect(disclosures().getAttribute("data-state")).toBe("ready");
 
       // o filtro em "Fatos relevantes", e a segunda página somada
@@ -553,10 +550,9 @@ describe("V-10 do M1.6c — o acompanhamento recarrega as duas seções", () => 
       // a rotina semanal calculou os fundamentos no meio do acompanhamento
       fundamentalsBody = { ticker: "AALR3", indicator: INDICATOR, peers: null };
       await advance(5000);
-      expect(riskState()).toBe(state);
+      expect(count("risk")).toBe(3); // o do início, o do acompanhamento e o do reloadAll
 
       expect(count("fundamentals")).toBe(2);
-      expect(fundamentals().getAttribute("data-state")).toBe("ready");
 
       expect(count("disclosures")).toBe(before + 1);
       const last = calls.filter((c) => c.route === "disclosures").at(-1) as Call;

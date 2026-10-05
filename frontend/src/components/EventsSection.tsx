@@ -17,6 +17,9 @@ type Props = {
   onRetry: () => void;
 };
 
+/** Quantos eventos da janela aparecem antes do "ver todos". */
+const RECENT_ROWS = 5;
+
 /** O início da janela: a mesma data, um ano antes (a janela exclui o início, como no mockup). */
 function yearBefore(date: string): string {
   const [year, month, day] = date.split("-");
@@ -46,8 +49,8 @@ function EventLine({ event }: { event: EventRow }) {
 
 /**
  * Proventos e desdobramentos (RF-09): os dos 12 meses até o último fechamento, do mais novo
- * ao mais antigo — data, tipo, valor ou proporção —, e "ver todos" para a série inteira. Sem
- * eventos no período, a frase.
+ * ao mais antigo — data, tipo, valor ou proporção —, só os `RECENT_ROWS` mais novos, e "ver
+ * todos" para a série inteira. Sem eventos no período, a frase.
  */
 export function EventsSection({ load, referenceDate, onRetry }: Props) {
   const titleId = useId();
@@ -62,7 +65,9 @@ export function EventsSection({ load, referenceDate, onRetry }: Props) {
   } else {
     const start = yearBefore(referenceDate);
     const all = [...load.data.results].sort((a, b) => b.date.localeCompare(a.date));
-    const recent = all.filter((e) => e.date > start && e.date <= referenceDate);
+    const recent = all
+      .filter((e) => e.date > start && e.date <= referenceDate)
+      .slice(0, RECENT_ROWS);
     const list = showAll ? all : recent;
     body = (
       <div className="ruvor-stack">

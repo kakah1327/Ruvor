@@ -6,6 +6,7 @@ import type { Risk } from "../api/types";
 import { TEXTOS } from "../content/textos";
 import { signInHref } from "../session/next";
 import { useSession } from "../session/SessionProvider";
+import { assetTabPath } from "./AssetTabs";
 import { Glyph } from "./Glyph";
 import { SignInNotice } from "./SignInNotice";
 
@@ -42,7 +43,7 @@ function isRisk(value: unknown): value is Risk {
  * Enquanto o `POST` não volta, o botão fica `aria-busy` e desabilitado.
  *
  * O lugar depende da sessão (RF-15, D-140, o `conta.html` aprovado): **logado**, o botão;
- * **anônimo**, o convite a entrar para calcular — o link para `/entrar?next=/ativos/{ticker}` e a
+ * **anônimo**, o convite a entrar para calcular — o link para `/entrar?next=/ativos/{ticker}/risco` e a
  * frase —; **carregando**, nada (a seção nem monta o lugar). Do `POST` (RF-16, RF-03): **401**
  * → `expired()` e, no lugar do botão, o aviso de sessão terminada, sem navegar — o aviso fica
  * enquanto a tela estiver montada, e a página nova mostra o anônimo normal; **403
@@ -127,12 +128,12 @@ export function ComputeInvite({
       <div className="ruvor-invite" data-risk-invite="signin" data-part="convite">
         <Link
           className="ruvor-btn ruvor-btn--primary"
-          to={signInHref(`/ativos/${encodeURIComponent(ticker)}`)}
+          to={signInHref(assetTabPath(ticker, "risco"))}
         >
           <Glyph name="user" />
           <span>{TEXTOS["conta.convite.entrar"]}</span>
         </Link>
-        <p className="ruvor-note">{TEXTOS["conta.convite.frase"]}</p>
+        <p className="ruvor-note ruvor-keep">{TEXTOS["conta.convite.frase"]}</p>
       </div>
     );
   }
