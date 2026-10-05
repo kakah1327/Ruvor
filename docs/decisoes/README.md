@@ -36,6 +36,9 @@ conversas e entre agentes.
 | [D-187](D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md) | A seção do laboratório fica na tela do ativo, logo depois do risco, para todos, pela rota `/lab`, sem eleger nem ordenar, com a diferença honesta nas duas leituras |
 | [D-188](D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) | A previsão de retorno é o log-retorno de um pregão, pontual, fora da amostra contra o retorno zero; cada modelo grava também a previsão do próximo pregão |
 | [D-192](D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md) | A tela mostra a validação e, junto dela, a previsão do próximo pregão, nunca sozinha, com o aviso obrigatório; sem comercialização, o parecer da CVM não segura o M5.1 — estende a D-160 |
+| [D-193](D-193-a-tela-do-ativo-em-seis-abas-com-endereco-restringe-a-d-99-a-d-187-e-a-d-192.md) | A tela do ativo em seis abas, cada uma com o seu endereço (`/ativos/{ticker}/{aba}`); a ordem das seções vira a ordem das abas, e a trilha fica na aba Risco — restringe a D-99, a D-187 e a D-192 |
+| [D-194](D-194-as-explicacoes-ficam-atras-de-um-botao-e-o-detalhe-recolhido-restringe-a-d-97-e-a-d-187.md) | As explicações ficam atrás do botão "Explicações", desligado por padrão, sem sair da página; estado, erro, convite e o aviso do retorno ficam à vista; proventos, comportamento e as grades do laboratório abrem recolhidos — restringe a D-97 e a D-187 |
+| [D-195](D-195-o-tema-escuro-e-carvao-quente.md) | O tema escuro é carvão quente: neutros com o matiz do papel do tema claro e camadas em degraus nítidos; acentos e tema claro não mudam |
 
 ## Arquitetura
 
