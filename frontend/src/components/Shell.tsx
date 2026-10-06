@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useOutletContext } from "react-router";
 
 import { TEXTOS } from "../content/textos";
 import { formatDate, formatInstant } from "../format/numbers";
+import { useSession } from "../session/SessionProvider";
 import { AccountMenu } from "./AccountMenu";
 import { Glyph } from "./Glyph";
 import { ReadingSwitch } from "./ReadingSwitch";
@@ -50,6 +51,10 @@ const PROVENANCE_TIME_ZONE = "America/Sao_Paulo";
  */
 export function Shell() {
   const { pathname } = useLocation();
+  const session = useSession();
+  const accountReady =
+    session.status === "authenticated" && !session.me.must_change_password;
+  const onPortfolios = pathname === "/carteiras" || pathname.startsWith("/carteiras/");
   const [stored, setStored] = useState<{
     pathname: string;
     provenance: Provenance;
@@ -89,6 +94,26 @@ export function Shell() {
           <img src={markReverse} alt="" />
           <b>{TEXTOS["casco.marca"]}</b>
         </Link>
+
+        {/* "Carteiras" (M2.2b, RF-01, D-180): logo depois da marca, só com a sessão logada e a
+            conta pronta; corrente em /carteiras e /carteiras/:id. O lugar da conta não se move. */}
+        {accountReady && (
+          <nav
+            className="ruvor-nav ruvor-nav--account"
+            data-part="nav"
+            aria-label={TEXTOS["carteiras.nav.rotulo"]}
+          >
+            <Link
+              className={
+                onPortfolios ? "ruvor-nav__link ruvor-nav__link--on" : "ruvor-nav__link"
+              }
+              to="/carteiras"
+              aria-current={onPortfolios ? "page" : undefined}
+            >
+              {TEXTOS["carteiras.nav"]}
+            </Link>
+          </nav>
+        )}
 
         {/* RF-02: na página de busca, a barra não tem campo — o grande basta. */}
         {pathname === "/" ? (

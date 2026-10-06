@@ -12,6 +12,7 @@ import { Shell } from "./components/Shell";
 import { AssetScreen } from "./screens/AssetScreen";
 import { NotFoundScreen } from "./screens/NotFoundScreen";
 import { PasswordScreen } from "./screens/PasswordScreen";
+import { PortfoliosScreen } from "./screens/PortfoliosScreen";
 import { SearchScreen } from "./screens/SearchScreen";
 import { SignInScreen } from "./screens/SignInScreen";
 import { SignUpScreen } from "./screens/SignUpScreen";
@@ -50,7 +51,8 @@ function AssetRoute() {
  * RF-04) ficam fora do casco, em tela cheia; vêm depois dele na lista, e o roteador os escolhe
  * pela especificidade — o caminho fixo ganha do `*` —, não pela ordem. A troca voluntária da
  * senha (`/conta/senha`) fica no casco; a obrigatória não tem rota (RF-05). A gestão de
- * usuários (`/organizacao/usuarios`, RF-11) também fica no casco.
+ * usuários (`/organizacao/usuarios`, RF-11) também fica no casco. As carteiras (`/carteiras`, a
+ * lista e a criação — M2.2b, RF-02) também.
  */
 export const routes: RouteObject[] = [
   {
@@ -63,6 +65,7 @@ export const routes: RouteObject[] = [
           { path: "ativos/:ticker/:aba?", element: <AssetRoute /> },
           { path: "conta/senha", element: <PasswordScreen mode="voluntary" /> },
           { path: "organizacao/usuarios", element: <UsersScreen /> },
+          { path: "carteiras", element: <PortfoliosScreen /> },
           { path: "*", element: <NotFoundScreen /> },
         ],
       },

@@ -1234,6 +1234,99 @@ export const TEXTOS = {
   "usuarios.pessoal.titulo": "A conta pessoal não tem outros usuários.",
   "usuarios.pessoal.texto":
     "Ela é só sua. Uma organização com várias pessoas é criada pela equipe que opera o Ruvor.",
+
+  // As carteiras (M2.2b, RF-01 a RF-06, D-180, D-181): o registro TEXTOS do `lista.html`
+  // aprovado, literal. Nenhuma é número com frase (D-97): não ganham leitura avançada.
+  "carteiras.nav": "Carteiras",
+  "carteiras.nav.rotulo": "Navegação",
+  "carteiras.eyebrow": "Carteiras",
+  "carteiras.titulo": "Quanto a sua carteira pode perder?",
+  "carteiras.sub":
+    "Monte a carteira com as ações e os pesos que você escolher. A plataforma estima a perda de 1 dia nos nove modelos, lado a lado.",
+  "carteiras.sub.organizacao": (org: string): string =>
+    `As carteiras são da organização ${org}: quem é dela vê e muda cada uma.`,
+  "carteiras.nova": "Nova carteira",
+  "carteiras.lista.titulo": "As carteiras",
+  "carteiras.lista.contagem": (n: number): string =>
+    n === 1 ? "1 carteira" : `${formatInteger(n)} carteiras`,
+  "carteiras.col.nome": "Nome",
+  "carteiras.col.acoes": "Ações",
+  "carteiras.col.versao": "Versão",
+  "carteiras.col.valor": "Valor",
+  "carteiras.col.mudou": "Composição mudou em",
+  "carteiras.acoes": (n: number): string =>
+    n === 1 ? "1 ação" : `${formatInteger(n)} ações`,
+  "carteiras.semValor": "sem valor",
+  "carteiras.lista.carregando": "Carregando as carteiras.",
+  "carteiras.lista.vazia.titulo": "Nenhuma carteira ainda.",
+  "carteiras.lista.vazia.texto":
+    "Uma carteira junta de 2 a 20 ações, cada uma com o peso que você der. Depois de criada, a plataforma calcula quanto ela pode perder em 1 dia.",
+  "carteiras.lista.vazia.criar": "Criar a primeira carteira",
+  "carteiras.lista.erro.titulo": "A lista de carteiras não carregou.",
+  "carteiras.lista.erro.texto": "Pode ser uma falha passageira do servidor.",
+  "carteiras.tentarDeNovo": "Tentar de novo",
+  "carteiras.mostrarMais": "Mostrar mais",
+  "carteiras.mostrando": (a: number, n: number): string =>
+    `Mostrando ${formatInteger(a)} de ${formatInteger(n)}.`,
+  "carteiras.carregandoMais": "Carregando mais carteiras…",
+  "carteiras.maisErro": "As próximas carteiras não carregaram.",
+  "carteiras.arquivada": (nome: string): string =>
+    `A carteira “${nome}” foi arquivada. O que foi calculado para ela fica guardado.`,
+  "carteiras.criar.titulo": "Nova carteira",
+  "carteiras.campo.nome": "Nome",
+  "carteiras.campo.nomeDica": "Até 100 caracteres.",
+  "carteiras.campo.valor": "Valor (opcional)",
+  "carteiras.campo.valorDica":
+    "Em reais, como 10.000,00. Com o valor, a perda aparece também em reais; sem ele, só em %.",
+  "carteiras.composicao.titulo": "Composição",
+  "carteiras.composicao.dica":
+    "De 2 a 20 ações. O peso de cada uma é em %, com até 2 casas, e a soma fecha em 100,00.",
+  "carteiras.seletor.rotulo": "Acrescentar ação",
+  "carteiras.seletor.placeholder": "Código ou nome da ação",
+  "carteiras.seletor.motivo.indice": "Índice: a carteira só aceita ações.",
+  "carteiras.seletor.motivo.inativa": "Ação inativa: não entra na carteira.",
+  "carteiras.seletor.motivo.naComposicao": "Já está na composição.",
+  "carteiras.seletor.nenhumaServe": (q: string): string =>
+    `Nada do que a busca por “${q}” trouxe pode entrar na carteira.`,
+  "carteiras.seletor.nenhumaServeDica":
+    "Só ação ativa entra. Tente um termo mais preciso, como o código da ação.",
+  "carteiras.seletor.limite": "A composição já tem 20 ações, o máximo.",
+  "carteiras.col.acao": "Ação",
+  "carteiras.col.peso": "Peso (%)",
+  "carteiras.col.remover": "Remover",
+  "carteiras.peso.rotulo": (ticker: string): string => `Peso de ${ticker}, em %`,
+  "carteiras.remover": (ticker: string): string => `Remover ${ticker} da composição`,
+  "carteiras.editor.vazio":
+    "Nenhuma ação na composição ainda. Busque acima pelo código ou pelo nome.",
+  "carteiras.soma.rotulo": "Soma",
+  "carteiras.soma.exata": "Fecha em 100,00.",
+  "carteiras.soma.abaixo": (d: string): string => `${d} abaixo de 100,00.`,
+  "carteiras.soma.acima": (d: string): string => `${d} acima de 100,00.`,
+  "carteiras.soma.foraDaSoma": (n: number): string =>
+    n === 1
+      ? "1 peso ainda não é número e fica fora da soma."
+      : `${formatInteger(n)} pesos ainda não são números e ficam fora da soma.`,
+  "carteiras.erro.nome": "Dê um nome à carteira.",
+  "carteiras.erro.valor":
+    "Use um valor em reais com até 2 casas, de 0,01 até 16 algarismos antes da vírgula, como 10.000,00.",
+  "carteiras.erro.pesoFormato": "Use um número com até 2 casas, com vírgula ou ponto.",
+  "carteiras.erro.peso": "O peso vai de 0,01 a 100,00.",
+  "carteiras.erro.contagem": (n: number): string =>
+    `A carteira precisa de 2 a 20 ações; a composição tem ${formatInteger(n)}.`,
+  "carteiras.erro.soma": (s: string): string =>
+    `A soma dos pesos precisa ser exatamente 100,00; está em ${s}.`,
+  "carteiras.erro.repetida": "Esta ação aparece em outra linha da composição.",
+  "carteiras.erro.desconhecida": "Este código não está no catálogo.",
+  "carteiras.erro.naoAcao": "Este código é de um índice; a carteira só aceita ações.",
+  "carteiras.erro.inativa":
+    "Esta ação está inativa no catálogo e não entra na carteira.",
+  "carteiras.erro.forma":
+    "A composição não chegou no formato esperado. Confira os pesos e o valor e tente de novo.",
+  "carteiras.erro.envio":
+    "Não foi possível criar a carteira agora. O que você digitou continua aqui; tente de novo.",
+  "carteiras.criar": "Criar carteira",
+  "carteiras.criando": "Criando…",
+  "carteiras.cancelar": "Cancelar",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

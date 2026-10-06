@@ -15,6 +15,9 @@
  * da sessão, o anônimo do padrão; nos casos logados e no carregando, o `SessionProvider` vem do
  * **mesmo grafo de módulos** que o casco, recarregado pelo `freshShell` — o de outro grafo teria
  * outro contexto, e o casco ficaria no anônimo do padrão.
+ *
+ * O item "Carteiras" (M2.2b, RF-01, D-180): só com a sessão logada, logo depois da marca, e
+ * corrente em `/carteiras` e `/carteiras/:id`.
  */
 import {
   act,
@@ -428,5 +431,91 @@ describe("o lugar da conta na barra (M2.1b, RF-09)", () => {
     await renderWithSession(null);
     expect(slot().getAttribute("data-account")).toBe("loading");
     expect(slot().childElementCount).toBe(0);
+  });
+});
+
+describe('o item "Carteiras" na barra (M2.2b, RF-01, D-180)', () => {
+  const ME = {
+    email: "ana.souza@exemplo.com",
+    name: "Ana Beatriz Souza",
+    role: "member",
+    must_change_password: false,
+    is_staff: false,
+    organization: { name: "Ana Beatriz Souza", slug: "pessoal-1", is_personal: true },
+  };
+
+  const navLink = () =>
+    within(screen.getByRole("banner")).queryByRole("link", {
+      name: TEXTOS["carteiras.nav"],
+    });
+
+  /** O casco sob o provedor do mesmo grafo; `me` nulo deixa o `auth/me` pendente. */
+  async function renderWithSession(me: object | null, path: string) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url !== "/api/v1/auth/me" || me === null) {
+          return new Promise<Response>(() => {});
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => me,
+        } as unknown as Response);
+      }),
+    );
+    const { Shell } = await freshShell();
+    const { SessionProvider } = await import("../src/session/SessionProvider");
+    const router = createMemoryRouter(
+      [
+        {
+          element: <SessionProvider />,
+          children: [{ element: <Shell />, children: [{ path: "*", element: null }] }],
+        },
+      ],
+      { initialEntries: [path] },
+    );
+    render(<RouterProvider router={router} />);
+    await act(async () => {
+      for (let i = 0; i < 20; i += 1) await Promise.resolve();
+    });
+  }
+
+  it("sem o provedor (o anônimo do padrão): sem o item", async () => {
+    await renderShell("/carteiras");
+    expect(navLink()).toBeNull();
+    expect(screen.getByRole("banner").querySelector("nav")).toBeNull();
+  });
+
+  it("carregando: sem o item", async () => {
+    await renderWithSession(null, "/carteiras");
+    expect(navLink()).toBeNull();
+  });
+
+  it("logado: o item depois da marca, antes da busca, levando a /carteiras", async () => {
+    await renderWithSession(ME, "/ativos/ITUB4");
+    const link = navLink() as HTMLElement;
+    expect(link.getAttribute("href")).toBe("/carteiras");
+    expect(link.getAttribute("aria-current")).toBeNull();
+    const nav = link.closest("nav") as HTMLElement;
+    expect(nav.previousElementSibling?.classList.contains("ruvor-brand")).toBe(true);
+    expect(nav.nextElementSibling?.classList.contains("ruvor-topbar__search")).toBe(
+      true,
+    );
+  });
+
+  it.each(["/carteiras", "/carteiras/6f1c2d3e-0000-4000-8000-000000000001"])(
+    "corrente em %s",
+    async (path) => {
+      await renderWithSession(ME, path);
+      const link = navLink() as HTMLElement;
+      expect(link.getAttribute("aria-current")).toBe("page");
+      expect(link.classList.contains("ruvor-nav__link--on")).toBe(true);
+    },
+  );
+
+  it("fora das carteiras, um caminho que só começa igual não é corrente", async () => {
+    await renderWithSession(ME, "/carteirasx");
+    expect(navLink()?.getAttribute("aria-current")).toBeNull();
   });
 });

@@ -298,6 +298,20 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "usuarios.senha.criado.texto": [["Gabriela Rocha", "gabriela.rocha@exemplo.com"]],
   "usuarios.senha.nova.texto": [["Ana Lima", "ana.lima@exemplo.com"]],
   "usuarios.membro.texto": [["Gestora Exemplo"]],
+  // carteiras.*: o registro EXEMPLOS do lista.html (M2.2b) — a contagem nos dois ramos.
+  "carteiras.sub.organizacao": [["Gestora Exemplo"]],
+  "carteiras.lista.contagem": [[1], [57]],
+  "carteiras.acoes": [[1], [4]],
+  "carteiras.mostrando": [[50, 57]],
+  "carteiras.arquivada": [["Bancos e energia"]],
+  "carteiras.seletor.nenhumaServe": [["IBOV"]],
+  "carteiras.peso.rotulo": [["PETR4"]],
+  "carteiras.remover": [["PETR4"]],
+  "carteiras.soma.abaixo": [["0,01"]],
+  "carteiras.soma.acima": [["0,50"]],
+  "carteiras.soma.foraDaSoma": [[1], [2]],
+  "carteiras.erro.contagem": [[1], [21]],
+  "carteiras.erro.soma": [["99,99"]],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.
