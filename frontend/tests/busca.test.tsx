@@ -47,6 +47,12 @@ let suggestionCalls: Call[] = [];
 /** O pedido da sugestão, literal: o contrato do RF-10. */
 const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
 
+/**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03): responde 401 (anônimo) na hora e
+ * fica fora de `calls` e de `suggestionCalls` — as contagens destes testes são da busca.
+ */
+const ME_URL = "/api/v1/auth/me";
+
 function fakeResponse(status: number, body: unknown): Response {
   return {
     ok: status >= 200 && status < 300,
@@ -64,6 +70,14 @@ function stubFetch(): void {
     vi.fn(
       (url: string, _init?: RequestInit) =>
         new Promise<Response>((resolve) => {
+          if (url === ME_URL) {
+            resolve(
+              fakeResponse(401, {
+                error: { code: "not_authenticated", message: "falhou", details: {} },
+              }),
+            );
+            return;
+          }
           (url === SUGGESTION_URL ? suggestionCalls : calls).push({
             url,
             respond: (body) => resolve(fakeResponse(200, body)),

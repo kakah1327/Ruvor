@@ -2,7 +2,7 @@
 
 - O `POST /risk` logado de um ativo nunca calculado grava o usuario no pedido novo, e a abertura
   daquele pedido (`_abrir_execucao` com `request_id`) grava o mesmo usuario na `risk_run`.
-- O anonimo grava nulo nos dois. O segundo usuario que pede o mesmo ativo com pedido aberto
+- O anonimo, desde a D-140 (M2.1b), recebe 401 e nenhum pedido nasce. O segundo usuario que pede o mesmo ativo com pedido aberto
   recebe 202 e o pedido continua do primeiro. A abertura sem `request_id` (a rotina) grava nulo.
 
 A abertura recebe `timezone.now()`: a `running` so conta dentro do prazo, contado do
@@ -135,14 +135,15 @@ def test_v19_o_pedido_logado_grava_o_autor_no_pedido_e_na_execucao() -> None:
     assert pedido.risk_run_id == run.pk
 
 
-def test_v19_o_pedido_anonimo_grava_nulo_no_pedido_e_na_execucao() -> None:
+def test_v19_o_pedido_anonimo_e_recusado_e_nao_grava_pedido() -> None:
+    # Desde a D-140 (M2.1b) o pedido de calculo exige conta: o anonimo recebe 401 e nenhum
+    # pedido nasce, entao nao ha autor nulo a gravar.
     _serie()
 
-    pedido = _pede(_cliente())
-    assert pedido.requested_by_id is None
-
-    run = _abre(pedido)
-    assert run.requested_by_id is None
+    resposta = _cliente().post(f"/api/v1/assets/{TICKER}/risk")
+    assert resposta.status_code == 401, resposta.content
+    assert resposta.json()["error"]["code"] == "not_authenticated"
+    assert not ComputeRequest.objects.filter(asset__ticker=TICKER).exists()
 
 
 def test_v19_o_segundo_pedido_com_pedido_aberto_nao_muda_o_autor() -> None:

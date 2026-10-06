@@ -2,19 +2,21 @@
  * @vitest-environment node
  *
  * V-02, a lista fechada das duas leituras (RF-04, RF-05): as 55 chaves do RF-04, escritas aqui,
- * copiadas da spec, e as seis medidas do estresse do M3.3 — 61. Cada chave com frase avançada (`LEITURA_KEYS`) está na lista, tem entrada em
+ * copiadas da spec, as seis medidas do estresse do M3.3, as nove do laboratório do M2.4 e as
+ * sete do retorno do M5.1 — 77. Cada chave com frase avançada (`LEITURA_KEYS`) está na lista, tem entrada em
  * `TEXTOS_AVANCADOS` com o mesmo tipo da iniciante (texto, ou função com o mesmo
  * `Function.length`), e o módulo avançado não tem chave fora de `LEITURA_KEYS`.
  *
  * A falha silenciosa é a chave que nunca ganha avançada e ninguém nota: com as quatro seções
- * escritas (T4, T7, T10, T13) e o M3.3, `LEITURA_KEYS` é exatamente `AS_61` — nem mais, nem menos.
+ * escritas (T4, T7, T10, T13), o M3.3, o M2.4 e o M5.1, `LEITURA_KEYS` é exatamente `AS_77` — nem
+ * mais, nem menos.
  */
 import { describe, expect, it } from "vitest";
 
 import { LEITURA_KEYS, TEXTOS_AVANCADOS } from "../src/content/avancado";
 import { TEXTOS, type TextoKey } from "../src/content/textos";
 
-const AS_61 = [
+const AS_77 = [
   // RF-21 do M1.6b (`LISTA_FECHADA` de textos.test.ts): os 19 campos de `CAMPOS_COM_FRASE`…
   "comportamento.return_1m",
   "comportamento.return_3m",
@@ -84,24 +86,43 @@ const AS_61 = [
   "comportamento.estresse.benchmark_drawdown",
   "comportamento.estresse.recovery_sessions",
   "comportamento.estresse.benchmark_recovery_sessions",
+  // A lista fechada do laboratório (M2.4), aprovada no portão do `laboratorio.html`: N = 9.
+  // São 70.
+  "laboratorio.decada",
+  "laboratorio.diferenca",
+  "laboratorio.violacoesAno",
+  "laboratorio.vereditoAno",
+  "laboratorio.anoNaoJulgado",
+  "laboratorio.semVereditoAno99",
+  "laboratorio.violacoesDecada",
+  "laboratorio.vereditoDecada",
+  "laboratorio.anosNaoRejeitados",
+  // A lista fechada do retorno (M5.1), aprovada no portão do `retorno.html`: N = 7. São 77.
+  "retorno.veredito",
+  "retorno.r2_os",
+  "retorno.acerto",
+  "retorno.dm",
+  "retorno.cw",
+  "retorno.pt",
+  "retorno.previsao",
 ] as const satisfies readonly TextoKey[];
 
 const ordenada = (chaves: readonly string[]): string[] => [...chaves].sort();
 
 describe("V-02 — a lista fechada das duas leituras", () => {
-  it("AS_61 tem 61 chaves distintas, todas em TEXTOS", () => {
-    expect(new Set(AS_61).size).toBe(61);
-    expect(AS_61.filter((k) => !Object.hasOwn(TEXTOS, k))).toEqual([]);
+  it("AS_77 tem 77 chaves distintas, todas em TEXTOS", () => {
+    expect(new Set(AS_77).size).toBe(77);
+    expect(AS_77.filter((k) => !Object.hasOwn(TEXTOS, k))).toEqual([]);
   });
 
-  it("LEITURA_KEYS não repete chave e está contida em AS_61", () => {
+  it("LEITURA_KEYS não repete chave e está contida em AS_77", () => {
     const chaves: readonly string[] = LEITURA_KEYS;
     expect(new Set(chaves).size).toBe(chaves.length);
-    expect(chaves.filter((k) => !(AS_61 as readonly string[]).includes(k))).toEqual([]);
+    expect(chaves.filter((k) => !(AS_77 as readonly string[]).includes(k))).toEqual([]);
   });
 
-  it("LEITURA_KEYS é exatamente AS_61: toda chave do RF-04 tem avançada", () => {
-    expect(ordenada(LEITURA_KEYS)).toEqual(ordenada(AS_61));
+  it("LEITURA_KEYS é exatamente AS_77: toda chave do RF-04 tem avançada", () => {
+    expect(ordenada(LEITURA_KEYS)).toEqual(ordenada(AS_77));
   });
 
   it("o módulo avançado tem exatamente as chaves de LEITURA_KEYS", () => {

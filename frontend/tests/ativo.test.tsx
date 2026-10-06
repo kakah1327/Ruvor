@@ -10,6 +10,9 @@
  * - V-14 das seções desta tarefa (RF-21): a frase de cada número está junto dele;
  * - `data-ready` e o `reloadAll()` que a T11 usa; as duas seções do M1.6c depois do risco, fora
  *   do `data-ready`;
+ * - M2.4 (T10, RF-18): o `/lab` na carga e no `reloadAll()`, fora do `data-ready` — a tela fica
+ *   pronta com o `/lab` ainda carregando ou em erro;
+ * - M5.1 (T10): o `/returns` na carga e no `reloadAll()`, também fora do `data-ready`;
  * - V-09 do M1.7 (RF-10): a busca da barra não pede a sugestão — **todo teste** confere, no
  *   `afterEach`, que a rota `suggestion` recebeu `suggestionsExpected` pedidos (0, menos na tela
  *   "ativo não encontrado", que monta a caixa de página e pede exatamente 1).
@@ -47,11 +50,13 @@ import {
   type Events,
   type Fundamentals,
   type HistogramBin,
+  type Lab,
   type Metric,
   type Metrics,
   MODEL_ORDER,
   type PriceRow,
   type Prices,
+  type Returns,
   type Risk,
   type RiskResult,
   type RiskRun,
@@ -235,6 +240,25 @@ const RISK: Risk = {
 
 /** Sem indicador calculado: a seção Fundamentos fica no vazio, sem alerta. */
 const FUNDAMENTALS: Fundamentals = { ticker: "ITUB4", indicator: null, peers: null };
+/** O `/lab` (M2.4): a década completa, sem experimento ainda. A seção chega na T12. */
+const LAB: Lab = {
+  ticker: "ITUB4",
+  active: true,
+  decade: {
+    first_price_date: "2016-09-22",
+    end_date: "2026-09-22",
+    last_price_date: "2026-10-02",
+    complete: true,
+    sessions: 2491,
+  },
+  risk_engine_version: "0.4.0",
+  pending: true,
+  latest: null,
+  last_failure: null,
+};
+
+/** O `/returns` (M5.1): sem validação ainda. A seção chega na T12. */
+const RETURNS: Returns = { ticker: "ITUB4", latest: null };
 
 const DISCLOSURES: Disclosures = {
   ticker: "ITUB4",
@@ -264,8 +288,11 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
+  | "lab"
+  | "returns"
   | "disclosures"
-  | "suggestion";
+  | "suggestion"
+  | "me";
 type Reply = { status: number; body: unknown };
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -284,14 +311,22 @@ let replies: Partial<Record<Route, Reply>> = {};
 const SUGGESTION_URL = "/api/v1/assets?has_risk=true&limit=8";
 
 /**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03), a rota `me`: responde na hora —
+ * `replies.me` ou, sem ela, 401 (anônimo) — e fica fora de `calls`.
+ */
+const ME_URL = "/api/v1/auth/me";
+const ANON: Reply = fail(401, "not_authenticated");
+
+/**
  * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). A
  * sugestão é a rota própria `suggestion`, casada só pelo endereço exato; qualquer outro pedido
  * continua lançando.
  */
 function routeOf(url: string): Route {
   if (url === SUGGESTION_URL) return "suggestion";
+  if (url === ME_URL) return "me";
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab|returns)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
   if (match === null) throw new Error(`pedido inesperado: ${url}`);
@@ -314,6 +349,10 @@ function stubFetch(): void {
       (url: string) =>
         new Promise<Response>((resolve) => {
           const route = routeOf(url);
+          if (route === "me") {
+            resolve(fakeResponse(replies.me ?? ANON));
+            return;
+          }
           const call: Call = { url, route, resolve: (r) => resolve(fakeResponse(r)) };
           calls.push(call);
           const reply = replies[route];
@@ -367,14 +406,18 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     metrics: ok({ ticker: "ITUB4", metric: METRIC } satisfies Metrics),
     risk: ok(RISK),
     fundamentals: ok(FUNDAMENTALS),
+    lab: ok(LAB),
+    returns: ok(RETURNS),
     disclosures: ok(DISCLOSURES),
     suggestion: ok(SUGGESTION),
+    me: ANON,
     ...over,
   };
 }
 
-function renderAsset(ticker = "ITUB4") {
-  const router = createMemoryRouter(routes, { initialEntries: [`/ativos/${ticker}`] });
+function renderAsset(ticker = "ITUB4", tab = "") {
+  const path = tab === "" ? `/ativos/${ticker}` : `/ativos/${ticker}/${tab}`;
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -421,12 +464,18 @@ const statValue = (field: string) =>
 const statPhrase = (field: string) =>
   stat(field).querySelector(".ruvor-note")?.textContent;
 
-async function loaded(): Promise<void> {
+/** O `data-ready`: o cabeçalho e o risco terminados, em qualquer aba. */
+async function ready(): Promise<void> {
   await waitFor(() =>
     expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
       "true",
     ),
   );
+}
+
+/** A visão geral pronta: o `data-ready` e o comportamento fora do carregando. */
+async function loaded(): Promise<void> {
+  await ready();
   await waitFor(() => expect(behavior().querySelector("[aria-busy]")).toBeNull());
 }
 
@@ -445,8 +494,8 @@ function openMoments(): void {
 
 // ---------------------------------------------------------------- RF-06
 
-describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () => {
-  it("pede as sete juntas, antes de qualquer resposta", () => {
+describe("RF-06 e RF-15 do M1.6c — as nove rotas, cada seção sozinha", () => {
+  it("pede as oito juntas, antes de qualquer resposta — com o /lab do M2.4 e o /returns do M5.1; os comunicados, só na aba deles", () => {
     replies = {};
     renderAsset();
     expect(count("suggestion")).toBe(0);
@@ -458,25 +507,107 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
         "/api/v1/assets/ITUB4/prices",
         "/api/v1/assets/ITUB4/risk",
         "/api/v1/assets/ITUB4/fundamentals",
-        "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
+        "/api/v1/assets/ITUB4/lab",
+        "/api/v1/assets/ITUB4/returns",
       ].sort(),
     );
   });
 
-  it("as duas seções do M1.6c vêm depois do risco: Fundamentos, depois Comunicados", async () => {
+  it("na aba dos comunicados, as oito e o /disclosures", () => {
+    replies = {};
+    renderAsset("ITUB4", "comunicados");
+    expect(calls.map((c) => c.url)).toContain(
+      "/api/v1/assets/ITUB4/disclosures?limit=10&offset=0",
+    );
+    expect(calls).toHaveLength(9);
+  });
+
+  it("as abas, na ordem: visão geral, risco, laboratório, retorno, fundamentos e comunicados", async () => {
     renderAsset();
     await loaded();
-    const risco = document.getElementById("risco") as HTMLElement;
-    const follows = (a: Node, b: Node) =>
-      (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-    expect(follows(risco, fundamentalsSection())).toBe(true);
-    expect(follows(fundamentalsSection(), disclosuresSection())).toBe(true);
-    expect(risco.contains(fundamentalsSection())).toBe(false);
+    const nav = screen.getByRole("navigation", { name: TEXTOS["ativo.abas.rotulo"] });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((a) => a.textContent),
+    ).toEqual([
+      TEXTOS["ativo.aba.visaoGeral"],
+      TEXTOS["ativo.aba.risco"],
+      TEXTOS["ativo.aba.laboratorio"],
+      TEXTOS["ativo.aba.retorno"],
+      TEXTOS["ativo.aba.fundamentos"],
+      TEXTOS["ativo.aba.comunicados"],
+    ]);
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((a) => a.getAttribute("href")),
+    ).toEqual([
+      "/ativos/ITUB4",
+      "/ativos/ITUB4/risco",
+      "/ativos/ITUB4/laboratorio",
+      "/ativos/ITUB4/retorno",
+      "/ativos/ITUB4/fundamentos",
+      "/ativos/ITUB4/comunicados",
+    ]);
+    const current = within(nav).getByRole("link", { current: "page" });
+    expect(current.textContent).toBe(TEXTOS["ativo.aba.visaoGeral"]);
+  });
+
+  it("a visão geral: o preço, os proventos e o comportamento, sem as outras seções", async () => {
+    renderAsset();
+    await loaded();
+    expect(within(pricePanel()).getByRole("img")).toBeDefined();
+    expect(behavior()).not.toBeNull();
+    expect(main().querySelector("[data-risk-state]")).toBeNull();
+    expect(main().querySelector('[data-section="fundamentals"]')).toBeNull();
+    expect(main().querySelector('[data-section="disclosures"]')).toBeNull();
+  });
+
+  it("trocar de aba mostra a seção dela e não pede as rotas de novo", async () => {
+    renderAsset();
+    await loaded();
+    const before = calls.length;
+    const nav = screen.getByRole("navigation", { name: TEXTOS["ativo.abas.rotulo"] });
+    fireEvent.click(
+      within(nav).getByRole("link", { name: TEXTOS["ativo.aba.fundamentos"] }),
+    );
+    await waitFor(() =>
+      expect(fundamentalsSection().getAttribute("data-state")).toBe("empty"),
+    );
+    expect(main().querySelector("[data-risk-state]")).toBeNull();
+    expect(calls.length).toBe(before);
+  });
+
+  it("a aba dos comunicados: a seção da companhia", async () => {
+    renderAsset("ITUB4", "comunicados");
+    await ready();
     await waitFor(() =>
       expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
     );
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
     expect(disclosuresSection().getAttribute("data-company")).toBe("19348");
+  });
+
+  it("as explicações: escondidas por padrão; o botão as mostra, e a escolha é lembrada", async () => {
+    window.localStorage.removeItem("ruvor-explain");
+    renderAsset();
+    await loaded();
+    const root = () => main().querySelector("[data-explain]") as HTMLElement;
+    const button = () =>
+      screen.getByRole("button", { name: TEXTOS["ativo.explicacoes"] });
+    expect(root().getAttribute("data-explain")).toBe("off");
+    expect(button().getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(button());
+    expect(root().getAttribute("data-explain")).toBe("on");
+    expect(button().getAttribute("aria-pressed")).toBe("true");
+    expect(window.localStorage.getItem("ruvor-explain")).toBe("on");
+    window.localStorage.removeItem("ruvor-explain");
+  });
+
+  it("a aba desconhecida vira a visão geral, sem entrada nova no histórico", async () => {
+    const router = renderAsset("ITUB4", "xpto");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/ativos/ITUB4"));
+    expect(router.state.historyAction).toBe("REPLACE");
   });
 
   it("a lenta não segura a rápida: o comportamento chega com a identidade pendente", async () => {
@@ -558,8 +689,6 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
     ["prices", () => pricePanel()],
     ["events", () => eventsPanel()],
     ["metrics", () => behavior()],
-    ["fundamentals", () => fundamentalsSection()],
-    ["disclosures", () => disclosuresSection()],
   ] as const)(
     "%s com 500: o erro só na seção dela, e as outras renderizam",
     async (route, section) => {
@@ -586,18 +715,38 @@ describe("RF-06 e RF-15 do M1.6c — as sete rotas, cada seção sozinha", () =>
       if (route !== "metrics") {
         await waitFor(() => expect(statValue("return_12m")).toBe("+25,8%"));
       }
-      if (route !== "fundamentals") {
-        await waitFor(() =>
-          expect(fundamentalsSection().getAttribute("data-state")).toBe("empty"),
-        );
-      }
-      if (route !== "disclosures") {
-        await waitFor(() =>
-          expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
-        );
-      }
 
       // tentar de novo pede só a rota da seção
+      replies[route] = allOkReply(route);
+      const before = calls.length;
+      fireEvent.click(
+        within(section()).getByRole("button", { name: TEXTOS["ativo.tentarDeNovo"] }),
+      );
+      await waitFor(() => expect(within(section()).queryByRole("alert")).toBeNull());
+      expect(calls.slice(before).map((c) => c.route)).toEqual([route]);
+    },
+  );
+
+  it.each([
+    ["fundamentals", "fundamentos", () => fundamentalsSection()],
+    ["disclosures", "comunicados", () => disclosuresSection()],
+  ] as const)(
+    "%s com 500, na aba dela: o erro só na seção, e tentar de novo pede só a rota dela",
+    async (route, tab, section) => {
+      allOk({ [route]: fail(500) });
+      stubFetch();
+      renderAsset("ITUB4", tab);
+      await waitFor(() => expect(within(section()).getByRole("alert")).toBeDefined());
+      await waitFor(() =>
+        expect(main().querySelector("[data-ready]")?.getAttribute("data-ready")).toBe(
+          "true",
+        ),
+      );
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+      expect(within(header()).getByRole("heading", { level: 1 }).textContent).toBe(
+        "ITUB4",
+      );
+
       replies[route] = allOkReply(route);
       const before = calls.length;
       fireEvent.click(
@@ -653,20 +802,43 @@ describe("data-ready e reloadAll()", () => {
 
     await reply("risk", ok(RISK));
     expect(readyAttr()).toBe("true");
-    // as duas seções do M1.6c seguem carregando: o data-ready não as espera
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("loading");
-    expect(disclosuresSection().getAttribute("data-state")).toBe("loading");
+    // o /lab (M2.4) e o /returns (M5.1) foram pedidos e seguem sem resposta: o data-ready não os espera
+    expect(calls.filter((c) => c.route === "lab")).toHaveLength(1);
+    expect(calls.filter((c) => c.route === "returns")).toHaveLength(1);
+    // o /fundamentals segue sem resposta: o data-ready não o espera
+    expect(calls.filter((c) => c.route === "fundamentals")).toHaveLength(1);
   });
 
-  it("as duas seções do M1.6c terminadas não bastam: o risco pendente segura", async () => {
+  it("os comunicados terminados não bastam: o risco pendente segura", async () => {
     allOk({ risk: undefined });
     stubFetch();
-    renderAsset();
+    renderAsset("ITUB4", "comunicados");
     await waitFor(() =>
       expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
     );
-    expect(fundamentalsSection().getAttribute("data-state")).toBe("empty");
     expect(main().querySelector("[data-ready]")).toBeNull();
+  });
+
+  it.each([
+    ["pendente", undefined],
+    ["em erro", fail(500)],
+  ])("o /lab %s não segura o data-ready (M2.4, RF-13)", async (_caso, labReply) => {
+    allOk({ lab: labReply });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(readyAttr()).toBe("true"));
+    expect(calls.filter((c) => c.route === "lab")).toHaveLength(1);
+  });
+
+  it.each([
+    ["pendente", undefined],
+    ["em erro", fail(500)],
+  ])("o /returns %s não segura o data-ready (M5.1)", async (_caso, returnsReply) => {
+    allOk({ returns: returnsReply });
+    stubFetch();
+    renderAsset();
+    await waitFor(() => expect(readyAttr()).toBe("true"));
+    expect(calls.filter((c) => c.route === "returns")).toHaveLength(1);
   });
 
   it("o risco em erro também termina", async () => {
@@ -684,11 +856,13 @@ describe("data-ready e reloadAll()", () => {
     expect(main().querySelector("[data-ready]")).toBeNull();
   });
 
-  it("reloadAll pede as seis de novo sem apagar o que já chegou, incrementa o reloadToken, e troca quando o novo chega", async () => {
+  it("reloadAll pede as oito de novo — com o /lab do M2.4 e o /returns do M5.1 — sem apagar o que já chegou, incrementa o reloadToken, e troca quando o novo chega", async () => {
     const { result } = renderHook(() => useAssetData("ITUB4"));
     await waitFor(() => expect(result.current.risk.state).toBe("ok"));
     await waitFor(() => expect(result.current.asset.state).toBe("ok"));
     await waitFor(() => expect(result.current.fundamentals.state).toBe("ok"));
+    await waitFor(() => expect(result.current.lab.state).toBe("ok"));
+    await waitFor(() => expect(result.current.returns.state).toBe("ok"));
     // o hook não pede /disclosures: é a seção Comunicados que pede
     expect(calls.some((c) => c.route === "disclosures")).toBe(false);
     const token = result.current.reloadToken;
@@ -701,7 +875,16 @@ describe("data-ready e reloadAll()", () => {
         .slice(before)
         .map((c) => c.route)
         .sort(),
-    ).toEqual(["asset", "events", "fundamentals", "metrics", "prices", "risk"]);
+    ).toEqual([
+      "asset",
+      "events",
+      "fundamentals",
+      "lab",
+      "metrics",
+      "prices",
+      "returns",
+      "risk",
+    ]);
     expect(result.current.reloadToken).toBe(token + 1);
     // enquanto recarrega, o dado anterior fica
     for (const key of [
@@ -711,6 +894,8 @@ describe("data-ready e reloadAll()", () => {
       "metrics",
       "risk",
       "fundamentals",
+      "lab",
+      "returns",
     ] as const) {
       expect(result.current[key].state).toBe("ok");
     }
@@ -993,15 +1178,9 @@ describe("M2.3 — V-08: trocar o nível não pede nada à API", () => {
   it("com o risco em E1, a troca pelo alternador não chama o fetch, nos dois sentidos", async () => {
     allOk({ risk: ok(RISK_E1) });
     stubFetch();
+    // Na visão geral: o /risk em E1 não abre acompanhamento, em aba nenhuma.
     renderAsset();
     await loaded();
-    // E1: a seção de risco mostra o resultado pronto, sem acompanhamento.
-    expect(
-      main().querySelector("[data-risk-state]")?.getAttribute("data-risk-state"),
-    ).toBe("E1");
-    await waitFor(() =>
-      expect(disclosuresSection().getAttribute("data-state")).toBe("ready"),
-    );
     const fetchSpy = vi.mocked(fetch);
     const antes = fetchSpy.mock.calls.length;
     // Um respiro depois da troca, para qualquer efeito disparado por ela chegar ao fetch.
@@ -1075,6 +1254,34 @@ describe("RF-09 — proventos e desdobramentos", () => {
       }),
     );
     expect(rows()).toHaveLength(3);
+  });
+
+  it("mais de cinco na janela: só os cinco mais novos, e ver todos com a série inteira", async () => {
+    const monthly = Array.from({ length: 8 }, (_, i) => ({
+      date: `2026-0${i + 1}-01`,
+      kind: "dividend" as const,
+      amount: "0.010000",
+      numerator: null,
+      denominator: null,
+    }));
+    allOk({ events: ok({ ticker: "ITUB4", results: monthly }) });
+    stubFetch();
+    renderAsset();
+    await loaded();
+    await waitFor(() => expect(within(eventsPanel()).getByRole("table")).toBeDefined());
+    expect(rows().map((r) => r[0])).toEqual([
+      "01/08/2026",
+      "01/07/2026",
+      "01/06/2026",
+      "01/05/2026",
+      "01/04/2026",
+    ]);
+    fireEvent.click(
+      within(eventsPanel()).getByRole("button", {
+        name: TEXTOS["ativo.eventos.verTodos"]("8"),
+      }),
+    );
+    expect(rows()).toHaveLength(8);
   });
 
   it("sem eventos no período: a frase, e ver todos se houver antigos", async () => {
@@ -1318,8 +1525,7 @@ describe("V-06 — nulo não é zero", () => {
     const link = within(section).getByRole("link", {
       name: TEXTOS["comportamento.irParaRisco"],
     });
-    expect(link.getAttribute("href")).toBe("#risco");
-    expect(document.getElementById("risco")).not.toBeNull();
+    expect(link.getAttribute("href")).toBe("/ativos/ITUB4/risco");
     expect(section.querySelector("[data-field]")).toBeNull();
     expect(within(section).queryByText(/^até /)).toBeNull();
   });
@@ -1540,7 +1746,13 @@ describe("M2.3 — a assimetria e a curtose recolhidas na iniciante (V-05)", () 
       renderAsset();
       await loaded();
       expect(behavior().querySelectorAll("[data-collapsible]")).toHaveLength(1);
-      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(1);
+      // Os dois controles: o da assimetria e da curtose, e o "ver mais" dos blocos recolhidos.
+      expect(behavior().querySelectorAll("[aria-expanded]")).toHaveLength(2);
+      expect(
+        within(behavior()).getByRole("button", {
+          name: TEXTOS["comportamento.verMais"],
+        }),
+      ).toBeDefined();
       for (const field of [
         "return_12m",
         "volatility_12m",

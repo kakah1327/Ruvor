@@ -158,6 +158,10 @@
   .kit-type--label-table { font-family: var(--ruvor-font-mono); text-transform: uppercase; font-size: var(--ruvor-type-label-size); letter-spacing: var(--ruvor-type-label-tracking-table); font-weight: var(--ruvor-type-label-weight); }
   .kit-type--brand { font-size: var(--ruvor-type-brand-size); line-height: var(--ruvor-type-brand-leading); letter-spacing: var(--ruvor-type-brand-tracking); font-weight: var(--ruvor-type-brand-weight); }
   .kit-type--code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-small-size); line-height: var(--ruvor-type-code-leading); }
+  .kit-type--scene { font-size: var(--ruvor-type-scene-size); line-height: var(--ruvor-type-display-leading); letter-spacing: var(--ruvor-type-display-tracking); font-weight: var(--ruvor-type-display-weight); }
+  .kit-type--scene-narrow { font-size: var(--ruvor-type-scene-narrow-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); font-weight: var(--ruvor-type-display-weight); }
+  .kit-type--scene-text { font-size: var(--ruvor-type-scene-text-size); }
+  .kit-type--auth { font-size: var(--ruvor-type-auth-size); line-height: var(--ruvor-type-h2-leading); letter-spacing: var(--ruvor-type-h2-tracking); font-weight: var(--ruvor-type-h2-weight); }
   .kit-font-sans { font-family: var(--ruvor-font-sans); font-size: var(--ruvor-type-h3-size); }
   .kit-font-mono { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-h3-size); }
 
@@ -198,6 +202,16 @@
   }
   .kit-rail-item:hover .ruvor-h3 { text-decoration: underline; }
 
+  /* M2.1b: as telas de acesso de exemplo, sem a altura da janela; o menu e o diálogo fora do
+     lugar deles (estáticos), para aparecerem abertos na página. O véu de exemplo usa o mesmo
+     token do ::backdrop. */
+  .kit-frame > .ruvor-access { min-height: 0; }
+  .kit-row--top { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-5); align-items: flex-start; }
+  .ruvor-menu.kit-static { position: static; }
+  .kit-scrim { padding: var(--ruvor-space-5); border-radius: var(--ruvor-radius-md); background: var(--ruvor-scrim); }
+  .ruvor-dialog.kit-static { position: static; display: block; margin: 0 auto; }
+  .kit-bars { display: grid; gap: var(--ruvor-space-2); }
+
   /*
    * Estados forçados — SÓ NA VITRINE. Cópia das regras de :hover, :focus-visible e :active
    * de brand/ruvor/components.css, para o estado aparecer sem o ponteiro nem o teclado.
@@ -226,6 +240,14 @@
   .ruvor-doc__link.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
   .ruvor-collapsible__toggle.is-hover span { text-decoration: underline; text-underline-offset: 3px; }
   .ruvor-collapsible__toggle.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 4px; }
+  .ruvor-topbar__signin.is-hover { background: var(--ruvor-topbar-control); }
+  .ruvor-account--button.is-hover .ruvor-account__name { color: var(--ruvor-topbar-text); }
+  .ruvor-menu__item.is-hover { background: var(--ruvor-control-hover); }
+  .ruvor-menu__item.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: -2px; }
+  .ruvor-link.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
+  .ruvor-segmented--surface .ruvor-segmented__btn.is-hover { color: var(--ruvor-ink); background: var(--ruvor-control-hover); }
+  .ruvor-segmented--surface .ruvor-segmented__btn.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-lab-scroll.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
   .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
@@ -256,6 +278,9 @@
     <a class="ruvor-nav__link" href="#telas-m16c"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></svg>Telas M1.6c</a>
     <a class="ruvor-nav__link" href="#telas-m17"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M1.7</a>
     <a class="ruvor-nav__link" href="#telas-m33"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg>Telas M3.3</a>
+    <a class="ruvor-nav__link" href="#telas-m21b"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.1b</a>
+    <a class="ruvor-nav__link" href="#telas-m24"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.4</a>
+    <a class="ruvor-nav__link" href="#telas-m51"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M5.1</a>
   </nav>
   <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
 </header>
@@ -323,6 +348,10 @@
     <div class="kit-type-row"><div><b>label</b><br><code class="kit-token" data-type="label"></code></div><div class="kit-type--label">Ranking dos modelos</div></div>
     <div class="kit-type-row"><div><b>label, tabela</b><br><code class="kit-token" data-token="--ruvor-type-label-tracking-table"></code></div><div class="kit-type--label-table">Estatística · p-valor</div></div>
     <div class="kit-type-row"><div><b>brand</b><br><code class="kit-token" data-type="brand"></code></div><div class="kit-type--brand">RUVOR</div></div>
+    <div class="kit-type-row"><div><b>scene · M2.1b</b><br><code class="kit-token" data-token="--ruvor-type-scene-size"></code></div><div class="kit-type--scene">Decisões com evidência.</div></div>
+    <div class="kit-type-row"><div><b>scene, até 720 px · M2.1b</b><br><code class="kit-token" data-token="--ruvor-type-scene-narrow-size"></code></div><div class="kit-type--scene-narrow">Decisões com evidência.</div></div>
+    <div class="kit-type-row"><div><b>scene-text · M2.1b</b><br><code class="kit-token" data-token="--ruvor-type-scene-text-size"></code></div><div class="kit-type--scene-text">O texto da cena de acesso.</div></div>
+    <div class="kit-type-row"><div><b>auth · M2.1b</b><br><code class="kit-token" data-token="--ruvor-type-auth-size"></code></div><div class="kit-type--auth">Que bom te ver de novo.</div></div>
     <div class="kit-type-row"><div><b>code</b><br><code class="kit-token" data-token="--ruvor-type-code-leading"></code></div><div class="kit-type--code">ruvor run --ticker PETR4.SA<br>--alpha 0.99</div></div>
     <div class="kit-type-row"><div><b>font-sans</b><br><code class="kit-token" data-token="--ruvor-font-sans"></code></div><div class="kit-font-sans">Quanto posso perder? 0123456789</div></div>
     <div class="kit-type-row"><div><b>font-mono</b><br><code class="kit-token" data-token="--ruvor-font-mono"></code></div><div class="kit-font-mono">VaR 99% = −3,42% 0123456789</div></div>
@@ -938,6 +967,290 @@ garch      -3,61%    adequado</div>
     </div>
   </section>
 
+  <section class="kit-section" id="telas-m21b">
+    <h2 class="ruvor-h2 kit-h">Telas do M2.1b</h2>
+    <p class="kit-note">O que os cinco mockups aprovados do M2.1b desenharam como estilo local (<code class="kit-token">docs/mockups/M2.1b/</code>, <code class="kit-token">.m21b-*</code>), com o nome do kit, nos dois temas: a cena de acesso e o arranjo de tela cheia, a dica dos requisitos e os erros de um campo, o painel estreito, o lugar da conta na barra e o menu, o convite e os avisos, o formulário de criação e a lista, o diálogo e o campo com copiar. Os estados forçados (<code class="kit-token">.is-hover</code>, <code class="kit-token">.is-focus</code>) são cópia das regras da folha. A barra em três linhas (até 840 px), o botão só com as iniciais (abaixo de 1024 px) e a cena em faixa (até 720 px) dependem da largura da janela: estreite a página para vê-los.</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m21b>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O lugar da conta na barra <code class="kit-token">.ruvor-topbar__account</code> <code class="kit-token">.ruvor-topbar__signin</code> <code class="kit-token">.ruvor-account--button</code> <code class="kit-token">.ruvor-account__name</code></h3>
+          <p class="kit-note">Carregando (vazio, com o espaço reservado), anônimo ("Entrar"; em hover; em foco) e logado (o botão fechado; em hover; aberto e em foco). A largura do lugar é a mesma nos três.</p>
+          <div class="kit-bars">
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><a class="ruvor-topbar__signin" href="#telas-m21b">Entrar</a></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><a class="ruvor-topbar__signin is-hover" href="#telas-m21b">Entrar</a></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><a class="ruvor-topbar__signin is-focus" href="#telas-m21b">Entrar</a></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button" type="button" aria-expanded="false" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button is-hover" type="button" aria-expanded="false" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <div class="ruvor-topbar__spacer" aria-hidden="true"></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button is-focus" type="button" aria-expanded="true" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O menu do botão de conta <code class="kit-token">.ruvor-menu</code> <code class="kit-token">__who</code> <code class="kit-token">__name</code> <code class="kit-token">__email</code> <code class="kit-token">__org</code> <code class="kit-token">__list</code> <code class="kit-token">__item</code> <code class="kit-token">__sep</code> <code class="kit-token">__error</code></h3>
+          <p class="kit-note">Aberto, fora da barra (na tela, ele se ancora abaixo dela, à direita). A organização com a administração (o primeiro item em hover, o segundo em foco); a conta pessoal; e o Sair que falhou.</p>
+          <div class="kit-row--top">
+            <div class="ruvor-menu kit-static">
+              <div class="ruvor-menu__who"><p class="ruvor-menu__name">Ana Beatriz Souza</p><p class="ruvor-menu__email">ana.souza@exemplo.com</p></div>
+              <div class="ruvor-menu__org"><p class="ruvor-eyebrow">Organização</p><p>Corretora Exemplo</p></div>
+              <ul class="ruvor-menu__list"><li><a class="ruvor-menu__item is-hover" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg><span>Trocar a senha</span></a></li><li><a class="ruvor-menu__item is-focus" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg><span>Usuários da organização</span></a></li><li class="ruvor-menu__sep" role="presentation"></li><li><button class="ruvor-menu__item" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg><span>Sair</span></button></li></ul>
+            </div>
+            <div class="ruvor-menu kit-static">
+              <div class="ruvor-menu__who"><p class="ruvor-menu__name">Ana Beatriz Souza</p><p class="ruvor-menu__email">ana.souza@exemplo.com</p></div>
+              <div class="ruvor-menu__org"><p class="ruvor-eyebrow">Organização</p><p>Conta pessoal</p></div>
+              <ul class="ruvor-menu__list"><li><a class="ruvor-menu__item" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg><span>Trocar a senha</span></a></li><li class="ruvor-menu__sep" role="presentation"></li><li><button class="ruvor-menu__item" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg><span>Sair</span></button></li></ul>
+            </div>
+            <div class="ruvor-menu kit-static">
+              <div class="ruvor-menu__who"><p class="ruvor-menu__name">Ana Beatriz Souza</p><p class="ruvor-menu__email">ana.souza@exemplo.com</p></div>
+              <div class="ruvor-menu__org"><p class="ruvor-eyebrow">Organização</p><p>Corretora Exemplo</p></div>
+              <ul class="ruvor-menu__list"><li><a class="ruvor-menu__item" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></svg><span>Trocar a senha</span></a></li><li><a class="ruvor-menu__item" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></svg><span>Usuários da organização</span></a></li><li class="ruvor-menu__sep" role="presentation"></li><li><button class="ruvor-menu__item" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></svg><span>Sair</span></button></li></ul><p class="ruvor-menu__error" role="alert">Não foi possível sair agora. Tente de novo.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O convite e os avisos para entrar <code class="kit-token">.ruvor-invite</code> <code class="kit-token">.ruvor-state--signin</code> <code class="kit-token">.ruvor-page-notice</code></h3>
+          <div class="ruvor-stack">
+            <div class="ruvor-invite"><a class="ruvor-btn ruvor-btn--primary" href="#telas-m21b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg><span>Entrar para calcular</span></a><p class="ruvor-note">Pedir um cálculo exige entrar na conta.</p></div>
+            <div class="ruvor-page-notice"><div class="ruvor-state ruvor-state--notice ruvor-state--signin" role="alert"><span class="ruvor-icon ruvor-icon--evidence"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></svg></span><div class="ruvor-state__body"><p class="ruvor-state__title">A sua sessão terminou.</p><p class="ruvor-note">Depois de entrar, você volta para esta página.</p><a class="ruvor-btn ruvor-btn--primary" href="#telas-m21b">Entrar</a></div></div></div>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A cena de acesso e o formulário <code class="kit-token">.ruvor-access</code> <code class="kit-token">.ruvor-scene</code> <code class="kit-token">.ruvor-access__side</code> <code class="kit-token">.ruvor-auth</code> <code class="kit-token">.ruvor-hint--top</code> <code class="kit-token">.ruvor-hint__list</code> <code class="kit-token">.ruvor-field__errors</code> <code class="kit-token">.ruvor-form-error</code> <code class="kit-token">.ruvor-btn--block</code> <code class="kit-token">.ruvor-auth__alt</code> <code class="kit-token">.ruvor-link</code></h3>
+          <div class="kit-frame">
+            <div class="ruvor-access">
+              <section class="ruvor-scene">
+                <img class="ruvor-scene__logo" src="../../../brand/ruvor/ruvor-logo-reverse.svg" alt="Ruvor">
+                <div class="ruvor-scene__copy">
+                  <p class="ruvor-eyebrow">Inteligência de risco</p>
+                  <p class="ruvor-display ruvor-scene__title">Decisões financeiras com evidência à vista.</p>
+                  <p class="ruvor-scene__text">Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.</p>
+                </div>
+              </section>
+              <section class="ruvor-access__side">
+                <form class="ruvor-auth" novalidate onsubmit="return false">
+                  <div class="ruvor-auth__head">
+                    <p class="ruvor-eyebrow">Acesso à plataforma</p>
+                    <p class="ruvor-h2 ruvor-auth__title">Que bom te ver de novo.</p>
+                    <p class="ruvor-sub">Entre com o e-mail e a senha da sua conta.</p>
+                    <p class="ruvor-note">A linha sob o subtítulo, como a da troca obrigatória.</p>
+                  </div>
+                  <div class="ruvor-field">
+                    <label class="ruvor-label" for="kit-m21b-email">E-mail</label>
+                    <input class="ruvor-input" id="kit-m21b-email" type="email" placeholder="nome@exemplo.com">
+                  </div>
+                  <div class="ruvor-field">
+                    <label class="ruvor-label" for="kit-m21b-senha">Senha</label>
+                    <span class="ruvor-hint ruvor-hint--top"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>A senha precisa:<ul class="ruvor-hint__list"><li>ter no mínimo 10 caracteres;</li><li>não ser só números;</li><li>não ser parecida com o seu e-mail ou o seu nome;</li><li>não ser uma senha comum.</li></ul></span></span>
+                    <input class="ruvor-input" id="kit-m21b-senha" type="password" aria-invalid="true">
+                    <div class="ruvor-field__errors"><span class="ruvor-field__error"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>Esta senha é muito curta. Ela precisa conter pelo menos 10 caracteres.</span></span><span class="ruvor-field__error"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>Esta senha é muito comum.</span></span></div>
+                  </div>
+                  <span class="ruvor-hint ruvor-hint--top"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></svg><span>Não há recuperação de senha por e-mail. Numa organização, peça uma senha provisória a quem a administra.</span></span>
+                  <div class="ruvor-callout ruvor-callout--critical ruvor-form-error" role="alert"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg><span>E-mail ou senha incorretos.</span></div>
+                  <button class="ruvor-btn ruvor-btn--primary ruvor-btn--block" type="button">Entrar</button>
+                  <p class="ruvor-auth__alt">Ainda não tem conta? <a class="ruvor-link" href="#telas-m21b">Criar conta</a> · em foco: <a class="ruvor-link is-focus" href="#telas-m21b">Criar conta</a></p>
+                  <a class="ruvor-btn ruvor-btn--ghost ruvor-btn--block" href="#telas-m21b">Continuar sem entrar</a>
+                </form>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O painel estreito, no casco <code class="kit-token">.ruvor-panel--narrow</code></h3>
+          <section class="ruvor-panel ruvor-panel--narrow"><div class="ruvor-panel__body">
+            <form class="ruvor-auth" novalidate onsubmit="return false">
+              <div class="ruvor-auth__head"><p class="ruvor-eyebrow">Conta</p><p class="ruvor-h2 ruvor-auth__title">Trocar a senha</p><p class="ruvor-sub">Na largura do formulário da cena.</p></div>
+              <div class="ruvor-field"><label class="ruvor-label" for="kit-m21b-atual">Senha atual</label><input class="ruvor-input" id="kit-m21b-atual" type="password"></div>
+              <button class="ruvor-btn ruvor-btn--primary ruvor-btn--block" type="button">Trocar a senha</button>
+            </form>
+          </div></section>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O formulário de criação e a lista <code class="kit-token">.ruvor-form-section</code> <code class="kit-token">__intro</code> <code class="kit-token">__fields</code> <code class="kit-token">__actions</code> <code class="kit-token">.ruvor-segmented--surface</code> <code class="kit-token">.ruvor-users</code> <code class="kit-token">__name</code> <code class="kit-token">__email</code> <code class="kit-token">__muted</code></h3>
+          <div class="ruvor-stack">
+          <section class="ruvor-panel"><div class="ruvor-panel__body">
+            <form class="ruvor-form-section" novalidate onsubmit="return false">
+              <div class="ruvor-form-section__intro"><h4 class="ruvor-h3">Novo usuário</h4><p>A conta nasce com uma senha provisória, que a pessoa troca no primeiro acesso.</p></div>
+              <div class="ruvor-form-section__fields">
+                <div class="ruvor-form-grid">
+                  <div class="ruvor-field"><label class="ruvor-label" for="kit-m21b-nome">Nome</label><input class="ruvor-input" id="kit-m21b-nome" type="text"></div>
+                  <div class="ruvor-field"><label class="ruvor-label" for="kit-m21b-novo">E-mail</label><input class="ruvor-input" id="kit-m21b-novo" type="email" placeholder="nome@exemplo.com"></div>
+                </div>
+                <div class="ruvor-field">
+                  <span class="ruvor-label">Papel · base (o segundo em hover) e em foco</span>
+                  <div class="ruvor-segmented ruvor-segmented--surface" role="group" aria-label="Papel, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Membro</button><button class="ruvor-segmented__btn is-hover" type="button" aria-pressed="false">Administração</button></div>
+                  <div class="ruvor-segmented ruvor-segmented--surface" role="group" aria-label="Papel em foco, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Membro</button><button class="ruvor-segmented__btn is-focus" type="button" aria-pressed="true">Administração</button></div>
+                  <span class="ruvor-label">Papel · enviando (desabilitado)</span>
+                  <div class="ruvor-segmented ruvor-segmented--surface" role="group" aria-label="Papel desabilitado, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true" disabled>Membro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false" disabled>Administração</button></div>
+                  <span class="ruvor-hint">Membro usa o Ruvor. Administração usa e também gere os usuários desta página.</span>
+                </div>
+                <div class="ruvor-form-section__actions"><button class="ruvor-btn ruvor-btn--primary" type="button">Criar usuário</button></div>
+              </div>
+            </form>
+          </div></section>
+          <section class="ruvor-panel"><div class="ruvor-panel__body">
+            <table class="ruvor-table ruvor-users">
+              <thead><tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Papel</th><th scope="col">Situação</th><th scope="col">Último acesso</th><th scope="col">Ações</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ruvor-users__name">Ana Beatriz Souza <span class="ruvor-tag ruvor-tag--neutral">você</span></span></td><td class="ruvor-users__email">ana.souza@exemplo.com</td><td data-label="Papel">Administração</td><td data-label="Situação"><ul class="ruvor-tag-list"><li><span class="ruvor-tag ruvor-tag--validated">ativa</span></li></ul></td><td data-label="Último acesso" class="ruvor-num">03/10/2026 09:12</td><td><div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="Ações de Ana Beatriz Souza"><button class="ruvor-btn ruvor-btn--ghost" type="button">Mudar para membro</button></div></td></tr>
+                <tr><td><span class="ruvor-users__name">Gabriela Rocha</span></td><td class="ruvor-users__email">gabriela.rocha@exemplo.com</td><td data-label="Papel">Membro</td><td data-label="Situação"><ul class="ruvor-tag-list"><li><span class="ruvor-tag ruvor-tag--validated">ativa</span></li><li><span class="ruvor-tag ruvor-tag--review">senha provisória por trocar</span></li></ul></td><td data-label="Último acesso" class="ruvor-users__muted">nunca entrou</td><td><div class="ruvor-btn-group ruvor-btn-group--wrap" role="group" aria-label="Ações de Gabriela Rocha"><button class="ruvor-btn ruvor-btn--ghost" type="button">Mudar para administração</button><button class="ruvor-btn ruvor-btn--ghost" type="button">Desativar</button><button class="ruvor-btn ruvor-btn--ghost" type="button">Nova senha provisória</button></div></td></tr>
+              </tbody>
+            </table>
+          </div></section>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O diálogo e o campo com copiar <code class="kit-token">.ruvor-dialog</code> <code class="kit-token">__body</code> <code class="kit-token">__list</code> <code class="kit-token">__actions</code> <code class="kit-token">.ruvor-copy</code> <code class="kit-token">.ruvor-copy__reply</code> <code class="kit-token">--critical</code> <code class="kit-token">--ruvor-scrim</code></h3>
+          <p class="kit-note">Aberto, estático, sobre o véu (<code class="kit-token">--ruvor-scrim</code>, o mesmo do <code class="kit-token">::backdrop</code>): depois de copiar, e com a cópia recusada. O botão abaixo abre o diálogo de verdade, com <code class="kit-token">showModal()</code>: o foco fica preso nele, o <code class="kit-token">Esc</code> fecha, e o foco volta ao botão.</p>
+          <div class="kit-row--top">
+            <div class="kit-scrim"><dialog class="ruvor-dialog kit-static" open aria-label="Usuário criado, de exemplo">
+              <div class="ruvor-dialog__body">
+                <h4 class="ruvor-h3">Usuário criado</h4>
+                <p>Gabriela Rocha (gabriela.rocha@exemplo.com) já pode entrar, com a senha provisória abaixo.</p>
+                <div class="ruvor-field"><span class="ruvor-label">Senha provisória</span><div class="ruvor-copy"><input class="ruvor-input" type="text" readonly value="hT7qWm2xKp9Lr4Vz" aria-label="Senha provisória, de exemplo"><button class="ruvor-btn" type="button"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>Copiada</span></button></div><p class="ruvor-copy__reply" role="status"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg><span>A senha foi copiada.</span></p></div>
+                <ul class="ruvor-dialog__list"><li>Ela não será mostrada de novo.</li><li>A pessoa troca a senha no primeiro acesso.</li></ul>
+              </div>
+              <div class="ruvor-dialog__actions"><button class="ruvor-btn ruvor-btn--primary" type="button">Fechar</button></div>
+            </dialog></div>
+            <div class="kit-scrim"><dialog class="ruvor-dialog kit-static" open aria-label="Cópia recusada, de exemplo">
+              <div class="ruvor-dialog__body">
+                <h4 class="ruvor-h3">Nova senha provisória</h4>
+                <div class="ruvor-field"><span class="ruvor-label">Senha provisória</span><div class="ruvor-copy"><input class="ruvor-input" type="text" readonly value="pL4nBtR9aXv2mQ7k" aria-label="Senha provisória, de exemplo"><button class="ruvor-btn" type="button">Copiar</button></div><p class="ruvor-copy__reply ruvor-copy__reply--critical" role="status"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg><span>O navegador não permitiu copiar. A senha está selecionada.</span></p></div>
+              </div>
+              <div class="ruvor-dialog__actions"><button class="ruvor-btn" type="button">Cancelar</button><button class="ruvor-btn ruvor-btn--primary" type="button">Confirmar</button></div>
+            </dialog></div>
+          </div>
+          <p><button class="ruvor-btn" type="button" data-kit-dialog-open>Abrir o diálogo de verdade</button></p>
+          <dialog class="ruvor-dialog" data-kit-dialog aria-label="Diálogo de exemplo">
+            <div class="ruvor-dialog__body"><h4 class="ruvor-h3">Mudar Gabriela Rocha para administração?</h4><p>Ela passa a gerir os usuários desta organização.</p></div>
+            <div class="ruvor-dialog__actions"><button class="ruvor-btn" type="button" data-kit-dialog-close>Cancelar</button><button class="ruvor-btn ruvor-btn--primary" type="button" data-kit-dialog-close>Mudar para administração</button></div>
+          </dialog>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m21b-copy></div>
+    </div>
+  </section>
+
+  <section class="kit-section" id="telas-m24">
+    <h2 class="ruvor-h2 kit-h">Telas do M2.4</h2>
+    <p class="kit-note">O que o mockup aprovado do M2.4 desenhou como estilo local (<code class="kit-token">docs/mockups/M2.4/laboratorio.html</code>, <code class="kit-token">.m24-*</code>), com o nome do kit, nos dois temas: a grade modelo × ano, que rola dentro do contêiner com a coluna dos modelos presa; as duas cópias das colunas da década e dos anos não rejeitados — no fim nas larguras largas, logo depois do nome até 720 px (estreite a janela para ver); os vereditos com rótulo, nunca só cor (as tags do kit); o modelo com erro; o detalhe dos testes; a diferença honesta e a impressão digital da trilha. O único interativo novo é o contêiner rolável, que recebe o foco pelo teclado (* o foco desenhado por classe de vitrine).</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m24>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A grade <code class="kit-token">.ruvor-lab-scroll</code> <code class="kit-token">.ruvor-lab-grid</code> <code class="kit-token">__sub</code> <code class="kit-token">__year</code> <code class="kit-token">__decade</code> <code class="kit-token">__narrow</code> <code class="kit-token">__wide</code> <code class="kit-token">__lead-end</code></h3>
+          <section class="ruvor-panel"><div class="ruvor-panel__head"><div><p class="ruvor-eyebrow">A 95%</p><h3 class="ruvor-h3" id="kit-m24-cap">Os dias acima do limite e o veredito de cada ano</h3></div></div><div class="ruvor-panel__body"><div class="ruvor-legend"><span class="ruvor-tag ruvor-tag--validated">adequado</span><span class="ruvor-tag ruvor-tag--review">não adequado</span><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span><span class="ruvor-tag ruvor-tag--neutral">não julgado</span></div></div><div class="ruvor-lab-scroll" role="region" tabindex="0" aria-labelledby="kit-m24-cap"><table class="ruvor-table ruvor-lab-grid"><thead><tr><th scope="col">Modelo</th><th scope="col" class="ruvor-lab-grid__decade ruvor-lab-grid__narrow">Década<span class="ruvor-lab-grid__sub">111,9 esperados</span></th><th scope="col" class="ruvor-lab-grid__narrow ruvor-lab-grid__lead-end">Anos não rejeitados</th><th scope="col">Ano 1<span class="ruvor-lab-grid__sub">set/2017 a set/2018</span><span class="ruvor-lab-grid__sub">12,6 esperados</span></th><th scope="col">Ano 2<span class="ruvor-lab-grid__sub">set/2018 a out/2019</span><span class="ruvor-lab-grid__sub">12,6 esperados</span></th><th scope="col">Ano 3<span class="ruvor-lab-grid__sub">out/2019 a abr/2020</span><span class="ruvor-lab-grid__sub">5,5 esperados</span></th><th scope="col" class="ruvor-lab-grid__decade ruvor-lab-grid__wide">Década<span class="ruvor-lab-grid__sub">111,9 esperados</span></th><th scope="col" class="ruvor-lab-grid__wide">Anos não rejeitados</th></tr></thead><tbody><tr><th scope="row">LSTM<span class="ruvor-table__sub">Aprendizado de máquina</span></th><td class="ruvor-lab-grid__decade ruvor-lab-grid__narrow"><div class="ruvor-cell-stack"><span class="ruvor-num">108 × 111,9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__narrow ruvor-lab-grid__lead-end"><span class="ruvor-num">1 de 2</span></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">34</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">4</span><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span></div></td><td class="ruvor-lab-grid__decade ruvor-lab-grid__wide"><div class="ruvor-cell-stack"><span class="ruvor-num">108 × 111,9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__wide"><span class="ruvor-num">1 de 2</span></td></tr><tr><th scope="row">GRU<span class="ruvor-table__sub">Aprendizado de máquina</span></th><td colspan="5"><p class="ruvor-note">O cálculo deste modelo falhou neste nível (um erro de exemplo).</p></td></tr></tbody></table></div></section>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O contêiner rolável: os estados <code class="kit-token">.ruvor-lab-scroll</code></h3>
+          <div class="kit-row"><div class="kit-cell"><span class="kit-state">repouso</span><div class="ruvor-lab-scroll" role="region" tabindex="0" aria-label="Exemplo rolável"><table class="ruvor-table ruvor-lab-grid"><tbody><tr><th scope="row">Histórico</th><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">27</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">13</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">33</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td></tr></tbody></table></div></div><div class="kit-cell"><span class="kit-state">foco*</span><div class="ruvor-lab-scroll is-focus" role="region" tabindex="0" aria-label="Exemplo rolável, com foco"><table class="ruvor-table ruvor-lab-grid"><tbody><tr><th scope="row">Histórico</th><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">27</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">13</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">33</span><span class="ruvor-tag ruvor-tag--review">não adequado</span></div></td><td class="ruvor-lab-grid__year"><div class="ruvor-cell-stack"><span class="ruvor-num">9</span><span class="ruvor-tag ruvor-tag--validated">adequado</span></div></td></tr></tbody></table></div></div></div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O detalhe dos testes <code class="kit-token">.ruvor-lab-models</code> <code class="kit-token">.ruvor-lab-model</code> <code class="kit-token">.ruvor-lab-levels</code> <code class="kit-token">.ruvor-lab-years</code></h3>
+          <div class="ruvor-lab-models"><section class="ruvor-lab-model" aria-label="LSTM"><h4 class="ruvor-h3">LSTM</h4><div class="ruvor-lab-levels"><div><p class="ruvor-eyebrow">A 95%</p><dl class="ruvor-tests"><div class="ruvor-test"><dt>Kupiec</dt><dd><span class="ruvor-num">0,704</span><span class="ruvor-tag ruvor-tag--validated">passou</span></dd></div></dl><div class="ruvor-lab-years ruvor-lab-scroll" role="region" tabindex="0" aria-label="Os testes de cada ano, a 95%"><table class="ruvor-table"><caption>Os testes de cada ano, a 95%</caption><thead><tr><th scope="col">Ano</th><th scope="col">Kupiec</th><th scope="col">Veredito</th></tr></thead><tbody><tr><th scope="row">Ano 1</th><td><span class="ruvor-num">&lt; 0,001</span> <span class="ruvor-tag ruvor-tag--review">não passou</span></td><td><span class="ruvor-tag ruvor-tag--review">não adequado</span></td></tr><tr><th scope="row">Ano 3</th><td>—</td><td><span class="ruvor-tag ruvor-tag--neutral">curto, sem veredito</span></td></tr></tbody></table></div></div><div><p class="ruvor-eyebrow">A 99%</p><p class="ruvor-note">O cálculo deste modelo falhou neste nível (um erro de exemplo).</p></div></div></section></div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A diferença honesta e a impressão digital <code class="kit-token">.ruvor-lab-honest</code> <code class="kit-token">.ruvor-lab-hash</code></h3>
+          <div class="ruvor-callout ruvor-lab-honest"><p>A diferença honesta, num destaque do kit: o texto até 78 caracteres por linha, para não virar uma faixa longa demais de ler nas larguras grandes.</p></div>
+          <dl class="ruvor-trail"><div><dt>Impressão digital dos preços</dt><dd class="ruvor-num ruvor-lab-hash">d2a0cec292f30a823ef94e74ce31da3d72a992fb349b48ccd54e8f4fb9710a44</dd></div></dl>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m24-copy></div>
+    </div>
+  </section>
+
+  <section class="kit-section" id="telas-m51">
+    <h2 class="ruvor-h2 kit-h">Telas do M5.1</h2>
+    <p class="kit-note">O que o mockup aprovado do M5.1 desenhou como estilo local (<code class="kit-token">docs/mockups/M5.1/retorno.html</code>, <code class="kit-token">.m51-*</code>), com o nome do kit, nos dois temas: um bloco por modelo, com o veredito em tag — a que bate a referência é a <code class="kit-token">.ruvor-tag--evidence</code>, nunca a <code class="kit-token">--validated</code> (D-192) —, o histórico e, por último, a previsão do próximo pregão, com destaque menor que o do veredito: micro, em texto suave, sem fundo, sem peso, sem seta e sem cor de direção, com a referência ao lado; o modelo com erro; o aviso e a frase do veredito nos destaques do kit. Nenhum interativo novo.</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m51>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O aviso e a frase do veredito <code class="kit-token">.ruvor-returns-callout</code></h3>
+          <div class="ruvor-callout ruvor-returns-callout"><p>O aviso da seção, num destaque do kit, sempre aberto: o texto até 92 caracteres por linha.</p></div>
+          <div class="ruvor-callout ruvor-returns-callout"><p>A frase do veredito: nenhum dos dois modelos errou menos do que supor retorno zero nos 2.246 pregões de teste até 02/10/2026 (um exemplo).</p></div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">Um bloco por modelo <code class="kit-token">.ruvor-returns-models</code> <code class="kit-token">.ruvor-returns-model</code> <code class="kit-token">__head</code> <code class="kit-token">.ruvor-returns-forecast</code> <code class="kit-token">__line</code></h3>
+          <section class="ruvor-panel"><div class="ruvor-panel__body"><div class="ruvor-returns-models">
+            <section class="ruvor-returns-model"><div class="ruvor-returns-model__head"><h3 class="ruvor-h3">AR(1)</h3><span class="ruvor-tag ruvor-tag--evidence">bate a referência</span></div><dl class="ruvor-tests"><div class="ruvor-test"><dt>Erro relativo à referência</dt><dd><span class="ruvor-num">+0,40%</span></dd></div><div class="ruvor-test"><dt>Diebold-Mariano</dt><dd><span class="ruvor-num">0,031</span></dd></div></dl><div class="ruvor-returns-forecast"><p class="ruvor-returns-forecast__line"><span>Previsão do modelo para 05/10/2026</span><span class="ruvor-num">+0,09%</span><span>referência: 0,00%</span></p><p class="ruvor-note">Um número estatístico, não uma expectativa nem uma indicação (um exemplo).</p></div></section>
+            <section class="ruvor-returns-model"><div class="ruvor-returns-model__head"><h3 class="ruvor-h3">Média histórica</h3><span class="ruvor-tag ruvor-tag--neutral">não bate a referência</span></div><dl class="ruvor-tests"><div class="ruvor-test"><dt>Erro relativo à referência</dt><dd><span class="ruvor-num">−0,01%</span></dd></div><div class="ruvor-test"><dt>Diebold-Mariano</dt><dd><span class="ruvor-num">0,540</span></dd></div></dl><div class="ruvor-returns-forecast"><p class="ruvor-returns-forecast__line"><span>Previsão do modelo para 05/10/2026</span><span class="ruvor-num">−0,05%</span><span>referência: 0,00%</span></p><p class="ruvor-note">Como ele não bate a referência, esse número não é mais informativo que supor retorno zero (um exemplo).</p></div></section>
+            <section class="ruvor-returns-model"><div class="ruvor-returns-model__head"><h3 class="ruvor-h3">AR(1)</h3><span class="ruvor-tag ruvor-tag--review">não deu para calcular</span></div><p class="ruvor-note">O cálculo deste modelo falhou (um erro de exemplo).</p></section>
+          </div></div></section>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m51-copy></div>
+    </div>
+  </section>
+
 </main>
 
 <aside class="ruvor-rail">
@@ -988,7 +1301,33 @@ garch      -3,61%    adequado</div>
   var m33 = document.querySelector("[data-m33]");
   document.querySelector("[data-m33-copy]").innerHTML = m33.innerHTML;
 
-  // Os 48 tokens de cor, na ordem de tokens.css.
+  // M2.1b: o painel escuro das telas é a mesma marcação do claro (os id dos campos de
+  // exemplo ganham o sufixo -escuro, para não se repetirem na página).
+  var m21b = document.querySelector("[data-m21b]");
+  document.querySelector("[data-m21b-copy]").innerHTML = m21b.innerHTML
+    .replace(/(id|for)="(kit-m21b-[\w-]+)"/g, '$1="$2-escuro"');
+
+  // M2.4: o painel escuro das telas é a mesma marcação do claro (o id da legenda da grade
+  // ganha o sufixo -escuro, para não se repetir na página).
+  var m24 = document.querySelector("[data-m24]");
+  document.querySelector("[data-m24-copy]").innerHTML = m24.innerHTML
+    .replace(/(id|aria-labelledby)="(kit-m24-[\w-]+)"/g, '$1="$2-escuro"');
+
+  // M5.1: o painel escuro do retorno é a mesma marcação do claro (sem id para trocar).
+  document.querySelector("[data-m51-copy]").innerHTML =
+    document.querySelector("[data-m51]").innerHTML;
+
+  // M2.1b: o diálogo de verdade, um por tema. Ao fechar, o foco volta a quem o abriu.
+  document.querySelectorAll("[data-kit-dialog-open]").forEach(function (opener) {
+    var dialog = opener.closest(".kit-theme").querySelector("[data-kit-dialog]");
+    opener.addEventListener("click", function () { dialog.showModal(); });
+    dialog.addEventListener("close", function () { opener.focus(); });
+    dialog.querySelectorAll("[data-kit-dialog-close]").forEach(function (b) {
+      b.addEventListener("click", function () { dialog.close(); });
+    });
+  });
+
+  // Os 49 tokens de cor, na ordem de tokens.css.
   var GROUPS = [
     ["Base", ["ink", "text", "paper", "bg", "canvas", "surface", "panel", "surface-2", "border", "text-muted"]],
     ["Semânticas", ["decision", "decision-soft", "decision-text", "review", "review-soft", "review-text",
@@ -997,10 +1336,11 @@ garch      -3,61%    adequado</div>
     ["Barra superior", ["topbar", "topbar-text", "topbar-link", "topbar-account", "topbar-edge", "avatar", "topbar-control"]],
     ["Componentes", ["on-decision", "choice-selected", "table-head", "table-rule", "rank-rule", "bar-track",
       "callout", "code-bg", "code-text", "skeleton-base", "skeleton-shine", "icon-review"]],
-    ["Estados", ["control-hover", "decision-hover", "focus", "focus-on-dark"]]
+    ["Estados", ["control-hover", "decision-hover", "focus", "focus-on-dark"]],
+    ["Diálogo (M2.1b)", ["scrim"]]
   ];
   var ALIAS = { text: "ink", bg: "paper", panel: "surface" };
-  var NO_SOURCE = ["decision-text", "topbar-edge", "topbar-control", "control-hover", "decision-hover", "focus", "focus-on-dark"];
+  var NO_SOURCE = ["decision-text", "topbar-edge", "topbar-control", "control-hover", "decision-hover", "focus", "focus-on-dark", "scrim"];
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);

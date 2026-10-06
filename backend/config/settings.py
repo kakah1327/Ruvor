@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.assets",
     "apps.analytics",
     "apps.risk",
+    "apps.returns",
     "apps.fundamentals",
     "apps.api",
     "apps.portfolios",

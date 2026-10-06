@@ -12,9 +12,11 @@ from apps.api.views import (
     AssetDisclosuresView,
     AssetEventsView,
     AssetFundamentalsView,
+    AssetLabView,
     AssetListView,
     AssetMetricsView,
     AssetPricesView,
+    AssetReturnsView,
     AssetRiskView,
 )
 
@@ -25,6 +27,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("assets/<str:ticker>/events", AssetEventsView.as_view()),
     path("assets/<str:ticker>/metrics", AssetMetricsView.as_view()),
     path("assets/<str:ticker>/risk", AssetRiskView.as_view()),
+    path("assets/<str:ticker>/returns", AssetReturnsView.as_view()),
     path("assets/<str:ticker>/fundamentals", AssetFundamentalsView.as_view()),
     path("assets/<str:ticker>/disclosures", AssetDisclosuresView.as_view()),
+    path("assets/<str:ticker>/lab", AssetLabView.as_view()),
 ]

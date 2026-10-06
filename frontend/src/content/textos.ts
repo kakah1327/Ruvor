@@ -19,6 +19,30 @@
 import { formatInteger } from "../format/numbers";
 import { RESSALVA } from "./ressalva";
 
+/** Um número já formatado em pt-BR ("1.234,5") de volta a número. */
+function numeroBR(texto: string): number {
+  return Number(texto.replace(/\./g, "").replace(",", "."));
+}
+
+/**
+ * O lado da rejeição do Kupiec da década (M2.4, portão do `laboratorio.html`): as violações
+ * (`v`) acima das esperadas (`e`), os dois já formatados. A rejeição sozinha não diz o lado.
+ */
+export function acimaDe(v: string, e: string): boolean {
+  return numeroBR(v) > numeroBR(e);
+}
+
+/** Um modelo que bate a referência na frase do veredito (M5.1): o nome e quanto errou menos. */
+export type ModeloQueBate = readonly [nome: string, quantoMenos: string];
+
+/** A frase dos modelos sem veredito (M5.1, `retorno.veredito`): o cálculo falhou. */
+function falhaFrase(falhos: number): string {
+  if (falhos === 0) return "";
+  return falhos === 1
+    ? " O cálculo de um dos modelos falhou, e ele não foi julgado."
+    : " O cálculo dos dois modelos falhou, e nenhum foi julgado.";
+}
+
 export const TEXTOS = {
   // A barra superior.
   "casco.marca": "RUVOR",
@@ -80,6 +104,47 @@ export const TEXTOS = {
   "busca.tagIndice": "índice",
   "busca.tagInativo": "inativo",
   "busca.tagSemDados": "sem dados ainda",
+  // A página inicial abaixo do campo: os números do método e o que a página do ativo mostra.
+  "busca.metodoTitulo": "O método, em números",
+  "busca.metodo": [
+    { valor: "9", rotulo: "métodos de estimar a perda em um dia" },
+    { valor: "4", rotulo: "testes que conferem cada método no passado" },
+    { valor: "2", rotulo: "níveis de confiança: 95% e 99%" },
+    { valor: "10 anos", rotulo: "de preço diário por ativo" },
+  ],
+  "busca.paginaTitulo": "O que a página do ativo mostra",
+  "busca.pagina": [
+    {
+      titulo: "Comportamento",
+      texto:
+        "O preço, os proventos, a volatilidade, as maiores quedas e como o ativo se saiu nos momentos de estresse do mercado.",
+    },
+    {
+      titulo: "Risco",
+      texto:
+        "Quanto o ativo pode perder em um dia, segundo nove métodos, e quais deles passaram nos testes sobre o histórico do próprio ativo.",
+    },
+    {
+      titulo: "Laboratório",
+      texto:
+        "Os mesmos nove métodos ano a ano, ao longo de uma década, para ver em que anos cada um acertou e errou.",
+    },
+    {
+      titulo: "Fundamentos e comunicados",
+      texto:
+        "Os indicadores do último balanço, a posição entre as empresas do mesmo segmento e o que a companhia divulgou à CVM.",
+    },
+  ],
+
+  // As abas da tela do ativo: cada uma com o seu endereço debaixo de /ativos/{ticker}.
+  "ativo.abas.rotulo": "Seções do ativo",
+  "ativo.aba.visaoGeral": "Visão geral",
+  "ativo.aba.risco": "Risco",
+  "ativo.aba.laboratorio": "Laboratório",
+  "ativo.aba.retorno": "Retorno",
+  "ativo.aba.fundamentos": "Fundamentos",
+  "ativo.aba.comunicados": "Comunicados",
+  "ativo.explicacoes": "Explicações",
 
   // O rodapé (RF-04).
   "rodape.ressalva": RESSALVA,
@@ -327,6 +392,9 @@ export const TEXTOS = {
   // O controle de recolher da assimetria e da curtose (RF-06, RF-07 do M2.3): do
   // `comportamento.html` aprovado — um rótulo só, nos dois estados e nos dois níveis.
   "comportamento.momentos.abrir": "Ver a assimetria e a curtose",
+  "comportamento.verMais":
+    "Ver mais: estresse, Ibovespa, proventos, distribuição e volume",
+  "comportamento.verMenos": "Ver menos",
 
   // risco.* — a camada 3.
   "risco.sobrancelha": "O que pode acontecer",
@@ -489,6 +557,210 @@ export const TEXTOS = {
   "risco.pedido.erro": (msg: string) => `O pedido de cálculo não foi aceito. ${msg}`,
   "risco.pedido.semResposta":
     "O pedido de cálculo não teve resposta do servidor. Tente de novo em instantes.",
+
+  // laboratorio.* — a seção do laboratório (M2.4): do `laboratorio.html` aprovado (T9), literais.
+  // As nove com frase nas duas leituras (a lista fechada, N = 9) vêm primeiro; a avançada delas
+  // mora em `avancado.ts`, e as afirmações são as de `conferencia-laboratorio.md`.
+  "laboratorio.decada": (
+    inicio: string,
+    fim: string,
+    anos: number,
+    ultimo: number,
+  ): string =>
+    `De ${inicio} a ${fim}, os dez primeiros anos de preço deste ativo. O primeiro ano serve para os modelos aprenderem; os ${anos} seguintes, para testá-los, um de cada vez${ultimo < 252 ? ` — o último, mais curto, com ${ultimo} pregões` : ""}.`,
+  "laboratorio.diferenca": (versao: string, asOf: string): string =>
+    `Por que o veredito daqui pode ser diferente do da aba Risco: aqui estão os mesmos nove métodos, mas só nos dez primeiros anos de preço deste ativo, até ${asOf}, calculados uma vez e guardados. A aba Risco é refeita a cada dia útil e inclui os dias depois de ${asOf}. Este resultado, do motor de cálculo ${versao}, não muda enquanto o motor for o mesmo; com um motor novo, o experimento é refeito. E um veredito do passado não garante como o modelo vai se comportar daqui para a frente.`,
+  "laboratorio.violacoesAno": (e: string, cadaN: number): string =>
+    `Cada número é a quantidade de pregões daquele ano de teste em que a perda passou do limite do modelo. Num ano inteiro, de 252 pregões, espera-se cerca de ${e} (1 dia a cada ${cadaN}); o cabeçalho de cada ano diz quantos eram esperados nele.`,
+  "laboratorio.vereditoAno": (celulas: number): string =>
+    `A 95%, cada ano de teste tem o próprio veredito: os mesmos dois testes da aba Risco, aplicados só aos dias daquele ano. Nesta grade são ${celulas} anos julgados, e mesmo um modelo sem defeito sai não adequado em cerca de 1 ano a cada 14, só por acaso. O veredito que resume cada modelo é o da década.`,
+  "laboratorio.anoNaoJulgado": (n: number): string =>
+    `O último ano de teste tem só ${n} pregões, menos de meio ano: é pouco para julgar. Ele mostra quantas vezes a perda passou do limite, sem veredito.`,
+  "laboratorio.semVereditoAno99":
+    "A 99%, espera-se que a perda passe do limite só 2 ou 3 vezes num ano: é pouco para um teste dizer algo de um ano sozinho — até um ano sem nenhuma vez seria reprovado. Por isso esta grade mostra, ano a ano, só quantas vezes a perda passou do limite, e o veredito fica na década.",
+  "laboratorio.violacoesDecada": (
+    v: string,
+    e: string,
+    cadaN: number,
+    kupiecOk: boolean,
+  ): string =>
+    `Na década, ${v === "1" ? "em 1 pregão" : `em ${v} pregões`} de teste a perda passou do limite, para cerca de ${e} esperados (1 dia a cada ${cadaN}): a soma dos anos.${kupiecOk ? "" : acimaDe(v, e) ? " Bem acima do esperado: o modelo subestimou o risco." : " Bem abaixo do esperado: o modelo superestimou o risco."}`,
+  "laboratorio.vereditoDecada":
+    "O veredito da década junta os mesmos dois testes sobre todos os anos de teste juntos: adequado quando o modelo passa no Kupiec e no Christoffersen; não adequado quando falha em pelo menos um; não julgado quando o cálculo falhou. Fala de como o modelo se comportou nesses anos, não do número de hoje.",
+  "laboratorio.anosNaoRejeitados":
+    "Em quantos dos anos de teste julgados o modelo não foi rejeitado, a 95%. É um fato de cada modelo, não uma comparação entre eles: a tabela segue sempre a mesma ordem, e um ano ruim de vez em quando — cerca de 1 ano a cada 14 — é esperado mesmo num modelo sem defeito.",
+  // Os estados, as notas, os títulos e os rótulos: uma leitura só, fora da lista fechada.
+  "laboratorio.sobrancelha": "Laboratório",
+  "laboratorio.titulo": "Como os modelos se saíram em dez anos",
+  "laboratorio.intro":
+    "Os mesmos nove métodos da aba Risco, testados ano a ano nos dez primeiros anos de preço deste ativo. O experimento é calculado uma vez e guardado, e a plataforma não escolhe nenhum método.",
+  "laboratorio.carregando": "Carregando o laboratório deste ativo.",
+  "laboratorio.estado.falhou.titulo": "O experimento deste ativo falhou.",
+  "laboratorio.estado.falhou": (data: string) =>
+    `A tentativa de ${data} não chegou a nenhum resultado.`,
+  "laboratorio.estado.tentaDeNovo":
+    "O experimento é tentado de novo depois do próximo cálculo do risco deste ativo.",
+  "laboratorio.estado.aCalcular.titulo":
+    "O experimento deste ativo ainda não foi calculado.",
+  "laboratorio.estado.aCalcular":
+    "Este ativo já tem dez anos de preço e o risco calculado. O experimento roda depois do próximo cálculo do risco deste ativo e aparece aqui ao recarregar a página.",
+  "laboratorio.estado.inativo.titulo": "Ativo inativo na B3: o laboratório não roda.",
+  "laboratorio.estado.inativo": "O experimento é feito só para ativos em negociação.",
+  "laboratorio.estado.semDecada.titulo": "Ainda não há dez anos de preço.",
+  "laboratorio.estado.semDecada": (inicio: string, fim: string) =>
+    `A série deste ativo começa em ${inicio}, e a década se completa em ${fim}. O experimento roda depois do primeiro cálculo do risco a partir dessa data.`,
+  "laboratorio.estado.serieCurta.titulo": "Série curta demais para o laboratório",
+  "laboratorio.estado.serieCurta": (n: string, min: string) =>
+    `A década deste ativo tem ${n} pregões; o experimento pede no mínimo ${min}.`,
+  "laboratorio.estado.semRisco.titulo": "O laboratório vem depois do risco.",
+  "laboratorio.estado.semRisco":
+    "O experimento roda depois do primeiro cálculo do risco deste ativo. O pedido de cálculo fica na aba Risco.",
+  "laboratorio.nota.falha": (data: string) =>
+    `A tentativa de refazer o experimento em ${data} falhou. Os números abaixo são os do experimento anterior.`,
+  "laboratorio.nota.motor": (antigo: string, novo: string) =>
+    `Este experimento é do motor ${antigo}; o do motor ${novo} roda depois do próximo cálculo do risco.`,
+  "laboratorio.nota.parcial": (n: number): string =>
+    n === 1
+      ? "1 dos 9 modelos ficou sem resultado em ao menos um nível neste experimento."
+      : `${n} dos 9 modelos ficaram sem resultado em ao menos um nível neste experimento.`,
+  "laboratorio.nota.refeito":
+    "O experimento é refeito depois do próximo cálculo do risco deste ativo.",
+  "laboratorio.grade.titulo.0.0500": "Os dias acima do limite e o veredito de cada ano",
+  "laboratorio.grade.titulo.0.0100": "Os dias acima do limite em cada ano",
+  "laboratorio.grade.ano": (n: number) => `Ano ${n}`,
+  "laboratorio.grade.periodo": (inicio: string, fim: string) => `${inicio} a ${fim}`,
+  "laboratorio.grade.esperadas": (e: string) => `${e} esperados`,
+  "laboratorio.grade.col.decada": "Década",
+  "laboratorio.grade.col.anos": "Anos não rejeitados",
+  "laboratorio.grade.kDeN": (k: number, n: number) => `${k} de ${n}`,
+  "laboratorio.tag.anoCurto": "curto, sem veredito",
+  "laboratorio.testes.abrir": "Ver os testes de cada modelo",
+  "laboratorio.grade.anoAAno": "Ano a ano",
+  "laboratorio.testes.porAno": "Os testes de cada ano, a 95%",
+  "laboratorio.testes.col.ano": "Ano",
+  "laboratorio.testes.col.veredito": "Veredito",
+  "laboratorio.trilha.titulo": "Trilha do experimento",
+  "laboratorio.trilha":
+    "O que entrou neste experimento — a década, a divisão entre treino e teste, a versão do método e os preços usados —, para que ele possa ser conferido.",
+  "laboratorio.trilha.abrir": "Ver o que entrou no experimento",
+  "laboratorio.trilha.decadeEnd": "Fim da década",
+  "laboratorio.trilha.years": "Anos de teste",
+  "laboratorio.trilha.origin": "Disparado",
+  "laboratorio.trilha.origin.risk_close": "depois do cálculo do risco",
+  "laboratorio.trilha.origin.command": "pelo operador",
+  "laboratorio.trilha.snapshots": "Treinos dos modelos de aprendizado",
+  "laboratorio.trilha.retratos": (r: string, t: string) =>
+    `${r} reaproveitados, ${t} novos`,
+  "laboratorio.trilha.fingerprint": "Impressão digital dos preços",
+
+  // retorno.* — a seção do retorno (M5.1): do `retorno.html` aprovado (T9), com os ajustes da
+  // revisão do mockup, literais. As sete com frase nas duas leituras (a lista fechada, N = 7) vêm
+  // primeiro; a avançada delas mora em `avancado.ts`, e as afirmações são as de
+  // `conferencia-retorno.md`. As funções recebem os valores já formatados.
+  "retorno.veredito": (
+    ticker: string,
+    n: string,
+    fim: string,
+    batem: readonly ModeloQueBate[],
+    naoBatem: readonly string[],
+    falhos: number,
+  ): string => {
+    const periodo = `nos ${n} pregões de teste até ${fim}`;
+    if (batem.length === 0 && naoBatem.length === 0)
+      return `Não deu para julgar os modelos de ${ticker}: o cálculo dos dois falhou.`;
+    if (batem.length === 0) {
+      const quem =
+        naoBatem.length === 2
+          ? "Nenhum dos dois modelos errou"
+          : `O modelo ${naoBatem[0]} não errou`;
+      const prev =
+        naoBatem.length === 2
+          ? "as previsões abaixo não são mais informativas"
+          : "a previsão dele não é mais informativa";
+      return `${quem} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}. Por isso, ${prev} que supor retorno zero.${falhaFrase(falhos)}`;
+    }
+    const quem =
+      batem.length === 2
+        ? `Os dois modelos erraram menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo} (${batem.map(([nm, x]) => `${nm}, ${x} menos`).join("; ")})`
+        : `O modelo ${batem[0]?.[0]} errou ${batem[0]?.[1]} menos do que supor retorno zero ao prever o retorno diário de ${ticker}, ${periodo}`;
+    const outro = naoBatem.length
+      ? ` O modelo ${naoBatem[0]} não errou menos, e a previsão dele não é mais informativa que supor retorno zero.`
+      : "";
+    return `${quem}, e o teste indica que a diferença dificilmente é acaso nesta série. A vantagem é pequena, e, entre muitos ativos e dois modelos, alguns casos assim aparecem por acaso.${outro}${falhaFrase(falhos)}`;
+  },
+  "retorno.r2_os": (valor: string, menos: boolean): string =>
+    `${menos ? `Errou ${valor} menos` : `Errou ${valor} mais`} do que supor retorno zero nos pregões de teste, medindo o erro de cada dia ao quadrado.`,
+  "retorno.acerto": (acerto: string, alta: string): string =>
+    `Acertou se o dia seria de alta ou de queda em ${acerto} dos dias; a ação subiu em ${alta} deles. Quem dissesse “alta” todo dia acertaria ${alta}.`,
+  "retorno.dm": (p: string, bate: boolean): string =>
+    `O teste que decide o veredito: com p-valor abaixo de 0,05, a diferença para o retorno zero dificilmente é acaso. Aqui, ${p}: ${bate ? "bate a referência" : "não bate"}.`,
+  "retorno.cw": (p: string): string =>
+    `Outro teste do mesmo erro, que desconta o ruído de estimar os parâmetros, já que o zero é um caso particular do modelo. Aqui, ${p}. Não entra no veredito.`,
+  "retorno.pt": (p: string | null, todosAlta: boolean | null): string =>
+    p !== null
+      ? `Confere se o acerto de alta ou queda é maior que o de um palpite ao acaso com as mesmas proporções. Aqui, ${p}. Não entra no veredito.`
+      : `O modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias: o acerto dele é a parcela de dias de ${todosAlta ? "alta" : "queda"}, e não há o que testar.`,
+  "retorno.previsao": (valor: string, data: string, bate: boolean): string =>
+    bate
+      ? `O modelo calcula ${valor} para ${data}. É um número estatístico, não uma expectativa nem uma indicação: ter batido a referência no passado não diz que ele acerta o próximo pregão.`
+      : `O modelo calcula ${valor} para ${data}; como ele não bate a referência, esse número não é mais informativo que supor retorno zero.`,
+  // Os estados, a previsão ausente, os títulos, os rótulos e o aviso: uma leitura só, fora da
+  // lista fechada. O `retorno.aviso` é a única entrada `retorno.*` isenta da lista ampliada do
+  // RF-21: diz "comprar, vender ou manter" e "vai fazer" de propósito, para negar.
+  "retorno.sobrancelha": "Retorno",
+  "retorno.titulo": "Os modelos de retorno, postos à prova",
+  "retorno.intro":
+    "Dois modelos estatísticos simples tentam prever o retorno de cada pregão desta ação, e a plataforma confere, no passado, se eles erraram menos do que supor retorno zero.",
+  "retorno.aviso":
+    "Esta seção mede se dois modelos estatísticos simples, no passado, teriam errado menos ao prever o retorno diário desta ação do que supor que ele é zero. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo, e nada aqui diz o que o preço vai fazer. A previsão de cada modelo para o próximo pregão é um número estatístico, não uma expectativa nem uma indicação; a de um modelo que não bate a referência não é mais informativa que supor zero. Não bater essa referência é o resultado mais comum — o retorno de um dia é quase imprevisível. Um modelo que bateu no passado pode deixar de bater, e a vantagem, quando aparece, é pequena.",
+  "retorno.carregando": "Carregando a validação do retorno deste ativo.",
+  "retorno.estado.inativo.titulo":
+    "Ativo inativo na B3: a validação do retorno não é calculada.",
+  "retorno.estado.inativo":
+    "O cálculo diário é feito só para ativos em negociação e com preço.",
+  "retorno.estado.semSerie.titulo": "Não foi possível saber se este ativo tem preço.",
+  "retorno.estado.semSerie":
+    "A validação depende da série de preços, que não carregou.",
+  "retorno.estado.naoCoberto.titulo": "Este ativo ainda não tem preço.",
+  "retorno.estado.naoCoberto":
+    "A validação do retorno chega junto com o cálculo do risco, que se pede na aba Risco.",
+  "retorno.estado.serieCurta.titulo": "Série curta demais para a validação",
+  "retorno.estado.serieCurta": (n: string, min: string) =>
+    `Este ativo tem ${n} pregões; a validação pede no mínimo ${min}.`,
+  "retorno.estado.naoCalculado.titulo":
+    "A validação deste ativo ainda não foi calculada.",
+  "retorno.estado.naoCalculado": "Ela entra no próximo cálculo diário.",
+  "retorno.previsao.inativo":
+    "Ativo inativo: a previsão gravada é de quando ele negociava e não é mostrada.",
+  "retorno.previsao.passada": (data: string) =>
+    `A previsão era para ${data}, que já passou. A próxima entra no próximo cálculo diário.`,
+  "retorno.previsao.rotulo": (data: string) => `Previsão do modelo para ${data}`,
+  "retorno.previsao.referencia": "referência: 0,00%",
+  "retorno.modelo.ar_1": "AR(1)",
+  "retorno.modelo.historical_mean": "Média histórica",
+  "retorno.tag.bate": "bate a referência",
+  "retorno.tag.naoBate": "não bate a referência",
+  "retorno.tag.erro": "não deu para calcular",
+  "retorno.rotulo.r2": "Erro relativo à referência",
+  "retorno.rotulo.acerto": "Acerto de alta ou queda",
+  "retorno.rotulo.dm": "Diebold-Mariano",
+  "retorno.rotulo.cw": "Clark-West",
+  "retorno.rotulo.pt": "Pesaran-Timmermann",
+  "retorno.rotulo.mse": "Erro quadrático médio do modelo",
+  "retorno.rotulo.mseRef": "Erro quadrático médio de supor zero",
+  "retorno.acerto.valor": (acerto: string, alta: string) =>
+    `${acerto} · subiu em ${alta}`,
+  "retorno.semPt": "sem teste",
+  "retorno.erroModelo": (msg: string) => `O cálculo deste modelo falhou (${msg}).`,
+  "retorno.detalhes.abrir": "Ver os erros e os outros dois testes",
+  "retorno.trilha.abrir": "Ver o que entrou no cálculo",
+  "retorno.trilha.titulo": "Trilha do cálculo",
+  "retorno.trilha":
+    "O que entrou nesta validação — a série, a divisão entre treino e teste, a versão do método e os preços usados —, para que ela possa ser conferida.",
+  "retorno.trilha.refit": "Reestimação",
+  "retorno.trilha.refitValor": "a cada 252 pregões, em janela que cresce",
+  "retorno.trilha.referencia": "Referência",
+  "retorno.trilha.referenciaValor": "retorno zero",
 
   // motivos.* — a tradução de cada motivo de backend/apps/api/ondemand.py (RF-18), por
   // `traduzirMotivo` em `motivos.ts`.
@@ -724,6 +996,244 @@ export const TEXTOS = {
   "comunicados.semCodigo":
     "O catálogo não tem o código desta companhia na CVM, e os comunicados dela não puderam ser ligados.",
   "comunicados.semLigacao": "Os comunicados desta companhia não puderam ser ligados.",
+
+  // acesso.* — a tela de entrada (M2.1b, RF-06): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/entrada.html` aprovado. Os sobretítulos ficam em caixa normal, como
+  // `busca.eyebrow`; a folha os põe em maiúsculas. A mensagem da API nunca entra aqui: a tela
+  // traduz pelo `code`.
+  "acesso.cena.marca": "Ruvor",
+  "acesso.cena.eyebrow": "Inteligência de risco",
+  "acesso.cena.titulo": "Decisões financeiras com evidência à vista.",
+  "acesso.cena.texto":
+    "Veja quanto uma ação pode perder, por nove modelos sobre a mesma base, com o método à vista.",
+  "acesso.eyebrow": "Acesso à plataforma",
+  "acesso.titulo": "Que bom te ver de novo.",
+  "acesso.sub": "Entre com o e-mail e a senha da sua conta.",
+  "acesso.email.rotulo": "E-mail",
+  "acesso.email.placeholder": "nome@exemplo.com",
+  "acesso.senha.rotulo": "Senha",
+  "acesso.senha.nota":
+    "Não há recuperação de senha por e-mail. Numa organização, peça uma senha provisória a quem a administra; numa conta pessoal, a senha não pode ser recuperada.",
+  "acesso.entrar": "Entrar",
+  "acesso.entrando": "Entrando…",
+  "acesso.semConta": "Ainda não tem conta?",
+  "acesso.criarConta": "Criar conta",
+  "acesso.continuar": "Continuar sem entrar",
+  "acesso.erro.emailVazio": "Informe o e-mail.",
+  "acesso.erro.senhaVazia": "Informe a senha.",
+  "acesso.erro.credenciais": "E-mail ou senha incorretos.",
+  // tentativas(n) — n: `details.wait_seconds`, inteiro; ausente (null) → a frase sem o número;
+  // de 60 s em diante, em minutos arredondados para cima (o bloqueio por e-mail e IP dura 900 s).
+  "acesso.erro.tentativas": (n: number | null): string =>
+    n == null
+      ? "Muitas tentativas. Aguarde um pouco e tente de novo."
+      : n < 60
+        ? `Muitas tentativas. Tente de novo em ${n} s.`
+        : `Muitas tentativas. Tente de novo em ${Math.ceil(n / 60)} min.`,
+  "acesso.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "acesso.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "acesso.erro.outro": "Não foi possível entrar agora. Tente de novo.",
+  // A dica da senha e a confirmação diferente, compartilhadas pelo cadastro e pelas duas trocas
+  // de senha (os portões da T6 e da T7): do registro `COMPARTILHADOS` do `senha.html` aprovado,
+  // o mesmo texto do `cadastro.html`. Cada requisito é um validador de `AUTH_PASSWORD_VALIDATORS`.
+  "acesso.senha.dica": "A senha precisa:",
+  "acesso.senha.requisito.tamanho": "ter no mínimo 10 caracteres;",
+  "acesso.senha.requisito.numeros": "não ser só números;",
+  "acesso.senha.requisito.parecida": "não ser parecida com o seu e-mail ou o seu nome;",
+  "acesso.senha.requisito.comum": "não ser uma senha comum.",
+  "acesso.erro.confirmacaoDiferente": "As duas senhas não são iguais.",
+
+  // cadastro.* — criar conta (M2.1b, RF-07): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/cadastro.html` aprovado, as chaves novas; as da entrada são reaproveitadas.
+  // As mensagens da API por campo (`details.fields`) não entram aqui: são dado.
+  "cadastro.titulo": "Crie a sua conta.",
+  "cadastro.sub": "Informe o seu nome, o e-mail e uma senha.",
+  "cadastro.nome.rotulo": "Nome",
+  "cadastro.confirmacao.rotulo": "Repita a senha",
+  "cadastro.pessoal": "A conta é pessoal: você é a única pessoa da organização dela.",
+  "cadastro.pessoal.organizacao":
+    "Se você vai usar o Ruvor numa organização, peça a conta a quem a administra.",
+  "cadastro.criar": "Criar conta",
+  "cadastro.criando": "Criando a conta…",
+  "cadastro.temConta": "Já tem conta?",
+  "cadastro.erro.nomeVazio": "Informe o nome.",
+  "cadastro.erro.confirmacaoVazia": "Repita a senha.",
+  "cadastro.erro.emailTaken": "Este e-mail já tem conta.",
+  "cadastro.erro.emailTakenLink": "Entrar",
+  "cadastro.erro.outro": "Não foi possível criar a conta agora. Tente de novo.",
+
+  // senha.* — trocar a senha, voluntária e obrigatória (M2.1b, RF-08): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/senha.html` aprovado.
+  "senha.eyebrow": "Sua conta",
+  "senha.titulo": "Trocar a senha",
+  "senha.sub": "Confirme a senha atual e escolha uma nova.",
+  "senha.obrigatoria.eyebrow": "Senha provisória",
+  "senha.obrigatoria.titulo": "Troque a senha para continuar.",
+  "senha.obrigatoria.sub":
+    "A sua senha é provisória e precisa ser trocada antes de usar o Ruvor.",
+  // conta(email) — o e-mail de quem entrou (`me.email`).
+  "senha.obrigatoria.conta": (email: string): string => `Você entrou como ${email}.`,
+  "senha.obrigatoria.sair": "Sair",
+  "senha.atual.rotulo": "Senha atual",
+  "senha.nova.rotulo": "Senha nova",
+  "senha.confirmacao.rotulo": "Repita a senha nova",
+  "senha.trocar": "Trocar a senha",
+  "senha.trocando": "Trocando…",
+  "senha.erro.atualVazia": "Informe a senha atual.",
+  "senha.erro.novaVazia": "Informe a senha nova.",
+  "senha.erro.confirmacaoVazia": "Repita a senha nova.",
+  "senha.erro.atualIncorreta": "Senha atual incorreta.",
+  "senha.erro.outro": "Não foi possível trocar a senha agora. Tente de novo.",
+  "senha.sucesso.titulo": "Senha trocada.",
+  "senha.sucesso.texto":
+    "As outras sessões desta conta foram encerradas. Esta continua aberta.",
+  "senha.sucesso.continuar": "Continuar",
+
+  // conta.* — o menu de conta (RF-09, RF-10), o convite a entrar para calcular (RF-15) e os dois
+  // avisos do RF-16: do registro `TEXTOS` do `docs/mockups/M2.1b/conta.html` aprovado. Nenhuma é
+  // número com frase: não têm leitura avançada.
+  "conta.entrar": "Entrar",
+  // rotulo(nome) — o `aria-label` do botão de conta, com o nome de quem entrou (`me.name`).
+  "conta.menu.rotulo": (nome: string): string => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.pessoal": "Conta pessoal",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
+  "conta.menu.sairFalhou": "Não foi possível sair agora. Tente de novo.",
+  "conta.convite.entrar": "Entrar para calcular",
+  "conta.convite.frase": "Pedir um cálculo exige entrar na conta.",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
+
+  // usuarios.* — a gestão de usuários (M2.1b, RF-11 a RF-14): do registro `TEXTOS` do
+  // `docs/mockups/M2.1b/usuarios.html` aprovado, com o papel `admin` mostrado como
+  // "Administração" (o portão da T9). Os avisos do RF-16 são os `conta.aviso.*`. As mensagens
+  // da API por campo (`details.fields`) não entram aqui: são dado. Nenhuma é número com frase:
+  // não têm leitura avançada.
+  // A página.
+  "usuarios.eyebrow": "Organização",
+  "usuarios.titulo": "Usuários da organização",
+  // sub(org) — o nome da organização (`me.organization.name`).
+  "usuarios.sub": (org: string): string =>
+    `Quem entra no Ruvor pela ${org}. Aqui você cria contas, muda o papel de cada pessoa, desativa quem não deve mais entrar e gera senhas provisórias.`,
+  // A criação (RF-13).
+  "usuarios.criar.titulo": "Novo usuário",
+  "usuarios.criar.texto":
+    "A conta nasce com uma senha provisória, que a pessoa troca no primeiro acesso. O Ruvor não envia e-mail: a senha aparece para você entregar.",
+  "usuarios.campo.nome": "Nome",
+  "usuarios.campo.email": "E-mail",
+  "usuarios.campo.email.exemplo": "nome@exemplo.com",
+  "usuarios.campo.papel": "Papel",
+  "usuarios.campo.papel.dica":
+    "Membro usa o Ruvor. Administração usa e também gere os usuários desta página.",
+  "usuarios.papel.member": "Membro",
+  "usuarios.papel.admin": "Administração",
+  "usuarios.criar.botao": "Criar usuário",
+  "usuarios.criar.enviando": "Criando…",
+  // Os erros.
+  "usuarios.erro.nomeVazio": "Informe o nome.",
+  "usuarios.erro.emailVazio": "Informe o e-mail.",
+  "usuarios.erro.emailTaken": "Este e-mail já tem conta no Ruvor.",
+  // muitos(n) — n: `details.wait_seconds`; sem ele, `usuarios.erro.muitosSemTempo`.
+  "usuarios.erro.muitos": (n: number): string =>
+    `Muitos pedidos seguidos. Tente de novo em ${n} s.`,
+  "usuarios.erro.muitosSemTempo":
+    "Muitos pedidos seguidos. Aguarde um pouco e tente de novo.",
+  "usuarios.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "usuarios.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "usuarios.erro.outro": "Não foi possível concluir agora. Tente de novo.",
+  "usuarios.erro.lastAdmin":
+    "A organização precisa de ao menos uma pessoa ativa na administração. Mude outra pessoa para administração antes.",
+  "usuarios.erro.naoEncontrado":
+    "Esta pessoa não está mais na organização. A lista foi atualizada.",
+  // A lista (RF-11).
+  "usuarios.lista.titulo": "Usuários",
+  // contagem(n) — o `count` da API.
+  "usuarios.lista.contagem": (n: number): string =>
+    n === 1 ? "1 usuário" : `${n} usuários`,
+  "usuarios.col.nome": "Nome",
+  "usuarios.col.email": "E-mail",
+  "usuarios.col.papel": "Papel",
+  "usuarios.col.situacao": "Situação",
+  "usuarios.col.ultimoAcesso": "Último acesso",
+  "usuarios.col.acoes": "Ações",
+  "usuarios.voce": "você",
+  "usuarios.situacao.ativa": "ativa",
+  "usuarios.situacao.desativada": "desativada",
+  "usuarios.provisoria": "senha provisória por trocar",
+  "usuarios.nuncaEntrou": "nunca entrou",
+  // ultimoAcesso(data, hora) — o `last_login` no fuso da B3, já formatado.
+  "usuarios.ultimoAcesso": (data: string, hora: string): string => `${data} às ${hora}`,
+  // mostrando(n, total) — as linhas na tela e o `count` da API.
+  "usuarios.mostrando": (n: number, total: number): string =>
+    `Mostrando ${n} de ${total}.`,
+  "usuarios.mostrarMais": "Mostrar mais",
+  "usuarios.erroLista": "Não foi possível carregar a lista de usuários.",
+  "usuarios.erroMais": "Não foi possível carregar mais usuários.",
+  "usuarios.tentarDeNovo": "Tentar de novo",
+  // As ações da linha (RF-14). acoes.rotulo(nome) — o `aria-label` do grupo de botões.
+  "usuarios.acoes.rotulo": (nome: string): string => `Ações para ${nome}`,
+  "usuarios.acao.admin": "Mudar para administração",
+  "usuarios.acao.member": "Mudar para membro",
+  "usuarios.acao.desativar": "Desativar",
+  "usuarios.acao.reativar": "Reativar",
+  "usuarios.acao.senha": "Nova senha provisória",
+  // As confirmações (RF-14); os títulos com o nome da pessoa da linha.
+  "usuarios.confirmar.admin.titulo": (nome: string): string =>
+    `Mudar ${nome} para administração?`,
+  "usuarios.confirmar.admin.texto":
+    "A pessoa passa a ver esta página e a criar, mudar, desativar e reativar os usuários da organização, e a gerar senhas provisórias para eles.",
+  "usuarios.confirmar.member.titulo": (nome: string): string =>
+    `Mudar ${nome} para membro?`,
+  "usuarios.confirmar.member.texto":
+    "A pessoa deixa de gerir os usuários da organização. O resto do Ruvor continua igual para ela.",
+  "usuarios.confirmar.rebaixarSi.titulo": "Deixar de administrar a organização?",
+  "usuarios.confirmar.rebaixarSi.texto":
+    "Você passa a membro e perde a gestão dos usuários: esta página deixa de abrir para você. Para voltar à administração, outra pessoa da administração precisa mudar o seu papel.",
+  "usuarios.confirmar.desativar.titulo": (nome: string): string => `Desativar ${nome}?`,
+  "usuarios.confirmar.desativar.texto":
+    "A pessoa deixa de conseguir entrar. As sessões abertas e as chaves de API dela são encerradas agora. A conta continua na lista e pode ser reativada.",
+  "usuarios.confirmar.reativar.titulo": (nome: string): string => `Reativar ${nome}?`,
+  "usuarios.confirmar.reativar.texto":
+    "A pessoa volta a entrar com a senha que já tinha. As chaves de API encerradas na desativação não voltam.",
+  "usuarios.confirmar.senha.titulo": (nome: string): string =>
+    `Gerar uma senha provisória nova para ${nome}?`,
+  "usuarios.confirmar.senha.texto":
+    "A senha atual da pessoa deixa de valer, e as sessões abertas e as chaves de API dela são encerradas agora. A senha nova aparece uma vez, para você entregar.",
+  "usuarios.confirmar.desativada":
+    "A conta está desativada: a mudança vale quando ela for reativada.",
+  "usuarios.confirmar.cancelar": "Cancelar",
+  "usuarios.confirmar.fechar": "Fechar",
+  "usuarios.confirmar.enviando": "Enviando…",
+  // O diálogo da senha provisória (RF-13, RF-14); os textos com o nome e o e-mail da pessoa.
+  "usuarios.senha.criado.titulo": "Usuário criado",
+  "usuarios.senha.criado.texto": (nome: string, email: string): string =>
+    `${nome} (${email}) já pode entrar, com a senha provisória abaixo.`,
+  "usuarios.senha.nova.titulo": "Senha provisória nova",
+  "usuarios.senha.nova.texto": (nome: string, email: string): string =>
+    `A senha de ${nome} (${email}) foi trocada por esta. As sessões e as chaves de API da pessoa foram encerradas.`,
+  "usuarios.senha.campo": "Senha provisória",
+  "usuarios.senha.umaVez":
+    "Ela aparece só agora. Depois de fechar esta janela, não será mostrada de novo.",
+  "usuarios.senha.trocar":
+    "No primeiro acesso, a pessoa entra com ela e precisa trocá-la antes de usar o Ruvor.",
+  "usuarios.senha.entrega":
+    "O Ruvor não envia e-mail: entregue a senha à pessoa por outro meio, de forma reservada.",
+  "usuarios.senha.copiar": "Copiar",
+  "usuarios.senha.copiada": "Copiada",
+  "usuarios.senha.copiadaAviso": "Senha copiada para a área de transferência.",
+  "usuarios.senha.copiaFalhou":
+    "Não foi possível copiar. Selecione a senha e copie com o teclado.",
+  "usuarios.senha.fechar": "Fechar",
+  // Quem não pode gerir (RF-12). membro.texto(org) — o nome da organização.
+  "usuarios.membro.titulo": "Só quem administra a organização gere os usuários.",
+  "usuarios.membro.texto": (org: string): string =>
+    `Você é membro da ${org}. Para criar uma conta, mudar um papel ou gerar uma senha provisória, fale com quem administra a organização.`,
+  "usuarios.pessoal.titulo": "A conta pessoal não tem outros usuários.",
+  "usuarios.pessoal.texto":
+    "Ela é só sua. Uma organização com várias pessoas é criada pela equipe que opera o Ruvor.",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

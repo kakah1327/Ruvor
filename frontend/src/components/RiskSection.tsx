@@ -8,6 +8,7 @@ import { TEXTOS } from "../content/textos";
 import { formatInteger } from "../format/numbers";
 import { MIN_SESSIONS } from "../risk/config";
 import { type RiskState, riskState } from "../risk/state";
+import { useSession } from "../session/SessionProvider";
 import { Collapsible } from "./Collapsible";
 import { ComputeInvite } from "./ComputeInvite";
 import { Glyph } from "./Glyph";
@@ -243,6 +244,17 @@ export function RiskSection({
   onInactive: () => void;
 }) {
   const titleId = useId();
+  // O lugar do pedido nos E7 e E8 (RF-15): com a sessão carregando, nem o botão nem o convite.
+  const sessionLoading = useSession().status === "loading";
+  const compute = (again: boolean) =>
+    sessionLoading ? undefined : (
+      <ComputeInvite
+        ticker={ticker}
+        again={again}
+        onRisk={onRisk}
+        onInactive={onInactive}
+      />
+    );
   const latest = risk?.latest ?? null;
   const progress = risk?.in_progress ?? null;
   const request = risk?.request ?? null;
@@ -347,14 +359,7 @@ export function RiskSection({
           title={TEXTOS["risco.estado.E7.titulo"]}
           text={traduzirMotivo(request?.reason ?? "")}
           notes={[TEXTOS["risco.estado.E7.nota"]]}
-          actions={
-            <ComputeInvite
-              ticker={ticker}
-              again={true}
-              onRisk={onRisk}
-              onInactive={onInactive}
-            />
-          }
+          actions={compute(true)}
         />
       );
       break;
@@ -363,14 +368,7 @@ export function RiskSection({
         <StatePanel
           title={TEXTOS["risco.estado.E8.titulo"]}
           text={TEXTOS["risco.estado.E8"]}
-          actions={
-            <ComputeInvite
-              ticker={ticker}
-              again={false}
-              onRisk={onRisk}
-              onInactive={onInactive}
-            />
-          }
+          actions={compute(false)}
         />
       );
       break;

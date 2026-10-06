@@ -3,10 +3,11 @@
 `_calcular_sob_demanda` e chamada direto, como as funcoes com sublinhado de
 `tests/risk/test_tasks.py` -- nunca a tarefa registrada. **Os duplos entram no modulo
 `apps.assets.tasks`**, o nome global que a cadeia chama: `run_import_prices`,
-`run_compute_metrics`, `_missing_models` e `_abrir_execucao`. A coleta e as metricas sao
+`run_compute_metrics`, `run_compute_returns` (M5.1), `_missing_models` e `_abrir_execucao`. A coleta e as metricas sao
 sempre duplos -- nenhum teste sai para o Yahoo, e a guarda de rede do `conftest` barraria.
 
-- **A ordem das tres etapas**, com os argumentos que cada uma recebe;
+- **A ordem das quatro etapas** -- coleta, metricas, retorno (M5.1) e abertura --, com os
+  argumentos que cada uma recebe; a falha do retorno so e registrada, e o pedido segue;
 - **o pedido vai a `running` e nao fecha** quando a abertura devolve `opened`: quem o fecha e
   o fecho da execucao, no teste de ponta a ponta;
 - **cada etapa que falha** fecha o pedido `failed` com o motivo dela e o erro, e as seguintes
@@ -36,6 +37,7 @@ from django.utils import timezone
 from engine.experiments.runner import ExperimentResult, run_experiment
 from pytest_django import DjangoCaptureOnCommitCallbacks, Settings
 
+from apps.accounts.models import Organization, User
 from apps.api.models import ComputeRequest
 from apps.api.ondemand import (
     REASON_CALCULATED,
@@ -116,6 +118,9 @@ def _etapas(monkeypatch: pytest.MonkeyPatch, *, abertura_real: bool = False) -> 
     monkeypatch.setattr(
         "apps.assets.tasks.run_compute_metrics", etapas.etapa("metricas")
     )
+    monkeypatch.setattr(
+        "apps.assets.tasks.run_compute_returns", etapas.etapa("retorno")
+    )
     if not abertura_real:
         monkeypatch.setattr(
             "apps.assets.tasks._abrir_execucao", etapas.etapa("abertura")
@@ -188,7 +193,7 @@ def _gravado(req: ComputeRequest) -> ComputeRequest:
 
 
 @pytest.mark.django_db
-def test_as_tres_etapas_rodam_na_ordem_com_os_argumentos_da_cadeia(
+def test_as_quatro_etapas_rodam_na_ordem_com_os_argumentos_da_cadeia(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     etapas = _etapas(monkeypatch)
@@ -198,13 +203,17 @@ def test_as_tres_etapas_rodam_na_ordem_com_os_argumentos_da_cadeia(
     _calcular_sob_demanda(req.pk)
 
     depois = timezone.now()
-    assert etapas.nomes() == ["coleta", "metricas", "abertura"]
-    (_, coleta, kw_coleta), (_, metricas, kw_metricas), (_, abertura, kw_abertura) = (
-        etapas.chamadas
-    )
+    assert etapas.nomes() == ["coleta", "metricas", "retorno", "abertura"]
+    (
+        (_, coleta, kw_coleta),
+        (_, metricas, kw_metricas),
+        (_, retorno, kw_retorno),
+        (_, abertura, kw_abertura),
+    ) = etapas.chamadas
     assert isinstance(coleta[0], YahooClient)
     assert (coleta[1:], kw_coleta) == ((["AAA3"],), {})
     assert (metricas, kw_metricas) == ((["AAA3"],), {})
+    assert (retorno, kw_retorno) == ((["AAA3"],), {"requested_by": None})
     ticker, instante, semente, modelos = abertura
     assert (ticker, semente, modelos) == ("AAA3", config.DEFAULT_SEED, list(MODELS))
     assert kw_abertura == {"request_id": req.pk}
@@ -233,6 +242,60 @@ def test_com_a_abertura_opened_o_pedido_fica_running_e_nao_fecha(
     )
 
 
+# --- o retorno (M5.1, RF-12): o autor do pedido, e a falha que nao fecha o pedido -----------
+
+
+@pytest.mark.django_db
+def test_o_retorno_recebe_o_requested_by_do_pedido(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    etapas = _etapas(monkeypatch)
+    usuario = User.objects.create_user(
+        email="quem@pediu.com",
+        name="Quem Pediu",
+        organization=Organization.objects.get(slug="ruvor"),
+        password="x" * 12,
+    )
+    req = ComputeRequest.objects.create(
+        asset=_ativo("AAA3"),
+        status=Status.QUEUED,
+        requested_at=timezone.now(),
+        requested_by=usuario,
+    )
+
+    _calcular_sob_demanda(req.pk)
+
+    (_, args, kwargs) = etapas.chamadas[2]
+    assert etapas.nomes()[2] == "retorno"
+    assert (args, kwargs) == ((["AAA3"],), {"requested_by": usuario})
+
+
+@pytest.mark.django_db
+def test_a_falha_do_retorno_e_registrada_e_o_pedido_segue_para_a_abertura(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    etapas = _etapas(monkeypatch)
+    etapas.falha["retorno"] = RuntimeError("retorno quebrado de proposito")
+    req = _pedido(_ativo("AAA3"))
+
+    with caplog.at_level("ERROR", logger="apps.assets.tasks"):
+        _calcular_sob_demanda(req.pk)
+
+    assert etapas.nomes() == ["coleta", "metricas", "retorno", "abertura"]
+    gravado = _gravado(req)
+    # a abertura devolveu `opened`: o pedido segue `running`, sem `failed` nem motivo
+    assert (gravado.status, gravado.reason, gravado.error, gravado.finished_at) == (
+        Status.RUNNING,
+        "",
+        "",
+        None,
+    )
+    assert any(
+        "o retorno falhou" in r.getMessage() and r.exc_info is not None
+        for r in caplog.records
+    )
+
+
 # --- as falhas de cada etapa ---------------------------------------------------------------
 
 
@@ -242,7 +305,11 @@ def test_com_a_abertura_opened_o_pedido_fica_running_e_nao_fecha(
     [
         ("coleta", REASON_COLLECT_FAILED, ["coleta"]),
         ("metricas", REASON_METRICS_FAILED, ["coleta", "metricas"]),
-        ("abertura", REASON_OPENING_FAILED, ["coleta", "metricas", "abertura"]),
+        (
+            "abertura",
+            REASON_OPENING_FAILED,
+            ["coleta", "metricas", "retorno", "abertura"],
+        ),
     ],
 )
 def test_a_etapa_que_falha_fecha_o_pedido_failed_com_o_motivo_e_o_erro(
@@ -281,7 +348,7 @@ def test_registry_incompleto_fecha_failed_na_abertura_sem_abrir(
     _calcular_sob_demanda(req.pk)
 
     assert pedidos == [list(MODELS)]
-    assert etapas.nomes() == ["coleta", "metricas"]
+    assert etapas.nomes() == ["coleta", "metricas", "retorno"]
     gravado = _gravado(req)
     assert (gravado.status, gravado.reason) == (Status.FAILED, REASON_OPENING_FAILED)
     assert gravado.error.startswith("ModelsMissing: ")
@@ -387,7 +454,7 @@ def test_pedido_expirado_pelo_post_durante_a_cadeia_continua_expired(
     with django_capture_on_commit_callbacks(execute=True):
         _calcular_sob_demanda(req.pk)
 
-    assert etapas.nomes() == ["coleta", "metricas"]
+    assert etapas.nomes() == ["coleta", "metricas", "retorno"]
     gravado = _gravado(req)
     assert (gravado.status, gravado.reason, gravado.error, gravado.risk_run) == (
         Status.EXPIRED,
@@ -450,7 +517,7 @@ def test_ponta_a_ponta_o_pedido_termina_done_calculado_quando_o_fecho_roda(
     with django_capture_on_commit_callbacks(execute=True):
         _calcular_sob_demanda(req.pk)
 
-    assert etapas.nomes() == ["coleta", "metricas"]
+    assert etapas.nomes() == ["coleta", "metricas", "retorno"]
     run = RiskRun.objects.get()
     gravado = _gravado(req)
     assert (gravado.status, gravado.risk_run_id, gravado.finished_at) == (

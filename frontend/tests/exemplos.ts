@@ -146,6 +146,81 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "risco.estado.recalculando": [[12, 18]],
   "risco.estado.E4": [[3, 18]],
   "risco.pedido.erro": [["Erro interno. Tente de novo mais tarde."]],
+  // laboratorio.*: o registro EXEMPLOS do `laboratorio.html` aprovado (M2.4, T9), cobrindo os
+  // ramos — o último trecho curto e cheio; acima, abaixo e dentro do esperado; um e dois modelos.
+  "laboratorio.decada": [
+    ["22/09/2016", "22/09/2026", 9, 222],
+    ["22/09/2016", "22/09/2026", 9, 252],
+  ],
+  "laboratorio.diferenca": [["0.4.0", "22/09/2026"]],
+  "laboratorio.violacoesAno": [
+    ["12,6", 20],
+    ["2,5", 100],
+  ],
+  "laboratorio.vereditoAno": [[81]],
+  "laboratorio.anoNaoJulgado": [[110]],
+  "laboratorio.violacoesDecada": [
+    ["108", "111,9", 20, true],
+    ["50", "22,4", 100, false],
+    ["10", "22,4", 100, false],
+    ["1", "2,5", 100, false],
+  ],
+  "laboratorio.estado.falhou": [["05/10/2026"]],
+  "laboratorio.estado.semDecada": [["28/10/2016", "28/10/2026"]],
+  "laboratorio.estado.serieCurta": [["480", "503"]],
+  "laboratorio.nota.falha": [["05/10/2026"]],
+  "laboratorio.nota.motor": [["0.4.0", "0.5.0"]],
+  "laboratorio.nota.parcial": [[1], [2]],
+  "laboratorio.grade.ano": [[1]],
+  "laboratorio.grade.periodo": [["set/2017", "set/2018"]],
+  "laboratorio.grade.esperadas": [["12,6"]],
+  "laboratorio.grade.kDeN": [[4, 9]],
+  "laboratorio.trilha.retratos": [["72", "0"]],
+  // retorno.*: o registro EXEMPLOS do `retorno.html` aprovado (M5.1, T9), cobrindo os ramos —
+  // nenhum bate, um, os dois, um e dois sem veredito; menos e mais; o PT nulo nos dois lados.
+  "retorno.veredito": [
+    ["ITUB4", "2.246", "02/10/2026", [], ["AR(1)", "Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"]], ["Média histórica"], 0],
+    [
+      "PETR4",
+      "2.246",
+      "02/10/2026",
+      [
+        ["AR(1)", "0,40%"],
+        ["Média histórica", "0,14%"],
+      ],
+      [],
+      0,
+    ],
+    ["ITUB4", "2.246", "02/10/2026", [], ["Média histórica"], 1],
+    ["ITUB4", "2.246", "02/10/2026", [["Média histórica", "0,01%"]], [], 1],
+    ["ITUB4", "2.246", "02/10/2026", [], [], 2],
+  ],
+  "retorno.r2_os": [
+    ["0,04%", true],
+    ["0,95%", false],
+    ["0,00%", false],
+  ],
+  "retorno.acerto": [["50,6%", "51,1%"]],
+  "retorno.dm": [
+    ["0,458", false],
+    ["0,031", true],
+  ],
+  "retorno.cw": [["0,049"]],
+  "retorno.pt": [
+    ["0,445", null],
+    [null, true],
+    [null, false],
+  ],
+  "retorno.previsao": [
+    ["−0,05%", "05/10/2026", false],
+    ["+0,09%", "05/10/2026", true],
+  ],
+  "retorno.estado.serieCurta": [["312", "503"]],
+  "retorno.previsao.passada": [["28/09/2026"]],
+  "retorno.previsao.rotulo": [["05/10/2026"]],
+  "retorno.acerto.valor": [["50,6%", "51,1%"]],
+  "retorno.erroModelo": [["matriz singular no trecho 4"]],
   // fundamentos.*: os do registro EXEMPLOS do ativo-fundamentos.html (M1.6c), um por ramo.
   "fundamentos.proveniencia": [["30/06/2026", "ITR", "28/09/2026 às 08:02"]],
   "fundamentos.vezes": [["4,65"]],
@@ -202,6 +277,27 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "motivos.serieCurta": [["312", "503"]],
   "motivos.expirado": [["30"]],
   "motivos.desconhecido": [["qualquer outro texto"]],
+  // acesso.*: o registro EXEMPLOS do entrada.html (M2.1b) — segundos, minutos e sem o número.
+  "acesso.erro.tentativas": [[42], [900], [null]],
+  // senha.*: o registro EXEMPLOS do senha.html (M2.1b) — o e-mail de quem entrou.
+  "senha.obrigatoria.conta": [["ana.souza@exemplo.com"]],
+  // conta.*: o registro EXEMPLOS do conta.html (M2.1b) — o nome de quem entrou.
+  "conta.menu.rotulo": [["Ana Beatriz Souza"]],
+  // usuarios.*: o registro EXEMPLOS do usuarios.html (M2.1b) — a contagem nos dois ramos.
+  "usuarios.sub": [["Gestora Exemplo"]],
+  "usuarios.erro.muitos": [[12]],
+  "usuarios.lista.contagem": [[1], [63]],
+  "usuarios.ultimoAcesso": [["03/10/2026", "10:41"]],
+  "usuarios.mostrando": [[50, 63]],
+  "usuarios.acoes.rotulo": [["Ana Lima"]],
+  "usuarios.confirmar.admin.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.member.titulo": [["Bruno Costa"]],
+  "usuarios.confirmar.desativar.titulo": [["Elisa Prado"]],
+  "usuarios.confirmar.reativar.titulo": [["Diego Alves"]],
+  "usuarios.confirmar.senha.titulo": [["Ana Lima"]],
+  "usuarios.senha.criado.texto": [["Gabriela Rocha", "gabriela.rocha@exemplo.com"]],
+  "usuarios.senha.nova.texto": [["Ana Lima", "ana.lima@exemplo.com"]],
+  "usuarios.membro.texto": [["Gestora Exemplo"]],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.
@@ -352,4 +448,63 @@ export const EXEMPLOS_AVANCADOS: Readonly<
   ],
   "fundamentos.pares.abaixoDeTodas": [["3"]],
   "fundamentos.pares.mediana": [["11,3%"], ["7,20 vezes"]],
+  // laboratorio.*: o registro EXEMPLOS (as avançadas) do `laboratorio.html` aprovado (M2.4, T9), cobrindo os
+  // ramos — o último trecho curto e cheio; acima, abaixo e dentro do esperado; um e dois modelos.
+  "laboratorio.decada": [
+    ["22/09/2016", "22/09/2026", 9, 222],
+    ["22/09/2016", "22/09/2026", 9, 252],
+  ],
+  "laboratorio.diferenca": [["0.4.0", "22/09/2026"]],
+  "laboratorio.violacoesAno": [
+    ["12,6", 20],
+    ["2,5", 100],
+  ],
+  "laboratorio.vereditoAno": [[81]],
+  "laboratorio.anoNaoJulgado": [[110]],
+  "laboratorio.violacoesDecada": [
+    ["108", "111,9", 20, true],
+    ["50", "22,4", 100, false],
+    ["10", "22,4", 100, false],
+    ["1", "2,5", 100, false],
+  ],
+  // retorno.*: o registro EXEMPLOS do `retorno.html` aprovado (M5.1, T9), cobrindo os ramos —
+  // nenhum bate, um, os dois, um e dois sem veredito; menos e mais; o PT nulo nos dois lados.
+  "retorno.veredito": [
+    ["ITUB4", "2.246", "02/10/2026", [], ["AR(1)", "Média histórica"], 0],
+    ["PETR4", "2.246", "02/10/2026", [["AR(1)", "0,40%"]], ["Média histórica"], 0],
+    [
+      "PETR4",
+      "2.246",
+      "02/10/2026",
+      [
+        ["AR(1)", "0,40%"],
+        ["Média histórica", "0,14%"],
+      ],
+      [],
+      0,
+    ],
+    ["ITUB4", "2.246", "02/10/2026", [], ["Média histórica"], 1],
+    ["ITUB4", "2.246", "02/10/2026", [["Média histórica", "0,01%"]], [], 1],
+    ["ITUB4", "2.246", "02/10/2026", [], [], 2],
+  ],
+  "retorno.r2_os": [
+    ["0,04%", true],
+    ["0,95%", false],
+    ["0,00%", false],
+  ],
+  "retorno.acerto": [["50,6%", "51,1%"]],
+  "retorno.dm": [
+    ["0,458", false],
+    ["0,031", true],
+  ],
+  "retorno.cw": [["0,049"]],
+  "retorno.pt": [
+    ["0,445", null],
+    [null, true],
+    [null, false],
+  ],
+  "retorno.previsao": [
+    ["−0,05%", "05/10/2026", false],
+    ["+0,09%", "05/10/2026", true],
+  ],
 };

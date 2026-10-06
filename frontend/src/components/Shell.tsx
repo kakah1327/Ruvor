@@ -4,6 +4,7 @@ import { Link, Outlet, useLocation, useOutletContext } from "react-router";
 
 import { TEXTOS } from "../content/textos";
 import { formatDate, formatInstant } from "../format/numbers";
+import { AccountMenu } from "./AccountMenu";
 import { Glyph } from "./Glyph";
 import { ReadingSwitch } from "./ReadingSwitch";
 import { SearchBox } from "./SearchBox";
@@ -83,7 +84,7 @@ export function Shell() {
 
   return (
     <div className="ruvor-app">
-      <header className="ruvor-topbar">
+      <header className="ruvor-topbar" data-part="barra">
         <Link className="ruvor-brand" to="/" aria-label={TEXTOS["casco.marca.rotulo"]}>
           <img src={markReverse} alt="" />
           <b>{TEXTOS["casco.marca"]}</b>
@@ -97,10 +98,12 @@ export function Shell() {
         )}
 
         {/* As duas chaves, a de leitura antes da de tema (RF-01 e RF-11 do M2.3): o arranjo
-            em 1440 e em 360 px é o do casco-e-preco.html, em .ruvor-topbar__prefs. */}
+            em 1440 e em 360 px é o do casco-e-preco.html, em .ruvor-topbar__prefs. O lugar da
+            conta por último, depois da chave de tema (RF-09 do M2.1b, o conta.html aprovado). */}
         <div className="ruvor-topbar__prefs">
           <ReadingSwitch />
           <ThemeSwitch />
+          <AccountMenu />
         </div>
       </header>
 

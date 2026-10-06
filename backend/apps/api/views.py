@@ -6,7 +6,8 @@ Toda view declara `permission_classes` no proprio corpo (D-86, V-09): o padrao d
 
 Este modulo nao importa o motor, nem direta nem indiretamente (RF-10): nada de `engine`,
 `pandas`, `apps.risk.tasks`, `apps.risk.compute`, `apps.risk.snapshots` ou
-`apps.assets.tasks`. O V-10 (`tests/api/test_sem_motor.py`) confere.
+`apps.assets.tasks`. O V-10 (`tests/api/test_sem_motor.py`) confere. O `/lab` (M2.4) le
+`apps/risk/models.py` e o modulo puro `apps/risk/decade.py` -- nunca `apps.risk.lab`.
 """
 
 from __future__ import annotations
@@ -32,7 +33,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -40,6 +41,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import User
+from apps.accounts.schema import ApiErrorSerializer
 from apps.analytics.models import BehaviorMetric, ReturnHistogramBin, StressEpisode
 from apps.api.errors import ApiError
 from apps.api.models import ComputeRequest
@@ -50,14 +52,17 @@ from apps.api.ondemand import (
     lock_on_demand,
     timeout,
 )
+from apps.api.permissions import ReadOpenWriteAccountReady
 from apps.api.serializers import (
     HAS_RISK_DESCRIPTION,
     AssetDetailSerializer,
     AssetEventsOut,
     AssetItemSerializer,
+    AssetLabOut,
     AssetListOut,
     AssetMetricsOut,
     AssetPricesOut,
+    AssetReturnsOut,
     AssetRiskOut,
     BehaviorMetricSerializer,
     ComputeRequestSerializer,
@@ -67,13 +72,19 @@ from apps.api.serializers import (
     FundamentalsOut,
     IndicatorOut,
     InProgressRunSerializer,
+    LabFailureOut,
+    LabRunOut,
     LatestRunSerializer,
     PeersOut,
     PriceSerializer,
+    ReturnLatestSerializer,
 )
 from apps.assets.models import Asset, CorporateEvent, Price
 from apps.fundamentals.models import Company, Disclosure, FundamentalIndicator
-from apps.risk.models import RiskResult, RiskRun
+from apps.returns.models import ReturnResult, ReturnRun
+from apps.risk import config as risk_config
+from apps.risk.decade import decade_of, valid_bars
+from apps.risk.models import LabResult, LabRun, LabYear, RiskResult, RiskRun
 
 # A paginacao da busca (RF-12).
 DEFAULT_LIMIT = 20
@@ -397,6 +408,39 @@ class AssetMetricsView(APIView):
         )
 
 
+class AssetReturnsView(APIView):
+    """`GET /api/v1/assets/{ticker}/returns` (M5.1, RF-14): a `return_run` de maior
+    `calculated_at` do ativo, com os resultados por `model_name`; `latest` nulo sem nenhuma.
+    Sem `in_progress`: o calculo e sincrono. Ativo inativo le o que tem. So `GET`.
+    """
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M4.2, RF-07: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(responses={200: AssetReturnsOut})
+    def get(self, request: Request, ticker: str) -> Response:
+        asset = _asset(ticker)
+        run = (
+            ReturnRun.objects.filter(asset=asset)
+            .select_related("price_run")
+            .prefetch_related(
+                Prefetch(
+                    "results", queryset=ReturnResult.objects.order_by("model_name")
+                )
+            )
+            .order_by("-calculated_at")
+            .first()
+        )
+        return Response(
+            {
+                "ticker": asset.ticker,
+                "latest": None if run is None else ReturnLatestSerializer(run).data,
+            }
+        )
+
+
 class AssetFundamentalsView(APIView):
     """`GET /api/v1/assets/{ticker}/fundamentals` (M1.6c, RF-02): a linha de
     `gold.fundamental_indicator` de maior `calculated_at` e a comparacao **dela** com os
@@ -577,10 +621,14 @@ class AssetRiskView(APIView):
       sai `expired` no corpo e continua aberto no banco (RF-18).
     - `POST`: o pedido de calculo sob demanda, so para ativo nunca calculado (RF-14), na
       ordem literal do RF-17 -- a trava global, a expiracao dos vencidos, as decisoes e o
-      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19).
+      `insert`, numa transacao; o enfileiramento no `on_commit` (RF-19). So com conta pronta
+      (M2.1b, RF-01; D-140): sem sessao, 401 `not_authenticated`; com a senha provisoria por
+      trocar, 403 `password_change_required`. O `GET` segue aberto.
     """
 
-    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    permission_classes = [  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+        ReadOpenWriteAccountReady
+    ]
     api_key_scope: ClassVar[str | None] = (
         "read"  # M4.2, RF-07: a chave le (so metodo seguro)
     )
@@ -589,7 +637,22 @@ class AssetRiskView(APIView):
     def get(self, request: Request, ticker: str) -> Response:
         return Response(risk_body(_asset(ticker), timezone.now()))
 
-    @extend_schema(request=None, responses={202: AssetRiskOut})  # M4.2, RF-12
+    @extend_schema(  # M4.2, RF-12; o 401 e o 403, M2.1b, RF-01
+        request=None,
+        responses={
+            202: AssetRiskOut,
+            401: OpenApiResponse(
+                ApiErrorSerializer, description="Sem sessão: `not_authenticated`."
+            ),
+            403: OpenApiResponse(
+                ApiErrorSerializer,
+                description=(
+                    "Senha provisória por trocar: `password_change_required`; ou chave "
+                    "de leitura: `api_key_not_allowed`."
+                ),
+            ),
+        },
+    )
     def post(self, request: Request, ticker: str) -> Response:
         """Decide **dentro** do `atomic` e levanta o erro **depois** de sair dele: um
         `ApiError` de dentro desfaria o `expire_stale`, e os vencidos tem de ficar gravados
@@ -608,8 +671,8 @@ class AssetRiskView(APIView):
         with transaction.atomic():
             lock_on_demand()
             expire_stale(now)
-            # o `isinstance` faz o papel do `is_authenticated` -- o anonimo e
-            # `AnonymousUser`, nunca `User` -- e estreita o tipo para a FK
+            # a permissao so deixa chegar aqui quem tem conta pronta (D-140): o
+            # `isinstance` so estreita o tipo para a FK, e o ramo `None` nao acontece
             error = _decide(
                 asset, now, request.user if isinstance(request.user, User) else None
             )
@@ -621,8 +684,9 @@ class AssetRiskView(APIView):
 def _decide(asset: Asset, now: datetime, requested_by: User | None) -> ApiError | None:
     """Os passos 4 a 6 do RF-17, sob a trava e depois do `expire_stale`: devolve o 409 ou o
     429 -- para o `POST` levantar fora do `atomic` --, ou `None` para o 202, inserindo o
-    pedido novo quando e o caso. `requested_by` e quem pediu, nulo no anonimo (M2.1a,
-    RF-26): so o pedido novo o grava; os dois 202 sem pedido novo nao mudam nada."""
+    pedido novo quando e o caso. `requested_by` e quem pediu (M2.1a, RF-26), sempre um
+    usuario desde a D-140, que fecha o `POST` ao anonimo: so o pedido novo o grava; os dois
+    202 sem pedido novo nao mudam nada."""
     if ComputeRequest.objects.filter(asset=asset, status__in=OPEN_STATUSES).exists():
         return None  # 202: o pedido aberto do ativo
     last_closed = (
@@ -665,3 +729,112 @@ def _decide(asset: Asset, now: datetime, requested_by: User | None) -> ApiError 
     # o nome global, que os testes substituem em `apps.api.views.enqueue_chain`
     transaction.on_commit(lambda: enqueue_chain(request_id))
     return None
+
+
+# --- /lab (M2.4, RF-12) --------------------------------------------------------------------
+
+LAB_SHOWN_STATUSES = (LabRun.Status.OK, LabRun.Status.PARTIAL)
+RISK_SHOWN_STATUSES = (RiskRun.Status.OK, RiskRun.Status.PARTIAL)
+
+
+def lab_pending(
+    *,
+    active: bool,
+    complete: bool,
+    sessions: int,
+    risk_engine_version: str | None,
+    latest_engine_version: str | None,
+    latest_status: str | None,
+) -> bool:
+    """O experimento devido ainda nao esta gravado (RF-12), literal.
+
+    `active` **e** a decada completa **e** suficiente **e** ha versao do risco **e** (sem
+    `latest`, **ou** o `latest` de outra versao do motor, **ou** o `latest` `partial`).
+    `latest_engine_version` e `latest_status` sao nulos sem `latest`.
+    """
+    return (
+        active
+        and complete
+        and sessions >= risk_config.MIN_SESSIONS
+        and risk_engine_version is not None
+        and (
+            latest_engine_version is None
+            or latest_engine_version != risk_engine_version
+            or latest_status == LabRun.Status.PARTIAL
+        )
+    )
+
+
+def lab_body(asset: Asset) -> dict[str, Any]:
+    """O corpo do `/lab` (RF-12).
+
+    - `decade`: a regra do RF-02 sobre `silver.price`, na leitura; tudo nulo sem preco
+    - `latest`: o `lab_run` `ok` ou `partial` de maior `calculated_at`, de qualquer versao do
+      motor; resultados por `model_name` e `alpha` decrescente, anos por `index`
+    - `last_failure`: o `failed` mais recente **posterior** ao `latest` (ou o mais recente)
+    - `risk_engine_version`: a versao da execucao de producao `ok`/`partial` mais recente
+    """
+    decade = decade_of(valid_bars(asset))
+    latest = (
+        LabRun.objects.filter(asset=asset, status__in=LAB_SHOWN_STATUSES)
+        .select_related("price_run")
+        .prefetch_related(
+            Prefetch(
+                "results",
+                queryset=LabResult.objects.order_by("model_name", "-alpha"),
+            ),
+            Prefetch("results__years", queryset=LabYear.objects.order_by("index")),
+        )
+        .order_by("-calculated_at")
+        .first()
+    )
+    failures = LabRun.objects.filter(asset=asset, status=LabRun.Status.FAILED)
+    if latest is not None:
+        failures = failures.filter(calculated_at__gt=latest.calculated_at)
+    last_failure = failures.order_by("-calculated_at").first()
+    risk_engine_version = (
+        RiskRun.objects.filter(asset=asset, status__in=RISK_SHOWN_STATUSES)
+        .order_by("-calculated_at")
+        .values_list("engine_version", flat=True)
+        .first()
+    )
+    active = asset.status == Asset.Status.ACTIVE
+    complete = decade is not None and decade.complete
+    sessions = 0 if decade is None else decade.sessions
+    return {
+        "ticker": asset.ticker,
+        "active": active,
+        "decade": {
+            "first_price_date": None if decade is None else decade.first_price_date,
+            "end_date": None if decade is None else decade.end_date,
+            "last_price_date": None if decade is None else decade.last_price_date,
+            "complete": complete,
+            "sessions": sessions,
+        },
+        "risk_engine_version": risk_engine_version,
+        "pending": lab_pending(
+            active=active,
+            complete=complete,
+            sessions=sessions,
+            risk_engine_version=risk_engine_version,
+            latest_engine_version=None if latest is None else latest.engine_version,
+            latest_status=None if latest is None else latest.status,
+        ),
+        "latest": None if latest is None else LabRunOut(latest).data,
+        "last_failure": None
+        if last_failure is None
+        else LabFailureOut(last_failure).data,
+    }
+
+
+class AssetLabView(APIView):
+    """`GET /api/v1/assets/{ticker}/lab`: o experimento fixo da decada (M2.4, RF-12). So `GET`."""
+
+    permission_classes = [AllowAny]  # noqa: RUF012 -- a forma do DRF; o V-09 le do corpo
+    api_key_scope: ClassVar[str | None] = (
+        "read"  # M2.4, RF-12: a chave le (so metodo seguro)
+    )
+
+    @extend_schema(responses={200: AssetLabOut})
+    def get(self, request: Request, ticker: str) -> Response:
+        return Response(lab_body(_asset(ticker)))

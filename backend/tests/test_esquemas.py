@@ -1,6 +1,6 @@
 """F4-01 e F4-02: os quatro esquemas existem, e as tabelas sao a lista fechada.
 
-Sao trinta e sete tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
+Sao quarenta e uma tabelas. O F4 criou nove — as duas do `core`, as duas de juncao do usuario
 e as cinco do Django no `public` —, o M1.1 acrescentou as quatro do catalogo de ativos —
 tres na `bronze` (`collection_run`, `b3_company_listing`, `b3_company_detail`) e uma na
 `silver` (`asset`) — e o M1.2 acrescentou as tres dos precos: uma na `bronze`
@@ -17,7 +17,9 @@ acrescentou as duas do contexto: uma na `silver` (`disclosure`) e uma na `gold`
 acrescentou a das chaves de API, no `core` (`api_key`), e o M4.1, a dos relatorios, tambem no
 `core` (`report`). O M2.2a acrescentou as cinco da carteira: tres no `core` (`portfolio`,
 `portfolio_version`, `portfolio_holding`) e duas na `gold` (`portfolio_risk_run`,
-`portfolio_risk_result`).
+`portfolio_risk_result`). O M2.4 acrescentou as tres do laboratorio, na `gold` (`lab_run`,
+`lab_result`, `lab_year`), e o M5.1, as duas do retorno, tambem na `gold` (`return_run`,
+`return_result`).
 
 Usa `django_db_blocker` e nao a marca `django_db` pelo mesmo motivo do
 `test_conexao_com_o_banco`: a marca conecta em `test_<nome>`, um banco que o proprio
@@ -57,11 +59,16 @@ TABELAS = {
     "core.user_user_permissions",
     "gold.behavior_metric",
     "gold.fundamental_indicator",
+    "gold.lab_result",
+    "gold.lab_run",
+    "gold.lab_year",
     "gold.model_snapshot",
     "gold.peer_comparison",
     "gold.portfolio_risk_result",
     "gold.portfolio_risk_run",
     "gold.return_histogram_bin",
+    "gold.return_result",
+    "gold.return_run",
     "gold.risk_result",
     "gold.risk_run",
     "gold.stress_episode",

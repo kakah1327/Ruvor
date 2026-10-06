@@ -5,16 +5,21 @@ import type {
   AssetDetail,
   Events,
   Fundamentals,
+  Lab,
   Metrics,
   Prices,
+  Returns,
   Risk,
 } from "../api/types";
 import { AssetHeader } from "../components/AssetHeader";
+import { type AssetTab, AssetTabs } from "../components/AssetTabs";
 import { BehaviorSection } from "../components/BehaviorSection";
 import { DisclosuresSection } from "../components/DisclosuresSection";
 import { EventsSection } from "../components/EventsSection";
 import { FundamentalsSection } from "../components/FundamentalsSection";
+import { LabSection } from "../components/LabSection";
 import { PriceSection } from "../components/PriceSection";
+import { ReturnsSection } from "../components/ReturnsSection";
 import {
   RiskSection,
   sectionPending,
@@ -24,11 +29,14 @@ import {
 import { SearchBox } from "../components/SearchBox";
 import { useShellContext } from "../components/Shell";
 import { TEXTOS } from "../content/textos";
+import { useExplain } from "../explain";
+import { useLabPolling } from "../lab/useLabPolling";
 import { usePolling } from "../risk/usePolling";
 
 /**
- * As seis rotas do ativo que a tela pede, cada uma com o seu estado e o seu "tentar de novo".
- * A sétima, `/disclosures`, a seção Comunicados pede sozinha (M1.6c, "Quem carrega os
+ * As oito rotas do ativo que a tela pede, cada uma com o seu estado e o seu "tentar de novo" —
+ * a sétima, `/lab`, é a do laboratório (M2.4, RF-18), e a oitava, `/returns`, a do retorno
+ * (M5.1). A nona, `/disclosures`, a seção Comunicados pede sozinha (M1.6c, "Quem carrega os
  * comunicados").
  */
 export type AssetData = {
@@ -38,6 +46,8 @@ export type AssetData = {
   metrics: Load<Metrics>;
   risk: Load<Risk>;
   fundamentals: Load<Fundamentals>;
+  lab: Load<Lab>;
+  returns: Load<Returns>;
   reload: {
     asset: () => void;
     prices: () => void;
@@ -45,9 +55,11 @@ export type AssetData = {
     metrics: () => void;
     risk: () => void;
     fundamentals: () => void;
+    lab: () => void;
+    returns: () => void;
   };
   /**
-   * Pede as seis de novo e incrementa `reloadToken` (RF-20 do M1.6b, RF-15 do M1.6c: o fim do
+   * Pede as oito de novo e incrementa `reloadToken` (RF-20 do M1.6b, RF-15 do M1.6c: o fim do
    * acompanhamento). Não apaga o que está na tela: cada seção mostra o dado anterior até o novo
    * chegar (`useResource`).
    */
@@ -57,8 +69,8 @@ export type AssetData = {
 };
 
 /**
- * As seis rotas do ativo em paralelo (RF-06 do M1.6b, RF-15 do M1.6c): cada seção carrega
- * sozinha, e a lenta não segura a rápida.
+ * As oito rotas do ativo em paralelo (RF-06 do M1.6b, RF-15 do M1.6c, RF-18 do M2.4, M5.1):
+ * cada seção carrega sozinha, e a lenta não segura a rápida.
  */
 export function useAssetData(ticker: string): AssetData {
   const base = `/api/v1/assets/${encodeURIComponent(ticker)}`;
@@ -68,6 +80,8 @@ export function useAssetData(ticker: string): AssetData {
   const metrics = useResource<Metrics>(`${base}/metrics`);
   const risk = useResource<Risk>(`${base}/risk`);
   const fundamentals = useResource<Fundamentals>(`${base}/fundamentals`);
+  const lab = useResource<Lab>(`${base}/lab`);
+  const returns = useResource<Returns>(`${base}/returns`);
   const [reloadToken, setReloadToken] = useState(0);
 
   const reloadAsset = asset.reload;
@@ -76,6 +90,8 @@ export function useAssetData(ticker: string): AssetData {
   const reloadMetrics = metrics.reload;
   const reloadRisk = risk.reload;
   const reloadFundamentals = fundamentals.reload;
+  const reloadLab = lab.reload;
+  const reloadReturns = returns.reload;
   const reloadAll = useCallback(() => {
     reloadAsset();
     reloadPrices();
@@ -83,6 +99,8 @@ export function useAssetData(ticker: string): AssetData {
     reloadMetrics();
     reloadRisk();
     reloadFundamentals();
+    reloadLab();
+    reloadReturns();
     setReloadToken((n) => n + 1);
   }, [
     reloadAsset,
@@ -91,6 +109,8 @@ export function useAssetData(ticker: string): AssetData {
     reloadMetrics,
     reloadRisk,
     reloadFundamentals,
+    reloadLab,
+    reloadReturns,
   ]);
 
   return {
@@ -100,6 +120,8 @@ export function useAssetData(ticker: string): AssetData {
     metrics: metrics.load,
     risk: risk.load,
     fundamentals: fundamentals.load,
+    lab: lab.load,
+    returns: returns.load,
     reload: {
       asset: reloadAsset,
       prices: reloadPrices,
@@ -107,6 +129,8 @@ export function useAssetData(ticker: string): AssetData {
       metrics: reloadMetrics,
       risk: reloadRisk,
       fundamentals: reloadFundamentals,
+      lab: reloadLab,
+      returns: reloadReturns,
     },
     reloadAll,
     reloadToken,
@@ -160,19 +184,22 @@ type Posted =
   | { base: Load<Risk>; kind: "inactive" };
 
 /**
- * A tela do ativo (RF-06 a RF-20 do M1.6b, RF-15 do M1.6c): o cabeçalho, o preço, os
- * proventos, o comportamento, o risco e, depois dele, os fundamentos e os comunicados, com a
- * trilha na coluna lateral do casco e a proveniência no rodapé.
+ * A tela do ativo (RF-06 a RF-20 do M1.6b, RF-15 do M1.6c): o cabeçalho e, abaixo das abas,
+ * uma seção de cada vez — a visão geral (o preço, os proventos e o comportamento), o risco, o
+ * laboratório (M2.4), o retorno (M5.1), os fundamentos e os comunicados —, com a trilha na
+ * coluna lateral do casco, só na aba do risco, e a proveniência no rodapé. As rotas são pedidas
+ * todas ao montar, qualquer que seja a aba, e trocar de aba não as pede de novo.
  *
  * `data-ready="true"` no raiz quando o cabeçalho **e** a seção de risco terminaram, com
  * sucesso ou erro — é o que a execução real espera. A seção terminou quando saiu do
  * carregando: o do `/risk` e o da identidade e da série que o estado pede. As duas seções do
- * M1.6c não entram nele.
+ * M1.6c, o `/lab` do laboratório (M2.4, RF-13) e o `/returns` do retorno (M5.1) não entram nele.
  */
-export function AssetScreen({ ticker }: { ticker: string }) {
+export function AssetScreen({ ticker, tab = "" }: { ticker: string; tab?: AssetTab }) {
   const data = useAssetData(ticker);
   const { asset, prices, events, metrics } = data;
   const { setProvenance, setRail, railElement } = useShellContext();
+  const [explain, toggleExplain] = useExplain();
 
   const [posted, setPosted] = useState<Posted | null>(null);
   const current = posted !== null && posted.base === data.risk ? posted : null;
@@ -182,12 +209,19 @@ export function AssetScreen({ ticker }: { ticker: string }) {
   const state = sectionStateOf(riskLoad, asset, prices, current?.kind === "inactive");
 
   usePolling(risk, data.reload.risk, data.reloadAll);
+  // A releitura limitada do `/lab` depois do fim do acompanhamento (RF-18 do M2.4).
+  useLabPolling(
+    data.lab.state === "ok" ? data.lab.data : null,
+    data.reload.lab,
+    data.reloadToken,
+  );
 
   const notFound = asset.state === "error" && asset.error.code === "asset_not_found";
 
   // A coluna lateral (a trilha) e a proveniência do rodapé (RF-04, RF-16): a do último
   // cálculo fechado `ok` ou `partial`.
-  const railOn = !notFound && wantsRail(state, risk);
+  // A trilha mora na aba do risco: fora dela, a coluna lateral some.
+  const railOn = !notFound && tab === "risco" && wantsRail(state, risk);
   useEffect(() => {
     setRail(railOn);
   }, [setRail, railOn]);
@@ -224,18 +258,28 @@ export function AssetScreen({ ticker }: { ticker: string }) {
     <div
       className="ruvor-stack ruvor-stack--loose"
       data-ready={ready ? "true" : undefined}
+      data-explain={explain ? "on" : "off"}
     >
       <AssetHeader load={asset} onRetry={data.reload.asset} />
-      <PriceSection load={prices} onRetry={data.reload.prices} />
-      <EventsSection
-        load={events}
-        referenceDate={eventsReference(asset)}
-        onRetry={data.reload.events}
-      />
-      <BehaviorSection load={metrics} ticker={ticker} onRetry={data.reload.metrics} />
+      <AssetTabs ticker={ticker} explain={explain} onToggleExplain={toggleExplain} />
 
-      {/* `id="risco"`: o destino do "Ir para o risco" do comportamento. */}
-      <div id="risco">
+      {tab === "" && (
+        <>
+          <PriceSection load={prices} onRetry={data.reload.prices} />
+          <EventsSection
+            load={events}
+            referenceDate={eventsReference(asset)}
+            onRetry={data.reload.events}
+          />
+          <BehaviorSection
+            load={metrics}
+            ticker={ticker}
+            onRetry={data.reload.metrics}
+          />
+        </>
+      )}
+
+      {tab === "risco" && (
         <RiskSection
           ticker={ticker}
           state={state}
@@ -246,18 +290,39 @@ export function AssetScreen({ ticker }: { ticker: string }) {
           onRisk={onRisk}
           onInactive={onInactive}
         />
-      </div>
+      )}
 
-      <FundamentalsSection
-        load={data.fundamentals}
-        asset={asset}
-        onRetry={data.reload.fundamentals}
-      />
-      <DisclosuresSection
-        ticker={ticker}
-        asset={asset}
-        reloadToken={data.reloadToken}
-      />
+      {/* O laboratório (M2.4, RF-13) e o retorno (M5.1): fora do `data-ready`. */}
+      {tab === "laboratorio" && (
+        <LabSection load={data.lab} onRetry={data.reload.lab} />
+      )}
+
+      {tab === "retorno" && (
+        <ReturnsSection
+          load={data.returns}
+          asset={asset}
+          prices={prices}
+          today={today()}
+          onRetry={data.reload.returns}
+          onRetryPrices={data.reload.prices}
+        />
+      )}
+
+      {tab === "fundamentos" && (
+        <FundamentalsSection
+          load={data.fundamentals}
+          asset={asset}
+          onRetry={data.reload.fundamentals}
+        />
+      )}
+
+      {tab === "comunicados" && (
+        <DisclosuresSection
+          ticker={ticker}
+          asset={asset}
+          reloadToken={data.reloadToken}
+        />
+      )}
     </div>
   );
 }

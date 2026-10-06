@@ -89,7 +89,8 @@ def test_nenhuma_entrada_do_beat_aponta_para_o_risco() -> None:
     assert not [t for t in tasks if t.startswith("apps.risk.tasks.")], tasks
 
 
-# --- V-09 (e V-20 do M1.6a; V-10 do M1.5c): presas, preco, metricas e risco, encadeados ----
+# --- V-09 (e V-20 do M1.6a; V-10 do M1.5c; V-10 do M5.1): presas, preco, metricas, risco e
+# retorno, encadeados ------------------------------------------------------------------------
 
 
 def test_rotina_diaria_enfileira_uma_corrente_presas_precos_metricas_e_risco(
@@ -109,6 +110,7 @@ def test_rotina_diaria_enfileira_uma_corrente_presas_precos_metricas_e_risco(
         "apps.assets.tasks.importar_precos",
         "apps.analytics.tasks.calcular_metricas",
         "apps.risk.tasks.recalcular_cobertos",
+        "apps.returns.tasks.calcular_retornos",
     ]
     # Imutaveis: com `.s()`, o que o elo anterior devolveu chegaria como argumento
     # posicional -- o `None` do `fechar_presas` no `importar_precos`, que nao recebe nenhum;
@@ -116,6 +118,8 @@ def test_rotina_diaria_enfileira_uma_corrente_presas_precos_metricas_e_risco(
     assert elos[1].immutable is True
     assert elos[2].immutable is True
     assert elos[3].immutable is True
+    # o retorno e o ultimo: com `.s()`, o texto do recalculo chegaria como argumento
+    assert elos[4].immutable is True
 
 
 # --- V-10: horario e configuracao ----------------------------------------------------------

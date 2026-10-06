@@ -223,3 +223,135 @@ describe("V-09 do M1.6c — o radical da imprensa nas entradas comunicados.*", (
     expect(achados).toEqual([]);
   });
 });
+
+/**
+ * RF-17 do M2.4: a seção do laboratório não elege modelo. Além da varredura de sempre, as
+ * entradas `laboratorio.*` — nas duas leituras, avaliadas pelos exemplos — não usam as palavras
+ * do "ranking" da Etapa 6 do TCC; palavra inteira, sem caixa.
+ */
+const PROIBIDAS_LABORATORIO =
+  /(?<![\p{L}\p{N}_])(pior|piores|vencedor|vencedores|venceu|ranking|campeão)(?![\p{L}\p{N}_])/iu;
+
+describe("RF-17 do M2.4 — o vocabulário do laboratório nas entradas laboratorio.*", () => {
+  it.each(["o pior", "Vencedor", "RANKING", "campeão", "os piores", "venceu"])(
+    "pega %j",
+    (texto) => {
+      expect(PROIBIDAS_LABORATORIO.test(texto)).toBe(true);
+    },
+  );
+
+  it.each(["superior", "convenceu", "rankings2"])("não pega %j", (texto) => {
+    expect(PROIBIDAS_LABORATORIO.test(texto)).toBe(false);
+  });
+
+  const registros: Array<[string, object, Exemplos]> = [
+    ["iniciante", TEXTOS, EXEMPLOS],
+    ["avançada", TEXTOS_AVANCADOS, EXEMPLOS_AVANCADOS],
+  ];
+
+  it.each(registros)("as entradas laboratorio.* da %s existem", (_rotulo, registro) => {
+    const chaves = Object.keys(registro).filter((k) => k.startsWith("laboratorio."));
+    expect(chaves.length).toBeGreaterThan(0);
+  });
+
+  it.each(registros)(
+    "nenhuma entrada laboratorio.* da %s usa o vocabulário do ranking",
+    (_rotulo, registro, exemplos) => {
+      const achados: string[] = [];
+      for (const [chave, valor] of Object.entries(registro) as Array<
+        [string, unknown]
+      >) {
+        if (!chave.startsWith("laboratorio.")) continue;
+        const saidas =
+          typeof valor === "string"
+            ? [valor]
+            : (exemplos[chave] ?? []).map((args) =>
+                (valor as (...a: unknown[]) => string)(...args),
+              );
+        expect(saidas.length, chave).toBeGreaterThan(0);
+        for (const saida of saidas) {
+          const m = PROIBIDAS_LABORATORIO.exec(saida);
+          if (m !== null) achados.push(`${chave}: ${m[1]}`);
+        }
+      }
+      expect(achados).toEqual([]);
+    },
+  );
+});
+
+/**
+ * V-16 do M5.1 (RF-21): a lista ampliada do vocabulário, fechada no portão do `retorno.html` —
+ * palavra inteira, sem caixa, por raiz —, sobre as entradas `retorno.*` nas duas leituras,
+ * avaliadas pelos exemplos (a forma (b)). `retorno.aviso` é a única isenta: diz "comprar, vender
+ * ou manter" e "vai fazer" de propósito, para negar. A lista não cabe na forma (a): os textos dos
+ * fundamentos dizem "lucro" e "venda".
+ */
+const AMPLIADA =
+  /(?<![\p{L}\p{N}_])(compr\p{L}*|vend\p{L}*|mant(er|enha|enham|ém)|lucr\p{L}*|ganh\p{L}*|rentab\p{L}*|oportunidades?|garant\p{L}*|alvos?|apost\p{L}*|promissor(a|as|es)?)(?![\p{L}\p{N}_])|vai (subir|cair|valorizar|desvalorizar|render)|vai se (valorizar|desvalorizar)|vão (subir|cair)|deve (subir|cair|render)|tende a (subir|cair)/iu;
+const ISENTAS_RETORNO = ["retorno.aviso"];
+
+describe("V-16 do M5.1 — a lista ampliada do RF-21 nas entradas retorno.*", () => {
+  it.each([
+    "vendeu",
+    "comprado",
+    "mantenha",
+    "a ação vai subir",
+    "deve cair",
+    "tende a subir",
+    "oportunidade",
+    "garante",
+    "lucro",
+    "ganho",
+    "rentabilidade",
+    "vai se valorizar",
+  ])("pega %j", (texto) => {
+    expect(AMPLIADA.test(texto)).toBe(true);
+  });
+
+  it.each(["reestimação", "manteiga_", "_lucro", "alvorada", "comprimento"])(
+    "não pega %j",
+    (texto) => {
+      // "comprimento" é raiz "compr": a lista o pega de propósito (por raiz); os outros, não.
+      expect(AMPLIADA.test(texto)).toBe(texto === "comprimento");
+    },
+  );
+
+  it("a isenção é exatamente retorno.aviso", () => {
+    expect(ISENTAS_RETORNO).toEqual(["retorno.aviso"]);
+    expect(AMPLIADA.test(TEXTOS["retorno.aviso"])).toBe(true);
+  });
+
+  const registros: Array<[string, object, Exemplos]> = [
+    ["iniciante", TEXTOS, EXEMPLOS],
+    ["avançada", TEXTOS_AVANCADOS, EXEMPLOS_AVANCADOS],
+  ];
+
+  it.each(registros)("as entradas retorno.* da %s existem", (_rotulo, registro) => {
+    const chaves = Object.keys(registro).filter((k) => k.startsWith("retorno."));
+    expect(chaves.length).toBeGreaterThan(0);
+  });
+
+  it.each(registros)(
+    "nenhuma entrada retorno.* da %s usa a lista ampliada",
+    (_rotulo, registro, exemplos) => {
+      const achados: string[] = [];
+      for (const [chave, valor] of Object.entries(registro) as Array<
+        [string, unknown]
+      >) {
+        if (!chave.startsWith("retorno.") || ISENTAS_RETORNO.includes(chave)) continue;
+        const saidas =
+          typeof valor === "string"
+            ? [valor]
+            : (exemplos[chave] ?? []).map((args) =>
+                (valor as (...a: unknown[]) => string)(...args),
+              );
+        expect(saidas.length, chave).toBeGreaterThan(0);
+        for (const saida of saidas) {
+          const m = AMPLIADA.exec(saida);
+          if (m !== null) achados.push(`${chave}: ${m[0]}`);
+        }
+      }
+      expect(achados).toEqual([]);
+    },
+  );
+});

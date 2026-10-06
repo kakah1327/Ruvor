@@ -57,20 +57,21 @@
   --ruvor-decision-hover: #7F3442;
   --ruvor-focus: #8F3B4B;
   --ruvor-focus-on-dark: #E7AAB5;
+  --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --ruvor-ink: #ECEBE7;
+  --ruvor-ink: #F0ECE7;
   --ruvor-text: var(--ruvor-ink);
-  --ruvor-paper: #212226;
+  --ruvor-paper: #191714;
   --ruvor-bg: var(--ruvor-paper);
-  --ruvor-canvas: #1A1B1E;
-  --ruvor-surface: #292A2F;
+  --ruvor-canvas: #110F0D;
+  --ruvor-surface: #24211E;
   --ruvor-panel: var(--ruvor-surface);
-  --ruvor-surface-2: #323338;
-  --ruvor-border: #45464B;
-  --ruvor-text-muted: #A4A4A9;
+  --ruvor-surface-2: #2E2B28;
+  --ruvor-border: #3F3B37;
+  --ruvor-text-muted: #B5B0AA;
   --ruvor-decision: #D38595;
   --ruvor-decision-soft: #41282E;
   --ruvor-decision-text: #E7AAB5;
@@ -86,44 +87,45 @@
   --ruvor-critical: #DC7F78;
   --ruvor-critical-soft: #432927;
   --ruvor-critical-text: #EEA9A3;
-  --ruvor-topbar: #0C0D0F;
-  --ruvor-topbar-text: #ECEBE7;
-  --ruvor-topbar-link: #A9AAAE;
-  --ruvor-topbar-account: #C4C4C2;
-  --ruvor-topbar-edge: #3A3B40;
-  --ruvor-avatar: #2E2F34;
-  --ruvor-topbar-control: #2E2F34;
-  --ruvor-on-decision: #1D1E21;
+  --ruvor-topbar: #090807;
+  --ruvor-topbar-text: #F0ECE7;
+  --ruvor-topbar-link: #B4B0AC;
+  --ruvor-topbar-account: #CAC7C2;
+  --ruvor-topbar-edge: #2E2B28;
+  --ruvor-avatar: #2A2724;
+  --ruvor-topbar-control: #2A2724;
+  --ruvor-on-decision: #191714;
   --ruvor-choice-selected: #3A2A2F;
-  --ruvor-table-head: #2E2F34;
-  --ruvor-table-rule: #34353A;
-  --ruvor-rank-rule: #34353A;
-  --ruvor-bar-track: #34393A;
-  --ruvor-callout: #2E2F34;
-  --ruvor-code-bg: #0C0D0F;
+  --ruvor-table-head: #2A2724;
+  --ruvor-table-rule: #2F2C29;
+  --ruvor-rank-rule: #2F2C29;
+  --ruvor-bar-track: #302D2B;
+  --ruvor-callout: #2A2724;
+  --ruvor-code-bg: #090807;
   --ruvor-code-text: #E8E6E1;
-  --ruvor-skeleton-base: #2E2F34;
-  --ruvor-skeleton-shine: #3A3B40;
+  --ruvor-skeleton-base: #2A2724;
+  --ruvor-skeleton-shine: #383532;
   --ruvor-icon-review: #D1B06A;
-  --ruvor-control-hover: #323338;
+  --ruvor-control-hover: #2E2B28;
   --ruvor-decision-hover: #E0A0AC;
   --ruvor-focus: #E7AAB5;
   --ruvor-focus-on-dark: #E7AAB5;
+  --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --ruvor-ink: #ECEBE7;
+    --ruvor-ink: #F0ECE7;
     --ruvor-text: var(--ruvor-ink);
-    --ruvor-paper: #212226;
+    --ruvor-paper: #191714;
     --ruvor-bg: var(--ruvor-paper);
-    --ruvor-canvas: #1A1B1E;
-    --ruvor-surface: #292A2F;
+    --ruvor-canvas: #110F0D;
+    --ruvor-surface: #24211E;
     --ruvor-panel: var(--ruvor-surface);
-    --ruvor-surface-2: #323338;
-    --ruvor-border: #45464B;
-    --ruvor-text-muted: #A4A4A9;
+    --ruvor-surface-2: #2E2B28;
+    --ruvor-border: #3F3B37;
+    --ruvor-text-muted: #B5B0AA;
     --ruvor-decision: #D38595;
     --ruvor-decision-soft: #41282E;
     --ruvor-decision-text: #E7AAB5;
@@ -139,29 +141,30 @@
     --ruvor-critical: #DC7F78;
     --ruvor-critical-soft: #432927;
     --ruvor-critical-text: #EEA9A3;
-    --ruvor-topbar: #0C0D0F;
-    --ruvor-topbar-text: #ECEBE7;
-    --ruvor-topbar-link: #A9AAAE;
-    --ruvor-topbar-account: #C4C4C2;
-    --ruvor-topbar-edge: #3A3B40;
-    --ruvor-avatar: #2E2F34;
-    --ruvor-topbar-control: #2E2F34;
-    --ruvor-on-decision: #1D1E21;
+    --ruvor-topbar: #090807;
+    --ruvor-topbar-text: #F0ECE7;
+    --ruvor-topbar-link: #B4B0AC;
+    --ruvor-topbar-account: #CAC7C2;
+    --ruvor-topbar-edge: #2E2B28;
+    --ruvor-avatar: #2A2724;
+    --ruvor-topbar-control: #2A2724;
+    --ruvor-on-decision: #191714;
     --ruvor-choice-selected: #3A2A2F;
-    --ruvor-table-head: #2E2F34;
-    --ruvor-table-rule: #34353A;
-    --ruvor-rank-rule: #34353A;
-    --ruvor-bar-track: #34393A;
-    --ruvor-callout: #2E2F34;
-    --ruvor-code-bg: #0C0D0F;
+    --ruvor-table-head: #2A2724;
+    --ruvor-table-rule: #2F2C29;
+    --ruvor-rank-rule: #2F2C29;
+    --ruvor-bar-track: #302D2B;
+    --ruvor-callout: #2A2724;
+    --ruvor-code-bg: #090807;
     --ruvor-code-text: #E8E6E1;
-    --ruvor-skeleton-base: #2E2F34;
-    --ruvor-skeleton-shine: #3A3B40;
+    --ruvor-skeleton-base: #2A2724;
+    --ruvor-skeleton-shine: #383532;
     --ruvor-icon-review: #D1B06A;
-    --ruvor-control-hover: #323338;
+    --ruvor-control-hover: #2E2B28;
     --ruvor-decision-hover: #E0A0AC;
     --ruvor-focus: #E7AAB5;
     --ruvor-focus-on-dark: #E7AAB5;
+    --ruvor-scrim: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent);
   }
 }
 
@@ -214,4 +217,8 @@
   --ruvor-type-brand-weight: 700;
   --ruvor-type-label-tracking-table: .07em;
   --ruvor-type-code-leading: 1.65;
+  --ruvor-type-scene-size: 48px;
+  --ruvor-type-scene-narrow-size: 28px;
+  --ruvor-type-scene-text-size: 15px;
+  --ruvor-type-auth-size: 31px;
 }

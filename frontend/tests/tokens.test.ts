@@ -114,6 +114,8 @@ const CORRESPONDENCE: ReadonlyArray<readonly [string, Source]> = [
   ["decision-hover", NONE],
   ["focus", NONE],
   ["focus-on-dark", NONE],
+  // M2.1b (T10): o véu atrás do diálogo (usuarios.html), a barra a 55% sobre transparente.
+  ["scrim", NONE],
 ];
 
 // O único -text escurecido pelo RF-04: diferente da fonte, e com este valor.
@@ -269,6 +271,15 @@ const PAIRS: readonly Pair[] = [
   ...SIGNALS.map(([signal, soft]): Pair => [signal, soft, 3]),
   // O sinal dentro do callout crítico fica sobre surface (components.css).
   ...SIGNALS.map(([signal]): Pair => [signal, "surface", 3]),
+  // M2.1b (T10): o sobretítulo da cena de acesso; as iniciais no botão de conta; o link no
+  // meio do texto, sobre a página e o painel; o papel marcado na chave sobre a superfície; e
+  // a confirmação de cópia, no diálogo.
+  ["review", "topbar", 4.5],
+  ["topbar-text", "avatar", 4.5],
+  ["decision-text", "paper", 4.5],
+  ["decision-text", "surface", 4.5],
+  ["paper", "ink", 4.5],
+  ["validated-text", "surface", 4.5],
 ];
 
 describe("V-04 — contraste", () => {
@@ -432,6 +443,14 @@ const INTERACTIVE = [
   ".ruvor-doc__link",
   // M2.3 (T7): o controle de recolher.
   ".ruvor-collapsible__toggle",
+  // M2.1b (T10): o link no meio do texto, o "Entrar" da barra, o botão de conta e o item do
+  // menu.
+  ".ruvor-link",
+  ".ruvor-topbar__signin",
+  ".ruvor-account--button",
+  ".ruvor-menu__item",
+  // M2.4 (T11): o contêiner rolável da grade do laboratório, que recebe o foco pelo teclado.
+  ".ruvor-lab-scroll",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -607,6 +626,149 @@ describe("M2.3 — o controle de recolher no kit", () => {
   it("o raiz separa o controle do que vem antes por uma régua de token", () => {
     expect(ruleValue(COMPONENTS_CSS, ".ruvor-collapsible", "border-top")).toBe(
       "1px solid var(--ruvor-table-rule)",
+    );
+  });
+});
+
+// M2.1b (T10): o que os mockups aprovados pediram ao kit e que a vista não confere sozinha —
+// o [hidden] do menu, o véu do diálogo em token, a chave sobre a superfície desabilitada e a
+// barra estreita até 840 px, sem os seletores por posição do M2.3.
+function mediaBodies(css: string, query: string): string[] {
+  const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const bodies: string[] = [];
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(`@media ${query}`, from);
+    if (at === -1) return bodies;
+    const open = text.indexOf("{", at);
+    let depth = 1;
+    let close = open + 1;
+    while (depth > 0) {
+      if (text[close] === "{") depth += 1;
+      else if (text[close] === "}") depth -= 1;
+      close += 1;
+    }
+    bodies.push(text.slice(open + 1, close - 1));
+    from = close;
+  }
+}
+
+describe("M2.1b — os componentes das telas de acesso no kit", () => {
+  it("o menu fechado continua oculto pelo [hidden]", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-menu[hidden]", "display")).toBe("none");
+  });
+
+  it("o véu do diálogo é o token --ruvor-scrim, no próprio ::backdrop", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-dialog::backdrop", "background")).toBe(
+      "var(--ruvor-scrim)",
+    );
+  });
+
+  it("a chave sobre a superfície tem :disabled, e o hover não vale nele", () => {
+    const disabled = ".ruvor-segmented--surface .ruvor-segmented__btn:disabled";
+    expect(ruleValue(COMPONENTS_CSS, disabled, "opacity")).toBe("0.5");
+    expect(ruleValue(COMPONENTS_CSS, disabled, "cursor")).toBe("not-allowed");
+    const hovers = COMPONENT_RULES.flatMap((rule) =>
+      selectorParts(rule.selector),
+    ).filter((part) =>
+      part.startsWith(".ruvor-segmented--surface .ruvor-segmented__btn:hover"),
+    );
+    expect(hovers.length).toBeGreaterThan(0);
+    for (const part of hovers) expect(part).toContain(":not(:disabled");
+  });
+
+  it("a barra estreita vale até 840 px e endereça cada peça, não a posição", () => {
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 840px)").join("\n");
+    for (const selector of [
+      ".ruvor-topbar {",
+      ".ruvor-topbar__prefs {",
+      ".ruvor-topbar__prefs > .ruvor-segmented:has(+ .ruvor-segmented) {",
+      ".ruvor-topbar__prefs > .ruvor-segmented + .ruvor-segmented {",
+      ".ruvor-topbar__prefs > .ruvor-topbar__account {",
+    ]) {
+      expect(narrow, selector).toContain(selector);
+    }
+    const old = mediaBodies(COMPONENTS_CSS, "(max-width: 720px)").join("\n");
+    expect(old).not.toMatch(/\.ruvor-topbar(__prefs|__search|__spacer)?\s*\{/);
+    expect(COMPONENTS_TEXT).not.toMatch(
+      /\.ruvor-topbar__prefs\s*>\s*:(first|last)-child/,
+    );
+  });
+});
+
+// M2.4 (T11): o que o laboratorio.html aprovado pediu ao kit e que a vista não confere sozinha —
+// a grade que rola dentro do contêiner com a coluna dos modelos presa, e as duas cópias das
+// colunas da década e dos anos não rejeitados, trocadas em 720 px (ajuste do portão). O foco do
+// contêiner está no V-05 (INTERACTIVE); as cores são tokens já medidos no V-04 (texto e texto
+// suave sobre surface e table-head, as tags sobre o -soft delas): nenhum par novo.
+describe("M2.4 — a grade do laboratório no kit", () => {
+  it("o contêiner rola na horizontal, e a página não", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-lab-scroll", "overflow-x")).toBe("auto");
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-lab-scroll", "max-width")).toBe("100%");
+  });
+
+  it("a coluna dos modelos fica presa, sobre a superfície", () => {
+    // o seletor tem dois blocos (o de sempre e o estreito, que só quebra o nome): lê os dois
+    const row = COMPONENT_RULES.filter(
+      (rule) => rule.selector === '.ruvor-lab-grid th[scope="row"]',
+    )
+      .map((rule) => rule.body)
+      .join(";");
+    expect(row).toMatch(/(?<![\w-])position:\s*sticky\s*;/);
+    expect(row).toMatch(/(?<![\w-])left:\s*0\s*;/);
+    expect(row).toMatch(/(?<![\w-])background:\s*var\(--ruvor-surface\)\s*;/);
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-lab-grid thead th:first-child", "position"),
+    ).toBe("sticky");
+  });
+
+  it("até 720 px, a cópia junto do nome aparece e a do fim some; fora, o contrário", () => {
+    expect(COMPONENTS_TEXT).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__narrow \{\s*display: none;\s*\}/,
+    );
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 720px)").join("\n");
+    expect(narrow).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__narrow \{\s*display: table-cell;\s*\}/,
+    );
+    expect(narrow).toMatch(
+      /\.ruvor-lab-grid \.ruvor-lab-grid__wide \{\s*display: none;\s*\}/,
+    );
+  });
+});
+
+// M5.1 (T11): o que o retorno.html aprovado pediu ao kit e que a vista não confere sozinha — a
+// previsão do próximo pregão com destaque menor que o do veredito (portão da T9): o tamanho
+// micro, como a tag, mas em texto suave, sem fundo e sem peso, e o número também suave (L3 da
+// revisão do mockup). As cores são tokens já medidos no V-04 (texto suave sobre surface; a tag
+// --evidence sobre o -soft dela): nenhum par novo.
+describe("M5.1 — o retorno no kit", () => {
+  it("a linha da previsão é micro e suave, sem fundo nem peso", () => {
+    const line = ".ruvor-returns-forecast__line";
+    expect(ruleValue(COMPONENTS_CSS, line, "font-size")).toBe(
+      "var(--ruvor-type-micro-size)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, line, "color")).toBe("var(--ruvor-text-muted)");
+    const body = COMPONENT_RULES.filter((rule) => rule.selector === line)
+      .map((rule) => rule.body)
+      .join(";");
+    expect(body).not.toMatch(/(?<![\w-])(background|font-weight)\s*:/);
+  });
+
+  it("o número da previsão também é suave, e não a tinta do veredito", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-returns-forecast__line .ruvor-num", "color"),
+    ).toBe("var(--ruvor-text-muted)");
+  });
+
+  it("a tag do veredito tem fundo e peso, que a previsão não tem", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag", "font-size")).toBe(
+      "var(--ruvor-type-micro-size)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag", "font-weight")).toBe(
+      "var(--ruvor-type-micro-weight)",
+    );
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag--evidence", "background")).toBe(
+      "var(--ruvor-evidence-soft)",
     );
   });
 });

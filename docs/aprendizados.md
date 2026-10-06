@@ -1684,3 +1684,116 @@ ainda em curso: a tabela saiu com 10 linhas em vez de 108, e com valores de outr
 **Faça:** só religue o Beat com o checkout e a imagem coerentes — é o último passo, não um intermediário. Conte com um
 tique imediato: anote o horário de recriação e o `max(id)` de `gold.risk_run` antes. Nas comparações de uma execução
 real, **fixe as execuções pelo `id`** (`WHERE id BETWEEN …`), nunca por "a mais recente".
+
+## O dublê de `<dialog>` que dispara `close` na hora esconde o diálogo que reabre
+
+**Quando:** ao testar no jsdom um componente que abre um `<dialog>` com `showModal()` num efeito e guarda o "está aberto"
+num estado do React que só zera no evento `close` (a gestão de usuários do M2.1b, `frontend/tests/dubles.ts`).
+
+**Problema:** no navegador, `close()` tira o atributo `open` **na hora**, mas o evento `close` chega **numa tarefa
+enfileirada** (a especificação HTML: "queue an element task … to fire an event named close"). Entre um e outro, a tela
+pode renderizar — a linha trocada depois de uma ação — com o `<dialog>` já fechado e o estado ainda aberto, e o efeito
+chama `showModal()` de novo: o diálogo reabre. O primeiro dublê disparava o `close` de forma síncrona, dentro do
+`close()`, e os 1610 testes passavam; o defeito só apareceu na execução real (`acesso.mjs`, 129 de 130 na primeira
+rodada).
+
+**Faça:** o dublê dispara o `close` num `setTimeout(…, 0)`, como o navegador, e descarta os pendentes ao restaurar. No
+componente, não decida reabrir pelo `element.open`: guarde o elemento em que o `showModal()` já foi chamado para o
+diálogo corrente e zere quando o diálogo vira nulo. Em geral: dublê de API do navegador reproduz **quando** o evento
+chega, não só **que** ele chega — e o que só o navegador mostra (foco preso, `Esc`, ordem de eventos) se prova no roteiro.
+
+## O `capturas.mjs` completo reprova por 429 com a taxa do anônimo padrão
+
+**Quando:** ao rodar o `capturas.mjs` inteiro na execução real de um bloco, com o `RUVOR_THROTTLE_ANON` do `.env` no
+padrão (60 por minuto).
+
+**Problema:** o roteiro carrega a tela do ativo muitas vezes em seguida, todas com o IP do contêiner `frontend`, e desde o
+M2.1b cada carga faz um pedido a mais, o `auth/me` da sessão. No fecho do M2.1b, a primeira rodada reprovou por 429; a
+segunda, com a taxa subida, passou com 644 conferências. O recado já existia no ESTADO ("em dev, suba
+`RUVOR_THROTTLE_ANON`"), mas não aqui.
+
+**Faça:** antes da rodada completa, suba `RUVOR_THROTTLE_ANON` (por exemplo, `100000/min`) só durante ela, guardando o
+sha256 do `.env`, e devolva-o igual no fim, conferindo o sha256. A medida da taxa (`RUVOR_E2E_MEDIR_TAXA=1`) é o caso
+oposto: roda com a taxa padrão.
+**O `.env` nem precisa mudar** (fase B do M2.4): a variável do shell vence a do `.env` na interpolação do `compose`, então
+`RUVOR_THROTTLE_ANON=100000/min docker compose up -d --force-recreate --no-deps web` sobe a taxa só na `web`, e o mesmo
+comando sem a variável a devolve — confira com `docker compose exec -T web sh -c 'echo $RUVOR_THROTTLE_ANON'`.
+
+
+## Migration nova que depende da `assets.0004_unaccent` some do banco de teste depois do `test_unaccent`
+
+**Quando:** ao criar com `makemigrations` uma migration de outra app que tenha chave estrangeira para `silver.asset` ou
+`bronze.collection_run` (ou para qualquer modelo de uma app cuja migration um teste desfaz e refaz).
+
+**Problema:** o `makemigrations` põe como dependência a **última** migration da app referida — hoje a
+`assets.0004_unaccent`. O `tests/assets/test_unaccent.py` faz `migrate assets 0003` e depois `migrate assets`: a volta
+desfaz também a migration nova (que depende da `0004`), e a ida, só da `assets`, **não a reaplica**. As tabelas dela somem
+do banco de teste para o resto da suíte, e os testes que rodam depois reprovam por tabela inexistente — de longe, sem
+relação aparente com o `test_unaccent`. Rodando o arquivo da tabela sozinho, tudo passa. Na T2 do M2.4, a primeira suíte
+inteira saiu `2 failed, 1807 passed` (o V-07 e o `test_esquemas.py`, sem as três tabelas do laboratório).
+
+**Faça:** depois do `makemigrations`, troque a dependência pela **mínima** que as chaves pedem — para `silver.asset` e
+`bronze.collection_run`, a `assets.0003_yahoo_chart_price_corporate_event`, a mesma da `risk.0003` — e fixe-a num teste
+(`test_a_0004_depende_da_assets_0003_e_nao_da_0004`, em `backend/tests/risk/test_lab_tabelas.py`). Para reproduzir:
+`python -m pytest tests/assets/test_unaccent.py tests/<o arquivo da tabela nova>`.
+
+
+## Duas suítes ao mesmo tempo estouram o tempo dos testes também no frontend
+
+**Quando:** ao rodar `npm test` (o Vitest do frontend) enquanto outra suíte roda na máquina — a de outro worktree, a do
+backend, um build de imagem.
+
+**Problema:** os testes do frontend têm o tempo-limite padrão de 5 s, e com a CPU dividida vários deles o estouram —
+na T12 do M2.4, com outro worktree rodando uma suíte ao mesmo tempo, reprovaram testes de arquivos sem relação entre si
+(usuários, busca, conta, risco…), e a mesma rodada, sozinha, saiu verde. Parece defeito intermitente do código, e não é.
+É o mesmo recado de [Duas suítes ao mesmo tempo](#duas-suítes-ao-mesmo-tempo-banco-de-teste-próprio-pelo-ruvor_db_name),
+que vale para o backend pelo banco e pela memória, e aqui pelo tempo.
+
+**Faça:** uma suíte inteira por vez na máquina, **frontend inclusive**: espere a do backend (ou a do outro worktree)
+terminar antes do `npm test`. Teste que estoura 5 s só com outra suíte rodando não é falha a corrigir — rode de novo
+sozinho e registre as duas rodadas.
+
+
+## Receber a `main` com dependência nova no frontend pede o build da imagem do `frontend`
+
+**Quando:** depois de receber a `main` (ou mudar de ramo) com dependência nova no `package.json`, e rodar o frontend por
+`docker compose run --rm --no-deps frontend …`.
+
+**Problema:** o `run --rm` monta um volume anônimo novo para o `node_modules`, populado **pela imagem**, não pelo
+`package.json` do checkout. Com a imagem de antes da dependência, 17 arquivos de teste reprovaram por
+`Failed to resolve import "react-router"` na retomada do M5.1 — parece defeito do merge, e não é. Um `npm ci` dentro do
+`run --rm` conserta só aquele contêiner, que some no fim.
+
+**Faça:** `docker compose build frontend` depois de receber a `main`, antes da primeira suíte. É o par do
+[volume anônimo que sobrevive à recriação](#volume-anônimo-de-node_modules-sobrevive-à-recriação-do-contêiner).
+
+
+## Teste de corrida que lê um evento marcado no `finally` depois do commit é instável
+
+**Quando:** ao provar com duas threads que a segunda só passa da trava depois de a primeira confirmar — o V-09 do
+laboratório (`tests/risk/test_lab_escrita.py`).
+
+**Problema:** a trava consultiva sai **no commit**; o evento que a primeira thread marca no `finally` vem depois,
+quando o `write_lab` já devolveu. A segunda thread pode pegar a trava nesse intervalo e ler o evento ainda falso. O
+teste reprovou 3 de 5 vezes isolado no ramo do M5.1 e 1 de 5 na `main` — passou na CI do M2.4 por sorte.
+
+**Faça:** sob a trava, confira o que a trava protege — a linha confirmada no banco
+(`LabRun.objects.filter(status="ok").exists()`) —, e não um sinal da outra thread. Sem a trava, a primeira ainda não
+confirmou e a leitura dá falso: o teste continua pegando a mutação que tira a trava. Rode o arquivo pelo menos oito
+vezes seguidas antes de dar o teste por estável.
+
+
+## A fase A noutra máquina começa por refazer a referência
+
+**Quando:** ao continuar, noutra máquina, um bloco cuja fase A rodou no banco de quem começou — o M5.1, retomado na
+máquina do Kauã.
+
+**Problema:** o banco local é outro: outros ativos cobertos (ABCB4 e ABEV3 no lugar de BBDC4 e AALR3), preços
+atrasados e o risco ainda no motor `0.3.0` — não havia referência `0.4.0` nenhuma para comparar os 108 pares. E o
+roteiro e a foto do mockup apontam para os números da máquina original.
+
+**Faça:** antes do build da versão nova, refaça a referência com o código da `main` — um worktree destacado em
+`origin/main`, montado num contêiner avulso do `worker` (`-v "$WT/backend:/repo/backend" -v "$WT/engine:/repo/engine"`),
+com `import_prices`, `compute_metrics` e `compute_risk --full`, síncronos, com o `worker` parado — e só então o build. O
+`--full` síncrono dos seis levou 22 min numa máquina de 16 GB; com o Docker limitado a 5,8 GB, um processo só por vez:
+o `worker` em concorrência 2 ao lado de outro cálculo deixou o Windows sem memória.

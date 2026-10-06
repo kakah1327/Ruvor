@@ -16,6 +16,13 @@
  *   na iniciante e abertas na avançada, com o painel sempre aberto (V-05), e nenhum `aria-live`
  *   no corpo da seção. Os testes do M1.6b que leem a tabela ou a trilha abrem o controle
  *   (`openModels`, `openTrail`): na iniciante, as duas nascem recolhidas.
+ * - M2.1b (T13): o E7 e o E8 pela sessão (RF-15) — anônimo, o convite a entrar com o `next`;
+ *   logado, o botão; carregando, nenhum —, e do `POST`, o 401 (o aviso de sessão terminada no
+ *   lugar do botão, sem mudar de rota) e o 403 `password_change_required` (um `auth/me` novo e
+ *   a troca obrigatória). Os testes do pedido entram logados (`SIGNED_IN`).
+ * - M2.4 (T10): o duplo reconhece o `/lab` (a tela o pede desde a T10) e conta os pedidos que
+ *   não reconhece — todo teste exige zero.
+ * - M5.1 (T10): o duplo reconhece o `/returns`, com um corpo padrão sem validação.
  *
  * O `fetch` é um duplo que responde pela rota e pelo método; o uPlot, um duplo mínimo.
  */
@@ -36,10 +43,12 @@ import {
   type AssetDetail,
   type ComputeRequest,
   type InProgress,
+  type Lab,
   MODEL_ORDER,
   type ModelName,
   type PriceRow,
   type Prices,
+  type Returns,
   type Risk,
   type RiskResult,
   type RiskRun,
@@ -49,6 +58,7 @@ import { traduzirMotivo } from "../src/content/motivos";
 import { TEXTOS } from "../src/content/textos";
 import { formatPercent } from "../src/format/numbers";
 import { lossFromVar } from "../src/format/var";
+import type { Me } from "../src/session/types";
 import { comNivel, limparNivel } from "./nivel";
 
 vi.mock("uplot", () => {
@@ -237,8 +247,12 @@ type Route =
   | "metrics"
   | "risk"
   | "fundamentals"
+  | "lab"
+  | "returns"
   | "disclosures"
-  | "post";
+  | "post"
+  | "csrf"
+  | "me";
 type Reply = { status: number; body: unknown } | "network" | "html";
 
 const ok = (body: unknown): Reply => ({ status: 200, body });
@@ -258,14 +272,46 @@ type Call = {
 
 let calls: Call[] = [];
 let replies: Partial<Record<Route, Reply>> = {};
+/** Os pedidos que o duplo não reconhece: `routeOf` lança dentro da promessa, que rejeita em silêncio. */
+let unexpected: string[] = [];
 
-/** A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página). */
+/**
+ * O `auth/me` da rota de layout da sessão (M2.1b, RF-03), a rota `me`: responde na hora —
+ * `replies.me` ou, sem ela, 401 (anônimo) — e fica fora de `calls`.
+ */
+const ME_URL = "/api/v1/auth/me";
+const ANON: Reply = fail(401, "not_authenticated");
+/** O `me` de quem entrou (M2.1b): o E7 e o E8 com o botão exigem a sessão logada (RF-15). */
+const ME: Me = {
+  email: "ana.souza@exemplo.com",
+  name: "Ana Beatriz Souza",
+  role: "member",
+  must_change_password: false,
+  is_staff: false,
+  organization: { name: "Ana Beatriz Souza", slug: "ana", is_personal: true },
+};
+const SIGNED_IN: Reply = ok(ME);
+/** Com `meHeld`, o `auth/me` fica pendente: a sessão carregando. */
+let meHeld = false;
+/** Os `auth/me` pedidos, que ficam fora de `calls`. */
+const meRequests = () =>
+  vi.mocked(fetch).mock.calls.filter(([url]) => url === ME_URL).length;
+
+/**
+ * A rota do pedido; só `/disclosures` leva parâmetros (a seção Comunicados pede a página).
+ * O `GET /api/v1/auth/csrf` é o que o cliente pede antes do `POST` sem cookie (M2.1b, RF-02).
+ */
 function routeOf(url: string, method: string): Route {
+  if (url === "/api/v1/auth/csrf" && method === "GET") return "csrf";
+  if (url === ME_URL && method === "GET") return "me";
   const match =
-    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals)|\/(disclosures)\?[^/]*)?$/.exec(
+    /^\/api\/v1\/assets\/[^/?]+(?:\/(prices|events|metrics|risk|fundamentals|lab|returns)|\/(disclosures)\?[^/]*)?$/.exec(
       url,
     );
-  if (match === null) throw new Error(`pedido inesperado: ${url}`);
+  if (match === null) {
+    unexpected.push(url);
+    throw new Error(`pedido inesperado: ${url}`);
+  }
   if (method === "POST") {
     if (match[1] !== "risk") throw new Error(`POST inesperado: ${url}`);
     return "post";
@@ -281,6 +327,18 @@ function stubFetch(): void {
       (url: string, init?: RequestInit) =>
         new Promise<Response>((resolve, reject) => {
           const route = routeOf(url, init?.method ?? "GET");
+          if (route === "me") {
+            if (meHeld) return;
+            const me = replies.me ?? ANON;
+            if (typeof me === "string") reject(new TypeError("Failed to fetch"));
+            else
+              resolve({
+                ok: me.status >= 200 && me.status < 300,
+                status: me.status,
+                json: async () => me.body,
+              } as unknown as Response);
+            return;
+          }
           const call: Call = {
             url,
             route,
@@ -295,12 +353,18 @@ function stubFetch(): void {
                     throw new SyntaxError("não é JSON");
                   },
                 } as unknown as Response);
-              else
+              else {
+                if (route === "csrf" && r.status >= 200 && r.status < 300) {
+                  // como o servidor: o `auth/csrf` grava o cookie que o `POST` lê em seguida.
+                  // biome-ignore lint/suspicious/noDocumentCookie: o cliente lê o cookie de verdade.
+                  document.cookie = "csrftoken=tok; path=/";
+                }
                 resolve({
                   ok: r.status >= 200 && r.status < 300,
                   status: r.status,
                   json: async () => r.body,
                 } as unknown as Response);
+              }
             },
           };
           calls.push(call);
@@ -319,6 +383,22 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
     metrics: ok({ ticker: "ITUB4", metric: null }),
     risk: ok(E1),
     fundamentals: ok({ ticker: "ITUB4", indicator: null, peers: null }),
+    lab: ok({
+      ticker: "ITUB4",
+      active: true,
+      decade: {
+        first_price_date: "2016-09-22",
+        end_date: "2026-09-22",
+        last_price_date: "2026-10-02",
+        complete: true,
+        sessions: 2491,
+      },
+      risk_engine_version: "0.4.0",
+      pending: true,
+      latest: null,
+      last_failure: null,
+    } satisfies Lab),
+    returns: ok({ ticker: "ITUB4", latest: null } satisfies Returns),
     disclosures: ok({
       ticker: "ITUB4",
       company: { code_cvm: "19348", name: "ITAU UNIBANCO HOLDING S.A." },
@@ -327,12 +407,16 @@ function allOk(over: Partial<Record<Route, Reply>> = {}): void {
       offset: 0,
       results: [],
     }),
+    csrf: { status: 204, body: null },
+    me: ANON,
     ...over,
   };
 }
 
 function renderAsset(ticker = "ITUB4") {
-  const router = createMemoryRouter(routes, { initialEntries: [`/ativos/${ticker}`] });
+  const router = createMemoryRouter(routes, {
+    initialEntries: [`/ativos/${ticker}/risco`],
+  });
   render(<RouterProvider router={router} />);
   return router;
 }
@@ -343,6 +427,8 @@ function clearCookie(): void {
 }
 
 beforeEach(() => {
+  meHeld = false;
+  unexpected = [];
   allOk();
   stubFetch();
 });
@@ -352,6 +438,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   clearCookie();
   limparNivel();
+  expect(unexpected).toEqual([]);
 });
 
 // ---------------------------------------------------------------- as partes
@@ -1069,7 +1156,7 @@ describe("V-11 — data-risk-state para cada linha da tabela de decisão", () =>
     if ("asset" in c) over.asset = c.asset;
     if ("prices" in c) over.prices = c.prices;
     allOk(over);
-    replies = { ...replies, ...over };
+    replies = { ...replies, ...over, me: SIGNED_IN };
     stubFetch();
     renderAsset();
     await settled(c.state);
@@ -1163,7 +1250,7 @@ describe("V-11 — data-risk-state para cada linha da tabela de decisão", () =>
 
 describe("V-11 — as respostas do POST (RF-19)", () => {
   function startE8(post?: Reply) {
-    allOk({ risk: ok(risk()), prices: ok(prices(0)), post });
+    allOk({ risk: ok(risk()), prices: ok(prices(0)), post, me: SIGNED_IN });
     stubFetch();
     renderAsset();
   }
@@ -1250,6 +1337,7 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
         risk({ request: request({ status: "failed", reason: "falhou na coleta" }) }),
       ),
       post: fail(429, "on_demand_queue_full", "cheia"),
+      me: SIGNED_IN,
     });
     stubFetch();
     renderAsset();
@@ -1274,14 +1362,188 @@ describe("V-11 — as respostas do POST (RF-19)", () => {
     );
   });
 
-  it("e não vai quando o cookie não existe", async () => {
+  it("sem cookie, o botão pede `auth/csrf` antes do `POST`", async () => {
     startE8({ status: 202, body: risk({ request: request({ status: "queued" }) }) });
     await settled("E8");
+    expect(calls.some((c) => c.route === "csrf")).toBe(false);
     fireEvent.click(calcular());
     await settled("E5");
-    expect(calls.find((c) => c.route === "post")?.headers).not.toHaveProperty(
-      "X-CSRFToken",
+    const csrfAt = calls.findIndex((c) => c.route === "csrf");
+    const postAt = calls.findIndex((c) => c.route === "post");
+    expect(calls.filter((c) => c.route === "csrf")).toHaveLength(1);
+    expect(csrfAt).toBeGreaterThanOrEqual(0);
+    expect(postAt).toBeGreaterThan(csrfAt);
+    expect(calls[csrfAt]?.url).toBe("/api/v1/auth/csrf");
+    expect(calls[csrfAt]?.headers).not.toHaveProperty("X-CSRFToken");
+    expect(calls[postAt]?.headers["X-CSRFToken"]).toBe("tok");
+  });
+});
+
+// ---------------------------------------------------------------- M2.1b: o convite e o 401
+
+describe("M2.1b — o convite a calcular depende da sessão (RF-15, V-11)", () => {
+  const E7 = risk({
+    request: request({ status: "failed", reason: "falhou na coleta" }),
+  });
+  const STATES = [
+    ["E8", risk(), TEXTOS["risco.estado.E8.titulo"], TEXTOS["risco.estado.E8"]],
+    ["E7", E7, TEXTOS["risco.estado.E7.titulo"], TEXTOS["risco.estado.E7.nota"]],
+  ] as const;
+  const computeButtons = () =>
+    within(section())
+      .queryAllByRole("button")
+      .filter(
+        (b) =>
+          b.textContent === TEXTOS["risco.pedido.calcular"] ||
+          b.textContent === TEXTOS["risco.pedido.deNovo"],
+      );
+  const invite = () => section().querySelector("[data-risk-invite]");
+
+  it.each(STATES)(
+    "%s anônimo: o convite com next=/ativos/{ticker}/risco e a frase, sem o botão; o título e a nota ficam",
+    async (state, body, title, note) => {
+      allOk({ risk: ok(body), prices: ok(prices(0)), me: ANON });
+      stubFetch();
+      renderAsset();
+      await settled(state);
+      await waitFor(() => expect(invite()).not.toBeNull());
+      expect(invite()?.getAttribute("data-risk-invite")).toBe("signin");
+      expect(invite()?.getAttribute("data-part")).toBe("convite");
+      const link = within(section()).getByRole("link", {
+        name: TEXTOS["conta.convite.entrar"],
+      });
+      expect(link.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4%2Frisco");
+      expect(invite()?.contains(link)).toBe(true);
+      expect(
+        within(invite() as HTMLElement).getByText(TEXTOS["conta.convite.frase"]),
+      ).toBeDefined();
+      expect(computeButtons()).toHaveLength(0);
+      expect(inBody(title)).toBeDefined();
+      expect(inBody(note)).toBeDefined();
+    },
+  );
+
+  it.each(STATES)("%s logado: o botão, sem o convite", async (state) => {
+    allOk({
+      risk: ok(state === "E7" ? E7 : risk()),
+      prices: ok(prices(0)),
+      me: SIGNED_IN,
+    });
+    stubFetch();
+    renderAsset();
+    await settled(state);
+    await waitFor(() => expect(computeButtons()).toHaveLength(1));
+    expect(invite()?.getAttribute("data-risk-invite")).toBe("compute");
+    expect(invite()?.contains(computeButtons()[0])).toBe(true);
+    expect(
+      within(section()).queryByRole("link", { name: TEXTOS["conta.convite.entrar"] }),
+    ).toBeNull();
+    expect(section().textContent).not.toContain(TEXTOS["conta.convite.frase"]);
+  });
+
+  it.each(STATES)(
+    "%s com a sessão carregando: nem o botão nem o convite",
+    async (state) => {
+      meHeld = true;
+      allOk({ risk: ok(state === "E7" ? E7 : risk()), prices: ok(prices(0)) });
+      stubFetch();
+      renderAsset();
+      await settled(state);
+      await act(async () => {});
+      expect(invite()).toBeNull();
+      expect(computeButtons()).toHaveLength(0);
+      expect(section().querySelector(".ruvor-state__actions")).toBeNull();
+      expect(section().textContent).not.toContain(TEXTOS["conta.convite.entrar"]);
+    },
+  );
+
+  it("o 401 do POST: expired(), o aviso de sessão terminada no lugar do botão, e a página não muda", async () => {
+    allOk({
+      risk: ok(risk()),
+      prices: ok(prices(0)),
+      me: SIGNED_IN,
+      post: fail(401, "not_authenticated", "As credenciais não foram fornecidas."),
+    });
+    stubFetch();
+    const router = renderAsset();
+    await settled("E8");
+    await waitFor(() => expect(computeButtons()).toHaveLength(1));
+    await act(async () => {
+      fireEvent.click(computeButtons()[0]);
+    });
+    const notice = await waitFor(() => {
+      const found = section().querySelector('[data-signin-notice="ended"]');
+      expect(found).not.toBeNull();
+      return found as HTMLElement;
+    });
+    expect(notice.getAttribute("role")).toBe("alert");
+    expect(notice.textContent).toContain(TEXTOS["conta.aviso.terminou"]);
+    expect(notice.closest(".ruvor-state__actions")).not.toBeNull();
+    expect(section().querySelector('[data-signin-notice="required"]')).toBeNull();
+    expect(computeButtons()).toHaveLength(0);
+    expect(invite()).toBeNull();
+    expect(section().textContent).not.toContain("As credenciais não foram fornecidas.");
+    const enter = within(notice).getByRole("link", { name: TEXTOS["conta.entrar"] });
+    expect(enter.getAttribute("href")).toBe("/entrar?next=%2Fativos%2FITUB4%2Frisco");
+    expect(document.activeElement).toBe(enter);
+    // A página fica onde estava; a sessão virou anônima (a barra mostra "Entrar").
+    expect(router.state.location.pathname).toBe("/ativos/ITUB4/risco");
+    expect(riskState()).toBe("E8");
+    expect(
+      document.querySelector(".ruvor-topbar__account")?.getAttribute("data-account"),
+    ).toBe("anonymous");
+  });
+
+  it("depois do 401, a página de outro ativo mostra o anônimo normal: o convite", async () => {
+    allOk({
+      risk: ok(risk()),
+      prices: ok(prices(0)),
+      me: SIGNED_IN,
+      post: fail(401, "not_authenticated"),
+    });
+    stubFetch();
+    const router = renderAsset();
+    await settled("E8");
+    await waitFor(() => expect(computeButtons()).toHaveLength(1));
+    await act(async () => {
+      fireEvent.click(computeButtons()[0]);
+    });
+    await waitFor(() =>
+      expect(section().querySelector('[data-signin-notice="ended"]')).not.toBeNull(),
     );
+    await act(() => router.navigate("/ativos/PETR4/risco"));
+    await settled("E8");
+    await waitFor(() =>
+      expect(invite()?.getAttribute("data-risk-invite")).toBe("signin"),
+    );
+    expect(section().querySelector("[data-signin-notice]")).toBeNull();
+  });
+
+  it("o 403 password_change_required do POST: um auth/me novo, e a troca obrigatória na tela", async () => {
+    allOk({
+      risk: ok(risk()),
+      prices: ok(prices(0)),
+      me: SIGNED_IN,
+      post: fail(403, "password_change_required", "Troque a senha."),
+    });
+    stubFetch();
+    const router = renderAsset();
+    await settled("E8");
+    await waitFor(() => expect(computeButtons()).toHaveLength(1));
+    expect(meRequests()).toBe(1);
+    // A sessão mudou no servidor (uma senha provisória nova): o próximo auth/me a mostra.
+    replies.me = ok({ ...ME, must_change_password: true });
+    await act(async () => {
+      fireEvent.click(computeButtons()[0]);
+    });
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-screen="senha-obrigatoria"]'),
+      ).not.toBeNull(),
+    );
+    expect(meRequests()).toBe(2);
+    expect(router.state.location.pathname).toBe("/ativos/ITUB4/risco");
+    expect(document.querySelector("[data-risk-state]")).toBeNull();
   });
 });
 

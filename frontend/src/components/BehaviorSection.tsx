@@ -1,4 +1,5 @@
-import { type ReactNode, useId } from "react";
+import { type ReactNode, useId, useState } from "react";
+import { Link } from "react-router";
 
 import type { Load } from "../api/resource";
 import type { Metric, Metrics } from "../api/types";
@@ -14,6 +15,7 @@ import {
   typographicMinus,
 } from "../format/numbers";
 import { textFor, useReading } from "../reading";
+import { assetTabPath } from "./AssetTabs";
 import { Collapsible } from "./Collapsible";
 import { Glyph } from "./Glyph";
 import { ReturnsHistogram } from "./ReturnsHistogram";
@@ -118,6 +120,8 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
   // A frase de cada número da lista fechada pelo nível (RF-05 do M2.3): a avançada substitui a
   // iniciante, com os mesmos argumentos. O nulo, o rótulo e a unidade não mudam com o nível.
   const reading = useReading();
+  // Os blocos depois da maior queda ficam recolhidos; o botão no fim da grade os mostra.
+  const [more, setMore] = useState(false);
   // Nulo continua nulo: `toNumber`, nunca `Number`, que faria do nulo um zero.
   const num = (field: DecField): number | null => toNumber(metric[field]);
   const isBenchmark = ticker === BENCHMARK_TICKER;
@@ -222,156 +226,177 @@ function Blocks({ metric, ticker }: { metric: Metric; ticker: string }) {
   const observations = metric.statistical_observations;
 
   return (
-    <div className="ruvor-blocks">
-      <Block
-        title={TEXTOS["comportamento.bloco.retornos"]}
-        note={TEXTOS["comportamento.nota.retornos"]}
-        wide
-      >
-        <div className="ruvor-stats">{returns}</div>
-      </Block>
+    <div className="ruvor-stack">
+      <div className="ruvor-blocks">
+        <Block
+          title={TEXTOS["comportamento.bloco.retornos"]}
+          note={TEXTOS["comportamento.nota.retornos"]}
+          wide
+        >
+          <div className="ruvor-stats">{returns}</div>
+        </Block>
 
-      <Block title={TEXTOS["comportamento.bloco.volatilidade"]}>
-        <div className="ruvor-stats">{volatility}</div>
-      </Block>
+        <Block title={TEXTOS["comportamento.bloco.volatilidade"]}>
+          <div className="ruvor-stats">{volatility}</div>
+        </Block>
 
-      <Block title={TEXTOS["comportamento.bloco.queda"]}>
-        <div className="ruvor-stats">
-          <Stat
-            field="max_drawdown"
-            value={
-              drawdown === null ? NULL : typographicMinus(formatPercent(drawdown, 1))
-            }
-            phrase={drawdownPhrase}
-          />
-          <Stat
-            field="max_drawdown_recovery_sessions"
-            value={sessions === null ? NULL : formatInteger(sessions)}
-            phrase={sessionsPhrase}
-          />
-        </div>
-      </Block>
-
-      {/* Os momentos de estresse (M3.3), logo depois da maior queda da série inteira. */}
-      <StressBlock stress={metric.stress} isBenchmark={isBenchmark} />
-
-      <Block
-        title={TEXTOS["comportamento.bloco.ibov"]}
-        note={
-          metric.benchmark_observations === null
-            ? null
-            : TEXTOS["comportamento.nota.ibov"](
-                formatInteger(metric.benchmark_observations),
-              )
-        }
-      >
-        <div className="ruvor-stats">
-          <Stat
-            field="beta_60m"
-            value={beta === null ? NULL : signedDecimal(beta)}
-            phrase={
-              beta === null
-                ? benchmarkNull
-                : textFor("comportamento.beta_60m", reading)(
-                    `${formatDecimal(Math.abs(beta), 2)}%`,
-                    beta < 0,
-                  )
-            }
-          />
-          <Stat
-            field="correlation_60m"
-            value={correlation === null ? NULL : signedDecimal(correlation)}
-            phrase={
-              correlation === null
-                ? benchmarkNull
-                : textFor(
-                    "comportamento.correlation_60m",
-                    reading,
-                  )(signedDecimal(correlation))
-            }
-          />
-        </div>
-      </Block>
-
-      <Block title={TEXTOS["comportamento.bloco.proventos"]}>
-        <div className="ruvor-stats">
-          <Stat
-            field="dividends_12m"
-            value={dividends === null ? NULL : formatCurrency(dividends)}
-            phrase={textFor("comportamento.dividends_12m", reading)}
-          />
-          <Stat
-            field="dividend_payments_12m"
-            value={formatInteger(metric.dividend_payments_12m)}
-            phrase={textFor("comportamento.dividend_payments_12m", reading)}
-          />
-          <Stat
-            field="dividend_yield_12m"
-            value={yieldValue === null ? NULL : formatPercent(yieldValue, 1)}
-            phrase={
-              yieldValue === null
-                ? null
-                : textFor("comportamento.dividend_yield_12m", reading)(
-                    formatDate(metric.as_of_date),
-                    formatCurrency(100 * yieldValue),
-                  )
-            }
-          />
-        </div>
-      </Block>
-
-      <Block
-        title={TEXTOS["comportamento.bloco.distribuicao"]}
-        note={
-          observations === null
-            ? null
-            : TEXTOS["comportamento.nota.distribuicao"](formatInteger(observations))
-        }
-        wide
-      >
-        <div className="ruvor-stack">
-          {observations !== null && (
-            <p className="ruvor-note">{textFor("comportamento.histograma", reading)}</p>
-          )}
-          <div>
-            <ReturnsHistogram bins={metric.histogram} observations={observations} />
+        <Block title={TEXTOS["comportamento.bloco.queda"]}>
+          <div className="ruvor-stats">
+            <Stat
+              field="max_drawdown"
+              value={
+                drawdown === null ? NULL : typographicMinus(formatPercent(drawdown, 1))
+              }
+              phrase={drawdownPhrase}
+            />
+            <Stat
+              field="max_drawdown_recovery_sessions"
+              value={sessions === null ? NULL : formatInteger(sessions)}
+              phrase={sessionsPhrase}
+            />
           </div>
-          {/* A assimetria e a curtose, recolhidas na iniciante (RF-06); o histograma fica
-              aberto nos dois níveis. Com a série curta, o recolhível continua, com os nulos. */}
-          <Collapsible name="moments" label={TEXTOS["comportamento.momentos.abrir"]}>
+        </Block>
+
+        {/* O resto, recolhido: a folha tira o invólucro do desenho (display: contents) quando
+          aberto, e os blocos voltam à grade como antes. */}
+        <div className="ruvor-blocks__more" data-open={more}>
+          {/* Os momentos de estresse (M3.3), logo depois da maior queda da série inteira. */}
+          <StressBlock stress={metric.stress} isBenchmark={isBenchmark} />
+
+          <Block
+            title={TEXTOS["comportamento.bloco.ibov"]}
+            note={
+              metric.benchmark_observations === null
+                ? null
+                : TEXTOS["comportamento.nota.ibov"](
+                    formatInteger(metric.benchmark_observations),
+                  )
+            }
+          >
             <div className="ruvor-stats">
               <Stat
-                field="skewness"
-                value={skewness === null ? NULL : signedDecimal(skewness)}
+                field="beta_60m"
+                value={beta === null ? NULL : signedDecimal(beta)}
                 phrase={
-                  skewness === null
-                    ? TEXTOS["comportamento.nulo.janela"](60)
-                    : textFor("comportamento.skewness", reading)(
-                        signedDecimal(skewness),
-                        Math.sign(skewness),
+                  beta === null
+                    ? benchmarkNull
+                    : textFor("comportamento.beta_60m", reading)(
+                        `${formatDecimal(Math.abs(beta), 2)}%`,
+                        beta < 0,
                       )
                 }
               />
               <Stat
-                field="excess_kurtosis"
-                value={kurtosis === null ? NULL : signedDecimal(kurtosis)}
+                field="correlation_60m"
+                value={correlation === null ? NULL : signedDecimal(correlation)}
                 phrase={
-                  kurtosis === null
-                    ? TEXTOS["comportamento.nulo.janela"](60)
-                    : textFor("comportamento.excess_kurtosis", reading)(
-                        signedDecimal(kurtosis),
-                        Math.sign(kurtosis),
+                  correlation === null
+                    ? benchmarkNull
+                    : textFor(
+                        "comportamento.correlation_60m",
+                        reading,
+                      )(signedDecimal(correlation))
+                }
+              />
+            </div>
+          </Block>
+
+          <Block title={TEXTOS["comportamento.bloco.proventos"]}>
+            <div className="ruvor-stats">
+              <Stat
+                field="dividends_12m"
+                value={dividends === null ? NULL : formatCurrency(dividends)}
+                phrase={textFor("comportamento.dividends_12m", reading)}
+              />
+              <Stat
+                field="dividend_payments_12m"
+                value={formatInteger(metric.dividend_payments_12m)}
+                phrase={textFor("comportamento.dividend_payments_12m", reading)}
+              />
+              <Stat
+                field="dividend_yield_12m"
+                value={yieldValue === null ? NULL : formatPercent(yieldValue, 1)}
+                phrase={
+                  yieldValue === null
+                    ? null
+                    : textFor("comportamento.dividend_yield_12m", reading)(
+                        formatDate(metric.as_of_date),
+                        formatCurrency(100 * yieldValue),
                       )
                 }
               />
             </div>
-          </Collapsible>
-        </div>
-      </Block>
+          </Block>
 
-      <Block title={TEXTOS["comportamento.bloco.volume"]} wide>
-        <div className="ruvor-stats">{volume}</div>
-      </Block>
+          <Block
+            title={TEXTOS["comportamento.bloco.distribuicao"]}
+            note={
+              observations === null
+                ? null
+                : TEXTOS["comportamento.nota.distribuicao"](formatInteger(observations))
+            }
+            wide
+          >
+            <div className="ruvor-stack">
+              {observations !== null && (
+                <p className="ruvor-note">
+                  {textFor("comportamento.histograma", reading)}
+                </p>
+              )}
+              <div>
+                <ReturnsHistogram bins={metric.histogram} observations={observations} />
+              </div>
+              {/* A assimetria e a curtose, recolhidas na iniciante (RF-06); o histograma fica
+              aberto nos dois níveis. Com a série curta, o recolhível continua, com os nulos. */}
+              <Collapsible
+                name="moments"
+                label={TEXTOS["comportamento.momentos.abrir"]}
+              >
+                <div className="ruvor-stats">
+                  <Stat
+                    field="skewness"
+                    value={skewness === null ? NULL : signedDecimal(skewness)}
+                    phrase={
+                      skewness === null
+                        ? TEXTOS["comportamento.nulo.janela"](60)
+                        : textFor("comportamento.skewness", reading)(
+                            signedDecimal(skewness),
+                            Math.sign(skewness),
+                          )
+                    }
+                  />
+                  <Stat
+                    field="excess_kurtosis"
+                    value={kurtosis === null ? NULL : signedDecimal(kurtosis)}
+                    phrase={
+                      kurtosis === null
+                        ? TEXTOS["comportamento.nulo.janela"](60)
+                        : textFor("comportamento.excess_kurtosis", reading)(
+                            signedDecimal(kurtosis),
+                            Math.sign(kurtosis),
+                          )
+                    }
+                  />
+                </div>
+              </Collapsible>
+            </div>
+          </Block>
+
+          <Block title={TEXTOS["comportamento.bloco.volume"]} wide>
+            <div className="ruvor-stats">{volume}</div>
+          </Block>
+        </div>
+      </div>
+      <div>
+        <button
+          className="ruvor-btn ruvor-btn--ghost"
+          type="button"
+          aria-expanded={more}
+          onClick={() => setMore((open) => !open)}
+        >
+          {more ? TEXTOS["comportamento.verMenos"] : TEXTOS["comportamento.verMais"]}
+        </button>
+      </div>
     </div>
   );
 }
@@ -409,10 +434,10 @@ export function BehaviorSection({ load, ticker, onRetry }: Props) {
               {TEXTOS["comportamento.naoCalculado.nota"]}
             </p>
             <div className="ruvor-state__actions">
-              <a className="ruvor-btn" href="#risco">
+              <Link className="ruvor-btn" to={assetTabPath(ticker, "risco")}>
                 <Glyph name="chart-line" />
                 <span>{TEXTOS["comportamento.irParaRisco"]}</span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -26,8 +26,9 @@ from apps.fundamentals.models import (
     FundamentalIndicator,
     PeerComparison,
 )
+from apps.returns.models import ReturnResult, ReturnRun
 from apps.risk.config import ALPHAS
-from apps.risk.models import RiskResult, RiskRun
+from apps.risk.models import LabResult, LabRun, LabYear, RiskResult, RiskRun
 
 # As 26 colunas de metrica de `gold.behavior_metric`, com o nome da coluna, na ordem de
 # `apps/analytics/models.py`. O V-11 confere contra `BehaviorMetric._meta`.
@@ -514,6 +515,68 @@ class AssetMetricsOut(serializers.Serializer[None]):
     metric = BehaviorMetricSerializer(allow_null=True)
 
 
+# --- /returns (M5.1, RF-14) ----------------------------------------------------------------
+
+
+class ReturnResultSerializer(serializers.ModelSerializer[ReturnResult]):
+    """Um resultado por modelo -- inclusive o que falhou, com o `error`. A lista de campos e
+    a lista fechada do RF-14; `model_name` sai como `string` livre, sem enum (RF-15)."""
+
+    class Meta:
+        model = ReturnResult
+        fields = (
+            "model_name",
+            "hyperparameters",
+            "mse",
+            "mse_reference",
+            "r2_os",
+            "direction_days",
+            "hit_rate",
+            "up_share",
+            "forecast_up_share",
+            "dm_statistic",
+            "dm_p_value",
+            "cw_statistic",
+            "cw_p_value",
+            "pt_statistic",
+            "pt_p_value",
+            "beats_reference",
+            "direction_skill",
+            "next_forecast",
+            "next_forecast_date",
+            "error",
+        )
+
+
+class ReturnLatestSerializer(serializers.ModelSerializer[ReturnRun]):
+    """A `return_run` de maior `calculated_at`: o manifesto do RF-14, a coleta pelo mesmo
+    `PriceRunSerializer` do `/risk` e os resultados, que a view entrega por `model_name`.
+    `requested_by` nao sai, como no `/risk`."""
+
+    price_run = PriceRunSerializer(read_only=True)
+    results = ReturnResultSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ReturnRun
+        fields = (
+            "calculated_at",
+            "engine_version",
+            "as_of_date",
+            "first_price_date",
+            "price_count",
+            "train_count",
+            "test_count",
+            "train_window_days",
+            "price_run",
+            "results",
+        )
+
+
+class AssetReturnsOut(serializers.Serializer[None]):
+    ticker = serializers.CharField()
+    latest = ReturnLatestSerializer(allow_null=True)
+
+
 class AssetRiskOut(serializers.Serializer[None]):
     """`risk_body`."""
 
@@ -522,6 +585,114 @@ class AssetRiskOut(serializers.Serializer[None]):
     latest = LatestRunSerializer(allow_null=True)
     in_progress = InProgressRunSerializer(allow_null=True)
     request = ComputeRequestSerializer(allow_null=True)
+
+
+class LabYearOut(serializers.ModelSerializer[LabYear]):
+    """Um trecho de teste (M2.4, RF-12): os testes e o veredito nulos a 99% e no nao julgado."""
+
+    class Meta:
+        model = LabYear
+        fields = (
+            "index",
+            "start_date",
+            "end_date",
+            "test_count",
+            "violations",
+            "expected_violations",
+            "kupiec_passed",
+            "kupiec_p_value",
+            "christoffersen_passed",
+            "christoffersen_p_value",
+            "adequate",
+        )
+
+
+class LabResultOut(serializers.ModelSerializer[LabResult]):
+    """Um resultado do experimento por (modelo, nivel), com os anos -- sem `hyperparameters`:
+    a trilha do `/risk` ja os mostra para os mesmos modelos (RF-12)."""
+
+    years = LabYearOut(many=True, read_only=True)
+
+    class Meta:
+        model = LabResult
+        fields = (
+            "model_name",
+            "model_category",
+            "alpha",
+            "test_count",
+            "violations",
+            "expected_violations",
+            "kupiec_passed",
+            "kupiec_p_value",
+            "christoffersen_passed",
+            "christoffersen_p_value",
+            "dq_passed",
+            "dq_p_value",
+            "adequate",
+            "error",
+            "reused_snapshots",
+            "trained_snapshots",
+            "years",
+        )
+
+
+class LabRunOut(serializers.ModelSerializer[LabRun]):
+    """O `latest` do `/lab`: o manifesto e os resultados. A view entrega os resultados ja
+    ordenados -- `model_name`, depois `alpha` decrescente -- e os anos por `index`."""
+
+    price_run = PriceRunSerializer(read_only=True)
+    results = LabResultOut(many=True, read_only=True)
+
+    class Meta:
+        model = LabRun
+        fields = (
+            "id",
+            "calculated_at",
+            "finished_at",
+            "status",
+            "origin",
+            "engine_version",
+            "seed",
+            "train_window_days",
+            "first_price_date",
+            "decade_end",
+            "as_of_date",
+            "price_count",
+            "train_count",
+            "test_count",
+            "year_count",
+            "price_run",
+            "price_fingerprint",
+            "results",
+        )
+
+
+class LabFailureOut(serializers.ModelSerializer[LabRun]):
+    """O `last_failure` do `/lab`: o `failed` mais recente posterior ao `latest`."""
+
+    class Meta:
+        model = LabRun
+        fields = ("id", "calculated_at", "engine_version", "error")
+
+
+class LabDecadeOut(serializers.Serializer[None]):
+    first_price_date = serializers.DateField(allow_null=True)
+    end_date = serializers.DateField(allow_null=True)
+    last_price_date = serializers.DateField(allow_null=True)
+    complete = serializers.BooleanField()
+    sessions = serializers.IntegerField()
+
+
+class AssetLabOut(serializers.Serializer[None]):
+    """`lab_body` (M2.4, RF-12)."""
+
+    ticker = serializers.CharField()
+    active = serializers.BooleanField()
+    decade = LabDecadeOut()
+    risk_engine_version = serializers.CharField(allow_null=True)
+    pending = serializers.BooleanField()
+    latest = LabRunOut(allow_null=True)
+    last_failure = LabFailureOut(allow_null=True)
 
 
 class FundamentalsOut(serializers.Serializer[None]):

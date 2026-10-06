@@ -9,13 +9,16 @@
  * Ícone novo entra na tabela abaixo, com o import do arquivo.
  */
 
+import checkCircleDuotone from "@brand/icons/duotone/check-circle.svg?raw";
 import infoDuotone from "@brand/icons/duotone/info.svg?raw";
 import warningDuotone from "@brand/icons/duotone/warning.svg?raw";
 import xCircleDuotone from "@brand/icons/duotone/x-circle.svg?raw";
 import arrowLeft from "@brand/icons/regular/arrow-left.svg?raw";
 import arrowSquareOut from "@brand/icons/regular/arrow-square-out.svg?raw";
 import arrowsClockwise from "@brand/icons/regular/arrows-clockwise.svg?raw";
+import buildings from "@brand/icons/regular/buildings.svg?raw";
 import calendarBlank from "@brand/icons/regular/calendar-blank.svg?raw";
+import caretDown from "@brand/icons/regular/caret-down.svg?raw";
 import caretRight from "@brand/icons/regular/caret-right.svg?raw";
 import chartLine from "@brand/icons/regular/chart-line.svg?raw";
 import checkCircle from "@brand/icons/regular/check-circle.svg?raw";
@@ -23,14 +26,22 @@ import database from "@brand/icons/regular/database.svg?raw";
 import info from "@brand/icons/regular/info.svg?raw";
 import magnifyingGlass from "@brand/icons/regular/magnifying-glass.svg?raw";
 import scales from "@brand/icons/regular/scales.svg?raw";
+import shieldCheck from "@brand/icons/regular/shield-check.svg?raw";
+import shieldWarning from "@brand/icons/regular/shield-warning.svg?raw";
+import signOut from "@brand/icons/regular/sign-out.svg?raw";
 import spinnerGap from "@brand/icons/regular/spinner-gap.svg?raw";
+import user from "@brand/icons/regular/user.svg?raw";
+import warning from "@brand/icons/regular/warning.svg?raw";
 import x from "@brand/icons/regular/x.svg?raw";
+import xCircle from "@brand/icons/regular/x-circle.svg?raw";
 
 const REGULAR = {
   "arrow-left": arrowLeft,
   "arrow-square-out": arrowSquareOut,
   "arrows-clockwise": arrowsClockwise,
+  buildings,
   "calendar-blank": calendarBlank,
+  "caret-down": caretDown,
   "caret-right": caretRight,
   "chart-line": chartLine,
   "check-circle": checkCircle,
@@ -38,12 +49,19 @@ const REGULAR = {
   info,
   "magnifying-glass": magnifyingGlass,
   scales,
+  "shield-check": shieldCheck,
+  "shield-warning": shieldWarning,
+  "sign-out": signOut,
   "spinner-gap": spinnerGap,
+  user,
+  warning,
   x,
+  "x-circle": xCircle,
 } as const;
 
 /** Os duotone só vão nos sinais (`.ruvor-icon`), pela D-93. */
 const DUOTONE = {
+  "check-circle": checkCircleDuotone,
   info: infoDuotone,
   warning: warningDuotone,
   "x-circle": xCircleDuotone,

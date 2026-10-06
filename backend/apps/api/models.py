@@ -27,8 +27,9 @@ class ComputeRequest(models.Model):
     `apps/api/ondemand.py`; `error`, so quando falhou. `risk_run` nao e unica: varios
     pedidos podem se ligar a mesma execucao em andamento (RF-24).
 
-    `requested_by` e quem pediu, nulo para o pedido anonimo e para todo pedido anterior ao
-    M2.1a; quem o preenche e a view do `POST` (T14 do M2.1a).
+    `requested_by` e quem pediu, nulo para todo pedido anterior ao M2.1a e para o pedido
+    anonimo anterior a D-140 (M2.1b), que fecha o `POST` a quem nao tem conta pronta; quem o
+    preenche e a view do `POST` (T14 do M2.1a).
     """
 
     class Status(models.TextChoices):

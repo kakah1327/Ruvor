@@ -32,6 +32,13 @@ conversas e entre agentes.
 | [D-146](D-146-o-estresse-historico-vira-bloco-so-do-ativo-e-so-com-preco.md) | O estresse histórico vira o bloco M3.3: só do ativo, só com preço |
 | [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
 | [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
+| [D-184](D-184-a-decada-e-a-do-ativo-e-o-teste-se-le-em-anos-de-252-pregoes.md) | A década do laboratório é a do ativo, do primeiro pregão a dez anos de calendário depois, e o teste se lê em trechos de 252 pregões; veredito por ano só a 95% |
+| [D-187](D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md) | A seção do laboratório fica na tela do ativo, logo depois do risco, para todos, pela rota `/lab`, sem eleger nem ordenar, com a diferença honesta nas duas leituras |
+| [D-188](D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) | A previsão de retorno é o log-retorno de um pregão, pontual, fora da amostra contra o retorno zero; cada modelo grava também a previsão do próximo pregão |
+| [D-192](D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md) | A tela mostra a validação e, junto dela, a previsão do próximo pregão, nunca sozinha, com o aviso obrigatório; sem comercialização, o parecer da CVM não segura o M5.1 — estende a D-160 |
+| [D-193](D-193-a-tela-do-ativo-em-seis-abas-com-endereco-restringe-a-d-99-a-d-187-e-a-d-192.md) | A tela do ativo em seis abas, cada uma com o seu endereço (`/ativos/{ticker}/{aba}`); a ordem das seções vira a ordem das abas, e a trilha fica na aba Risco — restringe a D-99, a D-187 e a D-192 |
+| [D-194](D-194-as-explicacoes-ficam-atras-de-um-botao-e-o-detalhe-recolhido-restringe-a-d-97-e-a-d-187.md) | As explicações ficam atrás do botão "Explicações", desligado por padrão, sem sair da página; estado, erro, convite e o aviso do retorno ficam à vista; proventos, comportamento e as grades do laboratório abrem recolhidos — restringe a D-97 e a D-187 |
+| [D-195](D-195-o-tema-escuro-e-carvao-quente.md) | O tema escuro é carvão quente: neutros com o matiz do papel do tema claro e camadas em degraus nítidos; acentos e tema claro não mudam |
 
 ## Arquitetura
 
@@ -109,6 +116,12 @@ conversas e entre agentes.
 | [D-157](D-157-alteracao-no-motor-em-lista-fechada-para-a-correcao-do-m1-4b-restringe-a-d-76.md) | Alteração no motor em lista fechada para a correção do M1.4b; restringe a D-76, a D-21 e a D-46 |
 | [D-158](D-158-o-var-do-dia-nao-usa-o-retorno-do-dia-e-os-tradicionais-reestimam-a-cada-252-pregoes-restringe-a-d-97.md) | Nos nove modelos, o VaR do dia *t* não usa o retorno de *t* nem posteriores, e o número mostrado tem a data do último pregão; os tradicionais reestimam a cada 252 pregões em janela expansiva; restringe a D-97 |
 | [D-159](D-159-a-linha-de-base-numerica-e-a-do-motor-0-4-0-restringe-a-d-44.md) | A linha de base numérica passa a ser a do motor `0.4.0`, recapturada por script versionado; restringe a D-44 |
+| [D-183](D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) | O laboratório é o cálculo de produção recortado na década do ativo, calculado uma vez e guardado; restringe a D-04 e responde a D-74 |
+| [D-185](D-185-o-experimento-mora-em-tres-tabelas-de-gold-imutaveis-e-um-ok-por-identidade.md) | O experimento mora em `gold.lab_run`, `lab_result` e `lab_year`, nasce fechado e é imutável no Django e no banco; um `ok` por identidade, e motor novo é experimento novo |
+| [D-186](D-186-o-experimento-roda-pela-fila-depois-do-fecho-do-risco-de-producao.md) | O experimento roda pela fila depois do fecho do risco de produção, reaproveitando os retratos, uma tarefa por ativo, sem entrada no Beat; o operador tem `compute_lab` |
+| [D-189](D-189-o-motor-ganha-o-pacote-engine-returns-em-lista-fechada-e-vai-a-0-5-0-restringe-a-d-21-a-d-76-e-a-d-157.md) | O motor ganha o pacote `engine.returns`, em lista fechada de arquivos novos, e vai a `0.5.0`; restringe a D-21, a D-76 e a D-157 |
+| [D-190](D-190-a-validacao-do-retorno-e-o-diebold-mariano-contra-o-zero-e-nenhum-modelo-e-eleito.md) | A validação do retorno: `r2_os`, acerto ao lado da parcela de alta, Diebold-Mariano no veredito; Clark-West e Pesaran-Timmermann fora dele; nenhum modelo é eleito |
+| [D-191](D-191-o-retorno-mora-em-apps-returns-e-roda-no-quinto-elo-da-rotina-estende-a-d-91.md) | O retorno mora em `apps/returns`, em `gold.return_run` e `gold.return_result`, imutáveis; roda no quinto elo da `rotina_diaria` e na cadeia sob demanda; sai pelo `/returns` — estende a D-91 |
 | [D-120](D-120-fundamento-vem-dos-dados-abertos-da-cvm.md) | Fundamento vem dos dados abertos da CVM (DFP e ITR), por HTTP direto |
 | [D-121](D-121-a-bronze-guarda-o-zip-inteiro-e-so-quando-o-conteudo-muda.md) | A `bronze` guarda o zip inteiro, e o conteúdo só de novo quando mudou |
 | [D-122](D-122-conta-se-localiza-pela-descricao-sob-mae-fixa.md) | Conta se localiza pela descrição sob mãe fixa definida, não pelo código; a companhia tem plano de contas |

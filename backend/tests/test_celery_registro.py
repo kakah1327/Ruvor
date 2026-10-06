@@ -42,6 +42,7 @@ _RISK_TASKS = {
     "apps.risk.tasks.fechar_execucao",
     "apps.risk.tasks.recalcular_cobertos",
     "apps.risk.tasks.fechar_presas",
+    "apps.risk.tasks.calcular_laboratorio",
 }
 
 _ASSETS_TASKS = {
@@ -49,6 +50,9 @@ _ASSETS_TASKS = {
     "apps.assets.tasks.importar_precos",
     "apps.assets.tasks.rotina_diaria",
 }
+
+
+_RETURNS_TASKS = {"apps.returns.tasks.calcular_retornos"}
 
 
 def test_config_expoe_a_aplicacao_celery() -> None:
@@ -71,4 +75,4 @@ def test_tarefas_de_app_entram_por_descoberta_automatica() -> None:
     )
     assert completed.returncode == 0, completed.stderr
     registered = set(completed.stdout.split())
-    assert _RISK_TASKS | _ASSETS_TASKS <= registered, completed.stdout
+    assert _RISK_TASKS | _ASSETS_TASKS | _RETURNS_TASKS <= registered, completed.stdout
