@@ -175,7 +175,7 @@ describe("o alternador do nível de leitura (V-03 do M2.3)", () => {
     ).not.toBe(0);
     expect(reading.parentElement).toBe(theme.parentElement);
     expect(reading.parentElement?.className).toBe("ruvor-topbar__prefs");
-    // M2.1b (T10): até 840 px, o kit endereça o alternador como a .ruvor-segmented seguida de
+    // M2.1b (T10): até 920 px (840 no M2.1b), o kit endereça o alternador como a .ruvor-segmented seguida de
     // outra e a chave de tema como a que segue outra — os dois vizinhos, nessa ordem.
     expect(reading.nextElementSibling).toBe(theme);
     expect(reading.classList.contains("ruvor-segmented")).toBe(true);
@@ -418,7 +418,7 @@ describe("o lugar da conta na barra (M2.1b, RF-09)", () => {
     ).toBeDefined();
     const prefs = document.querySelector(".ruvor-topbar__prefs") as HTMLElement;
     expect(prefs.lastElementChild).toBe(slot());
-    // O alternador e a chave de tema seguem vizinhos, nessa ordem (o kit até 840 px).
+    // O alternador e a chave de tema seguem vizinhos, nessa ordem (o kit até 920 px).
     expect(readingGroup().nextElementSibling).toBe(
       screen.getByRole("group", { name: TEXTOS["casco.tema.rotulo"] }),
     );

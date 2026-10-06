@@ -248,6 +248,12 @@
   .ruvor-segmented--surface .ruvor-segmented__btn.is-hover { color: var(--ruvor-ink); background: var(--ruvor-control-hover); }
   .ruvor-segmented--surface .ruvor-segmented__btn.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
   .ruvor-lab-scroll.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-portfolios__name.is-hover { text-decoration: underline; }
+  .ruvor-portfolios__name.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: var(--ruvor-radius-sm); }
+  .ruvor-back.is-hover { color: var(--ruvor-ink); text-decoration: underline; }
+  .ruvor-back.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .ruvor-asset-list a.is-focus { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; border-radius: 2px; }
+  .ruvor-pick--off > .ruvor-search__link.is-hover { background: transparent; }
   .ruvor-topbar .is-focus, .ruvor-code .is-focus { outline: 2px solid var(--ruvor-focus-on-dark); outline-offset: 2px; }
 
   @media (max-width: 1000px) {
@@ -281,6 +287,7 @@
     <a class="ruvor-nav__link" href="#telas-m21b"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.1b</a>
     <a class="ruvor-nav__link" href="#telas-m24"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M2.4</a>
     <a class="ruvor-nav__link" href="#telas-m51"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>Telas M5.1</a>
+    <a class="ruvor-nav__link" href="#telas-m22b"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg>Telas M2.2b</a>
   </nav>
   <div class="ruvor-account"><span>Vitrine do kit</span><span class="ruvor-avatar">M1</span></div>
 </header>
@@ -1251,6 +1258,245 @@ garch      -3,61%    adequado</div>
     </div>
   </section>
 
+  <section class="kit-section" id="telas-m22b">
+    <h2 class="ruvor-h2 kit-h">Telas do M2.2b</h2>
+    <p class="kit-note">O que os três mockups aprovados do M2.2b desenharam como estilo local (<code class="kit-token">docs/mockups/M2.2b/</code>, <code class="kit-token">.m22b-*</code>), com o nome do kit, nos dois temas: o item "Carteiras" na barra, a lista e a criação, o seletor de ação e o editor da composição, a cabeça da página da carteira, o nome e o valor no lugar, os fatos, a composição em leitura, o alto do resultado do risco, a faixa em reais, a trilha da carteira e o histórico curto. As <code class="kit-token">.m21b-*</code> que os mockups copiaram (a barra e o diálogo) são as da seção do M2.1b, acima. Os estados forçados (<code class="kit-token">.is-hover</code>, <code class="kit-token">.is-focus</code>) são cópia das regras da folha. A barra em três linhas com o item (até 920 px; era 840 no M2.1b, para todas as sessões), a lista em blocos e o editor estreito (até 720 px) dependem da largura da janela: estreite a página para vê-los.</p>
+    <div class="kit-themes kit-themes--stack">
+      <div class="kit-theme" data-theme="light" data-m22b>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O item "Carteiras" na barra <code class="kit-token">.ruvor-nav--account</code></h3>
+          <p class="kit-note">Logado, logo depois da marca: na página das carteiras (corrente); em outra página, em hover e em foco. Ao contrário do <code class="kit-token">.ruvor-nav</code> desta vitrine, o item não some abaixo de 1000 px.</p>
+          <div class="kit-bars">
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <nav class="ruvor-nav ruvor-nav--account" aria-label="Navegação, de exemplo"><a class="ruvor-nav__link ruvor-nav__link--on" href="#telas-m22b" aria-current="page">Carteiras</a></nav>
+              <div class="ruvor-topbar__search" role="search"><div class="ruvor-search ruvor-search--bar"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input class="ruvor-input ruvor-search__input" type="search" aria-label="Buscar, de exemplo" placeholder="Código ou nome da ação"></div></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button" type="button" aria-expanded="false" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <nav class="ruvor-nav ruvor-nav--account" aria-label="Navegação, de exemplo"><a class="ruvor-nav__link is-hover" href="#telas-m22b">Carteiras</a></nav>
+              <div class="ruvor-topbar__search" role="search"><div class="ruvor-search ruvor-search--bar"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input class="ruvor-input ruvor-search__input" type="search" aria-label="Buscar, de exemplo" placeholder="Código ou nome da ação"></div></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button" type="button" aria-expanded="false" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+            <header class="ruvor-topbar">
+              <div class="ruvor-brand"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b>RUVOR</b></div>
+              <nav class="ruvor-nav ruvor-nav--account" aria-label="Navegação, de exemplo"><a class="ruvor-nav__link is-focus" href="#telas-m22b">Carteiras</a></nav>
+              <div class="ruvor-topbar__search" role="search"><div class="ruvor-search ruvor-search--bar"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input class="ruvor-input ruvor-search__input" type="search" aria-label="Buscar, de exemplo" placeholder="Código ou nome da ação"></div></div>
+              <div class="ruvor-topbar__prefs">
+                <div class="ruvor-segmented" role="group" aria-label="Nível de leitura, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Iniciante</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Avançada</button></div>
+                <div class="ruvor-segmented" role="group" aria-label="Tema, de exemplo"><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Claro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="false">Escuro</button><button class="ruvor-segmented__btn" type="button" aria-pressed="true">Sistema</button></div>
+                <div class="ruvor-topbar__account"><button class="ruvor-account ruvor-account--button" type="button" aria-expanded="false" aria-label="Conta de Ana Beatriz Souza"><span class="ruvor-account__name">Ana Beatriz Souza</span><span class="ruvor-avatar" aria-hidden="true">AS</span><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></svg></button></div>
+              </div>
+            </header>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A cabeça e a lista <code class="kit-token">.ruvor-portfolios-head</code> <code class="kit-token">__org</code> <code class="kit-token">.ruvor-portfolios</code> <code class="kit-token">__name</code> <code class="kit-token">__muted</code> <code class="kit-token">__skel</code> <code class="kit-token">.ruvor-portfolios-more</code> <code class="kit-token">__error</code></h3>
+          <p class="kit-note">O nome da carteira em repouso, em hover e em foco; a carteira sem valor; o "mostrar mais" com o erro dele; e a lista carregando. Até 720 px, um bloco por carteira, com o rótulo da coluna em cima.</p>
+          <div class="ruvor-stack">
+            <div class="ruvor-page-head ruvor-portfolios-head">
+              <div>
+                <p class="ruvor-eyebrow">Carteiras</p>
+                <p class="ruvor-display">Quanto a sua carteira pode perder?</p>
+                <p class="ruvor-sub">Monte a carteira com as ações e os pesos que você escolher. A plataforma estima a perda de 1 dia nos nove modelos, lado a lado.</p>
+                <p class="ruvor-portfolios-head__org">As carteiras são da organização Gestora Exemplo: quem é dela vê e muda cada uma.</p>
+              </div>
+              <button class="ruvor-btn ruvor-btn--primary ruvor-push" type="button">Nova carteira</button>
+            </div>
+            <section class="ruvor-panel">
+              <div class="ruvor-panel__head"><h4 class="ruvor-h3">As carteiras</h4><span class="ruvor-push ruvor-muted">57 carteiras</span></div>
+              <table class="ruvor-table ruvor-portfolios">
+                <thead><tr><th scope="col">Nome</th><th scope="col">Ações</th><th scope="col">Versão</th><th scope="col">Valor</th><th scope="col">Composição mudou em</th></tr></thead>
+                <tbody>
+                  <tr><td><a class="ruvor-portfolios__name" href="#telas-m22b">Bancos e energia</a></td><td data-label="Ações">4 ações</td><td data-label="Versão" class="ruvor-num">2</td><td data-label="Valor" class="ruvor-num">R$ 50.000,00</td><td data-label="Composição mudou em" class="ruvor-num">03/10/2026 14:12</td></tr>
+                  <tr><td><a class="ruvor-portfolios__name is-hover" href="#telas-m22b">Dividendos</a></td><td data-label="Ações">6 ações</td><td data-label="Versão" class="ruvor-num">1</td><td data-label="Valor" class="ruvor-portfolios__muted">sem valor</td><td data-label="Composição mudou em" class="ruvor-num">01/10/2026 09:40</td></tr>
+                  <tr><td><a class="ruvor-portfolios__name is-focus" href="#telas-m22b">Teste de duas ações</a></td><td data-label="Ações">2 ações</td><td data-label="Versão" class="ruvor-num">7</td><td data-label="Valor" class="ruvor-num">R$ 1.000,00</td><td data-label="Composição mudou em" class="ruvor-num">04/10/2026 18:03</td></tr>
+                </tbody>
+              </table>
+              <div class="ruvor-portfolios-more"><button class="ruvor-btn" type="button">Tentar de novo</button><span>Mostrando 50 de 57.</span><p class="ruvor-portfolios-more__error" role="alert">As próximas carteiras não carregaram.</p></div>
+            </section>
+            <section class="ruvor-panel" aria-busy="true">
+              <div class="ruvor-panel__head"><h4 class="ruvor-h3">As carteiras</h4></div>
+              <table class="ruvor-table ruvor-portfolios" aria-hidden="true">
+                <thead><tr><th scope="col">Nome</th><th scope="col">Ações</th><th scope="col">Versão</th><th scope="col">Valor</th><th scope="col">Composição mudou em</th></tr></thead>
+                <tbody>
+                  <tr class="ruvor-portfolios__skel"><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td></tr>
+                  <tr class="ruvor-portfolios__skel"><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td><td><span class="ruvor-skeleton"></span></td></tr>
+                </tbody>
+              </table>
+            </section>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A criação, o seletor e o editor <code class="kit-token">.ruvor-portfolio-form</code> <code class="kit-token">__fields</code> <code class="kit-token">__actions</code> <code class="kit-token">__general</code> <code class="kit-token">.ruvor-portfolio-form-body</code> <code class="kit-token">.ruvor-fieldset</code> <code class="kit-token">__title</code> <code class="kit-token">.ruvor-picker</code> <code class="kit-token">.ruvor-pick</code> <code class="kit-token">--off</code> <code class="kit-token">__why</code> <code class="kit-token">.ruvor-holdings-editor</code> <code class="kit-token">__weight</code> <code class="kit-token">__remove</code> <code class="kit-token">__weight-head</code> <code class="kit-token">__empty</code> <code class="kit-token">.ruvor-holding-ticker</code> <code class="kit-token">.ruvor-holding-name</code> <code class="kit-token">.ruvor-weight-sum</code> <code class="kit-token">__value</code> <code class="kit-token">__gap</code> <code class="kit-token">--exact</code> <code class="kit-token">__out</code></h3>
+          <p class="kit-note">O seletor aberto, fora do lugar (estático): a ação escolhível, ativa pelo teclado; o índice desabilitado, com o motivo, em hover (não acende); e a ação já na composição, desabilitada e ativa pelo teclado. O editor com um peso inválido e a soma exata; e o editor com a soma abaixo, um peso fora da soma e o erro da soma, no pé.</p>
+          <section class="ruvor-panel"><div class="ruvor-panel__body ruvor-portfolio-form-body">
+            <form class="ruvor-portfolio-form" novalidate onsubmit="return false">
+              <div class="ruvor-form-grid ruvor-portfolio-form__fields">
+                <div class="ruvor-field"><label class="ruvor-label" for="kit-m22b-nome">Nome</label><input class="ruvor-input" id="kit-m22b-nome" type="text" value="Bancos e energia" aria-describedby="kit-m22b-nome-dica"><span class="ruvor-hint" id="kit-m22b-nome-dica">Até 100 caracteres.</span></div>
+                <div class="ruvor-field"><label class="ruvor-label" for="kit-m22b-valor">Valor (opcional)</label><input class="ruvor-input ruvor-num" id="kit-m22b-valor" type="text" inputmode="decimal" value="50.000,00"></div>
+              </div>
+              <fieldset class="ruvor-fieldset">
+                <legend class="ruvor-fieldset__title">Composição</legend>
+                <p class="ruvor-note">De 2 a 20 ações. O peso de cada uma é em %, com até 2 casas, e a soma fecha em 100,00.</p>
+                <div class="ruvor-picker">
+                  <div class="ruvor-search"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></svg><input class="ruvor-input ruvor-search__input" type="search" aria-label="Acrescentar ação, de exemplo" placeholder="Código ou nome da ação" value="ita"></div>
+                  <div class="ruvor-search__popover kit-static">
+                    <ul class="ruvor-search__list" role="listbox" aria-label="Acrescentar ação, de exemplo">
+                      <li class="ruvor-search__option ruvor-pick ruvor-search__option--active" role="option" aria-selected="true"><div class="ruvor-search__link"><span class="ruvor-search__ticker">ITSA4</span><span class="ruvor-search__name"><b>ITAUSA</b><span>Financeiro</span></span><span class="ruvor-search__tags"></span></div></li>
+                      <li class="ruvor-search__option ruvor-pick ruvor-pick--off" role="option" aria-selected="false" aria-disabled="true"><div class="ruvor-search__link is-hover"><span class="ruvor-search__ticker">IBOV</span><span class="ruvor-search__name"><b>Ibovespa</b><span class="ruvor-pick__why">Índice: a carteira só aceita ações.</span></span><span class="ruvor-search__tags"><span class="ruvor-tag ruvor-tag--evidence">índice</span></span></div></li>
+                      <li class="ruvor-search__option ruvor-pick ruvor-pick--off ruvor-search__option--active" role="option" aria-selected="true" aria-disabled="true"><div class="ruvor-search__link"><span class="ruvor-search__ticker">ITUB4</span><span class="ruvor-search__name"><b>ITAUUNIBANCO</b><span class="ruvor-pick__why">Já está na composição.</span></span><span class="ruvor-search__tags"></span></div></li>
+                    </ul>
+                  </div>
+                </div>
+                <table class="ruvor-table ruvor-holdings-editor">
+                  <colgroup><col><col class="ruvor-holdings-editor__weight"><col class="ruvor-holdings-editor__remove"></colgroup>
+                  <thead><tr><th scope="col">Ação</th><th scope="col" class="ruvor-holdings-editor__weight-head">Peso (%)</th><th scope="col"><span class="ruvor-sr-only">Remover</span></th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="ruvor-holding-ticker">ITUB4</span><span class="ruvor-holding-name">ITAUUNIBANCO</span></td><td><input class="ruvor-input" type="text" inputmode="decimal" value="65,40" aria-label="Peso de ITUB4, em %"></td><td><button class="ruvor-btn ruvor-btn--ghost ruvor-btn--icon" type="button" aria-label="Remover ITUB4 da composição"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></td></tr>
+                    <tr><td><span class="ruvor-holding-ticker">PETR4</span><span class="ruvor-holding-name">PETROBRAS</span></td><td><input class="ruvor-input" type="text" inputmode="decimal" value="34,59" aria-label="Peso de PETR4, em %"></td><td><button class="ruvor-btn ruvor-btn--ghost ruvor-btn--icon" type="button" aria-label="Remover PETR4 da composição"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></td></tr>
+                    <tr><td><span class="ruvor-holding-ticker">VALE3</span><span class="ruvor-holding-name">VALE</span></td><td><input class="ruvor-input" id="kit-m22b-peso" type="text" inputmode="decimal" value="0,001" aria-label="Peso de VALE3, em %" aria-invalid="true" aria-describedby="kit-m22b-peso-erro"><span class="ruvor-field__error" id="kit-m22b-peso-erro">Use um número com até 2 casas, com vírgula ou ponto.</span></td><td><button class="ruvor-btn ruvor-btn--ghost ruvor-btn--icon" type="button" aria-label="Remover VALE3 da composição"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button></td></tr>
+                  </tbody>
+                  <tfoot><tr><td><b>Soma</b> <span class="ruvor-muted">· 3 ações</span></td><td colspan="2"><div class="ruvor-weight-sum"><span class="ruvor-weight-sum__value">99,99%</span><span class="ruvor-weight-sum__gap">0,01 abaixo de 100,00.</span><p class="ruvor-weight-sum__out">1 peso ainda não é número e fica fora da soma.</p></div></td></tr>
+                    <tr><td colspan="3"><span class="ruvor-field__error" role="alert"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg><span>A soma dos pesos precisa ser exatamente 100,00; está em 99,99.</span></span></td></tr>
+                  </tfoot>
+                </table>
+                <table class="ruvor-table ruvor-holdings-editor">
+                  <colgroup><col><col class="ruvor-holdings-editor__weight"><col class="ruvor-holdings-editor__remove"></colgroup>
+                  <thead><tr><th scope="col">Ação</th><th scope="col" class="ruvor-holdings-editor__weight-head">Peso (%)</th><th scope="col"><span class="ruvor-sr-only">Remover</span></th></tr></thead>
+                  <tbody><tr class="ruvor-holdings-editor__empty"><td colspan="3">Nenhuma ação na composição ainda. Busque acima pelo código ou pelo nome.</td></tr></tbody>
+                  <tfoot><tr><td><b>Soma</b> <span class="ruvor-muted">· 0 ações</span></td><td colspan="2"><div class="ruvor-weight-sum"><span class="ruvor-weight-sum__value">0,00%</span><span class="ruvor-weight-sum__gap">100,00 abaixo de 100,00.</span></div></td></tr></tfoot>
+                </table>
+                <table class="ruvor-table ruvor-holdings-editor">
+                  <colgroup><col><col class="ruvor-holdings-editor__weight"><col class="ruvor-holdings-editor__remove"></colgroup>
+                  <tfoot><tr><td><b>Soma</b> <span class="ruvor-muted">· 3 ações</span></td><td colspan="2"><div class="ruvor-weight-sum"><span class="ruvor-weight-sum__value">100,00%</span><span class="ruvor-weight-sum__gap ruvor-weight-sum__gap--exact"><svg class="ruvor-glyph ruvor-glyph--sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></svg> Fecha em 100,00.</span></div></td></tr></tfoot>
+                </table>
+              </fieldset>
+              <div class="ruvor-callout ruvor-callout--critical ruvor-portfolio-form__general" role="alert"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg><span>Não foi possível criar a carteira agora. O que você digitou continua aqui; tente de novo.</span></div>
+              <div class="ruvor-portfolio-form__actions"><button class="ruvor-btn ruvor-btn--primary" type="button">Criar carteira</button><button class="ruvor-btn" type="button">Cancelar</button></div>
+            </form>
+          </div></section>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A cabeça da carteira, o nome e o valor no lugar, e os fatos <code class="kit-token">.ruvor-back</code> <code class="kit-token">.ruvor-portfolio-top</code> <code class="kit-token">__id</code> <code class="kit-token">__actions</code> <code class="kit-token">.ruvor-inline-edit</code> <code class="kit-token">__row</code> <code class="kit-token">--name</code> <code class="kit-token">.ruvor-facts</code> <code class="kit-token">__lead</code> <code class="kit-token">__wide</code> <code class="kit-token">__value</code> <code class="kit-token">__muted</code> <code class="kit-token">__acts</code> <code class="kit-token">.ruvor-reply</code></h3>
+          <p class="kit-note">A volta à lista em repouso, em hover e em foco; a cabeça em leitura e com o nome no lugar; os fatos com o valor (que ocupa duas colunas acima de 720 px) e com o valor no lugar (a linha inteira); a resposta de uma escrita, num destaque.</p>
+          <div class="ruvor-stack">
+            <p class="kit-row"><a class="ruvor-back" href="#telas-m22b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg><span>Todas as carteiras</span></a><a class="ruvor-back is-hover" href="#telas-m22b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg><span>Todas as carteiras</span></a><a class="ruvor-back is-focus" href="#telas-m22b"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg><span>Todas as carteiras</span></a></p>
+            <div class="ruvor-portfolio-top">
+              <div class="ruvor-portfolio-top__id"><p class="ruvor-eyebrow">Carteira</p><p class="ruvor-display">Bancos e energia</p></div>
+              <div class="ruvor-portfolio-top__actions"><button class="ruvor-btn ruvor-btn--ghost" type="button">Mudar o nome</button><button class="ruvor-btn" type="button">Arquivar</button></div>
+            </div>
+            <div class="ruvor-portfolio-top">
+              <div class="ruvor-portfolio-top__id"><p class="ruvor-eyebrow">Carteira</p>
+                <form class="ruvor-inline-edit ruvor-inline-edit--name" novalidate onsubmit="return false">
+                  <label class="ruvor-label" for="kit-m22b-renomear">Nome da carteira</label>
+                  <div class="ruvor-inline-edit__row"><input class="ruvor-input" id="kit-m22b-renomear" type="text" value="" aria-invalid="true" aria-describedby="kit-m22b-renomear-erro"><button class="ruvor-btn ruvor-btn--primary" type="button">Salvar</button><button class="ruvor-btn" type="button">Cancelar</button></div>
+                  <span class="ruvor-field__error" id="kit-m22b-renomear-erro">Dê um nome à carteira.</span>
+                </form>
+              </div>
+            </div>
+            <section class="ruvor-panel" aria-label="Sobre a carteira, de exemplo"><div class="ruvor-panel__body">
+              <dl class="ruvor-facts">
+                <div class="ruvor-facts__lead"><dt>Valor aplicado</dt><dd><span class="ruvor-facts__value ruvor-num">R$ 50.000,00</span><span class="ruvor-note">A perda estimada aparece também em reais, calculada com este valor.</span><span class="ruvor-facts__acts"><button class="ruvor-btn ruvor-btn--ghost" type="button">Mudar o valor</button><button class="ruvor-btn ruvor-btn--ghost" type="button">Tirar o valor</button></span></dd></div>
+                <div><dt>Versão da composição</dt><dd class="ruvor-facts__value ruvor-num">2</dd></div>
+                <div><dt>Composição mudou em</dt><dd class="ruvor-num">03/10/2026 às 14:12</dd></div>
+                <div><dt>Criada por</dt><dd>Ana Beatriz Souza</dd></div>
+              </dl>
+            </div></section>
+            <section class="ruvor-panel" aria-label="Sobre a carteira, com o valor no lugar, de exemplo"><div class="ruvor-panel__body">
+              <dl class="ruvor-facts">
+                <div class="ruvor-facts__wide"><dt>Valor aplicado</dt><dd>
+                  <form class="ruvor-inline-edit" novalidate onsubmit="return false">
+                    <label class="ruvor-sr-only" for="kit-m22b-novo-valor">Valor aplicado, em reais</label>
+                    <div class="ruvor-inline-edit__row"><input class="ruvor-input ruvor-num" id="kit-m22b-novo-valor" type="text" inputmode="decimal" value="50.000,00" aria-describedby="kit-m22b-novo-valor-dica"><button class="ruvor-btn ruvor-btn--primary" type="button">Salvar</button><button class="ruvor-btn" type="button">Cancelar</button></div>
+                    <span class="ruvor-hint" id="kit-m22b-novo-valor-dica">Em reais, como 10.000,00. Com o valor, a perda aparece também em reais; sem ele, só em %.</span>
+                  </form>
+                </dd></div>
+                <div><dt>Versão da composição</dt><dd class="ruvor-facts__value ruvor-num">1</dd></div>
+                <div><dt>Valor, sem ele</dt><dd><span class="ruvor-facts__muted">sem valor</span></dd></div>
+              </dl>
+            </div></section>
+            <div class="ruvor-callout" role="status"><span class="ruvor-icon ruvor-icon--evidence"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></svg></span><p class="ruvor-reply">Composição salva como a versão 3.</p></div>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">A composição em leitura e as ações da edição <code class="kit-token">.ruvor-holdings</code> <code class="kit-token">.ruvor-panel__head--wrap</code> <code class="kit-token">.ruvor-edit-actions</code></h3>
+          <div class="ruvor-stack">
+            <section class="ruvor-panel">
+              <div class="ruvor-panel__head ruvor-panel__head--wrap"><svg class="ruvor-glyph" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true" focusable="false"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></svg><h4 class="ruvor-h3">Composição</h4><span class="ruvor-tag ruvor-tag--neutral">2 ações</span><button class="ruvor-btn ruvor-push" type="button">Editar composição</button></div>
+              <div class="ruvor-panel__body ruvor-stack">
+                <table class="ruvor-table ruvor-holdings">
+                  <thead><tr><th scope="col">Ação</th><th scope="col">Peso (%)</th></tr></thead>
+                  <tbody>
+                    <tr><td><span class="ruvor-holding-ticker">ITUB4</span><span class="ruvor-holding-name">ITAUUNIBANCO</span></td><td class="ruvor-num">65,41%</td></tr>
+                    <tr><td><span class="ruvor-holding-ticker">PETR4</span><span class="ruvor-holding-name">PETROBRAS</span></td><td class="ruvor-num">34,59%</td></tr>
+                  </tbody>
+                  <tfoot><tr><td>Total</td><td class="ruvor-num">100,00%</td></tr></tfoot>
+                </table>
+                <p class="ruvor-note">Na ordem do código.</p>
+              </div>
+            </section>
+            <div class="ruvor-edit-actions"><button class="ruvor-btn" type="button">Cancelar</button><button class="ruvor-btn ruvor-btn--primary" type="button">Salvar a composição</button></div>
+          </div>
+        </div>
+
+        <div class="kit-block">
+          <h3 class="ruvor-h3">O risco da carteira <code class="kit-token">.ruvor-portfolio-run</code> <code class="kit-token">__facts</code> <code class="kit-token">__action</code> <code class="kit-token">.ruvor-range--brl</code> <code class="kit-token">.ruvor-portfolio-trail</code> <code class="kit-token">.ruvor-trail__hash</code> <code class="kit-token">.ruvor-trail__hash-row</code> <code class="kit-token">.ruvor-short-history</code> <code class="kit-token">__group</code> <code class="kit-token">.ruvor-asset-list</code></h3>
+          <p class="kit-note">O alto do resultado, com a resposta do pedido; a faixa em % e, logo abaixo, a faixa em reais, um degrau abaixo; a trilha da carteira com o SHA-256 da série; e o histórico curto, com o link de uma ação em repouso e em foco.</p>
+          <div class="ruvor-stack">
+            <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-portfolio-run">
+              <div class="ruvor-portfolio-run__facts"><p>Com os preços até 02/10/2026.</p><p class="ruvor-note">Uma frase de exemplo, ao lado da data.</p></div>
+              <div class="ruvor-portfolio-run__action"><button class="ruvor-btn ruvor-btn--primary" type="button">Calcular de novo</button><p class="ruvor-state__reply ruvor-state__reply--muted">O risco desta versão já está calculado com os preços até 02/10/2026.</p></div>
+            </div></div>
+            <article class="ruvor-panel"><div class="ruvor-panel__body ruvor-level">
+              <p class="ruvor-eyebrow">A 95%</p>
+              <p class="ruvor-range"><b class="ruvor-num">1,8% a 2,6%</b><small>em 1 dia</small></p>
+              <p class="ruvor-range ruvor-range--brl"><b class="ruvor-num">R$ 900,00 a R$ 1.300,00</b><small>em 1 dia</small></p>
+            </div></article>
+            <div class="ruvor-portfolio-trail">
+              <p class="ruvor-note">A trilha: as duas frases da carteira, com o respiro do painel.</p>
+              <dl class="ruvor-trail">
+                <div><dt>Versão da composição</dt><dd class="ruvor-num">2</dd></div>
+                <div><dt>Pregões em comum</dt><dd class="ruvor-num">2.431</dd></div>
+                <div class="ruvor-trail__hash-row"><dt>SHA-256 da série</dt><dd class="ruvor-trail__hash">d2a0cec292f30a823ef94e74ce31da3d72a992fb349b48ccd54e8f4fb9710a44</dd></div>
+              </dl>
+            </div>
+            <div class="ruvor-short-history">
+              <p class="ruvor-state__title">A série da carteira é curta demais para o risco.</p>
+              <div class="ruvor-short-history__group">
+                <p><b>Sem preço no Ruvor</b></p>
+                <ul class="ruvor-asset-list">
+                  <li><b>ABCB4</b><span>nenhum pregão guardado</span><a href="#telas-m22b">Abrir a página de ABCB4</a></li>
+                  <li><b>ABEV3</b><span>nenhum pregão guardado</span><a class="is-focus" href="#telas-m22b">Abrir a página de ABEV3</a></li>
+                </ul>
+              </div>
+              <div class="ruvor-short-history__group">
+                <p><b>Com menos pregões que o mínimo</b></p>
+                <ul class="ruvor-asset-list"><li><b>XPTO3</b><span>312 pregões, desde 14/06/2025</span></li></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="kit-theme" data-theme="dark" data-m22b-copy></div>
+    </div>
+  </section>
+
 </main>
 
 <aside class="ruvor-rail">
@@ -1316,6 +1562,12 @@ garch      -3,61%    adequado</div>
   // M5.1: o painel escuro do retorno é a mesma marcação do claro (sem id para trocar).
   document.querySelector("[data-m51-copy]").innerHTML =
     document.querySelector("[data-m51]").innerHTML;
+
+  // M2.2b: o painel escuro das telas da carteira é a mesma marcação do claro (os id dos campos
+  // de exemplo ganham o sufixo -escuro, para não se repetirem na página).
+  document.querySelector("[data-m22b-copy]").innerHTML = document
+    .querySelector("[data-m22b]")
+    .innerHTML.replace(/(id|for|aria-describedby)="(kit-m22b-[\w-]+)"/g, '$1="$2-escuro"');
 
   // M2.1b: o diálogo de verdade, um por tema. Ao fechar, o foco volta a quem o abriu.
   document.querySelectorAll("[data-kit-dialog-open]").forEach(function (opener) {
