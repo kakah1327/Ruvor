@@ -3,10 +3,10 @@
  * testes não rejeitaram (RF-14), sem eleger nenhum (D-65).
  */
 
-import { MODEL_ORDER, type ModelName, type RiskResult } from "../api/types";
+import { MODEL_ORDER, type ModelName, type RiskResultBase } from "../api/types";
 import { lossFromVar } from "../format/var";
 
-export type Alpha = RiskResult["alpha"];
+export type Alpha = RiskResultBase["alpha"];
 
 export type Discordancia = { min: number; max: number; n: number; total: number };
 
@@ -17,7 +17,7 @@ export type Discordancia = { min: number; max: number; n: number; total: number 
  * calculado. Nulo quando nenhum entrou.
  */
 export function discordancia(
-  results: readonly RiskResult[],
+  results: readonly RiskResultBase[],
   alpha: Alpha,
 ): Discordancia | null {
   const losses = results
@@ -41,7 +41,7 @@ export type NaoRejeitados = { adequados: ModelName[]; julgados: number };
  * chegada nem por valor. `julgados` conta os `adequate` não nulos.
  */
 export function naoRejeitados(
-  results: readonly RiskResult[],
+  results: readonly RiskResultBase[],
   alpha: Alpha,
 ): NaoRejeitados {
   const level = results.filter((r) => r.alpha === alpha);

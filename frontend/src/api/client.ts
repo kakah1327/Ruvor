@@ -72,7 +72,7 @@ function parseError(
   return { code, message, details: isRecord(details) ? details : {} };
 }
 
-type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /** A rota que garante o cookie `csrftoken` (M2.1a). */
 const CSRF_PATH = "/api/v1/auth/csrf";
@@ -179,6 +179,11 @@ export function apiGet<T>(path: string): Promise<T> {
 /** `body` opcional: sem ele, o pedido sai sem corpo, como as chamadas de antes. */
 export function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return request<T>("POST", path, body);
+}
+
+/** A forma do `apiPatch` (M2.2b, RF-15): corpo JSON e `X-CSRFToken`. */
+export function apiPut<T>(path: string, body: unknown): Promise<T> {
+  return request<T>("PUT", path, body);
 }
 
 export function apiPatch<T>(path: string, body: unknown): Promise<T> {

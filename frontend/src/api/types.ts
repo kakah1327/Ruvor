@@ -173,7 +173,12 @@ export type Metric = {
 
 export type Metrics = { ticker: string; metric: Metric | null };
 
-export type RiskResult = {
+/**
+ * Os campos comuns ao resultado do risco do ativo e ao da carteira (M2.2b, RF-16): os que a
+ * tabela dos nove (`ModelTable`), o resumo da perda (`LossSummary`) e `risk/summary.ts` leem,
+ * mais `hyperparameters` e `var_mean`, que os dois corpos trazem.
+ */
+export type RiskResultBase = {
   model_name: ModelName;
   model_category: "traditional" | "garch" | "ml";
   alpha: "0.0500" | "0.0100";
@@ -188,10 +193,14 @@ export type RiskResult = {
   christoffersen_p_value: Dec | null;
   dq_passed: boolean | null;
   dq_p_value: Dec | null;
-  /** Chega e não é mostrada (RF-15). */
-  basel_zone: string | null;
   adequate: boolean | null;
   error: string;
+};
+
+/** O resultado do risco do ativo: a base e os três campos que só ele traz. */
+export type RiskResult = RiskResultBase & {
+  /** Chega e não é mostrada (RF-15). */
+  basel_zone: string | null;
   reused_snapshots: number | null;
   trained_snapshots: number | null;
 };
@@ -246,6 +255,96 @@ export type Risk = {
   latest: RiskRun | null;
   in_progress: InProgress | null;
   request: ComputeRequest | null;
+};
+
+/**
+ * O resultado do risco da carteira (`PortfolioResultOut` em
+ * `backend/apps/portfolios/serializers.py`): a base, sem `basel_zone` nem os retratos, e a
+ * perda em reais, calculada na leitura com o valor de agora — nula sem valor ou sem VaR.
+ */
+export type PortfolioRiskResult = RiskResultBase & { loss_brl: Dec | null };
+
+/** Quem criou a carteira, ou pediu o cálculo (`CreatorOut`). */
+export type PortfolioCreator = { email: string; name: string };
+
+/** Uma posição da versão corrente (`HoldingOut`): o peso em %, com 2 casas. */
+export type PortfolioHolding = { ticker: string; name: string; weight: Dec };
+
+/** O corpo `portfolio` (`PortfolioOut`): as posições em ordem de ticker. */
+export type Portfolio = {
+  id: string;
+  name: string;
+  notional: Dec | null;
+  version: number;
+  holdings: PortfolioHolding[];
+  created_at: string;
+  updated_at: string;
+  version_created_at: string;
+  created_by: PortfolioCreator;
+};
+
+/** `GET /api/v1/portfolios` (`PortfolioListOut`). */
+export type PortfolioPage = {
+  count: number;
+  limit: number;
+  offset: number;
+  results: Portfolio[];
+};
+
+/** Um nível do `summary` (`PortfolioLevelOut`): lista, sem eleger (D-65). */
+export type PortfolioSummary = {
+  alpha: "0.0500" | "0.0100";
+  computed: ModelName[];
+  var_min: Dec | null;
+  var_max: Dec | null;
+  loss_brl_min: Dec | null;
+  loss_brl_max: Dec | null;
+  not_rejected: ModelName[];
+};
+
+/**
+ * A execução fechada mais nova da versão corrente (`PortfolioRunOut`), com o manifesto: nunca
+ * `running` (o serviço a exclui do `latest`).
+ */
+export type PortfolioRun = {
+  id: number;
+  version: number;
+  status: "ok" | "partial" | "failed";
+  calculated_at: string;
+  finished_at: string | null;
+  engine_version: string;
+  seed: number;
+  train_window_days: number;
+  first_date: string;
+  as_of_date: string;
+  session_count: number;
+  train_count: number;
+  test_count: number;
+  requested_models: string[];
+  series_sha256: string;
+  price_run_id: number;
+  requested_by: PortfolioCreator;
+  results: PortfolioRiskResult[];
+  summary: PortfolioSummary[];
+};
+
+/** A execução em andamento (`PortfolioProgressOut`). */
+export type PortfolioProgress = {
+  id: number;
+  version: number;
+  calculated_at: string;
+  requested_models: string[];
+  results_written: number;
+  results_expected: number;
+};
+
+/** O corpo interno de `{portfolio_risk: …}` (`PortfolioRiskBodyOut`), da versão corrente. */
+export type PortfolioRisk = {
+  portfolio_id: string;
+  version: number;
+  notional: Dec | null;
+  latest: PortfolioRun | null;
+  in_progress: PortfolioProgress | null;
 };
 
 /**
