@@ -14,6 +14,7 @@ import { ApiError, apiDelete, apiGet, apiPatch, apiPut } from "../api/client";
 import type { Portfolio } from "../api/types";
 import { Glyph } from "../components/Glyph";
 import { HoldingsEditor } from "../components/HoldingsEditor";
+import { PortfolioRiskSection } from "../components/PortfolioRiskSection";
 import { SignInNotice } from "../components/SignInNotice";
 import { TEXTOS } from "../content/textos";
 import { formatInstant } from "../format/numbers";
@@ -45,8 +46,11 @@ const NOTICE_LINK = "[data-signin-notice] a";
 /** O primeiro controle do diálogo, que recebe o foco quando ele abre. */
 const FIRST_CONTROL = "button:not([disabled]), a[href]";
 
-/** Onde o 401 de uma escrita chegou: o aviso de sessão terminada entra no lugar dessa ação. */
-type Ended = "name" | "value" | "unset" | "comp" | "archive";
+/**
+ * Onde o 401 chegou: o aviso de sessão terminada entra no lugar dessa ação. `risk` é o pedido de
+ * cálculo ou uma leitura do risco (a seção chama `expired()`; a página o vê pela sessão).
+ */
+type Ended = "name" | "value" | "unset" | "comp" | "archive" | "risk";
 
 type Page =
   | { kind: "loading" }
@@ -71,8 +75,11 @@ type Comp = {
   fail: string | null;
 };
 
-/** A resposta do `PUT` na leitura: "salva", "nada mudou" ou "outra pessoa mudou" (RF-07). */
-type Reply = { text: string; review: boolean };
+/**
+ * A resposta do `PUT` na leitura: "salva", "nada mudou" ou "outra pessoa mudou" (RF-07); com um
+ * cálculo em curso da versão anterior, a frase dele junto (`extra`, ou no lugar de "salva").
+ */
+type Reply = { text: string; review: boolean; extra: string | null };
 
 type Archive = { sending: boolean; error: string | null; ended: boolean };
 
@@ -197,7 +204,9 @@ function Sending({ label }: { label: string }) {
  * digitado; todas as ações de escrita somem, e um aviso só entra no lugar da que falhou — Esc e
  * "Cancelar" não as trazem de volta; no diálogo, o outro botão vira "Fechar".
  *
- * A seção de risco da carteira entra depois da composição, com a T9.
+ * **O risco** (T9) é a seção de `PortfolioRiskSection`, depois da composição, montada só com a
+ * carteira aberta; ela diz à página se há cálculo em curso, para as frases da composição (RF-07):
+ * o aviso no editor e a resposta do `PUT` que muda a versão.
  */
 export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
   const session = useSession();
@@ -215,6 +224,7 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
   const [comp, setComp] = useState<Comp | null>(null);
   const [compReply, setCompReply] = useState<Reply | null>(null);
   const [archive, setArchive] = useState<Archive | null>(null);
+  const [riskRunning, setRiskRunning] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const focusNext = useRef<string | null>(null);
@@ -306,13 +316,13 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
   }
 
   /** O 404 numa escrita: a página inteira vai a "não encontrada", e o que estava aberto fecha. */
-  function gone() {
+  const gone = useCallback(() => {
     setName(null);
     setValue(null);
     setComp(null);
     setArchive(null);
     setPage({ kind: "notfound" });
-  }
+  }, []);
 
   /** Os erros que valem para qualquer escrita; devolve se tratou. */
   function handleWrite(caught: unknown, where: Ended): boolean {
@@ -497,6 +507,7 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
       return;
     }
     const { rows } = checked;
+    const running = riskRunning;
     setComp({ rows, total: [], sending: true, fail: null });
     try {
       const portfolio = portfolioOf(
@@ -506,14 +517,33 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
       if (!mounted.current) return;
       // A resposta pela `version` contra a conhecida (RF-07): a API não cria versão quando a
       // composição é a mesma, e não tem controle de edição simultânea (a última escrita vence).
+      // O cálculo em curso, quando havia, é da versão conhecida: o risco passa à nova.
       const version = portfolio.version;
-      setCompReply(
-        version === known
-          ? { text: TEXTOS["carteira.composicao.nadaMudou"](known), review: false }
-          : version > known + 1
-            ? { text: TEXTOS["carteira.composicao.outraPessoa"](version), review: true }
-            : { text: TEXTOS["carteira.composicao.salva"](version), review: false },
-      );
+      let next: Reply;
+      if (version === known) {
+        next = {
+          text: TEXTOS["carteira.composicao.nadaMudou"](known),
+          review: false,
+          extra: null,
+        };
+      } else if (version > known + 1) {
+        next = {
+          text: TEXTOS["carteira.composicao.outraPessoa"](version),
+          review: true,
+          extra: running
+            ? TEXTOS["carteira.composicao.riscoEmCurso"](known, version)
+            : null,
+        };
+      } else {
+        next = {
+          text: running
+            ? TEXTOS["carteira.composicao.salvaEmCurso"](version, known)
+            : TEXTOS["carteira.composicao.salva"](version),
+          review: false,
+          extra: null,
+        };
+      }
+      setCompReply(next);
       show(portfolio);
       setComp(null);
       focusNext.current = '[data-part="editar-composicao"]';
@@ -623,7 +653,12 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
     );
   }
 
-  if (!signedIn && (ended === null || page.kind !== "ok")) {
+  // A sessão terminada com a página aberta, sem uma escrita que a tenha visto: o 401 veio do risco.
+  const sessionEnded = session.status === "anonymous" && session.ended;
+  const endedAt: Ended | null =
+    ended ?? (sessionEnded && page.kind === "ok" ? "risk" : null);
+
+  if (!signedIn && (endedAt === null || page.kind !== "ok")) {
     // Quem não entrou: o aviso "para quem entrou" no lugar da página, sem pedido.
     return (
       <div className="ruvor-stack ruvor-stack--loose" data-screen="carteira">
@@ -688,7 +723,7 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
   }
 
   const { portfolio } = page;
-  const readOnly = ended !== null;
+  const readOnly = endedAt !== null;
   const notice = <SignInNotice ended />;
 
   /** O `Esc` no campo aberto cancela — salvo depois do 401 ou enviando. */
@@ -932,6 +967,14 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
             <p className="ruvor-reply">{compReply.text}</p>
           </div>
         )}
+        {compReply?.extra != null && (
+          <div className="ruvor-callout" role="status" data-part="resposta-em-curso">
+            <span className="ruvor-icon ruvor-icon--evidence">
+              <Glyph name="info" weight="duotone" />
+            </span>
+            <p className="ruvor-reply">{compReply.extra}</p>
+          </div>
+        )}
         <table className="ruvor-table ruvor-holdings" data-part="composicao">
           <thead>
             <tr>
@@ -972,6 +1015,16 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
         <p className="ruvor-note">
           {`${TEXTOS["carteiras.composicao.dica"]} ${TEXTOS["carteira.composicao.nota"]}`}
         </p>
+        {riskRunning && (
+          <div className="ruvor-callout" role="status" data-part="em-curso">
+            <span className="ruvor-icon ruvor-icon--evidence">
+              <Glyph name="info" weight="duotone" />
+            </span>
+            <p className="ruvor-reply">
+              {TEXTOS["carteira.composicao.emCurso"](portfolio.version)}
+            </p>
+          </div>
+        )}
         <HoldingsEditor
           rows={comp.rows}
           totalErrors={comp.total}
@@ -1099,7 +1152,13 @@ export function PortfolioScreen({ portfolioId }: { portfolioId: string }) {
         {compBody}
       </section>
 
-      {/* A seção de risco da carteira (T9) entra aqui, depois da composição. */}
+      <PortfolioRiskSection
+        portfolio={portfolio}
+        readOnly={readOnly}
+        endedHere={endedAt === "risk"}
+        onNotFound={gone}
+        onRunning={setRiskRunning}
+      />
 
       <dialog
         ref={dialogRef}

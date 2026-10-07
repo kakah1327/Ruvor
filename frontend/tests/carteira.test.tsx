@@ -269,7 +269,7 @@ describe("V-01 — a sessão e os estados da página", () => {
     expect(navLink()).toBeNull();
   });
 
-  it("a carteira: os fatos, a composição na ordem da API e nenhum pedido ao risco", async () => {
+  it("a carteira: os fatos, a composição na ordem da API e o risco pedido depois dela", async () => {
     await openPage();
     expect(
       screen.getByRole("heading", { level: 1, name: BASE.name }).dataset.part,
@@ -292,8 +292,11 @@ describe("V-01 — a sessão e os estados da página", () => {
       `${TEXTOS["carteira.composicao.total"]}100,00%`,
     );
     expect(navLink()?.getAttribute("aria-current")).toBe("page");
-    expect(portfolioCalls().map((c) => `${c.method} ${c.url}`)).toEqual([GET_ONE]);
-    expect(calls.some((c) => c.url.includes("/risk"))).toBe(false);
+    // A seção de risco (T9) só monta com a carteira aberta: um `GET .../risk`, depois dela.
+    expect(portfolioCalls().map((c) => `${c.method} ${c.url}`)).toEqual([
+      GET_ONE,
+      `GET ${URL_ONE}/risk`,
+    ]);
   });
 
   it("sem valor: 'sem valor', a frase de só em %, e 'Informar um valor' sem 'Tirar'", async () => {
@@ -341,7 +344,9 @@ describe("V-01 — a sessão e os estados da página", () => {
     expect(root().textContent).not.toContain(API_MESSAGE);
     await click(button(TEXTOS["carteiras.tentarDeNovo"]) as HTMLButtonElement);
     expect(screen.getByRole("heading", { level: 1, name: BASE.name })).toBeDefined();
-    expect(portfolioCalls().filter((c) => c.method === "GET")).toHaveLength(2);
+    expect(
+      portfolioCalls().filter((c) => c.method === "GET" && c.url === URL_ONE),
+    ).toHaveLength(2);
   });
 
   it("o id que não é de uma carteira vai no caminho codificado, e o 404 decide", async () => {

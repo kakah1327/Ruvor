@@ -20,7 +20,9 @@
  * `ativo-estresse.html` (T4): são 61. O M2.4 acrescenta as nove `laboratorio.*` da lista fechada
  * do `laboratorio.html` (T9), literais, com as afirmações de `conferencia-laboratorio.md`: são 70.
  * O M5.1 acrescenta as sete `retorno.*` da lista fechada do `retorno.html` (T9), literais, com as
- * afirmações de `conferencia-retorno.md`: são 77.
+ * afirmações de `conferencia-retorno.md`: são 77. O M2.2b acrescenta as cinco `carteira.risco.*`
+ * da lista fechada do `risco.html` (T4), literais, com as afirmações de
+ * `docs/mockups/M2.2b/conferencia-risco.md`: são 82.
  */
 import { acimaDe, type ModeloQueBate, type TEXTOS, type TextoKey } from "./textos";
 
@@ -29,6 +31,27 @@ function nomes(lista: readonly string[]): string {
   return lista.length === 1
     ? (lista[0] ?? "")
     : `${lista.slice(0, -1).join(", ")} e ${lista.at(-1)}`;
+}
+
+/**
+ * A avançada dos não rejeitados, a mesma para o ativo (`risco.naoRejeitados`) e a carteira
+ * (`carteira.risco.naoRejeitados`, M2.2b): a conferência da carteira confirma cada afirmação.
+ */
+function naoRejeitadosAvancado(k: number, julgados: number, total: number): string {
+  const faltam = total - julgados;
+  const semVeredito =
+    faltam > 0
+      ? ` ${faltam} ${faltam === 1 ? "modelo ficou sem veredito porque o cálculo falhou: conta" : "modelos ficaram sem veredito porque o cálculo falhou: contam"} à parte, não como reprovação.`
+      : "";
+  if (julgados === 0)
+    return "Nenhum modelo pôde ser julgado neste nível: o cálculo falhou em todos, e falha não é reprovação.";
+  if (k === 0)
+    return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.${semVeredito}`;
+  const quem =
+    k === 1
+      ? `1 dos ${julgados} modelos julgados tem`
+      : `${k} dos ${julgados} modelos julgados têm`;
+  return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
 }
 
 /** Texto vira `string`; função mantém a assinatura (mesma chave, mesmos argumentos: RF-05). */
@@ -124,6 +147,13 @@ export const LEITURA_KEYS = [
   "retorno.cw",
   "retorno.pt",
   "retorno.previsao",
+  // O risco da carteira (M2.2b): as cinco novas da lista fechada do `risco.html` aprovado, N = 13
+  // com as oito `risco.*` reaproveitadas, que já estão acima.
+  "carteira.risco.perdaReais",
+  "carteira.risco.valorAgora",
+  "carteira.risco.serie",
+  "carteira.risco.asOf",
+  "carteira.risco.naoRejeitados",
 ] as const satisfies readonly TextoKey[];
 
 export type LeituraKey = (typeof LEITURA_KEYS)[number];
@@ -235,22 +265,7 @@ export const TEXTOS_AVANCADOS: {
   },
   "risco.veredito":
     "Veredito por modelo e por nível: adequado quando nem o Kupiec nem o Christoffersen rejeitam, os dois com p-valor acima de 0,05; não adequado quando ao menos um rejeita; não julgado quando o cálculo do modelo falhou, o que não é reprovação. O DQ fica fora. Os testes avaliam a série de VaR do período de teste: falam do passado do modelo, não do número de hoje.",
-  "risco.naoRejeitados": (k: number, julgados: number, total: number): string => {
-    const faltam = total - julgados;
-    const semVeredito =
-      faltam > 0
-        ? ` ${faltam} ${faltam === 1 ? "modelo ficou sem veredito porque o cálculo falhou: conta" : "modelos ficaram sem veredito porque o cálculo falhou: contam"} à parte, não como reprovação.`
-        : "";
-    if (julgados === 0)
-      return "Nenhum modelo pôde ser julgado neste nível: o cálculo falhou em todos, e falha não é reprovação.";
-    if (k === 0)
-      return `${julgados === 1 ? "O único modelo julgado neste nível foi rejeitado" : `Os ${julgados} modelos julgados neste nível foram rejeitados`} pelo Kupiec, pelo Christoffersen ou pelos dois, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje.${semVeredito}`;
-    const quem =
-      k === 1
-        ? `1 dos ${julgados} modelos julgados tem`
-        : `${k} dos ${julgados} modelos julgados têm`;
-    return `${quem} veredito adequado neste nível: nem o Kupiec rejeitou a hipótese de cobertura correta, nem o Christoffersen a de independência das violações, na série de VaR do período de teste. Os testes avaliam essa série inteira: o veredito fala dela, não do número de hoje. A lista segue a ordem fixa dos nove, não o valor.${semVeredito}`;
-  },
+  "risco.naoRejeitados": naoRejeitadosAvancado,
   "risco.violacoes": (v: string, e: string, cadaN: number, kupiecOk: boolean) =>
     `${v === "1" ? "1 violação — dia" : `${v} violações — dias`} do período de teste em que o retorno logarítmico ficou abaixo de −VaR do dia — para ${e} esperadas, os dias de teste divididos por ${cadaN}.${kupiecOk ? "" : " Longe o bastante do esperado para o Kupiec rejeitar: acima, o VaR subestimou a cauda; abaixo, superestimou."}`,
   "risco.kupiec": (p: string, ok: boolean) =>
@@ -361,6 +376,18 @@ export const TEXTOS_AVANCADOS: {
     p !== null
       ? `Pesaran-Timmermann: compara o acerto de direção com P* = p_y·p_x + (1 − p_y)(1 − p_x), o de um palpite independente com as mesmas proporções de alta realizada e prevista, pela diferença das variâncias do artigo; p unilateral. Aqui, ${p}. Não entra no veredito.`
       : `Pesaran-Timmermann sem p-valor: a parcela de alta prevista é ${todosAlta ? "1" : "0"} — o modelo previu ${todosAlta ? "alta" : "queda"} em todos os dias —, e o teste não tem o que medir; o acerto é a parcela de dias de ${todosAlta ? "alta" : "queda"}.`,
+  // O risco da carteira (M2.2b): do `risco.html` aprovado (T4), literais; as afirmações são as
+  // de `docs/mockups/M2.2b/conferencia-risco.md`. A de `carteira.risco.naoRejeitados` é a de
+  // `risco.naoRejeitados`, com a expressão da D-64 nos ramos k ≥ 1 e k = 0.
+  "carteira.risco.perdaReais": (valor: string, _cadaN: number) =>
+    `Valor × (1 − e^(−VaR)), com o valor de ${valor}, arredondado ao centavo, metade para cima: a mesma perda simples do percentual. A faixa vai da conversão do menor à do maior VaR do nível, entre os modelos que calcularam; na tabela, cada modelo tem a sua. Supõe o valor distribuído pelos pesos da composição, como a série da carteira, rebalanceada a cada pregão.`,
+  "carteira.risco.valorAgora":
+    "O valor aplicado fica fora do cálculo: não entra na série nem nos modelos, e mudá-lo não cria versão nem muda a série — por isso não abre cálculo novo. Os reais são calculados a cada leitura, com o valor guardado naquele momento; nenhum valor em reais fica gravado com o resultado.",
+  "carteira.risco.serie":
+    "Um índice que começa em 1 e anda pelo retorno simples ponderado pelos pesos, fixos e rebalanceados a cada data. As datas são as em que todas as ações da composição têm fechamento ajustado positivo; numa data que falta a uma delas, a data fica fora, e o retorno da seguinte cobre o intervalo. O motor tira do índice o retorno logarítmico — o da carteira, não a média ponderada dos de cada ação — e roda os mesmos nove modelos, testes, níveis e semente do ativo, com os primeiros 252 retornos de treino e o resto de teste, treinando do zero a cada cálculo. O piso é de 503 datas em comum, que deixam ao menos 250 dias de teste.",
+  "carteira.risco.asOf": (data: string) =>
+    `${data} é a última data da série: a mais recente em que todas as ações da composição têm fechamento ajustado positivo — no máximo, a do último preço da ação mais atrasada. Um pedido novo só abre cálculo quando essa data ou a série mudam: com a mesma data e o mesmo SHA-256 da série do cálculo fechado mais recente, concluído ou parcial, a resposta é que o risco desta versão já está calculado.`,
+  "carteira.risco.naoRejeitados": naoRejeitadosAvancado,
   "retorno.previsao": (valor: string, data: string, bate: boolean) =>
     `A previsão do próximo pregão é o mesmo cálculo do teste aplicado ao dia seguinte ao último preço: os parâmetros do trecho corrente, reestimados com tudo até o último preço quando ele abre um trecho de 252; na média histórica, a média dos retornos conhecidos; no AR(1), c + φ vezes o retorno do último pregão. A data, ${data}, é o primeiro dia de semana depois do último preço, sem o calendário de feriados. Aqui, ${valor}${bate ? ", de um modelo que bateu a referência no período — um número estatístico, gravado com 10 casas" : ", de um modelo que não bate a referência: não é mais informativa que supor zero"}.`,
 };

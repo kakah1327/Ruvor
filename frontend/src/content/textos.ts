@@ -43,6 +43,27 @@ function falhaFrase(falhos: number): string {
     : " O cálculo dos dois modelos falhou, e nenhum foi julgado.";
 }
 
+/**
+ * A frase dos não rejeitados do ativo (`risco.naoRejeitados`), fora do `TEXTOS` para a da
+ * carteira (`carteira.risco.naoRejeitados`, M2.2b) repetir os ramos k ≥ 1 e julgados = 0.
+ */
+function naoRejeitadosAtivo(k: number, julgados: number, total: number): string {
+  const faltam = total - julgados;
+  const semJulgar =
+    faltam > 0
+      ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.`
+      : "";
+  if (julgados === 0)
+    return "Não foi possível julgar nenhum modelo neste nível: o cálculo falhou em todos, e isso não conta como reprovação.";
+  if (k === 0)
+    return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste. O veredito fala desse período, não do número de hoje.${semJulgar}`;
+  const quem =
+    k === 1
+      ? `1 dos ${julgados} modelos julgados passou`
+      : `${k} dos ${julgados} modelos julgados passaram`;
+  return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste, não do número de hoje; e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
+}
+
 export const TEXTOS = {
   // A barra superior.
   "casco.marca": "RUVOR",
@@ -432,22 +453,7 @@ export const TEXTOS = {
   // A lista dos adequate = true, sem eleger nenhum (RF-14). Os ramos k = 0 e k ≥ 1 levam a
   // expressão da D-64 aprovada no portão do `risco.html` (T9 do M2.3), "não do número de
   // hoje" — a exceção ao "Fora" da spec; os ramos julgados = 0 e o dos que faltam, intactos.
-  "risco.naoRejeitados": (k: number, julgados: number, total: number): string => {
-    const faltam = total - julgados;
-    const semJulgar =
-      faltam > 0
-        ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.`
-        : "";
-    if (julgados === 0)
-      return "Não foi possível julgar nenhum modelo neste nível: o cálculo falhou em todos, e isso não conta como reprovação.";
-    if (k === 0)
-      return `Nenhum dos métodos julgados descreveu bem este ativo neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre o ativo — nenhum dos métodos testados acompanhou o comportamento dele no período de teste. O veredito fala desse período, não do número de hoje.${semJulgar}`;
-    const quem =
-      k === 1
-        ? `1 dos ${julgados} modelos julgados passou`
-        : `${k} dos ${julgados} modelos julgados passaram`;
-    return `${quem} nos testes de Kupiec e de Christoffersen neste nível: os dias em que a perda passou do limite ficaram perto do esperado e não vieram em sequência. O veredito fala do comportamento de cada modelo no período de teste, não do número de hoje; e passar não põe um modelo acima dos outros que também passaram: a lista segue a ordem fixa da tabela.${semJulgar}`;
-  },
+  "risco.naoRejeitados": naoRejeitadosAtivo,
   "risco.tabela.titulo": "Os nove modelos",
   "risco.tabela.intro":
     "Em ordem fixa, por família de método; a ordem não depende dos números. As barras usam a mesma escala nas duas colunas. Abra um modelo para ver os testes.",
@@ -1329,8 +1335,8 @@ export const TEXTOS = {
   "carteiras.cancelar": "Cancelar",
   // A página da carteira (M2.2b, RF-02, RF-07, RF-08): o registro TEXTOS do `carteira.html`
   // aprovado, literal. As três frases do cálculo em curso (`carteira.composicao.emCurso`,
-  // `.salvaEmCurso`, `.riscoEmCurso`) dependem do `in_progress` do risco e entram com a seção de
-  // risco (T9).
+  // `.salvaEmCurso`, `.riscoEmCurso`) dependem do `in_progress` do risco e entraram com a seção
+  // de risco (T9).
   "carteira.voltar": "Todas as carteiras",
   "carteira.sobrancelha": "Carteira",
   "carteira.carregando": "Carregando a carteira.",
@@ -1369,6 +1375,12 @@ export const TEXTOS = {
     `Nada mudou: a composição enviada é igual à da versão ${n}.`,
   "carteira.composicao.outraPessoa": (n: number): string =>
     `Outra pessoa também mudou esta carteira enquanto você editava. A composição abaixo, da versão ${n}, é a que ficou salva.`,
+  "carteira.composicao.emCurso": (n: number): string =>
+    `Há um cálculo do risco em curso, da versão ${n}. Você pode salvar: o risco mostrado passa a ser o da versão nova, vazio até ela ser calculada, e um cálculo novo só começa quando o atual terminar.`,
+  "carteira.composicao.salvaEmCurso": (n: number, anterior: number): string =>
+    `Composição salva como a versão ${n}. O cálculo em curso é da versão ${anterior}: o risco abaixo passa a ser o da versão ${n}, vazio até ela ser calculada, e um cálculo novo só começa quando aquele terminar.`,
+  "carteira.composicao.riscoEmCurso": (anterior: number, n: number): string =>
+    `O cálculo em curso é da versão ${anterior}: o risco abaixo passa a ser o da versão ${n}, vazio até ela ser calculada, e um cálculo novo só começa quando aquele terminar.`,
   "carteira.erro.forma":
     "A composição não foi aceita. Confira os pesos e tente de novo.",
   "carteira.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
@@ -1387,6 +1399,82 @@ export const TEXTOS = {
   "carteira.arquivar.semVolta": "A tela não tem como desarquivar.",
   "carteira.arquivar.confirmar": "Arquivar a carteira",
   "carteira.arquivar.enviando": "Arquivando…",
+  // O risco da carteira (M2.2b, RF-09 a RF-12): o `risco.html` aprovado, literal. As cinco com
+  // frase — `perdaReais`, `valorAgora`, `serie`, `asOf` e `naoRejeitados` — são a lista fechada
+  // da conferência (N = 13, com as oito `risco.*` reaproveitadas) e têm a avançada em
+  // `avancado.ts`; as outras são texto de estado, do pedido, do histórico curto e da trilha, no
+  // lugar das do ativo que não servem à carteira.
+  "carteira.risco.perdaReais": (valor: string, cadaN: number): string =>
+    `Em reais, sobre ${valor}: a mesma perda em %, aplicada ao valor da carteira. Em 1 dia a cada ${cadaN}, espera-se que a perda passe desse limite.`,
+  "carteira.risco.valorAgora":
+    "Os valores em reais usam o valor que a carteira tem agora. Mudar o valor muda os reais na hora, sem um cálculo novo: o valor não entra nos modelos.",
+  "carteira.risco.serie":
+    "A carteira entra nos modelos como uma série só: em cada pregão em que todas as ações têm preço, o retorno de cada uma conta pelo seu peso, como se os pesos fossem refeitos todo dia. Os nove modelos são os mesmos do risco de uma ação, e pedem ao menos 503 pregões em comum — cerca de dois anos de bolsa.",
+  "carteira.risco.asOf": (data: string): string =>
+    `Preços até ${data}: o último pregão em que todas as ações da carteira têm preço. Se uma delas fica sem preço novo, a data para nela.`,
+  // A de `risco.naoRejeitados`, com o ramo k = 0 da conferência ("esta carteira" no lugar de
+  // "este ativo"); os ramos k ≥ 1 e k = 0 levam a expressão da D-64.
+  "carteira.risco.naoRejeitados": (
+    k: number,
+    julgados: number,
+    total: number,
+  ): string => {
+    if (julgados === 0 || k > 0) return naoRejeitadosAtivo(k, julgados, total);
+    const faltam = total - julgados;
+    const semJulgar =
+      faltam > 0
+        ? ` ${faltam} ${faltam === 1 ? "modelo não pôde ser julgado" : "modelos não puderam ser julgados"}, porque o cálculo falhou — isso não conta como reprovação.`
+        : "";
+    return `Nenhum dos métodos julgados descreveu bem esta carteira neste nível${faltam > 0 ? ` (${julgados} de ${total} julgados)` : ""}. Não é erro do cálculo: é informação sobre a carteira — nenhum dos métodos testados acompanhou o comportamento da série dela no período de teste. O veredito fala desse período, não do número de hoje.${semJulgar}`;
+  },
+  "carteira.risco.carregando": "Carregando o risco desta carteira.",
+  "carteira.risco.estado.falhou":
+    "Nenhum modelo chegou a um resultado. A trilha do cálculo mostra o que entrou nele.",
+  "carteira.risco.estado.nunca.titulo":
+    "O risco desta versão da carteira ainda não foi calculado.",
+  "carteira.risco.estado.nunca":
+    "O cálculo monta a série da carteira com os preços que o Ruvor já guarda e roda os nove modelos. Leva alguns minutos, e esta parte da página acompanha o andamento.",
+  "carteira.risco.estado.parcial": (n: number): string =>
+    n === 1
+      ? "Neste cálculo, 1 de 9 modelos ficou sem resultado: o cálculo dele falhou. A tabela dos nove mostra qual."
+      : `Neste cálculo, ${n} de 9 modelos ficaram sem resultado: o cálculo deles falhou. A tabela dos nove mostra quais.`,
+  "carteira.risco.semRotina":
+    "Nenhuma rotina calcula o risco da carteira sozinha: com pregão novo, o cálculo novo começa pelo pedido.",
+  "carteira.risco.semValor":
+    "Esta carteira não tem valor: a perda aparece só em %. Com um valor, ela aparece também em reais.",
+  "carteira.risco.pedido.atualizado": (data: string): string =>
+    `O risco desta versão já está calculado com os preços até ${data}.`,
+  "carteira.risco.pedido.ocupada":
+    "A organização já tem um cálculo de carteira em curso, e um novo só pode começar quando ele terminar. Peça de novo depois.",
+  "carteira.risco.pedido.servicoOcupado": (segundos: string | null): string =>
+    segundos === null
+      ? "O serviço está ocupado; tente de novo em instantes."
+      : `O serviço está ocupado; tente de novo em ${segundos} ${segundos === "1" ? "segundo" : "segundos"}.`,
+  "carteira.risco.curta.titulo": "A série da carteira é curta demais para o risco.",
+  "carteira.risco.curta": (n: string, min: string): string =>
+    `A carteira tem ${n} ${n === "1" ? "pregão" : "pregões"} em comum; o risco pede no mínimo ${min} — cerca de dois anos de bolsa.`,
+  "carteira.risco.curta.semPreco.titulo": "Sem preço no Ruvor",
+  "carteira.risco.curta.semPreco": (k: number): string =>
+    k === 1
+      ? "O Ruvor ainda não guarda os preços desta ação. Na página dela, o pedido de cálculo do risco traz a série de preços."
+      : "O Ruvor ainda não guarda os preços destas ações. Na página de cada uma, o pedido de cálculo do risco traz a série de preços.",
+  "carteira.risco.curta.irPara": (ticker: string): string =>
+    `Abrir a página de ${ticker}`,
+  "carteira.risco.curta.curtas.titulo": "Com menos pregões que o mínimo",
+  "carteira.risco.curta.curtas": (k: number): string =>
+    k === 1
+      ? "Enquanto esta ação estiver na composição, a série da carteira não alcança o mínimo: ela só usa os pregões em que todas têm preço."
+      : "Enquanto uma destas ações estiver na composição, a série da carteira não alcança o mínimo: ela só usa os pregões em que todas têm preço.",
+  "carteira.risco.curta.sobreposicao.titulo": "Poucos pregões em comum",
+  "carteira.risco.curta.sobreposicao":
+    "Cada ação tem o mínimo de pregões, mas a série da carteira só usa as datas em que todas têm preço, e essas datas não chegam ao mínimo.",
+  "carteira.risco.curta.item": (n: string, data: string): string =>
+    `${n} ${n === "1" ? "pregão" : "pregões"}, desde ${data}`,
+  "carteira.risco.curta.itemSemPreco": "nenhum pregão guardado",
+  "carteira.risco.trilha.versao": "Versão da composição",
+  "carteira.risco.trilha.sessoes": "Pregões em comum",
+  "carteira.risco.trilha.pedidoPor": "Pedido por",
+  "carteira.risco.trilha.sha": "SHA-256 da série",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;

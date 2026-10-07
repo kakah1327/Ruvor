@@ -54,11 +54,15 @@ export function sectionPending(state: SectionState): boolean {
 
 type Tone = "evidence" | "review";
 
+/** O andamento que o painel desenha: o do ativo (`InProgress`) e o da carteira têm os dois. */
+type Progress = Pick<InProgress, "results_written" | "results_expected">;
+
 /**
  * O painel de estado (`.ruvor-state`): o sinal, o título, a frase, o andamento, as notas e a
- * ação. Os sinais são só duotone (D-93): info na evidência, warning na revisão.
+ * ação. Os sinais são só duotone (D-93): info na evidência, warning na revisão. Serve também à
+ * seção de risco da carteira (M2.2b).
  */
-function StatePanel({
+export function StatePanel({
   tone = "evidence",
   title,
   text,
@@ -70,7 +74,7 @@ function StatePanel({
   tone?: Tone;
   title: string;
   text?: string;
-  progress?: InProgress;
+  progress?: Progress;
   notes?: string[];
   actions?: ReactNode;
   notice?: boolean;
@@ -120,17 +124,20 @@ function StatePanel({
   );
 }
 
-function progressPercent(progress: InProgress): number {
+function progressPercent(progress: Progress): number {
   if (progress.results_expected <= 0) return 0;
   return Math.min(100, (100 * progress.results_written) / progress.results_expected);
 }
 
-/** O aviso de recálculo acima do resultado (E2) ou da falha (E3 com `in_progress`). */
-function Recalculating({
+/**
+ * O aviso de recálculo acima do resultado (E2) ou da falha (E3 com `in_progress`); na carteira
+ * (M2.2b), nos estados 3 e 4 com a anterior falha.
+ */
+export function Recalculating({
   progress,
   failed,
 }: {
-  progress: InProgress;
+  progress: Progress;
   failed: boolean;
 }) {
   return (

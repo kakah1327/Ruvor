@@ -1,6 +1,5 @@
 import type { ModelName, RiskResultBase } from "../api/types";
 import { MODEL_ORDER } from "../api/types";
-import type { LeituraKey } from "../content/avancado";
 import { TEXTOS } from "../content/textos";
 import { formatPercent } from "../format/numbers";
 import { formatBrlText } from "../portfolio/notional";
@@ -41,17 +40,20 @@ export type BrlRange = Readonly<Record<string, readonly [string, string] | null>
  * níveis, fora de qualquer recolhível (RF-06).
  *
  * Com `brl` (a carteira com valor), a faixa em reais logo abaixo da faixa em %, com o mesmo
- * horizonte, escrita pelo texto.
+ * horizonte, escrita pelo texto; com `notional`, o valor da carteira, a frase da perda em reais
+ * (`carteira.risco.perdaReais`) logo depois da frase da perda.
  */
 function LevelPanel({
   results,
   alpha,
   brl,
+  notional,
   notRejectedKey,
 }: {
   results: readonly RiskResultBase[];
   alpha: Alpha;
   brl: readonly [string, string] | null;
+  notional: string | null;
   notRejectedKey: NotRejectedKey;
 }) {
   const reading = useReading();
@@ -73,12 +75,7 @@ function LevelPanel({
     }
   }
 
-  // `carteira.risco.naoRejeitados` nasce em `textos.ts` e `avancado.ts` na T9 do M2.2b; até lá,
-  // o `Extract` deixa só a chave que já existe, e a do ativo é a única passada.
-  const notRejected = textFor(
-    notRejectedKey as Extract<NotRejectedKey, LeituraKey>,
-    reading,
-  );
+  const notRejected = textFor(notRejectedKey, reading);
 
   return (
     <article className="ruvor-panel" data-alpha={alpha}>
@@ -89,7 +86,7 @@ function LevelPanel({
           <small>{TEXTOS["risco.horizonte"]}</small>
         </p>
         {shownBrl !== null && (
-          <p className="ruvor-range" data-part="perda-reais">
+          <p className="ruvor-range ruvor-range--brl" data-part="perda-reais">
             <b className="ruvor-num">{shownBrl}</b>
             <small>{TEXTOS["risco.horizonte"]}</small>
           </p>
@@ -99,6 +96,14 @@ function LevelPanel({
             ? textFor("risco.perda95", reading)
             : textFor("risco.perda99", reading)}
         </p>
+        {shownBrl !== null && notional !== null && (
+          <p className="ruvor-note" data-phrase="perdaReais">
+            {textFor("carteira.risco.perdaReais", reading)(
+              formatBrlText(notional),
+              CADA_N[alpha],
+            )}
+          </p>
+        )}
         <p className="ruvor-note" data-phrase="discordancia">
           {textFor("risco.discordancia", reading)(
             min,
@@ -138,15 +143,18 @@ function LevelPanel({
 /**
  * Os dois níveis lado a lado (a quebra em uma coluna é do kit). Serve ao ativo e à carteira
  * (M2.2b, RF-16); as props opcionais ficam ausentes no ativo: `brlRange` dá a faixa em reais
- * por `alpha`, e `notRejectedKey` troca a frase dos não rejeitados (o padrão é a do ativo).
+ * por `alpha`, `notional` (o valor da carteira, decimal da API) a frase dela, e `notRejectedKey`
+ * troca a frase dos não rejeitados (o padrão é a do ativo).
  */
 export function LossSummary<R extends RiskResultBase>({
   results,
   brlRange,
+  notional,
   notRejectedKey = "risco.naoRejeitados",
 }: {
   results: readonly R[];
   brlRange?: BrlRange;
+  notional?: string | null;
   notRejectedKey?: NotRejectedKey;
 }) {
   return (
@@ -157,6 +165,7 @@ export function LossSummary<R extends RiskResultBase>({
           results={results}
           alpha={alpha}
           brl={brlRange?.[alpha] ?? null}
+          notional={notional ?? null}
           notRejectedKey={notRejectedKey}
         />
       ))}
