@@ -9,7 +9,14 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiDelete, apiGet, apiPatch, apiPost } from "../src/api/client";
+import {
+  ApiError,
+  apiDelete,
+  apiGet,
+  apiPatch,
+  apiPost,
+  apiPut,
+} from "../src/api/client";
 
 type FetchArgs = [string, RequestInit];
 
@@ -422,5 +429,77 @@ describe("403 csrf_failed: um `auth/csrf` e uma repetição (RF-02)", () => {
     const error = await caught(apiPost("/api/v1/assets/ABCD3/risk"));
     expect(error.code).toBe("password_change_required");
     expect(calls).toHaveLength(1);
+  });
+});
+
+describe("PUT (M2.2b, RF-15): a forma do PATCH", () => {
+  const PATH = "/api/v1/portfolios/5b0e6c1e-0000-4000-8000-000000000000/holdings";
+  const BODY = { holdings: [{ ticker: "ITUB4", weight: "60.00" }] };
+
+  it("o método, o corpo JSON, o Content-Type e o X-CSRFToken", async () => {
+    cookieJar("csrftoken=abc123");
+    const calls = stubServer(() => jsonReply(200, { portfolio: { version: 2 } }));
+    const reply = await apiPut<{ portfolio: { version: number } }>(PATH, BODY);
+    expect(reply).toEqual({ portfolio: { version: 2 } });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(PATH);
+    expect(calls[0]?.method).toBe("PUT");
+    const headers = plainHeaders(calls[0]);
+    expect(headers["X-CSRFToken"]).toBe("abc123");
+    expect(headers["Content-Type"]).toBe("application/json");
+    expect(calls[0]?.body).toBe(JSON.stringify(BODY));
+  });
+
+  it("sem cookie, pede `auth/csrf` antes e manda o token que o cookie passa a ter", async () => {
+    const jar = cookieJar("");
+    const calls = stubServer((url) => {
+      if (url === CSRF) {
+        jar.set("csrftoken=novo");
+        return noContent();
+      }
+      return jsonReply(200, {});
+    });
+    await apiPut(PATH, BODY);
+    expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([
+      `GET ${CSRF}`,
+      `PUT ${PATH}`,
+    ]);
+    expect(plainHeaders(calls[1])["X-CSRFToken"]).toBe("novo");
+  });
+
+  it("403 csrf_failed: um `auth/csrf` e uma repetição", async () => {
+    cookieJar("csrftoken=velho");
+    let failed = false;
+    const calls = stubServer((url, method) => {
+      if (url === CSRF && method === "GET") return noContent();
+      if (!failed) {
+        failed = true;
+        return apiErrorReply(403, "csrf_failed");
+      }
+      return jsonReply(200, { ok: true });
+    });
+    await expect(apiPut(PATH, BODY)).resolves.toEqual({ ok: true });
+    expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([
+      `PUT ${PATH}`,
+      `GET ${CSRF}`,
+      `PUT ${PATH}`,
+    ]);
+  });
+
+  it("o erro da API sobe como ApiError, com os detalhes", async () => {
+    cookieJar("csrftoken=abc123");
+    stubServer(() =>
+      jsonReply(400, {
+        error: {
+          code: "invalid_holdings",
+          message: "Composição inválida.",
+          details: { reason: "weights_sum", sum: "99.99" },
+        },
+      }),
+    );
+    const error = await caught(apiPut(PATH, BODY));
+    expect(error.status).toBe(400);
+    expect(error.code).toBe("invalid_holdings");
+    expect(error.details).toEqual({ reason: "weights_sum", sum: "99.99" });
   });
 });

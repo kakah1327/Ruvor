@@ -4,7 +4,7 @@
 > Atualizado no fecho de cada bloco. O andamento de cada frente, sessão a sessão, está em
 > [`frentes/`](frentes/).
 
-**Última atualização:** 2026-10-05
+**Última atualização:** 2026-10-07
 
 ---
 
@@ -39,7 +39,9 @@ implementação a abrir pelo dono, revisada pela `identidade`, depois do ajuste 
 `test_requested_by.py` — e entrou na `main` pela PR #39; o **M2.4 fechou em 2026-10-04** — o regime de laboratório: o
 experimento fixo da década de cada ativo coberto, os nove modelos nos dois níveis pelo cálculo de produção, ano a ano, em
 `gold.lab_run`, `lab_result` e `lab_year`, pela rota `/lab` e numa seção da tela do ativo logo depois do risco
-([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) — e entrou na `main` pela PR #40; o **M5.1 fechou em 2026-10-04** — o retorno: a média histórica e o AR(1) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito, numa seção depois do laboratório; o motor `0.5.0` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) —, retomado pelo Kauã, e entrou na `main` pela PR #41; os **ajustes de tela** (D-193 a D-195), fora de bloco, entraram pela PR #42, em 2026-10-05; na
+([D-183](decisoes/D-183-o-laboratorio-e-o-calculo-de-producao-recortado-na-decada-do-ativo-restringe-a-d-04.md) a [D-187](decisoes/D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md)) — e entrou na `main` pela PR #40; o **M5.1 fechou em 2026-10-04** — o retorno: a média histórica e o AR(1) validados fora da amostra contra o retorno zero, com o Diebold-Mariano no veredito, e a previsão do próximo pregão de cada um, sempre junto do veredito, numa seção depois do laboratório; o motor `0.5.0` ([D-188](decisoes/D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) a [D-192](decisoes/D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md)) —, retomado pelo Kauã, e entrou na `main` pela PR #41; os **ajustes de tela** (D-193 a D-195), fora de bloco, entraram pela PR #42, em 2026-10-05; o **M2.2b fechou em
+2026-10-07** — as telas da carteira: a lista, a criação, a página com a composição editável e o risco nos sete estados
+(D-180 a D-182) —, com a PR #45 a sair do rascunho; na
 frente
 `fundamentos`, o **M3.2 fechou em 2026-09-27**, depois do M3.1, e o próximo bloco dela não está
 definido; na frente `identidade`, o **M4.1 fechou em 2026-09-30** — o relatório de risco,
@@ -48,7 +50,7 @@ preenche o autor do pedido de cálculo, na coluna que o M2.1m criou
 ([D-107](decisoes/D-107-m2-1a-em-duas-fases-restringe-a-d-82.md)) — e entrou pela PR #29; o **M4.2 fechou em 2026-09-28**;
 e o **M2.2a — Carteira fechou no ramo em 2026-10-02** — a composição versionada e o risco dela nos
 nove modelos — e entrou na `main` pela PR #34; sem comercialização, o parecer da CVM não a segura ([D-160](decisoes/D-160-sem-comercializacao-o-parecer-da-cvm-nao-segura-a-carteira-substitui-a-d-116-item-2.md))
-**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅, com o darkside171 — o M5.1 terminado pelo Kauã) e `identidade` (M2.1a ✅ → M4.2 ✅ →
+**Frentes:** `marco1` (M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ → M2.2b ✅, com o darkside171 — o M5.1 terminado pelo Kauã) e `identidade` (M2.1a ✅ → M4.2 ✅ →
 M4.1 ✅ → M2.2a ✅, com o Kauã desde 2026-09-27, **sem telas** — toda interface visual é da `marco1`); a
 `fundamentos` (M3.1 ✅ e M3.2 ✅, também do Kauã) está parada. O andamento de cada uma está em [`frentes/`](frentes/); quem
 escreve onde, em [FRENTES.md](FRENTES.md)
@@ -1986,16 +1988,47 @@ do portão de mockup. O `frontend/` e o `brand/` são da `marco1`, e a PR passa 
 | Navegador | conferido a cada ajuste em `localhost:5273`, no tema escuro, na largura do computador; a página inicial também em 375 e 820 px e no tema claro. As abas e o carvão quente **não** foram vistos no celular nem no claro (o claro não mudou) |
 | `frontend/e2e/capturas.mjs` | ⚠️ **não rodado**: foi escrito para a página em rolagem e precisa ser revisto antes da próxima execução real |
 
+### M2.2b — Telas da carteira
+
+Spec em [`specs/M2.2b-telas-da-carteira.md`](specs/M2.2b-telas-da-carteira.md) e plano em
+[`planos/M2.2b-telas-da-carteira.md`](planos/M2.2b-telas-da-carteira.md), aprovados pelo dono em 2026-10-03, com os três
+portões de mockup (`lista.html`, `carteira.html`, `risco.html`). Frente `marco1`, ramo `marco1/M2.2b-telas-da-carteira`.
+T0 a T4 em 2026-10-03; a `main` com o M2.4, o M5.1 e os ajustes de tela recebida (`4ac5aba`); T5 (`8f7aea6`), T6
+(`49a3bf6`), T7 (`52aa685`), T8 (`d5c7ccf`) e T9 (`d4da5bb`) em 2026-10-06; T10 (`45f2259`) e a T11 com o FECHA em
+2026-10-07, pelo Kauã. Três decisões, com a spec:
+[D-180](decisoes/D-180-carteiras-e-um-item-da-barra-so-para-quem-entrou.md) ("Carteiras" na barra, só para quem entrou;
+a barra estreita até 920 px), [D-181](decisoes/D-181-o-seletor-de-acao-filtra-no-cliente.md) (o seletor filtra no
+cliente) e [D-182](decisoes/D-182-o-risco-da-carteira-se-acompanha-no-intervalo-do-ativo.md) (o risco relido a cada 5 s
+pelo `usePolling` genérico). **Fechou em 2026-10-07**; a PR de implementação (#45) é do dono, e nenhuma revisão de outra
+frente é obrigatória: o bloco só consome as rotas do M2.2a, e o backend não muda.
+
+**O que passou a existir:** no frontend, as rotas `/carteiras` (`screens/PortfoliosScreen.tsx`: a lista e a criação) e
+`/carteiras/:id` (`screens/PortfolioScreen.tsx`: o nome e o valor no lugar, a composição editada no lugar, o
+arquivamento com o diálogo), o item "Carteiras" na barra só com a conta pronta, o editor (`components/HoldingsEditor.tsx`
+e `portfolio/editor.ts`), o seletor (`components/AssetPicker.tsx`), o peso e o valor lidos por algarismos
+(`portfolio/weights.ts`, `portfolio/notional.ts`), a seção do risco da carteira (`components/PortfolioRiskSection.tsx`,
+`components/PortfolioTrail.tsx`) com a fonte que guarda o último corpo bom e o erro em separado
+(`portfolio/useRiskSource.ts`) e os sete estados na ordem do RF-09 (`portfolio/riskState.ts`), o `usePolling` genérico,
+o `apiPut` no cliente, os tipos da carteira e as cinco chaves `carteira.risco.*` com frase nas duas leituras. No kit, as
+classes da carteira e a barra estreita até 920 px. No roteiro, `frontend/e2e/carteira.mjs`.
+
+| Verificação | Resultado |
+|---|---|
+| Frontend | ✅ **51 arquivos, 2150 testes** (eram 1830 na `main`); lint, `typecheck` e build limpos |
+| Backend e motor | ✅ intocados: `git diff --stat $(git merge-base origin/main HEAD) -- backend/ engine/` vazio |
+| Mutações | ✅ as 27 das T5, T7, T8 e T9, de novo sobre o código final na T10: **todas reprovam** |
+| Execução real | ✅ `carteira.mjs`: **82 conferências, 0 falhas** — a criação, a composição inválida, a versão 2, o cálculo em **188 s**, a perda em % e em reais, o 409 de pedir de novo, o `insufficient_history` com o link da AERI3, a barra logada em sete larguras, o arquivamento; 12 capturas nos dois temas, em 1440 e 360 px; sem `beat`, o `.env` igual |
+
+**O que a execução real mostrou:** as duas primeiras rodadas falharam por erro do roteiro, não da tela — a lista vazia
+oferece "criar a primeira", não "Nova carteira", e o `insufficient_history` é 409, não 400. Ver [aprendizados](aprendizados.md).
+
 ## Próximo passo
 
-**Na frente `marco1`, nenhuma PR aberta:** o M5.1 entrou na `main` pela PR #41 (2026-10-04) e os ajustes de tela
-(D-193 a D-195) pela PR #42 (2026-10-05). **Antes da próxima execução real, rever o `frontend/e2e/capturas.mjs`**, escrito
+**Na frente `marco1`, a PR #45 (M2.2b) sai do rascunho:** o bloco fechou em 2026-10-07, e o dono a mescla com a CI
+verde. O M5.1 entrou na `main` pela PR #41 (2026-10-04) e os ajustes de tela (D-193 a D-195) pela PR #42 (2026-10-05). **Antes da próxima execução real, rever o `frontend/e2e/capturas.mjs`**, escrito
 para a página em rolagem, e ver as abas e o carvão quente no celular. **A imagem do `worker` diz `0.5.0`**: um checkout noutro ramo sem o
 M5.1 não pode rodar o cálculo do risco com ela (a versão sairia errada em linhas imutáveis), e a primeira rotina de cada
-máquina retreina os quatro modelos caros (os retratos `0.4.0` não valem) e refaz o laboratório. **O M2.2b** (ramo
-`marco1/M2.2b-telas-da-carteira`, com os portões das T2 a T4 aprovados e 96 commits atrás da `main` em 2026-10-05) recebe a
-`main` com o M5.1 e os ajustes de tela antes da tela: a ordem das seções, risco → laboratório → retorno → Fundamentos →
-Comunicados, é a ordem das abas (D-193). **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
+máquina retreina os quatro modelos caros (os retratos `0.4.0` não valem) e refaz o laboratório. **O AALR3 completa a década em 2026-10-28**: o primeiro fecho do
 risco depois disso grava o experimento dele. **O parecer da CVM, quando vier antes de comercializar, precisa cobrir o M5.1
 nomeadamente** (D-192). Ramos e a regra de onde cada comando roda estão em [frentes/marco1.md](frentes/marco1.md).
 

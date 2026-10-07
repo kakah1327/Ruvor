@@ -31,6 +31,7 @@ import { useShellContext } from "../components/Shell";
 import { TEXTOS } from "../content/textos";
 import { useExplain } from "../explain";
 import { useLabPolling } from "../lab/useLabPolling";
+import { shouldPoll } from "../risk/state";
 import { usePolling } from "../risk/usePolling";
 
 /**
@@ -208,7 +209,7 @@ export function AssetScreen({ ticker, tab = "" }: { ticker: string; tab?: AssetT
   const risk = riskLoad.state === "ok" ? riskLoad.data : null;
   const state = sectionStateOf(riskLoad, asset, prices, current?.kind === "inactive");
 
-  usePolling(risk, data.reload.risk, data.reloadAll);
+  usePolling(risk, shouldPoll, data.reload.risk, data.reloadAll);
   // A releitura limitada do `/lab` depois do fim do acompanhamento (RF-18 do M2.4).
   useLabPolling(
     data.lab.state === "ok" ? data.lab.data : null,

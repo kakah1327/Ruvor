@@ -298,6 +298,58 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "usuarios.senha.criado.texto": [["Gabriela Rocha", "gabriela.rocha@exemplo.com"]],
   "usuarios.senha.nova.texto": [["Ana Lima", "ana.lima@exemplo.com"]],
   "usuarios.membro.texto": [["Gestora Exemplo"]],
+  // carteiras.*: o registro EXEMPLOS do lista.html (M2.2b) — a contagem nos dois ramos.
+  "carteiras.sub.organizacao": [["Gestora Exemplo"]],
+  "carteiras.lista.contagem": [[1], [57]],
+  "carteiras.acoes": [[1], [4]],
+  "carteiras.mostrando": [[50, 57]],
+  "carteiras.arquivada": [["Bancos e energia"]],
+  "carteiras.seletor.nenhumaServe": [["IBOV"]],
+  "carteiras.peso.rotulo": [["PETR4"]],
+  "carteiras.remover": [["PETR4"]],
+  "carteiras.soma.abaixo": [["0,01"]],
+  "carteiras.soma.acima": [["0,50"]],
+  "carteiras.soma.foraDaSoma": [[1], [2]],
+  "carteiras.erro.contagem": [[1], [21]],
+  "carteiras.erro.soma": [["99,99"]],
+  // carteira.*: o registro EXEMPLOS do carteira.html (M2.2b), com as três frases do cálculo em
+  // curso, que entraram com a seção de risco (T9).
+  "carteira.mudouEm": [["02/10/2026", "16:41"]],
+  "carteira.composicao.salva": [[4]],
+  "carteira.composicao.nadaMudou": [[3]],
+  "carteira.composicao.outraPessoa": [[5]],
+  "carteira.composicao.emCurso": [[3]],
+  "carteira.composicao.salvaEmCurso": [[4, 3]],
+  "carteira.composicao.riscoEmCurso": [[3, 5]],
+  "carteira.erro.muitos": [[12]],
+  "carteira.arquivar.titulo": [["Bancos e energia"]],
+  // carteira.risco.*: o registro EXEMPLOS do risco.html aprovado (M2.2b, T4).
+  "carteira.risco.perdaReais": [
+    ["R$ 100.000,00", 20],
+    ["R$ 100.000,00", 100],
+  ],
+  "carteira.risco.asOf": [["02/10/2026"]],
+  "carteira.risco.naoRejeitados": [
+    [6, 9, 9],
+    [1, 7, 9],
+    [0, 9, 9],
+    [0, 7, 9],
+    [0, 0, 9],
+  ],
+  "carteira.risco.estado.parcial": [[2], [1]],
+  "carteira.risco.pedido.atualizado": [["02/10/2026"]],
+  "carteira.risco.pedido.servicoOcupado": [[null], ["30"], ["1"]],
+  "carteira.risco.curta": [
+    ["120", "503"],
+    ["1", "503"],
+  ],
+  "carteira.risco.curta.semPreco": [[2], [1]],
+  "carteira.risco.curta.curtas": [[2], [1]],
+  "carteira.risco.curta.irPara": [["ABCB4"]],
+  "carteira.risco.curta.item": [
+    ["410", "12/03/2025"],
+    ["1", "02/10/2026"],
+  ],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.
@@ -506,5 +558,16 @@ export const EXEMPLOS_AVANCADOS: Readonly<
   "retorno.previsao": [
     ["−0,05%", "05/10/2026", false],
     ["+0,09%", "05/10/2026", true],
+  ],
+  // O risco da carteira (M2.2b): o `EXEMPLOS_AVANCADOS` do `risco.html` aprovado (T4).
+  "carteira.risco.perdaReais": [["R$ 100.000,00", 20]],
+  "carteira.risco.asOf": [["02/10/2026"]],
+  "carteira.risco.naoRejeitados": [
+    [6, 9, 9],
+    [1, 7, 9],
+    [0, 9, 9],
+    [0, 7, 9],
+    [0, 1, 9],
+    [0, 0, 9],
   ],
 };

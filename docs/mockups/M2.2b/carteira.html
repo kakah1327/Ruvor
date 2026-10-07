@@ -1,0 +1,1344 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruvor — a página da carteira (mockup, M2.2b)</title>
+<link rel="stylesheet" href="../../../brand/ruvor/tokens.css">
+<link rel="stylesheet" href="../../../brand/ruvor/components.css">
+<style>
+  /*
+   * Mockup da página da carteira (T3 do plano M2.2b; RF-02, RF-07 e RF-08 da spec), em
+   * /carteiras/:id. Os campos e os códigos de erro são os de backend/apps/portfolios/
+   * (serializers.py: PortfolioOut, PortfolioUpdateIn, HoldingsIn; services.py: _holdings,
+   * update_portfolio, replace_holdings, archive_portfolio; views.py: STATUS_BY_CODE) e de
+   * backend/apps/api/errors.py (invalid_parameter com details.fields, too_many_requests com
+   * details.wait_seconds) e backend/apps/accounts/authentication.py (csrf_failed). Dado fictício,
+   * sem pedido à API: abre por file://. Só var(--ruvor-*) e valores estruturais: nenhuma cor
+   * literal, e nenhum token novo.
+   *
+   * O que é novo, e o portão aprova:
+   *   - a cabeça da página: o nome, os fatos (valor, versão, quando a composição mudou, quem
+   *     criou) e as ações (mudar o nome, arquivar);
+   *   - o nome e o valor editáveis no lugar (PATCH), inclusive tirar o valor (notional: null);
+   *   - a composição em leitura (na ordem da API, por código) e em edição no lugar, com o
+   *     editor do lista.html (T2) — texto do campo preservado, soma em centésimos, o reason na
+   *     linha —, e as três respostas do PUT: nova versão, "nada mudou" (mesma version) e
+   *     "outra pessoa mudou" (version > conhecida + 1), mais salvar com cálculo em curso;
+   *   - o arquivamento no diálogo do M2.1b (usuarios.html, aprovado), e a volta à lista;
+   *   - os estados da página (carregando, erro, não encontrada) e a falha de cada escrita.
+   * A seção de risco é da T4 (risco.html): aqui, só o lugar dela.
+   *
+   * Estilo local: m22b- (o que vai ao kit na T6, se o portão aprovar), m21b- (a barra do
+   * conta.html e o diálogo do usuarios.html, aprovados no M2.1b, COPIADOS SEM RENOMEAR) e mk-
+   * (a moldura do mockup, que não é tela).
+   */
+
+  /* === m21b — COPIADO SEM RENOMEAR do conta.html aprovado (M2.1b, T8): o lugar da conta ===== */
+  .m21b-slot {
+    box-sizing: border-box;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 200px;
+    min-height: 30px;
+    padding-left: var(--ruvor-space-3);
+    border-left: 1px solid var(--ruvor-topbar-control);
+  }
+  .ruvor-topbar.m21b-bar { position: relative; }
+  .m21b-signin {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1px solid var(--ruvor-topbar-control);
+    border-radius: var(--ruvor-radius-sm);
+    color: var(--ruvor-topbar-text);
+    font-size: var(--ruvor-type-small-size);
+    font-weight: var(--ruvor-type-small-weight);
+    line-height: var(--ruvor-type-micro-leading);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .m21b-signin:hover { background: var(--ruvor-topbar-control); }
+  .m21b-account {
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    background: transparent;
+    border: 0;
+    border-radius: var(--ruvor-radius-sm);
+    padding: 0;
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-end;
+    cursor: pointer;
+    gap: var(--ruvor-space-2);
+  }
+  .m21b-account:hover .m21b-account__name { color: var(--ruvor-topbar-text); }
+  .m21b-account__name { min-width: 0; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .m21b-account .ruvor-avatar { color: var(--ruvor-topbar-text); }
+  .m21b-account .ruvor-glyph { width: 12px; height: 12px; color: var(--ruvor-topbar-link); }
+  .m21b-account[aria-expanded="true"] .ruvor-glyph { transform: rotate(180deg); }
+  .m21b-menu {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + var(--ruvor-space-1));
+    right: 26px;
+    width: 280px;
+    max-width: calc(100vw - 2 * var(--ruvor-space-4));
+    box-sizing: border-box;
+    background: var(--ruvor-surface);
+    color: var(--ruvor-ink);
+    border: 1px solid var(--ruvor-border);
+    border-radius: var(--ruvor-radius-md);
+    box-shadow: var(--ruvor-shadow);
+    overflow: hidden;
+  }
+  .m21b-menu[hidden] { display: none; }
+  .m21b-menu__who, .m21b-menu__org { padding: var(--ruvor-space-3) var(--ruvor-space-4); }
+  .m21b-menu__who { border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__name { margin: 0; font-weight: var(--ruvor-type-small-weight); overflow-wrap: anywhere; }
+  .m21b-menu__email { margin: 0; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__org { display: flex; flex-direction: column; gap: var(--ruvor-space-1); background: var(--ruvor-table-head); border-bottom: 1px solid var(--ruvor-table-rule); }
+  .m21b-menu__org .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .m21b-menu__org p:last-child { margin: 0; font-size: var(--ruvor-type-small-size); overflow-wrap: anywhere; }
+  .m21b-menu__list { list-style: none; margin: 0; padding: var(--ruvor-space-1) 0; }
+  .m21b-menu__item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--ruvor-space-2);
+    width: 100%;
+    padding: 9px var(--ruvor-space-4);
+    border: 0;
+    background: transparent;
+    color: var(--ruvor-ink);
+    font: inherit;
+    font-size: var(--ruvor-type-small-size);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .m21b-menu__item:hover { background: var(--ruvor-control-hover); }
+  .m21b-menu__item .ruvor-glyph { color: var(--ruvor-text-muted); }
+  .m21b-menu__sep { height: 1px; margin: var(--ruvor-space-1) 0; background: var(--ruvor-table-rule); }
+  .ruvor-topbar .m21b-menu :focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: -2px; }
+  .m21b-notice .ruvor-btn { align-self: flex-start; }
+  .m21b-page-notice { max-width: 640px; }
+  @media (max-width: 1023px) {
+    .m21b-slot { width: calc(72px + var(--ruvor-space-3) + 1px); }
+    .m21b-account__name { display: none; }
+  }
+  @media (max-width: 840px) {
+    .ruvor-topbar.m21b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); }
+    .m21b-bar .ruvor-topbar__spacer { display: none; }
+    .m21b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m21b-bar .ruvor-topbar__prefs { display: contents; }
+    .m21b-menu { right: var(--ruvor-space-4); }
+    .ruvor-topbar.m21b-bar { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
+    .m21b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
+  }
+
+  /* === m21b — COPIADO SEM RENOMEAR do usuarios.html aprovado (M2.1b, T9): o diálogo ======== */
+  .m21b-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--ruvor-border); border-radius: var(--ruvor-radius-lg); background: var(--ruvor-surface); color: var(--ruvor-ink); box-shadow: var(--ruvor-shadow); }
+  .m21b-dialog::backdrop { background: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent); }
+  .m21b-dialog__body { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-3); }
+  .m21b-dialog__body p { margin: 0; }
+  .m21b-dialog__list { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-1); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m21b-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ruvor-space-2); padding: var(--ruvor-space-4) var(--ruvor-space-5); border-top: 1px solid var(--ruvor-border); }
+  @media (max-width: 720px) {
+    .m21b-dialog__actions { flex-direction: column-reverse; }
+    .m21b-dialog__actions .ruvor-btn { width: 100%; }
+  }
+
+  /* === m22b — COPIADO do lista.html (T2, ainda sem portão): a barra com "Carteiras" =======
+     Literal; se o portão do lista.html mudar a barra, este acompanha antes da T6. */
+  /* --- A barra com "Carteiras" (D-180) ------------------------------------------------
+     O item é o .ruvor-nav do kit, logo depois da marca, em DOM: marca, item, busca, chaves.
+     Só existe com a sessão logada e a conta pronta: sem ele, a barra é a do M2.1b, igual.
+     Acima de 920 px, uma linha: a marca, o item (a 24 px dela, o gap do .ruvor-nav), a busca e
+     as chaves. A regra [hidden] precisa sobreviver: .ruvor-nav tem display: flex no kit. */
+  .m22b-nav[hidden] { display: none; }
+  /* O kit esconde o .ruvor-nav até 1000 px (components.css, o @media (max-width: 1000px), do
+     tempo das telas de referência): o item fica em todas as larguras. Para a T6: a vitrine
+     (docs/mockups/M1.6a/kit.html) usa o .ruvor-nav com cinco links, e a regra do kit vale para
+     ela; a exceção vai por um modificador escopado (ex.: .ruvor-nav--account), não por apagar
+     a regra. */
+  .ruvor-topbar.m22b-bar > .m22b-nav:not([hidden]) { display: flex; }
+  .ruvor-topbar.m22b-bar:has(> .m22b-nav:not([hidden])) { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+  .m22b-bar > .m22b-nav { margin-left: -14px; }   /* 38 px do gap da barra − 14 = 24 px da marca */
+
+  /* Até 920 px (NOVO PONTO DE QUEBRA; o do M2.1b era 840 px): a barra em três linhas. As
+     regras repetem as do M2.1b até 840 px (acima), estendidas a 920 px, e acrescentam o item.
+     Com o item: cinco colunas — a marca, o item e o alternador na primeira linha; o tema e a
+     conta na segunda, à direita, a conta por último (o lugar do M2.1b, que não se move); a
+     busca na terceira. Sem o item: as quatro colunas do M2.1b. */
+  @media (max-width: 920px) {
+    .ruvor-topbar.m22b-bar { height: auto; min-height: 60px; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-4); grid-template-columns: auto minmax(0, 1fr) auto auto; }
+    .m22b-bar .ruvor-topbar__spacer { display: none; }
+    .m22b-bar .ruvor-topbar__search { grid-column: 1 / -1; grid-row: 3; max-width: none; margin-bottom: var(--ruvor-space-1); }
+    .m22b-bar .ruvor-topbar__prefs { display: contents; }
+    .m22b-bar .m21b-menu { right: var(--ruvor-space-4); }
+    .m22b-bar > .ruvor-brand { grid-column: 1; grid-row: 1; }
+    .m22b-bar .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 2 / -1; grid-row: 1; justify-self: end; }
+    .m22b-bar .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 4; grid-row: 2; justify-self: end; }
+    .m22b-bar .ruvor-topbar__prefs > .m21b-slot { grid-column: 4; grid-row: 2; justify-self: end; }
+    .ruvor-topbar.m22b-bar:has(> .m22b-nav:not([hidden])) { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+    .m22b-bar > .m22b-nav { grid-column: 2; grid-row: 1; margin-left: 0; align-self: stretch; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > [data-switch="reading"] { grid-column: 3 / -1; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > [data-switch="theme"] { grid-column: 1 / 5; }
+    .m22b-bar:has(> .m22b-nav:not([hidden])) .ruvor-topbar__prefs > .m21b-slot { grid-column: 5; }
+  }
+
+  /* === m22b — NOVO: a cabeça da página ================================================= */
+  .m22b-back { display: inline-flex; align-items: center; gap: var(--ruvor-space-1); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); text-decoration: none; border-radius: var(--ruvor-radius-sm); }
+  .m22b-back:hover { color: var(--ruvor-ink); text-decoration: underline; }
+  .m22b-back:focus-visible { outline: 2px solid var(--ruvor-focus); outline-offset: 2px; }
+  .m22b-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--ruvor-space-3) var(--ruvor-space-5); }
+  .m22b-top__id { flex: 1 1 320px; min-width: 0; }
+  .m22b-top__id .ruvor-display { margin: 0; overflow-wrap: anywhere; }
+  .m22b-top__id .ruvor-eyebrow { margin: var(--ruvor-space-3) 0 var(--ruvor-space-1); }
+  .m22b-top__actions { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-2); }
+
+  /* O nome no lugar: o campo do tamanho de um título, as ações ao lado (embaixo, no estreito). */
+  .m22b-inline { display: flex; flex-direction: column; gap: var(--ruvor-space-2); max-width: 560px; }
+  .m22b-inline__row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--ruvor-space-2); }
+  .m22b-inline__row .ruvor-input { flex: 1 1 220px; min-width: 0; width: auto; }
+  .m22b-inline--name .ruvor-input { font-size: var(--ruvor-type-h3-size); font-weight: var(--ruvor-type-h3-weight); }
+  .m22b-inline__row .ruvor-btn { flex: none; }
+
+  /* Os fatos da carteira: rótulo e valor, em colunas que quebram. */
+  .m22b-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--ruvor-space-4) var(--ruvor-space-5); margin: 0; }
+  .m22b-facts > div { display: flex; flex-direction: column; gap: var(--ruvor-space-1); min-width: 0; }
+  .m22b-facts > div.m22b-facts__wide { grid-column: 1 / -1; }
+  @media (min-width: 721px) { .m22b-facts > div.m22b-facts__lead { grid-column: span 2; } }
+  .m22b-facts dt { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m22b-facts dd { margin: 0; overflow-wrap: anywhere; display: flex; flex-direction: column; align-items: flex-start; gap: var(--ruvor-space-1); }
+  .m22b-facts__value { font-weight: var(--ruvor-type-small-weight); }
+  .m22b-facts__muted { color: var(--ruvor-text-muted); }
+  .m22b-facts__acts { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-1) var(--ruvor-space-2); margin-top: var(--ruvor-space-1); }
+  .m22b-facts__acts .ruvor-btn, .m22b-top__actions .ruvor-btn { font-size: var(--ruvor-type-small-size); }
+
+  /* A resposta de uma escrita, logo abaixo de onde ela aconteceu. */
+  .m22b-reply { margin: 0; display: flex; align-items: flex-start; gap: var(--ruvor-space-2); }
+
+  /* === m22b — NOVO: a composição em leitura =========================================== */
+  .m22b-holdings th:last-child, .m22b-holdings td:last-child { text-align: right; white-space: nowrap; }
+  .m22b-holdings tfoot td { border-top: 1px solid var(--ruvor-border); border-bottom: 0; font-weight: var(--ruvor-type-small-weight); }
+  .ruvor-panel__head.m22b-comp-head { flex-wrap: wrap; row-gap: var(--ruvor-space-2); }
+  .m22b-panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ruvor-space-2) var(--ruvor-space-4); margin-top: var(--ruvor-space-4); }
+
+  /* === m22b — COPIADO do lista.html (T2): o seletor e o editor, literais ================= */
+  /* --- O seletor de ação (D-181): a busca do catálogo dentro do editor ---------------- */
+  .m22b-picker { position: relative; max-width: 440px; }
+  .m22b-picker .ruvor-search__popover { min-width: 0; }
+  .m22b-picker .ruvor-search__list { max-height: 320px; overflow-y: auto; }
+  .m22b-pick > .ruvor-search__link { cursor: pointer; }
+  .m22b-pick--off > .ruvor-search__link { cursor: not-allowed; }
+  .m22b-pick--off > .ruvor-search__link:hover { background: transparent; }
+  .m22b-pick--off.ruvor-search__option--active > .ruvor-search__link { background: var(--ruvor-control-hover); box-shadow: inset 3px 0 0 var(--ruvor-border); }
+  .m22b-pick--off .ruvor-search__ticker, .m22b-pick--off .ruvor-search__name b { color: var(--ruvor-text-muted); }
+  .m22b-pick__why { color: var(--ruvor-text) !important; }
+
+  /* --- O editor da composição --------------------------------------------------------- */
+  .m22b-editor { table-layout: fixed; }
+  .m22b-editor col.m22b-editor__weight { width: 180px; }
+  .m22b-editor col.m22b-editor__remove { width: 56px; }
+  .m22b-editor td { vertical-align: top; }
+  .m22b-editor__ticker { font-family: var(--ruvor-font-mono); font-weight: var(--ruvor-type-small-weight); font-size: var(--ruvor-type-small-size); }
+  .m22b-editor__name { display: block; color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); overflow-wrap: anywhere; }
+  .m22b-editor .ruvor-input { padding: 7px 9px; text-align: right; font-family: var(--ruvor-font-mono); font-variant-numeric: tabular-nums; }
+  .m22b-editor .ruvor-field__error { display: block; margin-top: var(--ruvor-space-1); }
+  .m22b-editor .ruvor-btn--icon { width: 32px; height: 32px; }
+  .m22b-editor__empty td { color: var(--ruvor-text-muted); font-size: var(--ruvor-type-small-size); }
+  .m22b-editor tfoot td { border-top: 1px solid var(--ruvor-border); border-bottom: 0; background: var(--ruvor-table-head); vertical-align: middle; }
+  .m22b-sum { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ruvor-space-1) var(--ruvor-space-3); }
+  .m22b-sum__value { font-family: var(--ruvor-font-mono); font-variant-numeric: tabular-nums; font-weight: var(--ruvor-type-small-weight); }
+  .m22b-sum__gap { font-size: var(--ruvor-type-small-size); color: var(--ruvor-text-muted); }
+  .m22b-sum__gap--exact { color: var(--ruvor-validated-text); }
+  .m22b-sum__out { flex-basis: 100%; margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .m22b-sum .ruvor-field__error { flex-basis: 100%; }
+  .m22b-sum-weight { text-align: right; }
+
+  /* === m22b — NOVO: as ações da edição no lugar ====================================== */
+  .m22b-edit-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ruvor-space-2); }
+
+  @media (max-width: 720px) {
+    .m22b-top__actions { width: 100%; }
+    .m22b-inline__row .ruvor-btn { flex: 1; }
+    .m22b-edit-actions .ruvor-btn { flex: 1; }
+    .m22b-holdings td, .m22b-holdings th { padding-inline: 6px; }
+    /* do lista.html: */
+    .m22b-picker { max-width: none; }
+    /* O editor em 360 px: menos recuo nas células, o peso mais estreito. */
+    .m22b-editor th, .m22b-editor td { padding-left: 6px; padding-right: 6px; }
+    .m22b-editor col.m22b-editor__weight { width: 96px; }
+    .m22b-editor col.m22b-editor__remove { width: 44px; }
+  }
+
+  /* --- Moldura do mockup: não é tela ------------------------------------------------ */
+  .mk-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-2) var(--ruvor-space-3); padding: var(--ruvor-space-2) var(--ruvor-space-5); background: var(--ruvor-surface-2); border-bottom: 1px dashed var(--ruvor-text-muted); }
+  .mk-bar .ruvor-eyebrow { margin: 0; color: var(--ruvor-text-muted); }
+  .mk-group { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ruvor-space-1); }
+  .mk-group > span { font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); margin-right: var(--ruvor-space-1); }
+  .mk-bar .ruvor-btn { padding: 4px 9px; font-size: var(--ruvor-type-micro-size); }
+  .mk-bar .ruvor-btn[aria-pressed="true"] { border-color: var(--ruvor-ink); box-shadow: inset 0 0 0 1px var(--ruvor-ink); }
+  .mk-bar__hint { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); flex-basis: 100%; }
+  .mk-view[hidden] { display: none; }
+  .mk-tail { margin: 0; padding: var(--ruvor-space-2) var(--ruvor-space-3); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); color: var(--ruvor-text-muted); font-size: var(--ruvor-type-micro-size); }
+  .mk-tail code { font-family: var(--ruvor-font-mono); }
+  .mk-risk { padding: var(--ruvor-space-6) var(--ruvor-space-4); text-align: center; }
+  .mk-case { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-case > .mk-cap { margin: 0; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-dialogs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: var(--ruvor-space-5); align-items: start; }
+  .mk-scrim { padding: var(--ruvor-space-5); border-radius: var(--ruvor-radius-md); background: color-mix(in srgb, var(--ruvor-topbar) 55%, transparent); }
+  .mk-scrim .m21b-dialog { position: static; display: block; margin: 0 auto; }
+  .mk-pad { padding: var(--ruvor-space-5); display: flex; flex-direction: column; gap: var(--ruvor-space-5); }
+  .mk-frames { display: flex; flex-wrap: wrap; gap: var(--ruvor-space-6); align-items: flex-start; }
+  .mk-frame { display: flex; flex-direction: column; gap: var(--ruvor-space-2); }
+  .mk-frame p { margin: 0; font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); max-width: 360px; }
+  .mk-frame iframe { width: 360px; height: 1500px; border: 1px dashed var(--ruvor-text-muted); background: var(--ruvor-canvas); }
+  .mk-textos { table-layout: fixed; }
+  .mk-textos td { vertical-align: top; overflow-wrap: anywhere; font-size: var(--ruvor-type-small-size); }
+  .mk-textos td:first-child { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); width: 30%; }
+  .mk-textos td small { display: block; margin-top: var(--ruvor-space-2); font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); color: var(--ruvor-text-muted); }
+  .mk-code { margin: 0; padding: var(--ruvor-space-3); overflow: auto; font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); white-space: pre; color: var(--ruvor-text); border: 1px dashed var(--ruvor-text-muted); border-radius: var(--ruvor-radius-sm); }
+  .mk-notes { margin: 0; padding-left: var(--ruvor-space-4); display: flex; flex-direction: column; gap: var(--ruvor-space-2); font-size: var(--ruvor-type-small-size); }
+  .mk-notes code { font-family: var(--ruvor-font-mono); font-size: var(--ruvor-type-micro-size); }
+  [data-moldura="0"] .mk-bar { display: none; }
+  @media (max-width: 720px) {
+    .mk-bar { padding-inline: var(--ruvor-space-4); }
+    .mk-pad { padding: var(--ruvor-space-4); }
+    .mk-scrim { padding: var(--ruvor-space-3); }
+  }
+</style>
+</head>
+<body class="ruvor-app">
+
+<!-- Ícones do conjunto (brand/ruvor/icons/, Phosphor 2.1.1, D-93), copiados como símbolos. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-caret-down" viewBox="0 0 256 256"><path d="M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-sign-out" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 256 256"><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol>
+  <symbol id="i-buildings" viewBox="0 0 256 256"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-briefcase" viewBox="0 0 256 256"><path d="M216,56H176V48a24,24,0,0,0-24-24H104A24,24,0,0,0,80,48v8H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM96,48a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96ZM216,72v41.61A184,184,0,0,1,128,136a184.07,184.07,0,0,1-88-22.38V72Zm0,128H40V131.64A200.19,200.19,0,0,0,128,152a200.25,200.25,0,0,0,88-20.37V200ZM104,112a8,8,0,0,1,8-8h32a8,8,0,0,1,0,16H112A8,8,0,0,1,104,112Z"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+  <symbol id="i-database" viewBox="0 0 256 256"><path d="M128,24C74.17,24,32,48.6,32,80v96c0,31.4,42.17,56,96,56s96-24.6,96-56V80C224,48.6,181.83,24,128,24Zm80,104c0,9.62-7.88,19.43-21.61,26.92C170.93,163.35,150.19,168,128,168s-42.93-4.65-58.39-13.08C55.88,147.43,48,137.62,48,128V111.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64ZM69.61,53.08C85.07,44.65,105.81,40,128,40s42.93,4.65,58.39,13.08C200.12,60.57,208,70.38,208,80s-7.88,19.43-21.61,26.92C170.93,115.35,150.19,120,128,120s-42.93-4.65-58.39-13.08C55.88,99.43,48,89.62,48,80S55.88,60.57,69.61,53.08ZM186.39,202.92C170.93,211.35,150.19,216,128,216s-42.93-4.65-58.39-13.08C55.88,195.43,48,185.62,48,176V159.36c17.06,15,46.23,24.64,80,24.64s62.94-9.68,80-24.64V176C208,185.62,200.12,195.43,186.39,202.92Z"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 256 256"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-arrows-clockwise" viewBox="0 0 256 256"><path d="M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z"/></symbol>
+  <symbol id="i-spinner-gap" viewBox="0 0 256 256"><path d="M136,32V64a8,8,0,0,1-16,0V32a8,8,0,0,1,16,0Zm88,88H192a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16Zm-45.09,47.6a8,8,0,0,0-11.31,11.31l22.62,22.63a8,8,0,0,0,11.32-11.32ZM128,184a8,8,0,0,0-8,8v32a8,8,0,0,0,16,0V192A8,8,0,0,0,128,184ZM77.09,167.6,54.46,190.22a8,8,0,0,0,11.32,11.32L88.4,178.91A8,8,0,0,0,77.09,167.6ZM72,128a8,8,0,0,0-8-8H32a8,8,0,0,0,0,16H64A8,8,0,0,0,72,128ZM65.78,54.46A8,8,0,0,0,54.46,65.78L77.09,88.4A8,8,0,0,0,88.4,77.09Z"/></symbol>
+  <symbol id="i-duo-info" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M144,176a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176Zm88-48A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128ZM124,96a12,12,0,1,0-12-12A12,12,0,0,0,124,96Z"/></symbol>
+  <symbol id="i-duo-warning" viewBox="0 0 256 256"><path d="M215.46,216H40.54C27.92,216,20,202.79,26.13,192.09L113.59,40.22c6.3-11,22.52-11,28.82,0l87.46,151.87C236,202.79,228.08,216,215.46,216Z" opacity="0.2"/><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></symbol>
+  <symbol id="i-duo-x-circle" viewBox="0 0 256 256"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M165.66,101.66,139.31,128l26.35,26.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+</svg>
+
+<!-- ============================================================ MOLDURA DO MOCKUP (não é tela) -->
+<div class="mk-bar" role="region" aria-label="Controles do mockup">
+  <p class="ruvor-eyebrow">Mockup M2.2b · a página da carteira · fora da tela</p>
+  <div class="mk-group" role="group" aria-label="Vista">
+    <span>Vista:</span>
+    <button class="ruvor-btn" type="button" data-mk="pagina">a página · viva</button>
+    <button class="ruvor-btn" type="button" data-mk="estados">a página · os estados</button>
+    <button class="ruvor-btn" type="button" data-mk="composicao">a composição · os casos</button>
+    <button class="ruvor-btn" type="button" data-mk="nomevalor">o nome e o valor · os casos</button>
+    <button class="ruvor-btn" type="button" data-mk="dialogos">o arquivamento</button>
+    <button class="ruvor-btn" type="button" data-mk="estreito">360 px</button>
+    <button class="ruvor-btn" type="button" data-mk="textos">os textos</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="A próxima escrita responde">
+    <span>Na vista viva, a próxima escrita responde:</span>
+    <button class="ruvor-btn" type="button" data-mk-resp="ok">200 / 204</button>
+    <button class="ruvor-btn" type="button" data-mk-resp="mesma">PUT · mesma version</button>
+    <button class="ruvor-btn" type="button" data-mk-resp="outra">PUT · version &gt; conhecida + 1</button>
+    <button class="ruvor-btn" type="button" data-mk-resp="rede">rede / 5xx</button>
+    <button class="ruvor-btn" type="button" data-mk-resp="401">401</button>
+    <button class="ruvor-btn" type="button" data-mk-resp="404">404</button>
+  </div>
+  <div class="mk-group" role="group" aria-label="Cálculo em curso">
+    <span>Cálculo do risco em curso (in_progress da versão corrente):</span>
+    <button class="ruvor-btn" type="button" data-mk-curso="nao">não</button>
+    <button class="ruvor-btn" type="button" data-mk-curso="sim">sim</button>
+  </div>
+  <p class="mk-bar__hint">Na vista viva, os botões funcionam: editar a composição (a soma muda ao digitar, o campo guarda o que foi digitado), mudar o nome e o valor, tirar o valor e arquivar, com o diálogo de verdade. A resposta escolhida acima vale para a próxima escrita. O tema e o nível se trocam pela barra da tela.</p>
+</div>
+
+<!-- ============================================================ A TELA -->
+<header class="ruvor-topbar m21b-bar m22b-bar" data-part="barra">
+  <a class="ruvor-brand" href="#" data-t-aria="casco.marca.rotulo"><img src="../../../brand/ruvor/ruvor-mark-reverse.svg" alt=""><b data-t="casco.marca"></b></a>
+  <!-- Do lista.html (D-180), literal: o item, só com a sessão logada e a conta pronta. -->
+  <nav class="ruvor-nav m22b-nav" data-part="nav" data-t-aria="carteiras.nav.rotulo">
+    <a class="ruvor-nav__link ruvor-nav__link--on" href="#" aria-current="page" title="/carteiras" data-t="carteiras.nav"></a>
+  </nav>
+  <div class="ruvor-topbar__search" role="search">
+    <div class="ruvor-search ruvor-search--bar">
+      <svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-magnifying-glass"/></svg>
+      <input class="ruvor-input ruvor-search__input" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" data-t-aria="casco.busca.rotulo" data-t-placeholder="casco.busca.placeholder">
+    </div>
+  </div>
+  <div class="ruvor-topbar__prefs">
+    <div class="ruvor-segmented" role="group" data-switch="reading" data-t-aria="casco.leitura.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="beginner" aria-pressed="true" data-t="casco.leitura.iniciante"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-reading="advanced" aria-pressed="false" data-t="casco.leitura.avancada"></button>
+    </div>
+    <div class="ruvor-segmented" role="group" data-switch="theme" data-t-aria="casco.tema.rotulo">
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="light" aria-pressed="false" data-t="casco.tema.claro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="dark" aria-pressed="false" data-t="casco.tema.escuro"></button>
+      <button class="ruvor-segmented__btn" type="button" data-set-theme="system" aria-pressed="true" data-t="casco.tema.sistema"></button>
+    </div>
+    <div class="m21b-slot" data-account="authenticated" data-slot></div>
+  </div>
+</header>
+
+<div class="ruvor-workspace ruvor-workspace--full ruvor-workspace--footer">
+  <div id="views">
+
+    <!-- ======================================== A PÁGINA, VIVA -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="pagina" data-screen="carteira" hidden>
+      <div class="ruvor-stack ruvor-stack--loose" data-live></div>
+    </main>
+
+    <!-- ======================================== A PÁGINA, OS ESTADOS -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="estados" hidden>
+      <p class="mk-tail">Moldura: cada bloco é um estado da página inteira (abaixo da barra), com a legenda em cima, fora da tela.</p>
+      <div class="ruvor-stack ruvor-stack--loose" data-slot="estados"></div>
+    </main>
+
+    <!-- ======================================== A COMPOSIÇÃO, OS CASOS -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="composicao" hidden>
+      <p class="mk-tail">Moldura: cada bloco é o painel da composição num caso. O resto da página não muda com eles — salvo a versão e a data na cabeça, que acompanham a resposta do <code>PUT</code>, e a seção de risco, que a T4 desenha (depois de um <code>PUT</code> que muda a versão, a página relê <code>GET .../risk</code>).</p>
+      <div class="ruvor-stack ruvor-stack--loose" data-slot="composicao"></div>
+    </main>
+
+    <!-- ======================================== O NOME E O VALOR, OS CASOS -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="nomevalor" hidden>
+      <p class="mk-tail">Moldura: a cabeça da página em cada caso do nome e do valor (<code>PATCH portfolios/{id}</code>). As mensagens por campo marcadas como "da API" são o que a API manda em <code>details.fields</code>, mostradas como chegam — dado, não texto da tela.</p>
+      <div class="ruvor-stack ruvor-stack--loose" data-slot="nomevalor"></div>
+    </main>
+
+    <!-- ======================================== O ARQUIVAMENTO -->
+    <main class="ruvor-content ruvor-stack ruvor-stack--loose mk-view" data-view="dialogos" hidden>
+      <p class="mk-tail">Moldura: o diálogo do M2.1b (<code>usuarios.html</code>), desenhado parado sobre o véu que o showModal() põe atrás. Na tela, ele abre no centro, com o foco preso nele; o Esc e "Cancelar" fecham sem fazer nada, e o foco volta a "Arquivar". Para ver o comportamento, use a vista viva.</p>
+      <div class="mk-dialogs" data-slot="dialogos"></div>
+      <div class="mk-case" data-slot="depois"></div>
+    </main>
+
+    <!-- ======================================== 360 px -->
+    <div class="mk-view mk-pad" data-view="estreito" hidden>
+      <p class="mk-tail">Moldura: a mesma página em 360 px, sem a barra do mockup, no tema escolhido. A barra é a do <code>lista.html</code> até 920 px: a marca, "Carteiras" e o alternador na primeira linha; o tema e a conta na segunda; a busca na terceira. A cabeça vira uma coluna, as ações ocupam a largura, o editor fica com o recuo menor do <code>lista.html</code>, e as ações do diálogo se empilham, com a principal em cima. Nada rola na horizontal.</p>
+      <div class="mk-frames" data-frames></div>
+    </div>
+
+    <!-- ======================================== OS TEXTOS -->
+    <div class="mk-view mk-pad" data-view="textos" hidden>
+      <p class="mk-tail">Moldura: as chaves que nascem neste mockup, todas com o prefixo <code>carteira.*</code> (só desta página), com a saída de cada forma; depois, as que este mockup só usa e que nascem em outro (o editor e o item da barra, do <code>lista.html</code>; os avisos, do <code>conta.html</code>).</p>
+      <section class="ruvor-panel"><table class="ruvor-table mk-textos" data-textos></table></section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">O registro de exemplos das chaves-função</h2></div>
+        <div class="ruvor-panel__body ruvor-stack">
+          <p class="ruvor-note">No molde do <code>EXEMPLOS</code> de <code>frontend/tests/exemplos.ts</code>: uma lista de argumentos por chave-função, que cobre cada ramo. Nenhuma destas chaves é número com frase: não têm leitura avançada.</p>
+          <pre class="mk-code" data-exemplos></pre>
+        </div>
+      </section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">Usadas aqui, nascidas em outro mockup</h2></div>
+        <div class="ruvor-panel__body ruvor-stack">
+          <p class="ruvor-note">O item "Carteiras" da barra, o editor e o seletor, e os textos que a lista e a criação já nomearam (<code>carteiras.*</code>), são do <code>lista.html</code> (T2), escrito ao mesmo tempo que este e <b>ainda sem portão</b>. Foram copiados literais dele — o CSS (<code>m22b-nav</code>, <code>m22b-picker</code>, <code>m22b-editor</code>, <code>m22b-sum</code>), a aritmética (<code>parseWeight</code>, <code>parseNotional</code>, <code>centsText</code>) e as chaves abaixo; se o portão do <code>lista.html</code> mudar um deles, este mockup acompanha antes da T6. Os avisos do RF-16 são do <code>conta.html</code> aprovado, literais.</p>
+          <table class="ruvor-table mk-textos" data-textos-outros></table>
+        </div>
+      </section>
+      <section class="ruvor-panel">
+        <div class="ruvor-panel__head"><h2 class="ruvor-h3">Para o portão</h2></div>
+        <div class="ruvor-panel__body">
+          <ul class="mk-notes">
+            <li><b>A cabeça.</b> O nome é o título; abaixo, num painel, os fatos que o corpo <code>portfolio</code> traz (<code>serializers.py</code>, <code>PortfolioOut</code>): o valor (<code>notional</code>, ou "sem valor"), a versão da composição (<code>version</code>), quando ela mudou (<code>version_created_at</code>, no fuso da B3) e quem criou a carteira (<code>created_by.name</code>; o e-mail fica no <code>title</code>). <code>created_at</code> e <code>updated_at</code> não aparecem: "quando a composição mudou" é o que a spec pede (RF-08), e <code>updated_at</code> muda também com o nome e o valor. As ações da página — "Mudar o nome" e "Arquivar" — ficam à direita do título.</li>
+            <li><b>O nome no lugar</b> (<code>PATCH</code> com <code>{name}</code>): o título vira um campo com "Salvar" e "Cancelar"; o Esc cancela. O campo tem <code>maxlength="100"</code>, como o da criação no <code>lista.html</code>, e o navegador confere antes do pedido que o nome aparado não está vazio (<code>carteiras.erro.nome</code>). O <code>PortfolioUpdateIn</code> confere o mesmo (obrigatório, até 100 caracteres depois de aparar os espaços das pontas — o <code>CharField</code> do DRF apara antes de medir); se a API ainda assim responder <code>invalid_parameter</code>, a mensagem de <code>details.fields.name</code> aparece como chega.</li>
+            <li><b>O valor no lugar</b> (<code>PATCH</code> com <code>{notional}</code>): "Mudar o valor" (ou "Informar um valor", sem valor) abre o campo no próprio fato, com o valor de agora ("250000,00"). A regra do campo é a da criação, no <code>lista.html</code> (<code>parseNotional</code>: a forma brasileira com milhar, "250.000,00", ou sem milhar, com vírgula ou ponto nos centavos), mais o que a API confere (<code>_notional()</code>: <code>min_value=0.01</code>, <code>max_digits=18</code> com <code>decimal_places=2</code>, isto é, até 16 algarismos inteiros). Vai à API em texto com ponto (<code>"250000.00"</code>), lido por algarismos — nunca por ponto flutuante. <b>"Tirar o valor"</b> manda <code>{"notional": null}</code> direto, sem confirmação: é barato de desfazer (informar de novo). Sem valor, o risco mostra só a perda em % (RF-10), e a frase do fato diz isso.</li>
+            <li><b>Depois de um <code>PATCH</code> do valor, e de um <code>PUT</code> que muda a versão, a página relê <code>GET .../risk</code></b> (o plano, "A fonte do risco"): a perda em reais é calculada na leitura com o valor de agora. O efeito na seção é da T4.</li>
+            <li><b>A composição em leitura</b>: a tabela na ordem em que a API devolve — por código (<code>portfolio_out</code>, <code>order_by("asset__ticker")</code>), nunca por peso —, com o código, o nome do catálogo e o peso como veio (2 casas), e o total. "Editar composição" no cabeçalho do painel.</li>
+            <li><b>A edição no lugar</b> (<code>PUT portfolios/{id}/holdings</code>): o painel troca a tabela pelo editor do <code>lista.html</code> (T2), já com a composição corrente, cada peso no campo como texto ("40.00" vira "40,00" na abertura, e daí em diante o campo guarda o que for digitado — "35," continua "35,"). A soma é em centésimos inteiros (<code>parseWeight</code>/<code>sumCents</code> do plano). "Salvar a composição" confere antes de enviar (de 2 a 20 ações, cada peso em 0 &lt; peso ≤ 100 com até 2 casas, a soma exatamente 100,00) e mostra o motivo no lugar; "Cancelar" descarta e volta à leitura, sem pedido. O desenho do editor, do seletor e das mensagens de cada <code>reason</code> é o que o portão do <code>lista.html</code> aprovar; aqui ele aparece só no que a edição no lugar acrescenta.</li>
+            <li><b>As respostas do <code>PUT</code></b>, comparando a <code>version</code> da resposta com a que a tela conhecia (<code>known</code>): <b>igual</b> → "nada mudou" (o serviço não cria versão quando a composição é a mesma, em qualquer ordem: <code>replace_holdings</code>); <b><code>known + 1</code></b> → "salva como a versão N"; <b>maior que <code>known + 1</code></b> → "outra pessoa também mudou", com a composição que a resposta trouxe (a API não tem controle de edição simultânea: a última escrita vence). Nos três, o painel volta à leitura com a composição <b>da resposta</b>, e a cabeça passa a mostrar a versão e a data dela. A frase de "outra pessoa" não diz de quem é a composição que ficou: entre o <code>commit</code> do <code>PUT</code> e a leitura do corpo, outra escrita pode entrar.</li>
+            <li><b>Salvar com um cálculo em curso</b> (o <code>GET .../risk</code> trouxe <code>in_progress</code> da versão corrente): o editor avisa antes, e a resposta repete depois (RF-07) — o risco passa a ser o da versão nova, vazio até calcular, e um cálculo novo só começa quando o anterior terminar (<code>request_risk</code> dá <code>portfolio_compute_busy</code> enquanto houver uma <code>running</code> na organização; <code>read_risk</code> lê só a versão corrente). Salvar não é bloqueado.</li>
+            <li><b>A falha de uma escrita mantém o que estava</b> (RF-08): rede ou fora do formato, 5xx, <code>too_many_requests</code> (com ou sem <code>details.wait_seconds</code>), <code>csrf_failed</code> (depois da repetição do cliente do M2.1b) e qualquer outro <code>code</code> mostram a mensagem no lugar da ação, com <code>role="alert"</code>; o campo ou o editor ficam abertos com o que foi digitado, e a página continua com o nome, o valor e a composição de antes. No arquivamento, a mensagem entra no diálogo, que continua aberto.</li>
+            <li><b>O 401 — a regra</b> (RF-02, o RF-16 do M2.1b). Um 401 em qualquer escrita (o nome, o valor, tirar o valor, a composição, o arquivamento) passa a sessão a <code>{anonymous, ended: true}</code>. Daí em diante: (a) <b>a página continua à vista</b>, com o nome, o valor e a composição que estavam e com o que foi digitado, nos campos abertos, só para leitura; (b) <b>nenhuma ação de escrita segue viva</b> — "Mudar o nome", "Arquivar", "Mudar o valor"/"Informar um valor", "Tirar o valor", "Editar composição", "Salvar" e "Cancelar" saem de toda a página, e os controles do editor (o peso, remover, o seletor) ficam travados; (c) <b>o aviso "A sua sessão terminou."</b> (<code>role="alert"</code>, com "Entrar" para <code>/entrar?next=/carteiras/{id}</code>) entra no lugar da ação que recebeu o 401 — um aviso só, e o foco vai ao "Entrar" dele; (d) <b>Esc e Cancelar não trazem nada de volta</b> (não há Cancelar, e o Esc não fecha o campo aberto); (e) no diálogo do arquivamento, o aviso entra no diálogo e o outro botão vira <b>"Fechar"</b> (<code>usuarios.confirmar.fechar</code> do M2.1b); fechado, a página fica sem ações, com o aviso no lugar de "Arquivar"; (f) a barra passa a mostrar "Entrar", e o item "Carteiras" some (só existe logado). Ao carregar a página, o 401 põe o aviso no lugar dela. Quem nunca entrou vê "Esta página é para quem entrou na conta.", sem pedido à API (o plano, "A sessão nas telas da carteira").</li>
+            <li><b>O 404 em qualquer pedido</b> (<code>portfolio_not_found</code>: o <code>id</code> não é UUID canônico, não existe, é de outra organização ou foi arquivado — <code>_get</code> e <code>_public_id</code> dão o mesmo erro) troca a página inteira por "Carteira não encontrada.", ao abrir ou no meio do uso, com o caminho de volta à lista. <b>Atenção à ordem</b>: nas escritas, a forma do corpo é conferida antes de buscar a carteira — no <code>PATCH</code> e no <code>PUT</code>, o serializador de entrada (<code>_data(PortfolioUpdateIn)</code>, <code>_data(HoldingsIn)</code>) responde <code>invalid_parameter</code> antes do serviço; e no <code>PUT</code>, a regra da composição (<code>replace_holdings</code> chama <code>_holdings</code> primeiro) responde <code>invalid_holdings</code> antes do 404. Então uma carteira arquivada por outra pessoa só responde 404 a um corpo válido.</li>
+            <li><b>O arquivamento</b> (<code>DELETE</code>, 204): "Arquivar" abre o diálogo do M2.1b com o efeito dito — a carteira sai da lista da organização e deixa de abrir para todos; a composição e o risco calculado ficam guardados (<code>archive_portfolio</code> só grava <code>archived_at</code>). Não há rota para desarquivar, e a frase diz que a tela não desfaz. Confirmado, a página vai à lista, que mostra o aviso de que a carteira foi arquivada (o desenho da lista é do <code>lista.html</code>).</li>
+            <li><b><code>password_change_required</code></b> (403) numa leitura ou escrita: a tela relê a conta, e o desvio do M2.1b assume (a troca obrigatória do <code>senha.html</code>). Sem desenho aqui.</li>
+            <li><b>O item "Carteiras" na barra</b> está aqui porque a página fica dentro do casco: o lugar, o arranjo até 920 px e o texto são os do <code>lista.html</code> (D-180), copiados literais, e marcam a rota corrente também em <code>/carteiras/:id</code>. Depois de um 401, a sessão passa a anônima, e o item some junto com a conta (só existe logado).</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <footer class="ruvor-footer">
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-info"/></svg><span data-t="rodape.ressalva"></span></p>
+    <p><svg class="ruvor-glyph" aria-hidden="true" focusable="false"><use href="#i-database"/></svg><span data-t="rodape.fonte"></span></p>
+  </footer>
+</div>
+
+<!-- O diálogo de verdade da vista viva. -->
+<dialog class="m21b-dialog" id="live-dialog" aria-labelledby="live-dialog-title"></dialog>
+
+<script type="module">
+// ---------------------------------------------------------------- os textos
+// Herdados: os de frontend/src/content/textos.ts que o casco usa, literais.
+const HERDADOS = {
+  "casco.marca": "RUVOR",
+  "casco.marca.rotulo": "Ruvor, ir para a busca",
+  "casco.busca.placeholder": "Buscar ativo",
+  "casco.busca.rotulo": "Buscar ativo",
+  "casco.tema.rotulo": "Tema",
+  "casco.tema.claro": "Claro",
+  "casco.tema.escuro": "Escuro",
+  "casco.tema.sistema": "Sistema",
+  "casco.leitura.rotulo": "Nível de leitura",
+  "casco.leitura.iniciante": "Iniciante",
+  "casco.leitura.avancada": "Avançada",
+  "rodape.ressalva": "O Ruvor informa e compara métodos de medir risco. Não é recomendação de investimento: nada aqui indica comprar, vender ou manter um ativo. As estimativas usam dados passados e não garantem o que vai acontecer.",
+  "rodape.fonte": "Fontes: catálogo de ativos da B3, preços do Yahoo Finance, e balanços e comunicados da CVM.",
+};
+
+// Do conta.html aprovado (M2.1b, T8): o menu e os avisos do RF-16, literais.
+const DA_CONTA = {
+  "conta.entrar": "Entrar",
+  "conta.menu.rotulo": (nome) => `Conta de ${nome}`,
+  "conta.menu.organizacao": "Organização",
+  "conta.menu.senha": "Trocar a senha",
+  "conta.menu.usuarios": "Usuários da organização",
+  "conta.menu.sair": "Sair",
+  "conta.aviso.terminou": "A sua sessão terminou.",
+  "conta.aviso.paraQuemEntrou": "Esta página é para quem entrou na conta.",
+  "conta.aviso.volta": "Depois de entrar, você volta para esta página.",
+};
+
+// Do lista.html (T2, escrito ao mesmo tempo e ainda sem portão): o item da barra, o editor e o
+// que a lista e a criação já nomearam. Copiados literais do TEXTOS dele; se o portão do lista.html
+// mudar um nome ou um texto, este mockup acompanha antes da T6.
+const fmtInt = (n) => new Intl.NumberFormat("pt-BR").format(n);
+const DO_LISTA = {
+  "carteiras.nav": "Carteiras",
+  "carteiras.nav.rotulo": "Navegação",
+  "carteiras.semValor": "sem valor",
+  "carteiras.arquivada": (nome) => `A carteira “${nome}” foi arquivada. O que foi calculado para ela fica guardado.`,
+  "carteiras.campo.nomeDica": "Até 100 caracteres.",
+  "carteiras.campo.valorDica": "Em reais, como 10.000,00. Com o valor, a perda aparece também em reais; sem ele, só em %.",
+  "carteiras.erro.nome": "Dê um nome à carteira.",
+  "carteiras.erro.valor": "Use um valor em reais com até 2 casas, de 0,01 até 16 algarismos antes da vírgula, como 10.000,00.",
+  "carteiras.composicao.titulo": "Composição",
+  "carteiras.composicao.dica": "De 2 a 20 ações. O peso de cada uma é em %, com até 2 casas, e a soma fecha em 100,00.",
+  "carteiras.seletor.rotulo": "Acrescentar ação",
+  "carteiras.seletor.placeholder": "Código ou nome da ação",
+  "carteiras.seletor.limite": "A composição já tem 20 ações, o máximo.",
+  "carteiras.col.acao": "Ação",
+  "carteiras.col.peso": "Peso (%)",
+  "carteiras.col.remover": "Remover",
+  "carteiras.peso.rotulo": (ticker) => `Peso de ${ticker}, em %`,
+  "carteiras.remover": (ticker) => `Remover ${ticker} da composição`,
+  "carteiras.editor.vazio": "Nenhuma ação na composição ainda. Busque acima pelo código ou pelo nome.",
+  "carteiras.acoes": (n) => (n === 1 ? "1 ação" : `${fmtInt(n)} ações`),
+  "carteiras.soma.rotulo": "Soma",
+  "carteiras.soma.exata": "Fecha em 100,00.",
+  "carteiras.soma.abaixo": (d) => `${d} abaixo de 100,00.`,
+  "carteiras.soma.acima": (d) => `${d} acima de 100,00.`,
+  "carteiras.soma.foraDaSoma": (n) => (n === 1 ? "1 peso ainda não é número e fica fora da soma." : `${fmtInt(n)} pesos ainda não são números e ficam fora da soma.`),
+  "carteiras.erro.pesoFormato": "Use um número com até 2 casas, com vírgula ou ponto.",
+  "carteiras.erro.peso": "O peso vai de 0,01 a 100,00.",
+  "carteiras.erro.contagem": (n) => `A carteira precisa de 2 a 20 ações; a composição tem ${fmtInt(n)}.`,
+  "carteiras.erro.soma": (s) => `A soma dos pesos precisa ser exatamente 100,00; está em ${s}.`,
+  "carteiras.erro.repetida": "Esta ação aparece em outra linha da composição.",
+  "carteiras.erro.desconhecida": "Este código não está no catálogo.",
+  "carteiras.erro.naoAcao": "Este código é de um índice; a carteira só aceita ações.",
+  "carteiras.erro.inativa": "Esta ação está inativa no catálogo e não entra na carteira.",
+  "carteiras.cancelar": "Cancelar",
+  "carteiras.tentarDeNovo": "Tentar de novo",
+};
+// Os exemplos dessas chaves, do EXEMPLOS do lista.html, literais (só para a vista "os textos").
+const EXEMPLOS_DO_LISTA = {
+  "carteiras.arquivada": [["Bancos e energia"]],
+  "carteiras.peso.rotulo": [["PETR4"]],
+  "carteiras.remover": [["PETR4"]],
+  "carteiras.acoes": [[1], [4]],
+  "carteiras.soma.abaixo": [["0,01"]],
+  "carteiras.soma.acima": [["0,50"]],
+  "carteiras.soma.foraDaSoma": [[1], [2]],
+  "carteiras.erro.contagem": [[1], [21]],
+  "carteiras.erro.soma": [["99,99"]],
+};
+
+// NOVOS em textos.ts, prefixo carteira.* (RF-02, RF-07, RF-08): só desta página.
+const TEXTOS = {
+  // a página
+  "carteira.voltar": "Todas as carteiras",
+  "carteira.sobrancelha": "Carteira",
+  "carteira.carregando": "Carregando a carteira.",
+  "carteira.erro.titulo": "Não foi possível carregar a carteira.",
+  "carteira.erro.texto": "Pode ser uma falha passageira do servidor.",
+  "carteira.naoEncontrada.titulo": "Carteira não encontrada.",
+  "carteira.naoEncontrada.texto": "Ela pode ter sido arquivada, ou este endereço não é de uma carteira da sua organização.",
+  "carteira.naoEncontrada.voltar": "Ver as carteiras",
+  // os fatos
+  "carteira.fatos.rotulo": "Sobre a carteira",
+  "carteira.valor.rotulo": "Valor aplicado",
+  "carteira.valor.nota.com": "A perda estimada aparece também em reais, calculada com este valor.",
+  "carteira.valor.nota.sem": "Sem valor, a perda estimada aparece só em %.",
+  "carteira.versao.rotulo": "Versão da composição",
+  "carteira.mudouEm.rotulo": "Composição mudou em",
+  "carteira.mudouEm": (data, hora) => `${data} às ${hora}`,
+  "carteira.criadaPor.rotulo": "Criada por",
+  // o nome no lugar
+  "carteira.nome.mudar": "Mudar o nome",
+  "carteira.nome.campo": "Nome da carteira",
+  // o valor no lugar
+  "carteira.valor.mudar": "Mudar o valor",
+  "carteira.valor.informar": "Informar um valor",
+  "carteira.valor.tirar": "Tirar o valor",
+  "carteira.valor.campo": "Valor aplicado, em reais",
+  // as ações comuns
+  "carteira.salvar": "Salvar",
+  "carteira.salvando": "Salvando…",
+  // a composição
+  "carteira.composicao.ordem": "Na ordem do código.",
+  "carteira.composicao.total": "Total",
+  "carteira.composicao.editar": "Editar composição",
+  "carteira.composicao.salvar": "Salvar a composição",
+  "carteira.composicao.nota": "Salvar uma composição diferente cria a versão seguinte. O risco mostrado é sempre o da versão corrente.",
+  "carteira.composicao.emCurso": (n) => `Há um cálculo do risco em curso, da versão ${n}. Você pode salvar: o risco mostrado passa a ser o da versão nova, vazio até ela ser calculada, e um cálculo novo só começa quando o atual terminar.`,
+  "carteira.composicao.salva": (n) => `Composição salva como a versão ${n}.`,
+  "carteira.composicao.salvaEmCurso": (n, anterior) => `Composição salva como a versão ${n}. O cálculo em curso é da versão ${anterior}: o risco abaixo passa a ser o da versão ${n}, vazio até ela ser calculada, e um cálculo novo só começa quando aquele terminar.`,
+  "carteira.composicao.nadaMudou": (n) => `Nada mudou: a composição enviada é igual à da versão ${n}.`,
+  "carteira.composicao.riscoEmCurso": (anterior, n) => `O cálculo em curso é da versão ${anterior}: o risco abaixo passa a ser o da versão ${n}, vazio até ela ser calculada, e um cálculo novo só começa quando aquele terminar.`,
+  "carteira.composicao.outraPessoa": (n) => `Outra pessoa também mudou esta carteira enquanto você editava. A composição abaixo, da versão ${n}, é a que ficou salva.`,
+  "carteira.erro.forma": "A composição não foi aceita. Confira os pesos e tente de novo.",
+  // a falha de uma escrita
+  "carteira.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "carteira.erro.muitos": (n) => `Muitos pedidos seguidos. Tente de novo em ${n} s.`,
+  "carteira.erro.muitosSemTempo": "Muitos pedidos seguidos. Aguarde um pouco e tente de novo.",
+  "carteira.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "carteira.erro.outro": "Não foi possível concluir agora. Tente de novo.",
+  "carteira.erro.mantido": "Nada foi alterado.",
+  // o arquivamento
+  "carteira.arquivar": "Arquivar",
+  "carteira.arquivar.titulo": (nome) => `Arquivar a carteira “${nome}”?`,
+  "carteira.arquivar.texto": "A carteira sai da lista da organização e deixa de abrir, para todas as pessoas dela. A composição e o risco já calculado ficam guardados.",
+  "carteira.arquivar.semVolta": "A tela não tem como desarquivar.",
+  "carteira.arquivar.confirmar": "Arquivar a carteira",
+  "carteira.arquivar.enviando": "Arquivando…",
+};
+
+// O registro de exemplos (o molde do EXEMPLOS de frontend/tests/exemplos.ts): cada ramo.
+const EXEMPLOS = {
+  "carteira.mudouEm": [["02/10/2026", "16:41"]],
+  "carteira.composicao.emCurso": [[3]],
+  "carteira.composicao.salva": [[4]],
+  "carteira.composicao.salvaEmCurso": [[4, 3]],
+  "carteira.composicao.nadaMudou": [[3]],
+  "carteira.composicao.riscoEmCurso": [[3, 5]],
+  "carteira.composicao.outraPessoa": [[5]],
+  "carteira.erro.muitos": [[12]],
+  "carteira.arquivar.titulo": [["Bancos e energia"]],
+};
+
+// Do usuarios.html aprovado (M2.1b, T9): o botão do diálogo depois do 401, literal.
+const DO_USUARIOS = {
+  "usuarios.confirmar.fechar": "Fechar",
+};
+
+const T = (k, ...a) => {
+  const v = k in TEXTOS ? TEXTOS[k] : k in DO_LISTA ? DO_LISTA[k] : k in DA_CONTA ? DA_CONTA[k] : k in DO_USUARIOS ? DO_USUARIOS[k] : HERDADOS[k];
+  if (v === undefined) throw new Error(`texto sem chave: ${k}`);
+  return typeof v === "function" ? v(...a) : v;
+};
+
+// ---------------------------------------------------------------- utilidades
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const glyph = (id, extra = "") => `<svg class="ruvor-glyph ${extra}" aria-hidden="true" focusable="false"><use href="#i-${id}"/></svg>`;
+const tx = (k, ...a) => esc(T(k, ...a));
+
+for (const n of document.querySelectorAll("[data-t]")) n.textContent = T(n.dataset.t);
+for (const n of document.querySelectorAll("[data-t-aria]")) n.setAttribute("aria-label", T(n.dataset.tAria));
+for (const n of document.querySelectorAll("[data-t-placeholder]")) n.setAttribute("placeholder", T(n.dataset.tPlaceholder));
+
+// ---------------------------------------------------------------- copiado do lista.html, literal
+// ---------------------------------------------------------------- a aritmética dos pesos
+// A do plano ("A aritmética dos pesos", literal): por algarismos, nunca por parseFloat.
+const TOTAL_CENTS = 10000;
+function parseWeight(text) {
+  const t = text.trim().replaceAll(",", ".");
+  if (!/^\d{0,3}([.]\d{0,2})?$/.test(t)) return null;
+  const [int = "", dec = ""] = t.split(".");
+  if (int === "" && dec === "") return null; // ao menos um algarismo
+  return (int === "" ? 0 : Number(int)) * 100 + Number((dec + "00").slice(0, 2));
+}
+const weightToApi = (c) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, "0")}`;
+const sumCents = (ws) => ws.reduce((a, b) => a + b, 0);
+// Centésimos para a tela, com vírgula: 9999 → "99,99"; 1999980 → "19.999,80".
+const centsText = (c) => `${fmtInt(Math.floor(c / 100))},${String(c % 100).padStart(2, "0")}`;
+// O decimal da API em texto ("99.99") para a tela, pelo texto.
+// Algarismos em grupos de três, pelo texto: "250000" → "250.000". Sem Number: o valor vai a 16
+// algarismos inteiros, além do inteiro exato do JavaScript.
+const groupDigits = (int) => int.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const apiDecText = (s) => { const [i, d = "00"] = String(s).split("."); return `${groupDigits(i)},${(d + "00").slice(0, 2)}`; };
+
+// O valor (proposta deste portão): forma brasileira com milhar, ou sem milhar com vírgula ou
+// ponto nos centavos ("10000," vale, como o peso "5,"). Tudo em texto de algarismos: devolve
+// { int, dec } (a parte inteira sem zeros à esquerda e os dois centavos), ou null — fora da
+// forma, zero, ou com mais de 16 algarismos inteiros (o max_digits=18, decimal_places=2 de
+// backend/apps/portfolios/serializers.py:24-31).
+const NOTIONAL_MAX_INT_DIGITS = 16;
+function parseNotional(text) {
+  const t = text.trim();
+  let int = null, dec = "";
+  let m = /^(\d{1,3}(?:\.\d{3})+)(?:,(\d{0,2}))?$/.exec(t);
+  if (m) { int = m[1].replaceAll(".", ""); dec = m[2] ?? ""; }
+  else if ((m = /^(\d+)(?:[.,](\d{0,2}))?$/.exec(t))) { int = m[1]; dec = m[2] ?? ""; }
+  if (int === null) return null;
+  int = int.replace(/^0+(?=\d)/, "");
+  dec = (dec + "00").slice(0, 2);
+  if (int.length > NOTIONAL_MAX_INT_DIGITS) return null;
+  if (int === "0" && dec === "00") return null; // a partir de 0,01
+  return { int, dec };
+}
+const notionalToApi = (n) => `${n.int}.${n.dec}`; // "10000.00", pelo texto
+const brl = (s) => `R$ ${apiDecText(s)}`;
+
+// ---------------------------------------------------------------- desta página
+// O peso da API ("40.00") no campo, na abertura do editor: só troca o ponto pela vírgula; daí em
+// diante o campo guarda o que for digitado. O mesmo para o valor ("250000.00" → "250000,00").
+const apiToField = (w) => w.replace(".", ",");
+const pct = (w) => `${apiDecText(w)}%`;
+
+// ---------------------------------------------------------------- o dado fictício
+// O corpo `portfolio` da API (serializers.py, PortfolioOut): as posições em ordem de ticker.
+const ID = "3f6c2a9e-8d41-4b7a-9c35-1e2f0a7b6d58";
+const ANA = { email: "ana.souza@exemplo.com", name: "Ana Beatriz Souza" };
+const BASE = {
+  id: ID,
+  name: "Bancos e energia",
+  notional: "250000.00",
+  version: 3,
+  holdings: [
+    { ticker: "BBAS3", name: "BANCO DO BRASIL S.A.", weight: "20.00" },
+    { ticker: "ITUB4", name: "ITAU UNIBANCO HOLDING S.A.", weight: "35.00" },
+    { ticker: "PETR4", name: "PETROLEO BRASILEIRO S.A. PETROBRAS", weight: "25.00" },
+    { ticker: "TAEE11", name: "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.", weight: "20.00" },
+  ],
+  created_at: "2026-09-29T10:12:00-03:00",
+  updated_at: "2026-10-02T16:41:00-03:00",
+  version_created_at: ["02/10/2026", "16:41"],
+  created_by: ANA,
+};
+const clone = (p) => JSON.parse(JSON.stringify(p));
+const rowsOf = (p) => p.holdings.map((h) => ({ ticker: h.ticker, name: h.name, text: apiToField(h.weight) }));
+
+// ---------------------------------------------------------------- a barra: a conta logada (conta.html)
+function renderSlot(anon = false) {
+  const slot = $("[data-slot]");
+  $("[data-part='nav']").hidden = anon; // o item só com a sessão logada (lista.html, D-180)
+  if (anon) {
+    slot.dataset.account = "anonymous";
+    slot.innerHTML = `<a class="m21b-signin" href="#" title="/entrar?next=${esc(encodeURIComponent(`/carteiras/${ID}`))}">${tx("conta.entrar")}</a>`;
+    return;
+  }
+  slot.dataset.account = "authenticated";
+  slot.innerHTML = `
+    <button class="ruvor-account m21b-account" type="button" data-part="conta" aria-expanded="false" aria-controls="m21b-menu" aria-label="${tx("conta.menu.rotulo", ANA.name)}">
+      <span class="m21b-account__name">${esc(ANA.name)}</span>
+      <span class="ruvor-avatar" aria-hidden="true">AS</span>
+      ${glyph("caret-down")}
+    </button>
+    <div class="m21b-menu" id="m21b-menu" hidden>
+      <div class="m21b-menu__who"><p class="m21b-menu__name">${esc(ANA.name)}</p><p class="m21b-menu__email">${esc(ANA.email)}</p></div>
+      <div class="m21b-menu__org"><p class="ruvor-eyebrow">${tx("conta.menu.organizacao")}</p><p>Gestora Exemplo</p></div>
+      <ul class="m21b-menu__list">
+        <li><a class="m21b-menu__item" href="#">${glyph("shield-check")}<span>${tx("conta.menu.senha")}</span></a></li>
+        <li><a class="m21b-menu__item" href="#">${glyph("buildings")}<span>${tx("conta.menu.usuarios")}</span></a></li>
+        <li class="m21b-menu__sep" role="presentation"></li>
+        <li><button class="m21b-menu__item" type="button">${glyph("sign-out")}<span>${tx("conta.menu.sair")}</span></button></li>
+      </ul>
+    </div>`;
+  const btn = $("[data-part='conta']", slot);
+  const menu = $("#m21b-menu", slot);
+  btn.addEventListener("click", () => { const o = menu.hidden; menu.hidden = !o; btn.setAttribute("aria-expanded", String(o)); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); btn.focus(); } });
+  document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".m21b-slot, .mk-bar")) { menu.hidden = true; btn.setAttribute("aria-expanded", "false"); } });
+}
+
+// ---------------------------------------------------------------- peças
+// O aviso para entrar (RF-16), o do conta.html: ended (401 de quem tinha entrado, role=alert) ou
+// required (anônimo desde a carga).
+function signInNotice(kind) {
+  const title = kind === "ended" ? T("conta.aviso.terminou") : T("conta.aviso.paraQuemEntrou");
+  return `<div class="ruvor-state ruvor-state--notice m21b-notice" data-signin-notice="${kind}"${kind === "ended" ? ' role="alert"' : ""}>
+    <span class="ruvor-icon ruvor-icon--evidence"><svg aria-hidden="true" focusable="false"><use href="#i-duo-info"/></svg></span>
+    <div class="ruvor-state__body">
+      <p class="ruvor-state__title">${esc(title)}</p>
+      <p class="ruvor-note">${tx("conta.aviso.volta")}</p>
+      <a class="ruvor-btn ruvor-btn--primary" href="#" title="/entrar?next=${esc(encodeURIComponent(`/carteiras/${ID}`))}">${tx("conta.entrar")}</a>
+    </div>
+  </div>`;
+}
+// A falha de uma escrita (rede, 5xx, 429, csrf_failed, outro code): a mensagem, e que nada mudou.
+const ERROS = {
+  rede: () => T("carteira.erro.rede"),
+  muitos: () => T("carteira.erro.muitos", 12),
+  muitosSemTempo: () => T("carteira.erro.muitosSemTempo"),
+  csrf: () => T("carteira.erro.csrf"),
+  outro: () => T("carteira.erro.outro"),
+  forma: () => T("carteira.erro.forma"),
+};
+function failure(kind) {
+  return `<div class="ruvor-callout ruvor-callout--critical" role="alert">${glyph("warning")}<span>${esc(ERROS[kind]())} ${tx("carteira.erro.mantido")}</span></div>`;
+}
+// A resposta boa de uma escrita (role=status), e a de "outra pessoa mudou" (o tom de revisão).
+function reply(text, tone = "evidence") {
+  const icon = tone === "review" ? "duo-warning" : "duo-info";
+  return `<div class="ruvor-callout" role="${tone === "review" ? "alert" : "status"}"><span class="ruvor-icon ruvor-icon--${tone}"><svg aria-hidden="true" focusable="false"><use href="#i-${icon}"/></svg></span><p class="m22b-reply">${esc(text)}</p></div>`;
+}
+const sending = (label) => `<button class="ruvor-btn ruvor-btn--primary" type="button" aria-busy="true" disabled>${glyph("spinner-gap", "ruvor-spin")}<span>${esc(label)}</span></button>`;
+
+// ---------------------------------------------------------------- a cabeça
+// o: { p, name: null | {text, error, sending, fail, apiError}, value: idem, valueFail, valueSending,
+//      ended: null | "name" | "value" | "unset" | "comp" | "archive", base }
+// `ended` é a sessão terminada por um 401 ({anonymous, ended: true}): a página fica à vista, com o
+// que foi digitado, e NENHUMA ação de escrita segue viva — o aviso entra no lugar da ação que
+// recebeu o 401, e as outras somem. Esc e Cancelar não as trazem de volta (não há Cancelar).
+let fseq = 0;
+function headHtml(o) {
+  const p = o.p;
+  const part = (x) => (o.base ? ` data-part="${x}"` : "");
+  const id = `h${++fseq}`;
+  let title;
+  if (o.name) {
+    const n = o.name;
+    const err = n.error ?? n.apiError;
+    title = `<form class="m22b-inline m22b-inline--name" data-form="name" novalidate>
+      <label class="ruvor-label" for="${id}-name">${tx("carteira.nome.campo")}</label>
+      <div class="m22b-inline__row">
+        <input class="ruvor-input" id="${id}-name" name="name" type="text" maxlength="100" autocomplete="off" value="${esc(n.text)}"${err ? ` aria-invalid="true" aria-describedby="${id}-name-err"` : ` aria-describedby="${id}-name-hint"`}${n.sending ? " disabled" : o.ended ? " readonly" : ""}>
+        ${o.ended ? "" : n.sending ? sending(T("carteira.salvando")) : `<button class="ruvor-btn ruvor-btn--primary" type="submit">${tx("carteira.salvar")}</button><button class="ruvor-btn" type="button" data-cancel="name">${tx("carteiras.cancelar")}</button>`}
+      </div>
+      ${err ? `<span class="ruvor-field__error" id="${id}-name-err">${esc(err)}</span>` : `<span class="ruvor-hint" id="${id}-name-hint">${tx("carteiras.campo.nomeDica")}</span>`}
+      ${n.fail ? failure(n.fail) : ""}
+      ${o.ended === "name" ? signInNotice("ended") : ""}
+    </form>`;
+  } else {
+    title = `<h1 class="ruvor-display"${part("nome")}>${esc(p.name)}</h1>`;
+  }
+  const actions = o.name || o.ended
+    ? (o.ended === "archive" ? `<div class="m22b-top__actions">${signInNotice("ended")}</div>` : "")
+    : `<div class="m22b-top__actions">
+        <button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="name"${part("mudar-nome")}>${tx("carteira.nome.mudar")}</button>
+        <button class="ruvor-btn" type="button" data-act="archive"${part("arquivar")}>${tx("carteira.arquivar")}</button>
+      </div>`;
+  return `<div class="ruvor-stack">
+    <a class="m22b-back" href="#" title="/carteiras"${part("voltar")}>${glyph("arrow-left")}<span>${tx("carteira.voltar")}</span></a>
+    <div class="m22b-top">
+      <div class="m22b-top__id">
+        <p class="ruvor-eyebrow">${tx("carteira.sobrancelha")}</p>
+        ${title}
+      </div>
+      ${actions}
+    </div>
+    ${factsHtml(o)}
+  </div>`;
+}
+
+function factsHtml(o) {
+  const p = o.p;
+  const id = `v${++fseq}`;
+  let value;
+  if (o.value) {
+    const v = o.value;
+    const err = v.error ?? v.apiError;
+    value = `<form class="m22b-inline" data-form="value" novalidate>
+      <label class="ruvor-sr-only" for="${id}-value">${tx("carteira.valor.campo")}</label>
+      <div class="m22b-inline__row">
+        <input class="ruvor-input ruvor-num" id="${id}-value" name="notional" type="text" inputmode="decimal" autocomplete="off" value="${esc(v.text)}"${err ? ` aria-invalid="true" aria-describedby="${id}-value-err"` : ` aria-describedby="${id}-value-hint"`}${v.sending ? " disabled" : o.ended ? " readonly" : ""}>
+        ${o.ended ? "" : v.sending ? sending(T("carteira.salvando")) : `<button class="ruvor-btn ruvor-btn--primary" type="submit">${tx("carteira.salvar")}</button><button class="ruvor-btn" type="button" data-cancel="value">${tx("carteiras.cancelar")}</button>`}
+      </div>
+      ${err ? `<span class="ruvor-field__error" id="${id}-value-err">${esc(err)}</span>` : `<span class="ruvor-hint" id="${id}-value-hint">${tx("carteiras.campo.valorDica")}</span>`}
+      ${v.fail ? failure(v.fail) : ""}
+      ${o.ended === "value" ? signInNotice("ended") : ""}
+    </form>`;
+  } else {
+    const has = p.notional !== null;
+    const acts = o.ended
+      ? (o.ended === "unset" || o.ended === "value" ? signInNotice("ended") : "")
+      : `<span class="m22b-facts__acts">
+        ${o.valueSending ? sending(T("carteira.salvando")) : `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="value"${o.base ? ' data-part="mudar-valor"' : ""}>${tx(has ? "carteira.valor.mudar" : "carteira.valor.informar")}</button>
+        ${has ? `<button class="ruvor-btn ruvor-btn--ghost" type="button" data-act="unset"${o.base ? ' data-part="tirar-valor"' : ""}>${tx("carteira.valor.tirar")}</button>` : ""}`}
+      </span>`;
+    value = `<span class="${has ? "m22b-facts__value ruvor-num" : "m22b-facts__muted"}">${has ? esc(brl(p.notional)) : tx("carteiras.semValor")}</span>
+      <span class="ruvor-note">${tx(has ? "carteira.valor.nota.com" : "carteira.valor.nota.sem")}</span>
+      ${acts}
+      ${o.valueFail ? failure(o.valueFail) : ""}`;
+  }
+  return `<section class="ruvor-panel" aria-label="${tx("carteira.fatos.rotulo")}"><div class="ruvor-panel__body">
+    <dl class="m22b-facts">
+      <div class="${o.value ? "m22b-facts__wide" : "m22b-facts__lead"}"><dt>${tx("carteira.valor.rotulo")}</dt><dd>${value}</dd></div>
+      <div><dt>${tx("carteira.versao.rotulo")}</dt><dd class="m22b-facts__value ruvor-num">${esc(p.version)}</dd></div>
+      <div><dt>${tx("carteira.mudouEm.rotulo")}</dt><dd class="ruvor-num">${tx("carteira.mudouEm", ...p.version_created_at)}</dd></div>
+      <div><dt>${tx("carteira.criadaPor.rotulo")}</dt><dd title="${esc(p.created_by.email)}">${esc(p.created_by.name)}</dd></div>
+    </dl>
+  </div></section>`;
+}
+
+// ---------------------------------------------------------------- a composição
+function compHead(p, editing, base, ended) {
+  return `<div class="ruvor-panel__head m22b-comp-head">${glyph("briefcase")}<h2 class="ruvor-h3">${tx("carteiras.composicao.titulo")}</h2>
+    <span class="ruvor-tag ruvor-tag--neutral">${tx("carteiras.acoes", editing ?? p.holdings.length)}</span>
+    ${(editing === undefined || editing === null) && !ended ? `<button class="ruvor-btn ruvor-push" type="button" data-act="edit"${base ? ' data-part="editar-composicao"' : ""}>${tx("carteira.composicao.editar")}</button>` : ""}
+  </div>`;
+}
+// A leitura: as duas colunas do editor do lista.html (a ação com o nome embaixo, o peso).
+function readTable(p, base) {
+  const total = sumCents(p.holdings.map((h) => parseWeight(h.weight)));
+  return `<table class="ruvor-table m22b-holdings"${base ? ' data-part="composicao"' : ""}>
+    <thead><tr><th scope="col">${tx("carteiras.col.acao")}</th><th scope="col">${tx("carteiras.col.peso")}</th></tr></thead>
+    <tbody>${p.holdings.map((h) => `<tr><td><span class="m22b-editor__ticker">${esc(h.ticker)}</span><span class="m22b-editor__name">${esc(h.name)}</span></td><td class="ruvor-num">${esc(pct(h.weight))}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td>${tx("carteira.composicao.total")}</td><td class="ruvor-num">${esc(centsText(total))}%</td></tr></tfoot>
+  </table>`;
+}
+// o: { p, message: html, ended, base }
+function compRead(o) {
+  return `<section class="ruvor-panel" aria-labelledby="h-comp">
+    ${compHead(o.p, undefined, o.base, o.ended).replace('<h2 class="ruvor-h3">', '<h2 class="ruvor-h3" id="h-comp">')}
+    <div class="ruvor-panel__body ruvor-stack">
+      ${o.message ?? ""}
+      ${readTable(o.p, o.base)}
+      <p class="ruvor-note">${tx("carteira.composicao.ordem")}</p>
+    </div>
+  </section>`;
+}
+// A soma: o sumHtml do lista.html, literal salvo o E.rows (aqui, o parâmetro) e o id do ícone.
+function sumHtml(rows) {
+  const cents = rows.map((r) => parseWeight(r.text));
+  const good = cents.filter((c) => c !== null);
+  const out = cents.length - good.length;
+  const s = sumCents(good);
+  const gap = s === TOTAL_CENTS
+    ? `<span class="m22b-sum__gap m22b-sum__gap--exact">${glyph("check-circle", "ruvor-glyph--sm")} ${esc(T("carteiras.soma.exata"))}</span>`
+    : s < TOTAL_CENTS ? `<span class="m22b-sum__gap">${esc(T("carteiras.soma.abaixo", centsText(TOTAL_CENTS - s)))}</span>`
+    : `<span class="m22b-sum__gap">${esc(T("carteiras.soma.acima", centsText(s - TOTAL_CENTS)))}</span>`;
+  return `<span class="m22b-sum__value">${esc(centsText(s))}%</span>${gap}${out ? `<p class="m22b-sum__out">${esc(T("carteiras.soma.foraDaSoma", out))}</p>` : ""}`;
+}
+// O editor: a tabela e o seletor do lista.html (editorTable, picker), com a composição corrente.
+// o: { p, rows, rowErrors: {i: {w, t}}, total: [msg], emCurso, fail, ended, sending, base }
+function compEdit(o) {
+  const id = `e${++fseq}`;
+  const errs = o.rowErrors ?? {};
+  const total = o.total ?? [];
+  const rows = o.rows.map((r, i) => {
+    const wErr = errs[i]?.w ?? null;
+    const tErr = errs[i]?.t ?? null;
+    return `<tr data-row="${i}">
+      <td><span class="m22b-editor__ticker">${esc(r.ticker)}</span><span class="m22b-editor__name">${esc(r.name)}</span>${tErr ? `<span class="ruvor-field__error" id="${id}-r${i}-t-err">${esc(tErr)}</span>` : ""}</td>
+      <td><input class="ruvor-input" type="text" inputmode="decimal" autocomplete="off" data-weight="${i}" value="${esc(r.text)}" aria-label="${esc(T("carteiras.peso.rotulo", r.ticker))}"${wErr ? ` aria-invalid="true" aria-describedby="${id}-r${i}-w-err"` : tErr ? ` aria-describedby="${id}-r${i}-t-err"` : ""}${o.sending ? " disabled" : o.ended ? " readonly" : ""}>${wErr ? `<span class="ruvor-field__error" id="${id}-r${i}-w-err">${esc(wErr)}</span>` : ""}</td>
+      <td><button class="ruvor-btn ruvor-btn--ghost ruvor-btn--icon" type="button" data-remove="${i}" aria-label="${esc(T("carteiras.remover", r.ticker))}"${o.sending || o.ended ? " disabled" : ""}>${glyph("x")}</button></td>
+    </tr>`;
+  }).join("");
+  const full = o.rows.length >= 20;
+  const actions = o.ended
+    ? (o.ended === "comp" ? signInNotice("ended") : "")
+    : `<div class="m22b-edit-actions">
+        <button class="ruvor-btn" type="button" data-cancel="comp"${o.sending ? " disabled" : ""}>${tx("carteiras.cancelar")}</button>
+        ${o.sending ? sending(T("carteira.salvando")) : `<button class="ruvor-btn ruvor-btn--primary" type="submit"${o.base ? ' data-part="salvar-composicao"' : ""}>${tx("carteira.composicao.salvar")}</button>`}
+      </div>`;
+  return `<section class="ruvor-panel" aria-labelledby="h-comp-${id}">
+    ${compHead(o.p, o.rows.length, o.base, o.ended).replace('<h2 class="ruvor-h3">', `<h2 class="ruvor-h3" id="h-comp-${id}">`)}
+    <form class="ruvor-panel__body ruvor-stack" data-form="comp" novalidate>
+      <p class="ruvor-note">${tx("carteiras.composicao.dica")} ${tx("carteira.composicao.nota")}</p>
+      ${o.emCurso ? reply(T("carteira.composicao.emCurso", o.p.version)) : ""}
+      <div class="m22b-picker" data-picker>
+        <div class="ruvor-search">
+          ${glyph("magnifying-glass")}
+          <input class="ruvor-input ruvor-search__input" id="${id}-pk" type="search" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-label="${tx("carteiras.seletor.rotulo")}" placeholder="${tx("carteiras.seletor.placeholder")}" value=""${full ? ` disabled aria-describedby="${id}-pk-full"` : ""}${o.sending || o.ended ? " disabled" : ""}>
+        </div>
+        ${full ? `<p class="ruvor-hint" id="${id}-pk-full">${tx("carteiras.seletor.limite")}</p>` : ""}
+      </div>
+      <table class="ruvor-table m22b-editor">
+        <colgroup><col><col class="m22b-editor__weight"><col class="m22b-editor__remove"></colgroup>
+        <thead><tr><th scope="col">${tx("carteiras.col.acao")}</th><th scope="col" class="m22b-sum-weight">${tx("carteiras.col.peso")}</th><th scope="col"><span class="ruvor-sr-only">${tx("carteiras.col.remover")}</span></th></tr></thead>
+        <tbody>${o.rows.length ? rows : `<tr class="m22b-editor__empty"><td colspan="3">${esc(T("carteiras.editor.vazio"))}</td></tr>`}</tbody>
+        <tfoot><tr><td><b>${tx("carteiras.soma.rotulo")}</b> <span class="ruvor-muted">· ${tx("carteiras.acoes", o.rows.length)}</span></td>
+          <td colspan="2"><div class="m22b-sum" aria-live="polite" data-sum>${sumHtml(o.rows)}</div></td></tr>
+          ${total.length ? `<tr><td colspan="3">${total.map((m) => `<span class="ruvor-field__error" role="alert">${glyph("warning", "ruvor-glyph--sm")}<span>${esc(m)}</span></span>`).join("")}</td></tr>` : ""}
+        </tfoot>
+      </table>
+      ${o.fail ? failure(o.fail) : ""}
+      ${actions}
+    </form>
+  </section>`;
+}
+// O que a tela confere antes do PUT (RF-06): de 2 a 20, cada peso, a soma — os textos do lista.html.
+function checkComp(rows) {
+  if (rows.length < 2 || rows.length > 20) return { total: [T("carteiras.erro.contagem", rows.length)] };
+  const rowErrors = {};
+  const ws = rows.map((r, i) => {
+    const w = parseWeight(r.text);
+    if (w === null) rowErrors[i] = { w: T("carteiras.erro.pesoFormato") };
+    else if (w <= 0 || w > TOTAL_CENTS) rowErrors[i] = { w: T("carteiras.erro.peso") };
+    return w;
+  });
+  if (Object.keys(rowErrors).length) return { rowErrors };
+  const s = sumCents(ws);
+  if (s !== TOTAL_CENTS) return { total: [T("carteiras.erro.soma", centsText(s))] };
+  return null;
+}
+
+const riskSlot = () => `<section class="mk-tail mk-risk" data-part="risco">Moldura: aqui fica a seção de risco da carteira — os sete estados, o pedido, o resultado e a trilha —, desenhada no <code>risco.html</code> (T4). Ela lê <code>GET portfolios/{id}/risk</code>, e a página a relê depois de um <code>PUT</code> que muda a versão e de um <code>PATCH</code> do valor.</section>`;
+
+// ---------------------------------------------------------------- os estados da página
+const skeleton = () => `<div class="ruvor-stack" role="status" aria-busy="true">
+    <span class="ruvor-sr-only">${tx("carteira.carregando")}</span>
+    <div class="ruvor-skeleton ruvor-skeleton--short" aria-hidden="true"></div>
+    <div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div>
+    <div class="ruvor-skeleton ruvor-skeleton--block" aria-hidden="true"></div>
+  </div>`;
+const pageError = () => `<div class="ruvor-stack">
+    <a class="m22b-back" href="#" title="/carteiras">${glyph("arrow-left")}<span>${tx("carteira.voltar")}</span></a>
+    <div class="ruvor-panel"><div class="ruvor-panel__body ruvor-state">
+      <span class="ruvor-icon ruvor-icon--review"><svg aria-hidden="true" focusable="false"><use href="#i-duo-warning"/></svg></span>
+      <div class="ruvor-state__body">
+        <p class="ruvor-state__title">${tx("carteira.erro.titulo")}</p>
+        <p class="ruvor-state__text">${tx("carteira.erro.texto")}</p>
+        <div class="ruvor-state__actions"><button class="ruvor-btn" type="button" data-retry>${glyph("arrows-clockwise")}<span>${tx("carteiras.tentarDeNovo")}</span></button></div>
+      </div>
+    </div></div>
+  </div>`;
+const notFound = () => `<section class="ruvor-notfound" data-part="nao-encontrada">
+    <p class="ruvor-eyebrow">${tx("carteira.sobrancelha")}</p>
+    <h1 class="ruvor-display">${tx("carteira.naoEncontrada.titulo")}</h1>
+    <p class="ruvor-sub">${tx("carteira.naoEncontrada.texto")}</p>
+    <a class="ruvor-btn ruvor-btn--primary" href="#" title="/carteiras">${glyph("briefcase")}<span>${tx("carteira.naoEncontrada.voltar")}</span></a>
+  </section>`;
+
+// ================================================================= A VISTA VIVA
+const live = { p: clone(BASE), mode: "page", comp: null, name: null, value: null, valueFail: null, ended: null, compMsg: null, resp: "ok", emCurso: false };
+const liveHost = $("[data-live]");
+const liveDialog = $("#live-dialog");
+let opener = null;
+
+function renderLive() {
+  if (live.mode === "notfound") { liveHost.innerHTML = notFound(); return; }
+  if (live.mode === "archived") {
+    liveHost.innerHTML = `${reply(T("carteiras.arquivada", live.p.name))}
+      <p class="mk-tail">Moldura: a página foi à lista (<code>/carteiras</code>), que mostra o aviso acima, no topo, até a próxima navegação. O desenho da lista é o do <code>lista.html</code> (T2). <a href="#" data-reset>Voltar à carteira (moldura)</a></p>`;
+    return;
+  }
+  const head = headHtml({ p: live.p, name: live.name, value: live.value, valueFail: live.valueFail, valueSending: live.valueSending, ended: live.ended, base: true });
+  const comp = live.comp ? compEdit({ p: live.p, base: true, emCurso: live.emCurso, ended: live.ended, ...live.comp }) : compRead({ p: live.p, base: true, ended: live.ended, message: live.compMsg });
+  liveHost.innerHTML = head + comp + riskSlot();
+}
+// a próxima escrita: devolve a resposta escolhida na moldura e volta a "200 / 204"
+function takeResp() { const r = live.resp; setResp("ok"); return r; }
+
+liveHost.addEventListener("click", (ev) => {
+  const t = ev.target;
+  if (t.closest("[data-reset]")) { ev.preventDefault(); Object.assign(live, { p: clone(BASE), mode: "page", comp: null, name: null, value: null, valueFail: null, ended: null, compMsg: null }); renderSlot(false); renderLive(); return; }
+  if (live.ended) return; // depois do 401, nenhuma ação de escrita volta
+  const act = t.closest("[data-act]")?.dataset.act;
+  if (act === "name") { live.name = { text: live.p.name }; renderLive(); $("[data-form='name'] input", liveHost)?.focus(); return; }
+  if (act === "value") { live.value = { text: live.p.notional ? apiToField(live.p.notional) : "" }; live.valueFail = null; renderLive(); $("[data-form='value'] input", liveHost)?.focus(); return; }
+  if (act === "unset") { patchValue(null); return; }
+  if (act === "edit") { live.comp = { rows: rowsOf(live.p) }; live.compMsg = null; renderLive(); $("[data-weight='0']", liveHost)?.focus(); return; }
+  if (act === "archive") { openArchive(t.closest("[data-act]")); return; }
+  const cancel = t.closest("[data-cancel]")?.dataset.cancel;
+  if (cancel === "name") { live.name = null; renderLive(); $("[data-part='mudar-nome']", liveHost)?.focus(); return; }
+  if (cancel === "value") { live.value = null; renderLive(); $("[data-part='mudar-valor']", liveHost)?.focus(); return; }
+  if (cancel === "comp") { live.comp = null; renderLive(); $("[data-part='editar-composicao']", liveHost)?.focus(); return; }
+  const rm = t.closest("[data-remove]");
+  if (rm) { live.comp.rows.splice(Number(rm.dataset.remove), 1); live.comp.rowErrors = {}; live.comp.total = []; renderLive(); return; }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || liveDialog.open || live.ended) return;
+  if (live.name) { live.name = null; renderLive(); $("[data-part='mudar-nome']", liveHost)?.focus(); }
+  else if (live.value) { live.value = null; renderLive(); $("[data-part='mudar-valor']", liveHost)?.focus(); }
+});
+// O campo guarda o que foi digitado; só a soma muda (o editor nunca reescreve o campo).
+liveHost.addEventListener("input", (ev) => {
+  const w = ev.target.closest("[data-weight]");
+  if (!w || !live.comp) return;
+  live.comp.rows[Number(w.dataset.weight)].text = w.value;
+  $("[data-sum]", liveHost).innerHTML = sumHtml(live.comp.rows);
+});
+liveHost.addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const form = ev.target.dataset.form;
+  if (form === "name") {
+    const text = $("input", ev.target).value;
+    const name = text.trim();
+    if (!name) { live.name = { text, error: T("carteiras.erro.nome") }; renderLive(); $("[data-form='name'] input", liveHost).focus(); return; }
+    const r = takeResp();
+    if (r === "404") { live.mode = "notfound"; renderLive(); return; }
+    if (r === "401") { live.name = { text }; endSession("name"); return; }
+    if (r === "rede") { live.name = { text, fail: "rede" }; renderLive(); return; }
+    live.p.name = name; live.name = null; renderLive(); $("[data-part='mudar-nome']", liveHost)?.focus(); return;
+  }
+  if (form === "value") {
+    const text = $("input", ev.target).value;
+    const n = parseNotional(text);
+    if (n === null) { live.value = { text, error: T("carteiras.erro.valor") }; renderLive(); $("[data-form='value'] input", liveHost).focus(); return; }
+    patchValue(notionalToApi(n), text);
+    return;
+  }
+  if (form === "comp") {
+    const rows = live.comp.rows;
+    const bad = checkComp(rows);
+    if (bad) { live.comp = { rows, ...bad }; renderLive(); ($("[aria-invalid='true']", liveHost) ?? $("[data-sum]", liveHost))?.focus?.(); return; }
+    const r = takeResp();
+    if (r === "404") { live.mode = "notfound"; renderLive(); return; }
+    if (r === "401") { live.comp = { rows }; endSession("comp"); return; }
+    if (r === "rede") { live.comp = { rows, fail: "rede" }; renderLive(); return; }
+    const known = live.p.version;
+    const holdings = rows.map((x) => ({ ticker: x.ticker, name: x.name, weight: weightToApi(parseWeight(x.text)) })).sort((a, b) => (a.ticker < b.ticker ? -1 : 1));
+    if (r === "mesma") {
+      live.compMsg = reply(T("carteira.composicao.nadaMudou", known));
+    } else {
+      const v = r === "outra" ? known + 2 : known + 1;
+      live.p = { ...live.p, version: v, holdings, version_created_at: ["03/10/2026", "11:05"] };
+      live.compMsg = r === "outra"
+        ? reply(T("carteira.composicao.outraPessoa", v), "review") + (live.emCurso ? reply(T("carteira.composicao.riscoEmCurso", known, v)) : "")
+        : reply(live.emCurso ? T("carteira.composicao.salvaEmCurso", v, known) : T("carteira.composicao.salva", v));
+    }
+    live.comp = null;
+    // a versão nova não tem cálculo em curso: read_risk lê só a versão corrente
+    if (r !== "mesma" && live.emCurso) setCurso(false); else renderLive();
+    $("[data-part='editar-composicao']", liveHost)?.focus();
+  }
+});
+// O 401 (RF-02, o RF-16 do M2.1b): a sessão fica {anonymous, ended: true}; a página continua à
+// vista, com o que foi digitado; o aviso entra no lugar da ação que recebeu o 401 e as outras somem.
+function endSession(where) { live.ended = where; renderSlot(true); renderLive(); $("[data-signin-notice] a", liveHost)?.focus(); }
+function patchValue(v, text = "") {
+  const r = takeResp();
+  if (r === "404") { live.mode = "notfound"; renderLive(); return; }
+  if (v === null) {
+    // "Tirar o valor": sem campo aberto; a falha e o 401 ficam no próprio fato.
+    if (r === "401") { endSession("unset"); return; }
+    if (r === "rede") { live.valueFail = "rede"; renderLive(); return; }
+    live.p.notional = null; live.valueFail = null; renderLive(); $("[data-part='mudar-valor']", liveHost)?.focus(); return;
+  }
+  if (r === "401") { live.value = { text }; endSession("value"); return; }
+  if (r === "rede") { live.value = { text, fail: "rede" }; renderLive(); return; }
+  live.p.notional = v; live.value = null; live.valueFail = null; renderLive(); $("[data-part='mudar-valor']", liveHost)?.focus();
+}
+
+// ---------------------------------------------------------------- o diálogo
+let dlgSeq = 0;
+// { nome, erro, sending, sessao, live }
+function archiveHtml(o) {
+  const tid = o.live ? "live-dialog-title" : `d${++dlgSeq}-t`;
+  return `<div class="m21b-dialog__body">
+      <h2 class="ruvor-h3" id="${tid}">${tx("carteira.arquivar.titulo", o.nome)}</h2>
+      ${o.sessao ? "" : `<p>${tx("carteira.arquivar.texto")}</p><p class="ruvor-note">${tx("carteira.arquivar.semVolta")}</p>`}
+      ${o.erro ? failure(o.erro) : ""}
+      ${o.sessao ? signInNotice("ended") : ""}
+    </div>
+    <div class="m21b-dialog__actions">
+      <button class="ruvor-btn" type="button" data-close${o.sending ? " disabled" : ""}>${tx(o.sessao ? "usuarios.confirmar.fechar" : "carteiras.cancelar")}</button>
+      ${o.sessao ? "" : o.sending ? sending(T("carteira.arquivar.enviando")) : `<button class="ruvor-btn ruvor-btn--primary" type="button" data-confirm>${tx("carteira.arquivar.confirmar")}</button>`}
+    </div>`;
+}
+function openArchive(from) {
+  opener = from;
+  liveDialog.innerHTML = archiveHtml({ nome: live.p.name, live: true });
+  liveDialog.showModal();
+}
+liveDialog.addEventListener("close", () => {
+  liveDialog.innerHTML = "";
+  const target = opener && document.contains(opener) ? opener : ($("[data-part='arquivar']", liveHost) ?? $("[data-signin-notice] a", liveHost));
+  opener = null;
+  target?.focus();
+});
+liveDialog.addEventListener("click", (ev) => {
+  if (ev.target.closest("[data-close]")) { liveDialog.close(); return; }
+  if (!ev.target.closest("[data-confirm]")) return;
+  const r = takeResp();
+  if (r === "404") { opener = null; liveDialog.close(); live.mode = "notfound"; renderLive(); return; }
+  if (r === "401") { liveDialog.innerHTML = archiveHtml({ nome: live.p.name, live: true, sessao: true }); live.ended = "archive"; renderSlot(true); renderLive(); opener = null; liveDialog.querySelector("a, button")?.focus(); return; }
+  if (r === "rede") { liveDialog.innerHTML = archiveHtml({ nome: live.p.name, live: true, erro: "rede" }); liveDialog.querySelector("[data-confirm]")?.focus(); return; }
+  opener = null; liveDialog.close(); live.mode = "archived"; renderLive();
+});
+
+// ================================================================= A VISTA "OS ESTADOS"
+function caseBlock(cap, html, id = "") {
+  return `<div class="mk-case"${id ? ` id="${id}"` : ""}><p class="mk-cap">${esc(cap)}</p>${html}</div>`;
+}
+$("[data-slot='estados']").innerHTML = [
+  caseBlock("Carregando · GET portfolios/{id} ainda não voltou (a sessão já resolveu como logada; antes disso, o mesmo esqueleto, sem pedido)", skeleton()),
+  caseBlock("Erro · a leitura falhou (rede, 5xx, 429 ou outro code): a mensagem com \"Tentar de novo\"", pageError()),
+  caseBlock("Não encontrada · 404 portfolio_not_found, ao abrir ou no meio do uso (outra pessoa arquivou): a página inteira vira isto", notFound()),
+  caseBlock("Anônimo desde a carga (RF-02): o aviso do conta.html no lugar da página, sem pedido à API; a barra mostra \"Entrar\" e não mostra \"Carteiras\"", `<div class="m21b-page-notice">${signInNotice("required")}</div>`),
+  caseBlock("401 ao carregar, depois de ter entrado: o aviso de sessão terminada no lugar da página", `<div class="m21b-page-notice">${signInNotice("ended")}</div>`),
+  caseBlock("Pronta · a carteira com valor, em leitura (o estado de base da vista viva)", headHtml({ p: BASE }) + compRead({ p: BASE }) + riskSlot()),
+  caseBlock("Pronta · sem valor (notional nulo)", headHtml({ p: { ...BASE, notional: null } })),
+].join("");
+
+// ================================================================= A VISTA "A COMPOSIÇÃO"
+const P = BASE;
+const R = rowsOf(P);
+const withTexts = (texts) => R.map((r, i) => ({ ...r, text: texts[i] }));
+const REASONS_ROWS = [
+  { ticker: "BBAS3", name: "BANCO DO BRASIL S.A.", text: "20" },
+  { ticker: "ITUB4", name: "ITAU UNIBANCO HOLDING S.A.", text: "35" },
+  { ticker: "PETR4", name: "PETROLEO BRASILEIRO S.A. PETROBRAS", text: "25" },
+  { ticker: "TAEE11", name: "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.", text: "20" },
+];
+const AFTER = { ...P, version: 4, version_created_at: ["03/10/2026", "11:05"], holdings: [
+  { ticker: "BBAS3", name: "BANCO DO BRASIL S.A.", weight: "20.00" },
+  { ticker: "ITUB4", name: "ITAU UNIBANCO HOLDING S.A.", weight: "35.50" },
+  { ticker: "PETR4", name: "PETROLEO BRASILEIRO S.A. PETROBRAS", weight: "24.50" },
+  { ticker: "TAEE11", name: "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.", weight: "20.00" },
+] };
+const OTHER = { ...AFTER, version: 5, version_created_at: ["03/10/2026", "11:06"] };
+$("[data-slot='composicao']").innerHTML = [
+  caseBlock("Leitura · na ordem da API (por código), o peso como veio, o total", compRead({ p: P })),
+  caseBlock("Edição · aberta: a composição corrente no editor, cada peso como texto (\"20.00\" → \"20,00\")", compEdit({ p: P, rows: R })),
+  caseBlock("Edição · digitando: o campo guarda o que foi digitado (\"35,5\", \"24,50\") e a soma é exata (0,01 + 65,40 + 34,59 também daria 100,00: centésimos inteiros)", compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]) })),
+  caseBlock("Edição · soma abaixo e, depois de \"Salvar a composição\", o motivo no total, sem pedido", compEdit({ p: P, rows: withTexts(["20", "35", "24,5", "20"]), total: [T("carteiras.erro.soma", "99,50")] })),
+  caseBlock("Edição · soma acima: só o aviso na soma; o motivo no total aparece ao salvar", compEdit({ p: P, rows: withTexts(["20", "40", "25", "20"]) })),
+  caseBlock("Edição · um campo que ainda não é número (\"35,\" continua \"35,\" e conta 35,00; \"2,555\" não é peso e fica fora da soma) e, ao salvar, o motivo na linha", compEdit({ p: P, rows: withTexts(["20", "35,", "2,555", "20"]), rowErrors: { 2: { w: T("carteiras.erro.pesoFormato") } } })),
+  caseBlock("Edição · uma ação só, depois de remover as outras: o motivo no total (count_out_of_range, conferido no navegador)", compEdit({ p: P, rows: [{ ...R[1], text: "100" }], total: [T("carteiras.erro.contagem", 1)] })),
+  caseBlock("Edição · 400 invalid_holdings, reason items, o caso desta página: inactive — a ação deixou de ser negociada depois de entrar na composição, e o corpo da carteira não traz o status (os riscos da spec). A mensagem vai à linha do index, sob o código", compEdit({ p: P, rows: REASONS_ROWS, rowErrors: { 3: { t: T("carteiras.erro.inativa") } } })),
+  caseBlock("Edição · 400 invalid_holdings, cada reason de linha (duplicate, unknown_ticker, not_a_stock, inactive sob o código; weight_out_of_range sob o peso), só para conferir as mensagens do lista.html", compEdit({ p: P, rows: [
+    { ticker: "BBAS3", name: "BANCO DO BRASIL S.A.", text: "20" },
+    { ticker: "BBAS3", name: "BANCO DO BRASIL S.A.", text: "10" },
+    { ticker: "XPTO3", name: "—", text: "10" },
+    { ticker: "IBOV", name: "IBOVESPA", text: "10" },
+    { ticker: "TAEE11", name: "TRANSMISSORA ALIANÇA DE ENERGIA ELÉTRICA S.A.", text: "20" },
+    { ticker: "ITUB4", name: "ITAU UNIBANCO HOLDING S.A.", text: "130" },
+  ], rowErrors: { 1: { t: T("carteiras.erro.repetida") }, 2: { t: T("carteiras.erro.desconhecida") }, 3: { t: T("carteiras.erro.naoAcao") }, 4: { t: T("carteiras.erro.inativa") }, 5: { w: T("carteiras.erro.peso") } } })),
+  caseBlock("Edição · 400 invalid_holdings, reason weights_sum (details.sum) ou count_out_of_range (details.count): no total", compEdit({ p: P, rows: withTexts(["20", "35", "25", "20"]), total: [T("carteiras.erro.soma", "99,99")] })),
+  caseBlock("Edição · 400 invalid_parameter (details.fields em texto, sem o index da linha): a mensagem geral", compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]), fail: "forma" })),
+  caseBlock("Edição · com um cálculo do risco em curso (in_progress da versão 3): o aviso antes de salvar; salvar não é bloqueado", compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]), emCurso: true })),
+  caseBlock("Edição · salvando: o editor espera, os campos ficam travados", compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]), sending: true })),
+  caseBlock("Resposta · 200 com version = conhecida + 1: salva, de volta à leitura, com a composição da resposta (a cabeça passa a versão 4)", compRead({ p: AFTER, message: reply(T("carteira.composicao.salva", 4)) })),
+  caseBlock("Resposta · 200 com a mesma version (a mesma composição, em qualquer ordem): nada mudou", compRead({ p: P, message: reply(T("carteira.composicao.nadaMudou", 3)) })),
+  caseBlock("Resposta · 200 com version > conhecida + 1 (a tela conhecia a 3; veio a 5): outra pessoa também mudou, e a composição que ficou", compRead({ p: OTHER, message: reply(T("carteira.composicao.outraPessoa", 5), "review") })),
+  caseBlock("Resposta · 200 salvo com o cálculo em curso da versão anterior (RF-07): o risco passa a ser o da versão nova, vazio até calcular", compRead({ p: AFTER, message: reply(T("carteira.composicao.salvaEmCurso", 4, 3)) })),
+  caseBlock("Falha do PUT · rede, 5xx, 429 (com e sem wait_seconds), csrf_failed ou outro code: a mensagem no lugar da ação, o editor aberto com o que foi digitado, a composição de antes intacta", compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]), fail: "rede" }) + `<div class="ruvor-stack">${["muitos", "muitosSemTempo", "csrf", "outro"].map(failure).join("")}</div>`),
+  caseBlock("401 no PUT (RF-02): a página inteira depois — a sessão {anonymous, ended: true}; o aviso no lugar das ações do editor, o que foi digitado à vista (só leitura), e nenhuma outra ação de escrita (Mudar o nome, Arquivar, Mudar e Tirar o valor somem); a barra mostra Entrar, sem Carteiras", headHtml({ p: P, ended: "comp" }) + compEdit({ p: P, rows: withTexts(["20", "35,5", "24,50", "20"]), ended: "comp" })),
+  caseBlock("O editor sem linhas (todas removidas): a linha vazia do lista.html", compEdit({ p: P, rows: [], total: [] })),
+  caseBlock("Resposta · version > conhecida + 1 com o cálculo em curso da versão anterior: as duas frases", compRead({ p: OTHER, message: reply(T("carteira.composicao.outraPessoa", 5), "review") + reply(T("carteira.composicao.riscoEmCurso", 3, 5)) })),
+  caseBlock("404 no PUT: a página inteira vai a \"Carteira não encontrada.\" (ver a vista dos estados)", `<p class="mk-tail">Moldura: sem desenho aqui; é o estado "não encontrada".</p>`),
+].join("");
+
+// ================================================================= A VISTA "O NOME E O VALOR"
+const NOVO = "Bancos, energia e transmissão";
+$("[data-slot='nomevalor']").innerHTML = [
+  caseBlock("O nome · editando (o título vira o campo; o Esc cancela)", headHtml({ p: P, name: { text: NOVO } })),
+  caseBlock("O nome · vazio, conferido no navegador antes do pedido", headHtml({ p: P, name: { text: "   ", error: T("carteiras.erro.nome") } })),
+  caseBlock("O nome · 400 invalid_parameter: a mensagem de details.fields.name, da API, como chega", headHtml({ p: P, name: { text: NOVO, apiError: "Certifique-se de que este campo não tenha mais de 100 caracteres." } })),
+  caseBlock("O nome · salvando", headHtml({ p: P, name: { text: NOVO, sending: true } })),
+  caseBlock("O nome · a falha do PATCH (rede; e, no mesmo lugar, 429, csrf_failed, outro code): o campo aberto com o que foi digitado, o nome de antes intacto", headHtml({ p: P, name: { text: NOVO, fail: "rede" } })),
+  caseBlock("O nome · 401: o aviso de sessão terminada no lugar das ações", headHtml({ p: P, name: { text: NOVO }, ended: "name" })),
+  caseBlock("O valor · editando (o fato vira o campo, na linha inteira)", headHtml({ p: P, value: { text: "300000,00" } })),
+  caseBlock("O valor · sem valor: \"Informar um valor\" abre o campo vazio", headHtml({ p: { ...P, notional: null }, value: { text: "" } })),
+  caseBlock("O valor · fora da regra, conferido no navegador (três casas; também zero, letras, milhar mal formado, mais de 16 algarismos inteiros)", headHtml({ p: P, value: { text: "300000,555", error: T("carteiras.erro.valor") } })),
+  caseBlock("O valor · a falha do PATCH: o campo aberto com o que foi digitado, o valor de antes intacto", headHtml({ p: P, value: { text: "300000,00", fail: "rede" } })),
+  caseBlock("O valor · 401 no PATCH", headHtml({ p: P, value: { text: "300000,00" }, ended: "value" })),
+  caseBlock("Tirar o valor · salvando ({\"notional\": null}, sem confirmação)", headHtml({ p: P, valueSending: true })),
+  caseBlock("Tirar o valor · feito: \"sem valor\", e a frase do fato diz que a perda aparece só em %", headHtml({ p: { ...P, notional: null } })),
+  caseBlock("Tirar o valor · a falha: o valor de antes fica, com a mensagem no fato", headHtml({ p: P, valueFail: "rede" })),
+  caseBlock("Tirar o valor · 401: o aviso de sessão terminada no lugar das ações do fato", headHtml({ p: P, ended: "unset" })),
+].join("");
+
+// ================================================================= A VISTA "O ARQUIVAMENTO"
+const scrim = (cap, inner) => caseBlock(cap, `<div class="mk-scrim"><dialog class="m21b-dialog" open>${inner}</dialog></div>`);
+$("[data-slot='dialogos']").innerHTML = [
+  scrim("Confirmar · o efeito dito; \"Cancelar\" e o Esc fecham sem pedido", archiveHtml({ nome: P.name })),
+  scrim("Confirmar · enviando (DELETE)", archiveHtml({ nome: P.name, sending: true })),
+  scrim("Erro · rede (e, no mesmo lugar, 429, csrf_failed e qualquer outro code): o diálogo continua aberto, a carteira continua", archiveHtml({ nome: P.name, erro: "rede" })),
+  scrim("Erro · 401: o aviso de sessão terminada dentro do diálogo, no lugar da ação, com Entrar; o outro botão vira \"Fechar\" (usuarios.confirmar.fechar). Fechado, a página fica sem nenhuma ação de escrita, com o aviso no lugar de Arquivar", archiveHtml({ nome: P.name, sessao: true })),
+].join("");
+$("[data-slot='depois']").innerHTML = `<p class="mk-cap">Depois · 204: a página vai à lista (/carteiras), que mostra o aviso no topo. 404 (outra pessoa já arquivou): o diálogo fecha e a página vai a "Carteira não encontrada."</p>${reply(T("carteiras.arquivada", P.name))}`;
+
+// ================================================================= A VISTA "OS TEXTOS"
+function rowsFor(obj, ex = {}) {
+  const out = (v, e) => (typeof v === "function" ? (e ?? [[]]).map((a) => v(...a)) : [v]);
+  let rows = `<thead><tr><th scope="col">chave</th><th scope="col">texto</th></tr></thead><tbody>`;
+  for (const [k, v] of Object.entries(obj)) {
+    const sig = typeof v === "function" ? `função de ${v.length} argumento${v.length === 1 ? "" : "s"}` : "texto";
+    rows += `<tr><td>${esc(k)}<small>${esc(sig)}</small></td><td>${out(v, ex[k] ?? (typeof v === "function" ? [Array(v.length).fill("X")] : undefined)).map(esc).join("<br><br>")}</td></tr>`;
+  }
+  return `${rows}</tbody>`;
+}
+$("[data-textos]").innerHTML = rowsFor(TEXTOS, EXEMPLOS);
+$("[data-textos-outros]").innerHTML = rowsFor({ ...DO_LISTA, ...DA_CONTA, ...DO_USUARIOS }, { ...EXEMPLOS_DO_LISTA, "conta.menu.rotulo": [["Ana Beatriz Souza"]] });
+$("[data-exemplos]").textContent = `// novos em EXEMPLOS (frontend/tests/exemplos.ts)\n${JSON.stringify(EXEMPLOS, null, 2)}`;
+
+// ================================================================= tema e vistas
+const root = document.documentElement;
+const params = new URLSearchParams(location.search);
+let theme = "system";
+const themeBtns = document.querySelectorAll("[data-set-theme]");
+function setTheme(next) {
+  theme = next;
+  if (next === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", next);
+  for (const b of themeBtns) b.setAttribute("aria-pressed", String(b.dataset.setTheme === next));
+  refreshFrames();
+}
+for (const b of themeBtns) b.addEventListener("click", () => setTheme(b.dataset.setTheme));
+// O alternador de leitura fica como no casco: nenhum texto desta página muda com o nível
+// (a seção de risco, que muda, é da T4).
+for (const b of document.querySelectorAll("[data-set-reading]")) b.addEventListener("click", () => {
+  for (const o of document.querySelectorAll("[data-set-reading]")) o.setAttribute("aria-pressed", String(o === b));
+});
+
+function setResp(r) {
+  live.resp = r;
+  for (const b of document.querySelectorAll("[data-mk-resp]")) b.setAttribute("aria-pressed", String(b.dataset.mkResp === r));
+}
+for (const b of document.querySelectorAll("[data-mk-resp]")) b.addEventListener("click", () => setResp(b.dataset.mkResp));
+function setCurso(on) {
+  live.emCurso = on;
+  for (const b of document.querySelectorAll("[data-mk-curso]")) b.setAttribute("aria-pressed", String((b.dataset.mkCurso === "sim") === on));
+  renderLive();
+}
+for (const b of document.querySelectorAll("[data-mk-curso]")) b.addEventListener("click", () => setCurso(b.dataset.mkCurso === "sim"));
+
+const mkBtns = document.querySelectorAll("[data-mk]");
+let view = "pagina";
+function setView(next) {
+  view = next;
+  for (const b of mkBtns) b.setAttribute("aria-pressed", String(b.dataset.mk === next));
+  for (const v of document.querySelectorAll(".mk-view")) v.hidden = v.dataset.view !== next;
+  // O anônimo desde a carga é o único estado com "Entrar" na barra; nas outras, a conta logada.
+  refreshFrames();
+}
+for (const b of mkBtns) b.addEventListener("click", () => setView(b.dataset.mk));
+
+function refreshFrames() {
+  const host = $("[data-frames]");
+  if (!host || view !== "estreito") return;
+  const src = (v) => `${location.pathname}?moldura=0&vista=${v}&tema=${theme}`;
+  host.innerHTML = [
+    ["A página, 360 px", "pagina"],
+    ["Os estados, 360 px", "estados"],
+    ["A composição, 360 px", "composicao"],
+    ["O nome e o valor, 360 px", "nomevalor"],
+    ["O arquivamento, 360 px", "dialogos"],
+  ].map(([l, v]) => `<div class="mk-frame"><p>${esc(l)}</p><iframe title="${esc(l)}" src="${src(v)}"></iframe></div>`).join("");
+}
+
+// ?vista=pagina|estados|composicao|nomevalor|dialogos|estreito|textos &tema=light|dark|system &moldura=0 &curso=sim
+if (params.get("moldura") === "0") root.dataset.moldura = "0";
+renderSlot(false);
+setResp("ok");
+live.emCurso = params.get("curso") === "sim";
+setCurso(live.emCurso);
+setTheme(params.get("tema") || "system");
+setView(params.get("vista") || "pagina");
+document.body.dataset.ready = "true";
+</script>
+</body>
+</html>

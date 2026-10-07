@@ -709,7 +709,7 @@
 
 /* M2.3: as chaves da barra juntas no terceiro lugar da grade — o alternador de leitura
    primeiro, a chave de tema depois e, desde o M2.1b, o lugar da conta por último. Até
-   840 px, ver o fim da folha. */
+   920 px (840 no M2.1b), ver o fim da folha. */
 .ruvor-topbar__prefs {
   display: flex;
   align-items: center;
@@ -2488,8 +2488,8 @@
  * na barra, o menu, o convite e os avisos) e usuarios.html (o formulário de criação, a
  * lista, o diálogo e o campo com copiar). Cada m21b- virou um nome ruvor- (o que o mockup
  * tabela, quando tabela); os valores são os aprovados. Ficam antes do anel sobre fundo
- * escuro, como as do M1.6b. Os pontos de quebra (1023, 840 e 720 px) estão nas @media do
- * fim da folha.
+ * escuro, como as do M1.6b. Os pontos de quebra (1023, 840 — 920 desde o M2.2b — e 720 px)
+ * estão nas @media do fim da folha.
  * ================================================================================== */
 
 /* --- A cena de acesso e o arranjo de tela cheia (entrada.html) ----------------------- */
@@ -3073,6 +3073,619 @@
   color: var(--ruvor-critical-text);
 }
 
+/* ==================================================================================
+ * M2.2b — as telas da carteira (T6). Vieram do estilo local dos três mockups aprovados,
+ * docs/mockups/M2.2b/: lista.html (o item "Carteiras" da barra, a lista, a criação, o seletor
+ * de ação e o editor da composição), carteira.html (a cabeça da página, o nome e o valor no
+ * lugar, os fatos, a composição em leitura e as ações da edição) e risco.html (o alto do
+ * resultado, a faixa em reais, a trilha da carteira e o histórico curto). Cada m22b- virou um
+ * nome ruvor-; os valores são os aprovados, e a moldura dos mockups (mk-, m22b-mk-) não vem.
+ * As m21b- que os mockups copiaram do M2.1b (a barra e o diálogo) já estão no kit, acima, com
+ * os nomes da T10 dele. O ponto de quebra da barra passou de 840 a 920 px (o portão das T2 a
+ * T4), na @media do fim da folha; a de 720 px tem o estreito destas telas.
+ * ================================================================================== */
+
+/* --- O item "Carteiras" na barra (lista.html, D-180) ---------------------------------- */
+
+/* O .ruvor-nav do kit com um modificador: logo depois da marca, só com a sessão logada e a
+   conta pronta. O kit esconde o .ruvor-nav até 1000 px (a vitrine o usa assim); este fica em
+   todas as larguras. O [hidden] sobrevive ao display do .ruvor-nav. */
+.ruvor-nav--account[hidden] {
+  display: none;
+}
+
+.ruvor-topbar > .ruvor-nav--account:not([hidden]) {
+  display: flex;
+}
+
+.ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+
+/* 38 px do gap da barra − 14 = 24 px da marca, o gap do .ruvor-nav. */
+.ruvor-topbar > .ruvor-nav--account {
+  margin-left: -14px;
+}
+
+/* --- A cabeça da lista e a lista (lista.html) ----------------------------------------- */
+
+.ruvor-portfolios-head {
+  flex-wrap: wrap;
+}
+
+.ruvor-portfolios-head .ruvor-sub {
+  margin-bottom: 0;
+}
+
+/* A organização, quando não é a pessoal. */
+.ruvor-portfolios-head__org {
+  margin: var(--ruvor-space-2) 0 0;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+/* A lista (sobre .ruvor-table): o nome é o link para a carteira; até 720 px, um bloco por
+   carteira (a @media do fim da folha). */
+.ruvor-portfolios {
+  table-layout: auto;
+}
+
+.ruvor-portfolios th:not(:first-child),
+.ruvor-portfolios td:not(:first-child) {
+  white-space: nowrap;
+}
+
+.ruvor-portfolios__name {
+  font-weight: var(--ruvor-type-small-weight);
+  color: var(--ruvor-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.ruvor-portfolios__name:hover {
+  text-decoration: underline;
+}
+
+.ruvor-portfolios__name:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: var(--ruvor-radius-sm);
+}
+
+.ruvor-portfolios__muted {
+  color: var(--ruvor-text-muted);
+}
+
+/* Carregando: linhas de esqueleto. */
+.ruvor-portfolios__skel td {
+  padding-block: 14px;
+}
+
+.ruvor-portfolios__skel .ruvor-skeleton {
+  display: block;
+  height: 12px;
+}
+
+/* O pé da lista: quantas aparecem, o "mostrar mais" e o erro dele. */
+.ruvor-portfolios-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-3);
+  padding: var(--ruvor-space-3) 18px;
+  border-top: 1px solid var(--ruvor-table-rule);
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-portfolios-more__error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--ruvor-critical-text);
+}
+
+/* --- O formulário de criação (lista.html) --------------------------------------------- */
+
+.ruvor-portfolio-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-5);
+}
+
+/* Sobre .ruvor-form-grid: o nome largo, o valor estreito. Em (0,2,0), vence a coluna única que
+   a @media de 1000 px dá ao .ruvor-form-grid, mais abaixo; a coluna única vem só até 720 px. */
+.ruvor-form-grid.ruvor-portfolio-form__fields {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.ruvor-portfolio-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ruvor-space-2) var(--ruvor-space-3);
+}
+
+.ruvor-portfolio-form__general {
+  margin: 0;
+}
+
+/* O grupo da composição: um fieldset sem moldura, com a legenda de título. */
+.ruvor-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.ruvor-fieldset__title {
+  margin: 0;
+  padding: 0;
+  font-size: var(--ruvor-type-small-size);
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+/* --- O seletor de ação (lista.html, D-181): a busca do catálogo dentro do editor ---------- */
+
+.ruvor-picker {
+  position: relative;
+  max-width: 440px;
+}
+
+.ruvor-picker .ruvor-search__popover {
+  min-width: 0;
+}
+
+.ruvor-picker .ruvor-search__list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* A opção (sobre .ruvor-search__option, role="option"): a escolhível e a desabilitada
+   (--off, com aria-disabled="true"), que mostra o motivo no lugar do setor. */
+.ruvor-pick > .ruvor-search__link {
+  cursor: pointer;
+}
+
+.ruvor-pick--off > .ruvor-search__link {
+  cursor: not-allowed;
+}
+
+.ruvor-pick--off > .ruvor-search__link:hover {
+  background: transparent;
+}
+
+.ruvor-pick--off.ruvor-search__option--active > .ruvor-search__link {
+  background: var(--ruvor-control-hover);
+  box-shadow: inset 3px 0 0 var(--ruvor-border);
+}
+
+.ruvor-pick--off .ruvor-search__ticker,
+.ruvor-pick--off .ruvor-search__name b {
+  color: var(--ruvor-text-muted);
+}
+
+/* O motivo na tinta do texto. Em (0,2,0), vence o .ruvor-search__name span (0,1,1), que o
+   deixaria suave (o mockup usava !important). */
+.ruvor-search__name .ruvor-pick__why {
+  color: var(--ruvor-text);
+}
+
+/* --- O editor da composição (lista.html e carteira.html) ------------------------------ */
+
+/* Sobre .ruvor-table: a ação, o peso (um campo de texto) e o remover. */
+.ruvor-holdings-editor {
+  table-layout: fixed;
+}
+
+.ruvor-holdings-editor col.ruvor-holdings-editor__weight {
+  width: 180px;
+}
+
+.ruvor-holdings-editor col.ruvor-holdings-editor__remove {
+  width: 56px;
+}
+
+.ruvor-holdings-editor td {
+  vertical-align: top;
+}
+
+/* O código e o nome da ação, no editor e na composição em leitura. */
+.ruvor-holding-ticker {
+  font-family: var(--ruvor-font-mono);
+  font-weight: var(--ruvor-type-small-weight);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-holding-name {
+  display: block;
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-micro-size);
+  overflow-wrap: anywhere;
+}
+
+.ruvor-holdings-editor .ruvor-input {
+  padding: 7px 9px;
+  text-align: right;
+  font-family: var(--ruvor-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ruvor-holdings-editor .ruvor-field__error {
+  display: block;
+  margin-top: var(--ruvor-space-1);
+}
+
+.ruvor-holdings-editor .ruvor-btn--icon {
+  width: 32px;
+  height: 32px;
+}
+
+.ruvor-holdings-editor__empty td {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-holdings-editor tfoot td {
+  border-top: 1px solid var(--ruvor-border);
+  border-bottom: 0;
+  background: var(--ruvor-table-head);
+  vertical-align: middle;
+}
+
+/* O cabeçalho da coluna do peso, à direita como o campo. */
+.ruvor-holdings-editor__weight-head {
+  text-align: right;
+}
+
+/* A soma ao vivo, no pé do editor: o total, o que falta ou sobra (ou "exata") e quantos pesos
+   ficaram fora da soma. */
+.ruvor-weight-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruvor-space-1) var(--ruvor-space-3);
+}
+
+.ruvor-weight-sum__value {
+  font-family: var(--ruvor-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-weight-sum__gap {
+  font-size: var(--ruvor-type-small-size);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-weight-sum__gap--exact {
+  color: var(--ruvor-validated-text);
+}
+
+.ruvor-weight-sum__out {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--ruvor-type-micro-size);
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-weight-sum .ruvor-field__error {
+  flex-basis: 100%;
+}
+
+/* --- A cabeça da página da carteira (carteira.html) ----------------------------------- */
+
+/* A volta à lista. */
+.ruvor-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ruvor-space-1);
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+  text-decoration: none;
+  border-radius: var(--ruvor-radius-sm);
+}
+
+.ruvor-back:hover {
+  color: var(--ruvor-ink);
+  text-decoration: underline;
+}
+
+.ruvor-back:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+}
+
+/* O nome à esquerda, as ações (mudar o nome, arquivar) à direita. */
+.ruvor-portfolio-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ruvor-space-3) var(--ruvor-space-5);
+}
+
+.ruvor-portfolio-top__id {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.ruvor-portfolio-top__id .ruvor-display {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ruvor-portfolio-top__id .ruvor-eyebrow {
+  margin: var(--ruvor-space-3) 0 var(--ruvor-space-1);
+}
+
+.ruvor-portfolio-top__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-2);
+}
+
+/* O nome e o valor no lugar: o campo e as ações ao lado (embaixo, no estreito); o do nome,
+   no tamanho de um título. */
+.ruvor-inline-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-2);
+  max-width: 560px;
+}
+
+.ruvor-inline-edit__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--ruvor-space-2);
+}
+
+.ruvor-inline-edit__row .ruvor-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  width: auto;
+}
+
+.ruvor-inline-edit--name .ruvor-input {
+  font-size: var(--ruvor-type-h3-size);
+  font-weight: var(--ruvor-type-h3-weight);
+}
+
+.ruvor-inline-edit__row .ruvor-btn {
+  flex: none;
+}
+
+/* Os fatos da carteira (dl): rótulo e valor, em colunas que quebram. O valor ocupa duas
+   colunas acima de 720 px (--lead) e a linha inteira em edição (--wide). */
+.ruvor-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--ruvor-space-4) var(--ruvor-space-5);
+  margin: 0;
+}
+
+.ruvor-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-1);
+  min-width: 0;
+}
+
+.ruvor-facts > div.ruvor-facts__wide {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 721px) {
+  .ruvor-facts > div.ruvor-facts__lead {
+    grid-column: span 2;
+  }
+}
+
+.ruvor-facts dt {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ruvor-space-1);
+}
+
+.ruvor-facts__value {
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+.ruvor-facts__muted {
+  color: var(--ruvor-text-muted);
+}
+
+.ruvor-facts__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruvor-space-1) var(--ruvor-space-2);
+  margin-top: var(--ruvor-space-1);
+}
+
+.ruvor-facts__acts .ruvor-btn,
+.ruvor-portfolio-top__actions .ruvor-btn {
+  font-size: var(--ruvor-type-small-size);
+}
+
+/* A resposta de uma escrita, num destaque, logo abaixo de onde ela aconteceu. */
+.ruvor-reply {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ruvor-space-2);
+}
+
+/* --- A composição em leitura e a edição no lugar (carteira.html) ---------------------- */
+
+/* Sobre .ruvor-table: a ação e o peso, com o total no pé. */
+.ruvor-holdings th:last-child,
+.ruvor-holdings td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ruvor-holdings tfoot td {
+  border-top: 1px solid var(--ruvor-border);
+  border-bottom: 0;
+  font-weight: var(--ruvor-type-small-weight);
+}
+
+/* A cabeça de painel que quebra linha (o título, a contagem e o "Editar"). */
+.ruvor-panel__head.ruvor-panel__head--wrap {
+  flex-wrap: wrap;
+  row-gap: var(--ruvor-space-2);
+}
+
+.ruvor-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ruvor-space-2);
+}
+
+/* --- O risco da carteira (risco.html) ------------------------------------------------- */
+
+/* O alto do resultado: a data dos preços à esquerda, o pedido à direita (embaixo, no
+   estreito). */
+.ruvor-portfolio-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ruvor-space-3) var(--ruvor-space-5);
+}
+
+.ruvor-portfolio-run__facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-2);
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.ruvor-portfolio-run__facts p {
+  margin: 0;
+}
+
+.ruvor-portfolio-run__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--ruvor-space-2);
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+.ruvor-portfolio-run__action .ruvor-state__reply {
+  text-align: right;
+  max-width: 44ch;
+}
+
+/* A faixa em reais, logo abaixo da faixa em %: o mesmo arranjo, um degrau abaixo. Depois de
+   .ruvor-range b, na mesma especificidade. */
+.ruvor-range--brl b {
+  font-size: var(--ruvor-type-h3-size);
+  letter-spacing: normal;
+  line-height: var(--ruvor-type-h3-leading);
+}
+
+/* A trilha da carteira: as duas frases e a lista (.ruvor-trail), com o SHA-256 da série em
+   mono, o rótulo numa linha só e o valor quebrando no espaço que sobra. */
+.ruvor-portfolio-trail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-3);
+}
+
+.ruvor-portfolio-trail .ruvor-note {
+  margin: 0;
+}
+
+.ruvor-trail__hash {
+  font-family: var(--ruvor-font-mono);
+  font-size: var(--ruvor-type-micro-size);
+}
+
+.ruvor-trail__hash-row dt {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* O histórico curto (RF-12): os grupos e a lista das ações de cada um. */
+.ruvor-short-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-4);
+}
+
+.ruvor-short-history__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruvor-space-2);
+  padding-top: var(--ruvor-space-3);
+  border-top: 1px solid var(--ruvor-table-rule);
+}
+
+.ruvor-short-history__group > p {
+  margin: 0;
+}
+
+.ruvor-asset-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ruvor-asset-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ruvor-space-1) var(--ruvor-space-3);
+  padding: var(--ruvor-space-2) 0;
+  border-bottom: 1px solid var(--ruvor-border);
+}
+
+.ruvor-asset-list li:last-child {
+  border-bottom: 0;
+}
+
+.ruvor-asset-list b {
+  font-family: var(--ruvor-font-mono);
+  min-width: 7ch;
+}
+
+.ruvor-asset-list span {
+  color: var(--ruvor-text-muted);
+  font-size: var(--ruvor-type-small-size);
+}
+
+.ruvor-asset-list a {
+  margin-left: auto;
+  font-size: var(--ruvor-type-small-size);
+  color: var(--ruvor-ink);
+  text-underline-offset: 3px;
+}
+
+.ruvor-asset-list a:focus-visible {
+  outline: 2px solid var(--ruvor-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* O anel sobre fundo escuro: dentro da barra e do bloco de código. Em (0,2,0) e depois dos
    componentes, vence o anel claro de .ruvor-btn, .ruvor-input, .ruvor-select e .ruvor-choice
    (também (0,2,0)) quando eles estão nesses fundos; o link da barra tem regra própria em
@@ -3162,8 +3775,10 @@
 }
 
 /* M1.6b: a barra estreita, em duas linhas, com a busca embaixo. Até 840 px desde o M2.1b
-   (era 720): entre 721 e 840 px, a linha única deixava a busca com 78 a 156 px. */
-@media (max-width: 840px) {
+   (era 720): entre 721 e 840 px, a linha única deixava a busca com 78 a 156 px. Até 920 px
+   desde o M2.2b (o portão das T2 a T4), para todas as sessões: com "Carteiras", a linha única
+   de 841 px deixaria a busca com 123 px. */
+@media (max-width: 920px) {
   .ruvor-topbar {
     height: auto;
     min-height: 60px;
@@ -3222,6 +3837,37 @@
 
   .ruvor-menu {
     right: var(--ruvor-space-4);
+  }
+
+  /* M2.2b (lista.html): com "Carteiras", cinco colunas — a marca, o item e o alternador na
+     primeira linha; a chave de tema e a conta na segunda, à direita, a conta por último (o
+     lugar do M2.1b, que não se move); a busca na terceira. Sem o item, as quatro de cima. */
+  .ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  }
+
+  .ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) > .ruvor-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ruvor-topbar > .ruvor-nav--account {
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0;
+    align-self: stretch;
+  }
+
+  .ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) .ruvor-topbar__prefs > .ruvor-segmented:has(+ .ruvor-segmented) {
+    grid-column: 3 / -1;
+  }
+
+  .ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) .ruvor-topbar__prefs > .ruvor-segmented + .ruvor-segmented {
+    grid-column: 1 / 5;
+  }
+
+  .ruvor-topbar:has(> .ruvor-nav--account:not([hidden])) .ruvor-topbar__prefs > .ruvor-topbar__account {
+    grid-column: 5;
   }
 }
 
@@ -3471,5 +4117,121 @@
 
   .ruvor-lab-levels {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* M2.2b (lista.html): a criação em uma coluna; o seletor na largura; a lista em blocos — uma
+     carteira por bloco, os campos com o rótulo da coluna em cima; o editor com menos recuo
+     nas células e o peso mais estreito. */
+  .ruvor-form-grid.ruvor-portfolio-form__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ruvor-picker {
+    max-width: none;
+  }
+
+  .ruvor-portfolios thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ruvor-portfolios tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ruvor-space-2) var(--ruvor-space-3);
+    padding: var(--ruvor-space-3) var(--ruvor-space-4);
+    border-bottom: 1px solid var(--ruvor-table-rule);
+  }
+
+  .ruvor-portfolios tr:last-child {
+    border-bottom: 0;
+  }
+
+  .ruvor-portfolios td {
+    display: block;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  /* Em (0,2,1), vence o nowrap das colunas de fora (o mockup usava !important). */
+  .ruvor-portfolios td:not(:first-child) {
+    white-space: normal;
+  }
+
+  .ruvor-portfolios td:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ruvor-portfolios td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--ruvor-font-mono);
+    font-size: var(--ruvor-type-label-size);
+    font-weight: var(--ruvor-type-label-weight);
+    letter-spacing: var(--ruvor-type-label-tracking);
+    text-transform: uppercase;
+    color: var(--ruvor-text-muted);
+  }
+
+  .ruvor-portfolios-more {
+    padding-inline: var(--ruvor-space-4);
+  }
+
+  .ruvor-holdings-editor th,
+  .ruvor-holdings-editor td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .ruvor-holdings-editor col.ruvor-holdings-editor__weight {
+    width: 96px;
+  }
+
+  .ruvor-holdings-editor col.ruvor-holdings-editor__remove {
+    width: 44px;
+  }
+
+  .ruvor-panel__body.ruvor-portfolio-form-body {
+    padding: var(--ruvor-space-4) var(--ruvor-space-3);
+  }
+
+  /* M2.2b (carteira.html): as ações da cabeça na largura; os botões do nome e do valor no
+     lugar e os da edição dividem a linha; a composição com menos recuo. */
+  .ruvor-portfolio-top__actions {
+    width: 100%;
+  }
+
+  .ruvor-inline-edit__row .ruvor-btn {
+    flex: 1;
+  }
+
+  .ruvor-edit-actions .ruvor-btn {
+    flex: 1;
+  }
+
+  .ruvor-holdings td,
+  .ruvor-holdings th {
+    padding-inline: 6px;
+  }
+
+  /* M2.2b (risco.html): o pedido embaixo, na largura, com a resposta à esquerda; o link de
+     cada ação do histórico curto na linha de baixo. */
+  .ruvor-portfolio-run__action {
+    align-items: stretch;
+  }
+
+  .ruvor-portfolio-run__action .ruvor-state__reply {
+    text-align: left;
+  }
+
+  .ruvor-asset-list a {
+    margin-left: 0;
+    flex-basis: 100%;
   }
 }

@@ -13,6 +13,8 @@
  *   `EXEMPLOS` (iniciante) e de `EXEMPLOS_AVANCADOS` (avançada) — os ramos `k ≥ 1` e `k = 0`.
  *   O ramo `julgados = 0` é isento (não há veredito) e fica fora **pelo filtro**, não por lista;
  *   e cada registro tem ao menos um exemplo de `k ≥ 1` e um de `k = 0`.
+ * - `carteira.risco.naoRejeitados` (M2.2b): a mesma prova, com a mesma expressão — a iniciante
+ *   troca "este ativo" por "esta carteira" no ramo `k = 0`, e a avançada é a do ativo.
  */
 import { describe, expect, it } from "vitest";
 
@@ -24,33 +26,48 @@ import { EXEMPLOS, EXEMPLOS_AVANCADOS } from "./exemplos";
 const EXPRESSAO = {
   "risco.veredito": "não do número de hoje",
   "risco.naoRejeitados": "não do número de hoje",
+  "carteira.risco.naoRejeitados": "não do número de hoje",
 } as const;
 
 type NaoRejeitadosArgs = readonly [k: number, julgados: number, total: number];
 
 const REGISTROS = [
   {
+    chave: "risco.naoRejeitados",
     nivel: "iniciante",
     exemplos: EXEMPLOS,
     frase: TEXTOS["risco.naoRejeitados"],
   },
   {
+    chave: "risco.naoRejeitados",
     nivel: "avançada",
     exemplos: EXEMPLOS_AVANCADOS,
     frase: TEXTOS_AVANCADOS["risco.naoRejeitados"],
   },
+  {
+    chave: "carteira.risco.naoRejeitados",
+    nivel: "iniciante",
+    exemplos: EXEMPLOS,
+    frase: TEXTOS["carteira.risco.naoRejeitados"],
+  },
+  {
+    chave: "carteira.risco.naoRejeitados",
+    nivel: "avançada",
+    exemplos: EXEMPLOS_AVANCADOS,
+    frase: TEXTOS_AVANCADOS["carteira.risco.naoRejeitados"],
+  },
 ] as const;
 
-type Exemplos = (typeof REGISTROS)[number]["exemplos"];
+type Registro = (typeof REGISTROS)[number];
 
-/** Todos os exemplos de `risco.naoRejeitados` de um registro. */
-function todos(exemplos: Exemplos): NaoRejeitadosArgs[] {
-  return (exemplos["risco.naoRejeitados"] ?? []) as NaoRejeitadosArgs[];
+/** Todos os exemplos da chave de um registro. */
+function todos({ exemplos, chave }: Registro): NaoRejeitadosArgs[] {
+  return (exemplos[chave] ?? []) as NaoRejeitadosArgs[];
 }
 
 /** Os exemplos com veredito: `julgados > 0` — os ramos `k ≥ 1` e `k = 0`. */
-function julgados(exemplos: Exemplos): NaoRejeitadosArgs[] {
-  return todos(exemplos).filter(([, j]) => j > 0);
+function julgados(registro: Registro): NaoRejeitadosArgs[] {
+  return todos(registro).filter(([, j]) => j > 0);
 }
 
 describe("V-06 — risco.veredito, nas duas leituras", () => {
@@ -62,30 +79,26 @@ describe("V-06 — risco.veredito, nas duas leituras", () => {
   });
 });
 
-describe.each(REGISTROS)(
-  "V-06 — risco.naoRejeitados, na $nivel",
-  ({ exemplos, frase }) => {
-    it("cada exemplo com julgados > 0 contém a expressão", () => {
-      const casos = julgados(exemplos);
-      expect(casos.length).toBeGreaterThan(0);
-      const faltam = casos.filter(
-        (args) => !frase(...args).includes(EXPRESSAO["risco.naoRejeitados"]),
-      );
-      expect(faltam).toEqual([]);
-    });
+describe.each(REGISTROS)("V-06 — $chave, na $nivel", (registro) => {
+  const { chave, frase } = registro;
+  it("cada exemplo com julgados > 0 contém a expressão", () => {
+    const casos = julgados(registro);
+    expect(casos.length).toBeGreaterThan(0);
+    const faltam = casos.filter((args) => !frase(...args).includes(EXPRESSAO[chave]));
+    expect(faltam).toEqual([]);
+  });
 
-    it("há exemplo do ramo k ≥ 1 e do ramo k = 0 entre os julgados", () => {
-      const casos = julgados(exemplos);
-      expect(casos.some(([k]) => k >= 1)).toBe(true);
-      expect(casos.some(([k]) => k === 0)).toBe(true);
-    });
+  it("há exemplo do ramo k ≥ 1 e do ramo k = 0 entre os julgados", () => {
+    const casos = julgados(registro);
+    expect(casos.some(([k]) => k >= 1)).toBe(true);
+    expect(casos.some(([k]) => k === 0)).toBe(true);
+  });
 
-    it("o exemplo com julgados = 0 está no registro e o filtro o tira", () => {
-      const isentos = todos(exemplos).filter(([, j]) => j === 0);
-      expect(isentos.length).toBeGreaterThan(0);
-      const casos = julgados(exemplos);
-      for (const isento of isentos) expect(casos).not.toContain(isento);
-      expect(casos).toHaveLength(todos(exemplos).length - isentos.length);
-    });
-  },
-);
+  it("o exemplo com julgados = 0 está no registro e o filtro o tira", () => {
+    const isentos = todos(registro).filter(([, j]) => j === 0);
+    expect(isentos.length).toBeGreaterThan(0);
+    const casos = julgados(registro);
+    for (const isento of isentos) expect(casos).not.toContain(isento);
+    expect(casos).toHaveLength(todos(registro).length - isentos.length);
+  });
+});

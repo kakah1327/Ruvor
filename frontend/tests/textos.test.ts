@@ -78,6 +78,12 @@ const LISTA_FECHADA = [
   "retorno.cw",
   "retorno.pt",
   "retorno.previsao",
+  // A lista fechada do risco da carteira (M2.2b, D-97): as cinco novas do portão do `risco.html`.
+  "carteira.risco.perdaReais",
+  "carteira.risco.valorAgora",
+  "carteira.risco.serie",
+  "carteira.risco.asOf",
+  "carteira.risco.naoRejeitados",
 ];
 
 // Os campos do RF-10 que não têm frase própria: entram na frase ou na nota do bloco.
@@ -90,8 +96,8 @@ const SEM_FRASE = [
 ];
 
 describe("V-14 — a lista fechada do RF-21 no módulo de textos", () => {
-  it("a lista tem as 55 chaves", () => {
-    expect(new Set(LISTA_FECHADA).size).toBe(55);
+  it("a lista tem as 60 chaves", () => {
+    expect(new Set(LISTA_FECHADA).size).toBe(60);
   });
 
   it.each(LISTA_FECHADA)("%s existe e não é vazia", (chave) => {

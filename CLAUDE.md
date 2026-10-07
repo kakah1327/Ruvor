@@ -313,7 +313,12 @@ aviso sempre aberto ([D-188](docs/decisoes/D-188-a-previsao-de-retorno-e-o-log-r
   `/ativos/{ticker}` (a tela do ativo, com o risco, o pedido de cálculo e o acompanhamento), dentro do
   casco (`components/Shell.tsx`); desde o M2.1b, `/conta/senha` (a troca voluntária) e `/organizacao/usuarios` (a
   gestão, que o menu só oferece à `admin` de organização não pessoal) também no casco, e `/entrar` e `/cadastro` fora
-  dele, em tela cheia. Na raiz das rotas, o `SessionProvider` (`src/session/`) lê `auth/me` uma vez e dá a sessão a todas as telas;
+  dele, em tela cheia. Desde o M2.2b, as **telas da carteira**, no casco: `/carteiras` (a lista e a criação,
+  `screens/PortfoliosScreen.tsx`) e `/carteiras/:id` (a página, `screens/PortfolioScreen.tsx`, com a composição editada no
+  lugar e o risco nos sete estados em `components/PortfolioRiskSection.tsx`), o item "Carteiras" na barra só com a conta
+  pronta e a barra estreita até 920 px ([D-180](docs/decisoes/D-180-carteiras-e-um-item-da-barra-so-para-quem-entrou.md)
+  a [D-182](docs/decisoes/D-182-o-risco-da-carteira-se-acompanha-no-intervalo-do-ativo.md)); o peso e o valor se leem por
+  algarismos, nunca por `parseFloat` (`src/portfolio/`). Na raiz das rotas, o `SessionProvider` (`src/session/`) lê `auth/me` uma vez e dá a sessão a todas as telas;
   com a senha provisória por trocar, mostra a **troca obrigatória** no lugar de qualquer rota, sem mudar a URL (menos
   em `/entrar` e `/cadastro`); o `next` da entrada só aceita caminho interno (`safeNext`). O **menu de conta** fica por
   último na barra (`components/AccountMenu.tsx`), os avisos de sessão terminada e de página só para quem entrou em
@@ -345,9 +350,10 @@ aviso sempre aberto ([D-188](docs/decisoes/D-188-a-previsao-de-retorno-e-o-log-r
   estado, erro e convite (`ruvor-keep`) ficam; proventos, comportamento e as grades do laboratório abrem recolhidos
   ([D-194](docs/decisoes/D-194-as-explicacoes-ficam-atras-de-um-botao-e-o-detalhe-recolhido-restringe-a-d-97-e-a-d-187.md)); a página inicial centrada, com os números do método e o que a página do ativo mostra; e o tema
   escuro em carvão quente ([D-195](docs/decisoes/D-195-o-tema-escuro-e-carvao-quente.md)).
-  1830 testes.
-  `frontend/e2e/` são os roteiros da execução real — `capturas.mjs` e, desde o M2.1b, `acesso.mjs`, que confere as
-  telas de acesso no navegador e as compara com os mockups aprovados —, com o Playwright na imagem oficial, fora da CI.
+  2150 testes.
+  `frontend/e2e/` são os roteiros da execução real — `capturas.mjs`; desde o M2.1b, `acesso.mjs`, que confere as
+  telas de acesso no navegador e as compara com os mockups aprovados; e, desde o M2.2b, `carteira.mjs`, o caminho da
+  carteira, com um cálculo real —, com o Playwright na imagem oficial, fora da CI.
   Lint e formatação são do **Biome**, por `npm run lint`
   ([D-43](docs/decisoes/D-43-ruff-e-biome-e-onde-cada-verificacao-roda.md)) — do lado Python,
   os dois projetos usam `ruff`. O `package.json` exige **Node 24.15+**, travado por

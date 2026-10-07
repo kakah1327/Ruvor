@@ -280,6 +280,10 @@ const PAIRS: readonly Pair[] = [
   ["decision-text", "surface", 4.5],
   ["paper", "ink", 4.5],
   ["validated-text", "surface", 4.5],
+  // M2.2b (T6): a soma do editor da composição, no pé da tabela (fundo table-head) — o
+  // "exata" e o erro da soma.
+  ["validated-text", "table-head", 4.5],
+  ["critical-text", "table-head", 4.5],
 ];
 
 describe("V-04 — contraste", () => {
@@ -451,6 +455,11 @@ const INTERACTIVE = [
   ".ruvor-menu__item",
   // M2.4 (T11): o contêiner rolável da grade do laboratório, que recebe o foco pelo teclado.
   ".ruvor-lab-scroll",
+  // M2.2b (T6): o nome da carteira na lista, a volta à lista e o link de cada ação do
+  // histórico curto. O item "Carteiras" é o .ruvor-nav__link, já acima.
+  ".ruvor-portfolios__name",
+  ".ruvor-back",
+  ".ruvor-asset-list a",
 ];
 
 describe("V-05 — foco visível", () => {
@@ -632,7 +641,8 @@ describe("M2.3 — o controle de recolher no kit", () => {
 
 // M2.1b (T10): o que os mockups aprovados pediram ao kit e que a vista não confere sozinha —
 // o [hidden] do menu, o véu do diálogo em token, a chave sobre a superfície desabilitada e a
-// barra estreita até 840 px, sem os seletores por posição do M2.3.
+// barra estreita até 840 px — 920 px desde o M2.2b (o portão das T2 a T4) —, sem os seletores
+// por posição do M2.3.
 function mediaBodies(css: string, query: string): string[] {
   const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const bodies: string[] = [];
@@ -677,8 +687,9 @@ describe("M2.1b — os componentes das telas de acesso no kit", () => {
     for (const part of hovers) expect(part).toContain(":not(:disabled");
   });
 
-  it("a barra estreita vale até 840 px e endereça cada peça, não a posição", () => {
-    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 840px)").join("\n");
+  it("a barra estreita vale até 920 px e endereça cada peça, não a posição", () => {
+    expect(mediaBodies(COMPONENTS_CSS, "(max-width: 840px)")).toEqual([]);
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 920px)").join("\n");
     for (const selector of [
       ".ruvor-topbar {",
       ".ruvor-topbar__prefs {",
@@ -769,6 +780,106 @@ describe("M5.1 — o retorno no kit", () => {
     );
     expect(ruleValue(COMPONENTS_CSS, ".ruvor-tag--evidence", "background")).toBe(
       "var(--ruvor-evidence-soft)",
+    );
+  });
+});
+
+// M2.2b (T6): o que os mockups aprovados (lista.html, carteira.html, risco.html) pediram ao kit e
+// que a vista não confere sozinha — o item "Carteiras" que o kit não esconde abaixo de 1000 px (a
+// vitrine segue com o .ruvor-nav escondido) e a barra dele até 920 px; o motivo do seletor na
+// tinta do texto sem !important; a faixa em reais um degrau abaixo da faixa em %; e a lista em
+// blocos até 720 px. O foco dos três links novos está no V-05 (INTERACTIVE); as duas cores novas
+// sobre o pé do editor, no V-04 (PAIRS).
+describe("M2.2b — as telas da carteira no kit", () => {
+  const NAV = ".ruvor-topbar:has(> .ruvor-nav--account:not([hidden]))";
+
+  it("o item fica em todas as larguras, e o [hidden] o esconde", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-nav--account[hidden]", "display")).toBe(
+      "none",
+    );
+    expect(
+      ruleValue(
+        COMPONENTS_CSS,
+        ".ruvor-topbar > .ruvor-nav--account:not([hidden])",
+        "display",
+      ),
+    ).toBe("flex");
+    // o .ruvor-nav da vitrine continua escondido até 1000 px
+    const wide = mediaBodies(COMPONENTS_CSS, "(max-width: 1000px)").join("\n");
+    expect(wide).toMatch(/\.ruvor-nav \{\s*display: none;\s*\}/);
+    expect(wide).not.toContain("ruvor-nav--account");
+  });
+
+  it("com o item, a barra larga tem quatro colunas e a estreita, cinco", () => {
+    const columns = COMPONENT_RULES.filter((rule) => rule.selector === NAV).map(
+      (rule) => /grid-template-columns:\s*([^;]+);/.exec(rule.body)?.[1].trim(),
+    );
+    expect(columns).toEqual([
+      "auto auto minmax(0, 1fr) auto",
+      "auto auto minmax(0, 1fr) auto auto",
+    ]);
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 920px)").join("\n");
+    for (const selector of [
+      `${NAV} {`,
+      ".ruvor-topbar > .ruvor-nav--account {",
+      `${NAV} .ruvor-topbar__prefs > .ruvor-segmented:has(+ .ruvor-segmented) {`,
+      `${NAV} .ruvor-topbar__prefs > .ruvor-segmented + .ruvor-segmented {`,
+      `${NAV} .ruvor-topbar__prefs > .ruvor-topbar__account {`,
+    ]) {
+      expect(narrow, selector).toContain(selector);
+    }
+  });
+
+  it("a folha não usa !important", () => {
+    expect(COMPONENTS_TEXT).not.toMatch(/!important/);
+  });
+
+  it("o motivo do seletor vence o texto suave do nome, pela especificidade", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-search__name .ruvor-pick__why", "color"),
+    ).toBe("var(--ruvor-text)");
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-search__name span", "color")).toBe(
+      "var(--ruvor-text-muted)",
+    );
+  });
+
+  it("a opção desabilitada não acende no hover e mostra que não se escolhe", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-pick--off > .ruvor-search__link", "cursor"),
+    ).toBe("not-allowed");
+    expect(
+      ruleValue(
+        COMPONENTS_CSS,
+        ".ruvor-pick--off > .ruvor-search__link:hover",
+        "background",
+      ),
+    ).toBe("transparent");
+  });
+
+  it("os links novos têm hover", () => {
+    expect(
+      ruleValue(COMPONENTS_CSS, ".ruvor-portfolios__name:hover", "text-decoration"),
+    ).toBe("underline");
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-back:hover", "color")).toBe(
+      "var(--ruvor-ink)",
+    );
+  });
+
+  it("a faixa em reais é um degrau abaixo da faixa em %, e vem depois dela", () => {
+    expect(ruleValue(COMPONENTS_CSS, ".ruvor-range--brl b", "font-size")).toBe(
+      "var(--ruvor-type-h3-size)",
+    );
+    const at = (selector: string): number =>
+      COMPONENT_RULES.findIndex((rule) => rule.selector === selector);
+    expect(at(".ruvor-range b")).toBeGreaterThan(-1);
+    expect(at(".ruvor-range--brl b")).toBeGreaterThan(at(".ruvor-range b"));
+  });
+
+  it("até 720 px, a lista vira blocos e o nowrap das colunas cede", () => {
+    const narrow = mediaBodies(COMPONENTS_CSS, "(max-width: 720px)").join("\n");
+    expect(narrow).toMatch(/\.ruvor-portfolios td \{[^}]*display: block;/);
+    expect(narrow).toMatch(
+      /\.ruvor-portfolios td:not\(:first-child\) \{\s*white-space: normal;\s*\}/,
     );
   });
 });

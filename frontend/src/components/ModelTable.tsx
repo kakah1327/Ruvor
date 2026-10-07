@@ -1,17 +1,18 @@
 import { Fragment, useId, useState } from "react";
 
-import { MODEL_ORDER, type ModelName, type RiskResult } from "../api/types";
+import { MODEL_ORDER, type ModelName, type RiskResultBase } from "../api/types";
 import { BLOCOS_AVANCADOS } from "../content/avancado";
 import { TEXTOS } from "../content/textos";
 import { formatDecimal, formatInteger } from "../format/numbers";
 import { formatLoss, lossFromVar } from "../format/var";
+import { formatBrlText } from "../portfolio/notional";
 import { type Reading, textFor, useReading } from "../reading";
 import type { Alpha } from "../risk/summary";
 import { Glyph } from "./Glyph";
 import { ALPHAS, CADA_N } from "./LossSummary";
 
 /** A família de cada modelo (RF-15): a linha de baixo do nome. */
-const CATEGORY: Record<ModelName, RiskResult["model_category"]> = {
+const CATEGORY: Record<ModelName, RiskResultBase["model_category"]> = {
   historical: "traditional",
   parametric: "traditional",
   monte_carlo: "traditional",
@@ -62,8 +63,20 @@ function PassTag({ ok }: { ok: boolean }) {
 /**
  * A célula de um nível: a perda (RF-12), a barra na escala comum às dezoito células e a
  * tag. Sem perda — o modelo falhou, ou não tem linha —, "—" e a tag, sem barra.
+ *
+ * `brl` é a perda em reais do modelo (a carteira com valor, M2.2b RF-10), um decimal da API: vai
+ * no `<small>` de `.ruvor-loss`, ao lado da %, escrito pelo texto; a barra segue a escala da %.
+ * Nulo — o ativo, a carteira sem valor, o modelo sem VaR —, nada a mais.
  */
-function LossCell({ result, scale }: { result: RiskResult | null; scale: number }) {
+function LossCell({
+  result,
+  scale,
+  brl,
+}: {
+  result: RiskResultBase | null;
+  scale: number;
+  brl: string | null;
+}) {
   if (result === null || result.var_latest === null) {
     return (
       <td>
@@ -82,6 +95,7 @@ function LossCell({ result, scale }: { result: RiskResult | null; scale: number 
       <div className="ruvor-cell-stack">
         <span className="ruvor-loss">
           <b className="ruvor-num">{formatLoss(result.var_latest)}</b>
+          {brl !== null && <small data-part="perda-reais">{formatBrlText(brl)}</small>}
         </span>
         <span className="ruvor-bar ruvor-bar--evidence" aria-hidden="true">
           <span
@@ -129,7 +143,13 @@ function TestRow({
  * Os testes de um modelo num nível (RF-15): violações × esperadas, Kupiec, Christoffersen e
  * DQ. O modelo que falhou — sem linha, com erro, ou com o Kupiec nulo — mostra o erro.
  */
-function LevelTests({ result, alpha }: { result: RiskResult | null; alpha: Alpha }) {
+function LevelTests({
+  result,
+  alpha,
+}: {
+  result: RiskResultBase | null;
+  alpha: Alpha;
+}) {
   const reading = useReading();
   const title = <p className="ruvor-eyebrow">{TEXTOS[`risco.nivel.${alpha}`]}</p>;
   if (
@@ -198,8 +218,17 @@ function openFor(reading: Reading): ReadonlySet<ModelName> {
  * As linhas de teste (M2.3): fechadas na iniciante e abertas na avançada; trocar o nível
  * reaplica o padrão — o estado guarda o nível em que foi decidido, como o `Collapsible` —, e
  * cada linha expansível leva `data-collapsible="tests"` e o seu `data-open`.
+ *
+ * Serve ao ativo e à carteira (M2.2b, RF-16): `lossBrl`, ausente no ativo, dá a perda em reais
+ * de cada resultado (o `loss_brl` da carteira), mostrada ao lado da % quando não é nula.
  */
-export function ModelTable({ results }: { results: readonly RiskResult[] }) {
+export function ModelTable<R extends RiskResultBase>({
+  results,
+  lossBrl,
+}: {
+  results: readonly R[];
+  lossBrl?: (r: R) => string | null;
+}) {
   const reading = useReading();
   const baseId = useId();
   const titleId = `${baseId}-titulo`;
@@ -215,7 +244,7 @@ export function ModelTable({ results }: { results: readonly RiskResult[] }) {
     setState({ reading, open });
   }
 
-  const at = (model: ModelName, alpha: Alpha): RiskResult | null =>
+  const at = (model: ModelName, alpha: Alpha): R | null =>
     results.find((r) => r.model_name === model && r.alpha === alpha) ?? null;
 
   const losses = results
@@ -302,9 +331,21 @@ export function ModelTable({ results }: { results: readonly RiskResult[] }) {
                       {TEXTOS[`risco.categoria.${CATEGORY[model]}`]}
                     </span>
                   </td>
-                  {ALPHAS.map((alpha) => (
-                    <LossCell key={alpha} result={at(model, alpha)} scale={scale} />
-                  ))}
+                  {ALPHAS.map((alpha) => {
+                    const result = at(model, alpha);
+                    return (
+                      <LossCell
+                        key={alpha}
+                        result={result}
+                        scale={scale}
+                        brl={
+                          result === null || lossBrl === undefined
+                            ? null
+                            : lossBrl(result)
+                        }
+                      />
+                    );
+                  })}
                 </tr>
                 <tr className="ruvor-table__detail" id={detailId} hidden={!expanded}>
                   <td colSpan={3}>

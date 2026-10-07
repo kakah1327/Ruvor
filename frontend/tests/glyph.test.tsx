@@ -25,6 +25,7 @@ const REGULAR: RegularGlyph[] = [
   "arrow-left",
   "arrow-square-out",
   "arrows-clockwise",
+  "briefcase",
   "buildings",
   "calendar-blank",
   "caret-down",

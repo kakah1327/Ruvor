@@ -33,6 +33,9 @@ conversas e entre agentes.
 | [D-147](D-147-os-episodios-de-estresse-sao-uma-lista-curada.md) | Os episódios de estresse são uma lista curada, com datas de calendário |
 | [D-148](D-148-o-estresse-e-tabela-filha-da-metrica-e-sai-pelo-metrics.md) | O estresse é tabela filha da linha de métrica e sai pela rota `/metrics` |
 | [D-184](D-184-a-decada-e-a-do-ativo-e-o-teste-se-le-em-anos-de-252-pregoes.md) | A década do laboratório é a do ativo, do primeiro pregão a dez anos de calendário depois, e o teste se lê em trechos de 252 pregões; veredito por ano só a 95% |
+| [D-180](D-180-carteiras-e-um-item-da-barra-so-para-quem-entrou.md) | "Carteiras" é um item da barra, só para quem entrou com a conta pronta; a barra estreita vale até 920 px |
+| [D-181](D-181-o-seletor-de-acao-filtra-no-cliente.md) | O seletor de ação da carteira usa a busca do catálogo e filtra no cliente: só ação ativa é escolhível, o resto aparece desabilitado com o motivo |
+| [D-182](D-182-o-risco-da-carteira-se-acompanha-no-intervalo-do-ativo.md) | O risco da carteira se relê a cada 5 s, como o do ativo, pelo `usePolling` genérico; um erro numa releitura mantém o que estava |
 | [D-187](D-187-a-secao-do-laboratorio-fica-na-tela-do-ativo-depois-do-risco-sem-eleger.md) | A seção do laboratório fica na tela do ativo, logo depois do risco, para todos, pela rota `/lab`, sem eleger nem ordenar, com a diferença honesta nas duas leituras |
 | [D-188](D-188-a-previsao-de-retorno-e-o-log-retorno-de-um-pregao-contra-o-retorno-zero.md) | A previsão de retorno é o log-retorno de um pregão, pontual, fora da amostra contra o retorno zero; cada modelo grava também a previsão do próximo pregão |
 | [D-192](D-192-a-tela-mostra-a-validacao-e-a-previsao-junto-dela-com-o-aviso-estende-a-d-160.md) | A tela mostra a validação e, junto dela, a previsão do próximo pregão, nunca sozinha, com o aviso obrigatório; sem comercialização, o parecer da CVM não segura o M5.1 — estende a D-160 |
