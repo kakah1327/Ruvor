@@ -312,6 +312,14 @@ export const EXEMPLOS: Readonly<Record<string, ReadonlyArray<readonly unknown[]>
   "carteiras.soma.foraDaSoma": [[1], [2]],
   "carteiras.erro.contagem": [[1], [21]],
   "carteiras.erro.soma": [["99,99"]],
+  // carteira.*: o registro EXEMPLOS do carteira.html (M2.2b), sem as três frases do cálculo em
+  // curso, que entram com a seção de risco (T9).
+  "carteira.mudouEm": [["02/10/2026", "16:41"]],
+  "carteira.composicao.salva": [[4]],
+  "carteira.composicao.nadaMudou": [[3]],
+  "carteira.composicao.outraPessoa": [[5]],
+  "carteira.erro.muitos": [[12]],
+  "carteira.arquivar.titulo": [["Bancos e energia"]],
 };
 
 // Um conjunto de argumentos por ramo de cada função de `TEXTOS_AVANCADOS`. Cresce seção a seção.

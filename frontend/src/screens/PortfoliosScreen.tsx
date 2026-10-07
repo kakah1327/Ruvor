@@ -50,7 +50,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** A forma de `PortfolioOut` que a tela lê, com o instante legível. */
-function isPortfolio(value: unknown): value is Portfolio {
+export function isPortfolio(value: unknown): value is Portfolio {
   return (
     isRecord(value) &&
     typeof value.id === "string" &&

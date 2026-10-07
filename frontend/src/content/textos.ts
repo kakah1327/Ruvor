@@ -1327,6 +1327,66 @@ export const TEXTOS = {
   "carteiras.criar": "Criar carteira",
   "carteiras.criando": "Criando…",
   "carteiras.cancelar": "Cancelar",
+  // A página da carteira (M2.2b, RF-02, RF-07, RF-08): o registro TEXTOS do `carteira.html`
+  // aprovado, literal. As três frases do cálculo em curso (`carteira.composicao.emCurso`,
+  // `.salvaEmCurso`, `.riscoEmCurso`) dependem do `in_progress` do risco e entram com a seção de
+  // risco (T9).
+  "carteira.voltar": "Todas as carteiras",
+  "carteira.sobrancelha": "Carteira",
+  "carteira.carregando": "Carregando a carteira.",
+  "carteira.erro.titulo": "Não foi possível carregar a carteira.",
+  "carteira.erro.texto": "Pode ser uma falha passageira do servidor.",
+  "carteira.naoEncontrada.titulo": "Carteira não encontrada.",
+  "carteira.naoEncontrada.texto":
+    "Ela pode ter sido arquivada, ou este endereço não é de uma carteira da sua organização.",
+  "carteira.naoEncontrada.voltar": "Ver as carteiras",
+  "carteira.fatos.rotulo": "Sobre a carteira",
+  "carteira.valor.rotulo": "Valor aplicado",
+  "carteira.valor.nota.com":
+    "A perda estimada aparece também em reais, calculada com este valor.",
+  "carteira.valor.nota.sem": "Sem valor, a perda estimada aparece só em %.",
+  "carteira.versao.rotulo": "Versão da composição",
+  "carteira.mudouEm.rotulo": "Composição mudou em",
+  "carteira.mudouEm": (data: string, hora: string): string => `${data} às ${hora}`,
+  "carteira.criadaPor.rotulo": "Criada por",
+  "carteira.nome.mudar": "Mudar o nome",
+  "carteira.nome.campo": "Nome da carteira",
+  "carteira.valor.mudar": "Mudar o valor",
+  "carteira.valor.informar": "Informar um valor",
+  "carteira.valor.tirar": "Tirar o valor",
+  "carteira.valor.campo": "Valor aplicado, em reais",
+  "carteira.salvar": "Salvar",
+  "carteira.salvando": "Salvando…",
+  "carteira.composicao.ordem": "Na ordem do código.",
+  "carteira.composicao.total": "Total",
+  "carteira.composicao.editar": "Editar composição",
+  "carteira.composicao.salvar": "Salvar a composição",
+  "carteira.composicao.nota":
+    "Salvar uma composição diferente cria a versão seguinte. O risco mostrado é sempre o da versão corrente.",
+  "carteira.composicao.salva": (n: number): string =>
+    `Composição salva como a versão ${n}.`,
+  "carteira.composicao.nadaMudou": (n: number): string =>
+    `Nada mudou: a composição enviada é igual à da versão ${n}.`,
+  "carteira.composicao.outraPessoa": (n: number): string =>
+    `Outra pessoa também mudou esta carteira enquanto você editava. A composição abaixo, da versão ${n}, é a que ficou salva.`,
+  "carteira.erro.forma":
+    "A composição não foi aceita. Confira os pesos e tente de novo.",
+  "carteira.erro.rede": "Não foi possível falar com o servidor. Tente de novo.",
+  "carteira.erro.muitos": (n: number): string =>
+    `Muitos pedidos seguidos. Tente de novo em ${n} s.`,
+  "carteira.erro.muitosSemTempo":
+    "Muitos pedidos seguidos. Aguarde um pouco e tente de novo.",
+  "carteira.erro.csrf": "A página ficou desatualizada. Recarregue e tente de novo.",
+  "carteira.erro.outro": "Não foi possível concluir agora. Tente de novo.",
+  "carteira.erro.mantido": "Nada foi alterado.",
+  "carteira.arquivar": "Arquivar",
+  "carteira.arquivar.titulo": (nome: string): string =>
+    `Arquivar a carteira “${nome}”?`,
+  "carteira.arquivar.texto":
+    "A carteira sai da lista da organização e deixa de abrir, para todas as pessoas dela. A composição e o risco já calculado ficam guardados.",
+  "carteira.arquivar.semVolta": "A tela não tem como desarquivar.",
+  "carteira.arquivar.confirmar": "Arquivar a carteira",
+  "carteira.arquivar.enviando": "Arquivando…",
 } as const;
 
 export type TextoKey = keyof typeof TEXTOS;
