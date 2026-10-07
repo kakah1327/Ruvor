@@ -28,7 +28,7 @@ a frente e crie o ramo pelo formato abaixo.
 
 | Frente | Dono | Blocos, em ordem | Arquivo | Ramo atual |
 |---|---|---|---|---|
-| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M2.2b-telas-da-carteira` — o M2.2b, com os portões das T2 a T4 aprovados; o M5.1 entrou pela PR #41 e os ajustes de tela (D-193 a D-195) pela PR #42 |
+| `marco1` | darkside171 | M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ → M2.1b ✅ → M2.4 ✅ → M5.1 ✅ → M2.2b ✅ | [frentes/marco1.md](frentes/marco1.md) | `marco1/M2.2b-telas-da-carteira` — o M2.2b, fechado em 2026-10-07, com a PR #45 a sair do rascunho; o M5.1 entrou pela PR #41 e os ajustes de tela (D-193 a D-195) pela PR #42 |
 | `identidade` | kakah1327 (Kauã), desde 2026-09-27 | M2.1 ✅ → M4.2 ✅ → M4.1 ✅ → M2.2a ✅ (PR #34, 2026-10-02) | [frentes/identidade.md](frentes/identidade.md) | — |
 | `fundamentos` | kakah1327 (Kauã) | M3.1 ✅ → M3.2 ✅ | [frentes/fundamentos.md](frentes/fundamentos.md) | — (parada; o M3.2 foi mesclado) |
 
@@ -122,7 +122,7 @@ outras frentes.
 | D-140 a D-159 | `marco1`, reservadas pela spec do M1.6c e divididas em 2026-09-29: M2.1b D-140–142, M1.7 D-143–145, M3.3 D-146–148, M1.5c D-149–150, M2.3 D-151–154, M1.6d D-155–156; e, pela spec do M1.4b em 2026-10-02, D-157–159 | D-140, D-143, D-144, D-146 a D-153, D-157 a D-159 (a D-140 com o M2.1b, fechado, que deixa a D-141 e a D-142 sem uso; a D-157 a D-159 com o M1.4b, fechado; a D-146 a D-148 com o M3.3, fechado; a D-143 e a D-144 com o M1.7, fechado, que deixa a D-145 sem uso; a D-149 e a D-150 com o M1.5c, fechado; a D-151 a D-153 com o M2.3, fechado, que deixou a D-154 sem uso) |
 | D-100 a D-119 | `identidade` | todas — D-116 a D-119 são do M2.2a |
 | D-160 a D-179 | `identidade`, reservada pela spec do M2.2a | — |
-| D-180 a D-199 | `marco1`, reservada pela spec do M2.2b (D-180 a D-182) e dividida com a do M2.4 (D-183 a D-187), a do M5.1 (D-188 a D-192) e os ajustes de tela (D-193 a D-195) | D-183 a D-187, com o M2.4, fechado; D-188 a D-192, com o M5.1, fechado; D-193 a D-195, com os ajustes de tela, no ramo `marco1/ajustes-de-tela`; a D-180 a D-182 são do M2.2b, no ramo dele |
+| D-180 a D-199 | `marco1`, reservada pela spec do M2.2b (D-180 a D-182) e dividida com a do M2.4 (D-183 a D-187), a do M5.1 (D-188 a D-192) e os ajustes de tela (D-193 a D-195) | D-183 a D-187, com o M2.4, fechado; D-188 a D-192, com o M5.1, fechado; D-193 a D-195, com os ajustes de tela (PR #42); D-180 a D-182, com o M2.2b, fechado |
 | D-120 a D-139 | `fundamentos` | D-120 a D-134 |
 
 Acabou a faixa: a frente reserva a próxima livre de vinte, com uma linha nesta tabela, na PR da

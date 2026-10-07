@@ -1797,3 +1797,16 @@ roteiro e a foto do mockup apontam para os números da máquina original.
 com `import_prices`, `compute_metrics` e `compute_risk --full`, síncronos, com o `worker` parado — e só então o build. O
 `--full` síncrono dos seis levou 22 min numa máquina de 16 GB; com o Docker limitado a 5,8 GB, um processo só por vez:
 o `worker` em concorrência 2 ao lado de outro cálculo deixou o Windows sem memória.
+
+## O roteiro da execução real lê o código de estado e o marcador no contrato, não na memória
+
+**Quando:** ao escrever um roteiro novo de `frontend/e2e/` para um bloco de tela — o `carteira.mjs` do M2.2b.
+
+**Problema:** as duas primeiras rodadas falharam por erro do roteiro, e a tela estava certa nas duas. O roteiro
+procurava o botão "Nova carteira" na lista vazia, mas o estado vazio mostra o "criar a primeira"
+(`data-part="criar-primeira"`). E esperava 400 no `insufficient_history`, mas o contrato do M2.2a dá **409**
+(`backend/apps/portfolios/views.py`, o mapa de `code` para status). Cada rodada com o cálculo real custa uns 4 min.
+
+**Faça:** antes da primeira rodada, tire cada status esperado do mapa da view ou da tabela de erros da spec do backend,
+e cada marcador (`data-part`) de um `grep` no componente, olhando o estado em que a tela vai estar: lista vazia,
+primeira carteira. Ponha os passos que não dependem do cálculo antes dele, para que o erro apareça cedo.

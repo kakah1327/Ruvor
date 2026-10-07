@@ -2,21 +2,22 @@
 
 **Dono:** darkside171
 **Blocos:** M1.5b ✅ → M1.6a ✅ → M1.6b ✅ → M1.6c ✅ → M2.1m ✅ → M1.6d ✅ → M1.5c ✅ → M1.7 ✅ → M2.3 ✅ → M3.3 ✅ → M1.4b ✅ →
-M2.1b ✅ → M2.4 ✅ → M5.1 ✅; o M2.2b no ramo dele. O M1.6b fechou o Marco 1: digita ITUB4, recebe o
+M2.1b ✅ → M2.4 ✅ → M5.1 ✅ → M2.2b ✅. O M1.6b fechou o Marco 1: digita ITUB4, recebe o
 comportamento e o risco; o M1.6c completou a tela com as camadas 4 e 5; o M2.3 deu a ela as duas leituras, iniciante e
 avançada; o M3.3, o estresse histórico na seção Comportamento; o M1.4b corrigiu o motor (`0.4.0`): o GARCH e o EGARCH
 sem olhar à frente, e os tradicionais em janela expansiva; o M2.1b, as telas de acesso — entrar, cadastro, troca de senha,
 menu de conta e gestão de usuários — e o pedido de cálculo só com conta (D-140); o M2.4, o regime de laboratório — o
 experimento fixo da década de cada ativo, ano a ano, numa seção logo depois do risco (D-183 a D-187); o M5.1, o retorno —
 dois modelos simples validados contra o retorno zero e a previsão do próximo pregão junto do veredito, no motor `0.5.0`
-(D-188 a D-192), terminado pelo Kauã na máquina dele.
+(D-188 a D-192), terminado pelo Kauã na máquina dele; o M2.2b, as telas da carteira — a lista, a criação, a página com
+a composição editável e o risco nos sete estados (D-180 a D-182) —, também fechado pelo Kauã.
 **Cerca:** ver [FRENTES.md](../FRENTES.md#cercas).
 **Faixa de decisões:** D-75 a D-81 (todas usadas pelo M1.5b), depois D-85 a D-99 (todas usadas; a D-99 é do M1.6c) e
 D-140 a D-159, reservadas pela spec do M1.6c e divididas entre os seis blocos abertos em 2026-09-29 — usadas D-140,
 D-143 e D-144, D-146 a D-153 — a D-140 com o M2.1b, fechado (a D-141 e a D-142 ficam sem uso); a D-146 a D-148 com o M3.3, fechado; a D-143 e a D-144 com o M1.7, fechado (a D-145 fica sem uso); a D-149 e a D-150 com o
 M1.5c, fechado; a D-151 a D-153 com o M2.3, fechado, e a D-154 sem uso; e a D-157 a D-159, tomadas pela spec do M1.4b,
 fechado; e a D-180 a D-199, reservada pela spec do M2.2b (D-180 a D-182) e dividida com o M2.4, que usou a D-183 a
-D-187, e com o M5.1, que usou a D-188 a D-192 (ver [FRENTES.md](../FRENTES.md#numeração-de-decisão)).
+D-187, com o M5.1, que usou a D-188 a D-192, e com os ajustes de tela (D-193 a D-195); o M2.2b usou a D-180 a D-182 (ver [FRENTES.md](../FRENTES.md#numeração-de-decisão)).
 
 ---
 
@@ -53,8 +54,8 @@ ramo — mockup com dado real, tela, execução real —, o orquestrador põe o 
 1. **Rever o `frontend/e2e/capturas.mjs`** antes da próxima execução real: foi escrito para a página em rolagem, e a
    tela do ativo agora tem seis abas (D-193). Ver as abas e o carvão quente no celular. Os ajustes de tela entraram pela
    PR #42 (2026-10-05) e o M5.1 pela PR #41: a imagem do `worker` diz `0.5.0`.
-2. **O M2.2b**, no ramo dele (96 commits atrás da `main` em 2026-10-05): recebe a `main` com o M5.1 e os ajustes de tela antes da tela; a ordem das seções —
-   risco → laboratório → retorno → Fundamentos → Comunicados — é a ordem das abas.
+2. **O M2.2b fechou em 2026-10-07**: a PR #45 sai do rascunho para o dono mesclar com a CI verde. O roteiro
+   `frontend/e2e/carteira.mjs` é o caminho da carteira na execução real; não entra na CI.
 3. Pedir à `identidade` o `verbose_name` em `User.name` e `User.email` (a mensagem de semelhança da senha cita o campo em
    inglês).
 4. Os achados da revisão da PR #37 (M3.3), registrados como dívida no [ESTADO](../ESTADO.md#dívida-registrada).
@@ -105,3 +106,4 @@ gravaram nenhum (ver o fecho do M1.4b no ESTADO).
 | 2026-10-04 | M5.1 retomado pelo Kauã, na máquina dele: a `main` com o M2.4 recebida, os ajustes do mockup, T10 a T13, a correção do V-09 instável do laboratório, a fase A refeita (os 108 pares iguais, o oráculo a 4,98e-11), a fase B (558 conferências, 0 falhas) e o FECHA |
 | 2026-10-04 | PR #41 (M5.1) mesclada. Ajustes de tela pelo Kauã, no ramo `marco1/ajustes-de-tela`, vistos no navegador e aprovados na conversa: as seis abas com endereço (D-193), o botão Explicações e o detalhe recolhido (D-194), a página inicial centrada, o tema escuro em carvão quente (D-195); 1830 testes no frontend; o `capturas.mjs` não rodado, a rever |
 | 2026-10-05 | PR #42 (ajustes de tela) mesclada. Documentos postos no estado atual: nenhuma PR aberta na frente; o M2.2b segue no ramo dele |
+| 2026-10-07 | M2.2b fechado pelo Kauã: T5 a T9 sobre a `main` com o M2.4, o M5.1 e os ajustes de tela; T10, as 27 mutações reprovando de novo sobre o código final; T11, o `carteira.mjs` com 82 conferências e 0 falhas na stack real (o cálculo em 188 s), 12 capturas; 51 arquivos e 2150 testes no frontend; o backend e o motor intocados; D-180 a D-182 |
