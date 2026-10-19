@@ -14,8 +14,9 @@
 
 | Arquivo | Papel |
 |---|---|
-| `TCC_II_VaR_ML_v3_cap1.docx` | **Fonte canônica** do texto acadêmico |
-| `TCC_II_VaR_ML_v3.md` | Conversão em Markdown, para leitura e diff. **Gerada** — não editar |
+| `TCC_II_VaR_ML_v4.docx` e `.pdf` | **A versão entregue** do TCC II (2026-10-05), gerada por [`tools/tcc/`](../../tools/tcc/README.md) |
+| `TCC_II_VaR_ML_v3_cap1.docx` | A base do v4: o `montar.py` aplica o texto novo sobre ela |
+| `TCC_II_VaR_ML_v3.md` | Conversão em Markdown do v3, para leitura e diff. **Gerada** — não editar |
 
 Para regenerar o Markdown após alterar o `.docx`:
 
@@ -33,16 +34,13 @@ O TCC e o Ruvor compartilham o **motor numérico** (`engine/`) e divergem no res
 O modelo núcleo-aberto sustenta as duas afirmações ao mesmo tempo — ver
 [`docs/ARQUITETURA.md`](../ARQUITETURA.md), seção de estrutura do repositório.
 
-## Divergências conhecidas entre o texto e o código
+## Divergências entre o texto e o código
 
-O TCC descreve decisões que mudaram desde a redação (Flask, Jinja2, `statsmodels.QuantReg`,
-ausência de banco). O levantamento completo está em
-[`docs/prototipo/07-backlog-specs.md`](../prototipo/07-backlog-specs.md), seção de
-divergências.
+As do v3 (Flask, Jinja2, `statsmodels.QuantReg`, ausência de banco), levantadas em
+[`docs/prototipo/07-backlog-specs.md`](../prototipo/07-backlog-specs.md), foram corrigidas no v4. O v4 cita as telas de
+carteira como trabalho futuro; elas entraram depois, no M2.2b.
 
 ## Pendências do trabalho acadêmico
 
-- **Etapa 6** (ranking comparativo dos 9 modelos nos 4 ativos) não executada
-- **Capítulo 5** (considerações finais) em branco
-- Correção da semente aleatória e refação da Tabela 1 — pré-requisito da Etapa 6
-- Renomeação de "VaR Lab" para "Ruvor" no texto
+Nenhuma: a Etapa 6, o Capítulo 5, a semente e a Tabela 1, e o nome Ruvor estão no v4
+([ROADMAP](../ROADMAP.md#trilha-paralela--tcc)).
