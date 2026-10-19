@@ -125,12 +125,17 @@ Independente da plataforma. É tempo de máquina, não desenvolvimento.
 | | Tarefa | Observação |
 |---|---|---|
 | ✅ | Fixar semente das redes neurais | **feito no M1.4** — `engine/src/engine/seeding.py`, aplicada no início de cada treino ([D-63](decisoes/D-63-semente-fixa-entra-no-manifesto.md)). Era pré-requisito de tudo abaixo |
-| ⬜ | Refazer a Tabela 1 (modelos de ML) | os números atuais vieram de execução sem semente |
-| ⬜ | Refazer a Tabela 2 e a conclusão preliminar | saíram do motor com os dois defeitos que o M1.4b corrigiu — o GARCH e o EGARCH viam o retorno do dia, e os tradicionais eram o quantil do primeiro ano; a conclusão "GARCH/EGARCH ganham dos tradicionais estáticos" não se sustenta sem refazer. A Tabela 1 também tem o `garchnet`, que mudou no `0.4.0` |
-| ⬜ | Executar a Etapa 6 | 9 modelos × 4 ativos × 2 níveis; ~1h em CPU paralelizada |
-| ⬜ | Escrever §4.5 e o Capítulo 5 | dependem da Etapa 6 |
-| ⬜ | Renomear VaR Lab → Ruvor no texto | |
-| ⬜ | Corrigir divergências do §3.2 | Flask/Jinja2, QuantReg, ausência de banco |
+| ✅ | Refazer a Tabela 1 (modelos de ML) | **feito no TCC v4** (2026-10-05) — a Tabela 1 é o backtesting dos nove modelos no PETR4, de 2017 a 2026, com os resultados do laboratório (M2.4), no motor `0.5.0` |
+| ✅ | Refazer a Tabela 2 e a conclusão preliminar | **feito no TCC v4** — a Tabela 2 é o ranking dos nove modelos nos quatro ativos e dois níveis; a conclusão nova: nenhum modelo é adequado em todos os casos, e o CAViaR, o GARCH(1,1) e a LSTM ficam à frente |
+| ✅ | Executar a Etapa 6 | **feito no TCC v4** — a §4.6, o ranking comparativo, sobre o laboratório de IBOV, PETR4, VALE3 e ITUB4 |
+| ✅ | Escrever §4.5 e o Capítulo 5 | **feito no TCC v4** — a §4.5, a interface web, e as considerações finais, com limitações e trabalhos futuros |
+| ✅ | Renomear VaR Lab → Ruvor no texto | **feito no TCC v4** — "VaR Lab" não aparece mais no texto |
+| ✅ | Corrigir divergências do §3.2 | **feito no TCC v4** — o texto explica a troca do Flask pelo Django e o abandono do QuantReg |
+
+**A trilha está fechada.** O texto entregue é o `docs/tcc/TCC_II_VaR_ML_v4.docx` (e o `.pdf`), gerado pelos scripts de
+[`tools/tcc/`](../tools/tcc/README.md) (PR #44). Os números do capítulo 4 estão fixos no `cap45.py`: refazer o
+experimento regenera tabelas e figuras, mas o texto se revê à mão. As considerações finais citam as telas de carteira
+como trabalho futuro; elas entraram depois, no M2.2b (2026-10-07).
 
 Detalhe das divergências em
 [`docs/prototipo/07-backlog-specs.md`](prototipo/07-backlog-specs.md).
